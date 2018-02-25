@@ -1,0 +1,88 @@
+#' semPower: Performs a priori, post-hoc, anc compromise power analyses structural equation models.
+#'
+#' semPower provides various power-analyes for structural equation (SEM) models:
+#'
+#' \itemize{
+#' \item A-priori power analysis \code{\link{semPower.aPriori}} computes the required N, given an effect, alpha, power, and the model df
+#' \item Post-hoc power analysis \code{\link{semPower.postHoc}} computes the achieved power, given an effect, alpha, N, and the model df
+#' \item Compromise power analysis \code{\link{semPower.compromise}} computes the implied alpha and power, given an effect, the alpha/beta ratio, N, and the model df
+#' }
+#'
+#' In SEM, the discrepancy between H0 and H1 (the magnitude of effect) refers to the difference between two models. semPower allows for expressing the  magnitude of effect by one of the following measures: F0, RMSEA, Mc, GFI, or AGFI.
+#' Alternatively, the implied effect can also be computed from the discrepancy between a hypothesized (model implied) covariance matrix and the population covariance matrix, see the examples below how to use this feature in conjunctino with lavaan.
+#'
+#'
+#'
+#' @docType package
+#' @name semPower
+#' @author  Morten Moshagen \email{morten.moshagen@@uni-ulm.de}
+#' @references
+#' Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. \emph{Structural Equation Modeling, 23}, 54-60. doi: 10.1080/10705511.2014.950896
+#' @examples
+#' # a-priori power analyses using rmsea = .05 a target power (1-beta) of .80
+#' ap1 <- semPower.aPriori(0.05, 'RMSEA', alpha = .05, beta = .20, df = 200)
+#' summary(ap1)
+#' # a-priori power analyses using f0 = .75 and a target power of .95
+#' ap2 <- semPower.aPriori(0.75, 'F0', alpha = .05, power = .95, df = 200)
+#' summary(ap2)
+#' # post-hoc power analyses using rmsea = .08
+#' ph <- semPower.postHoc(.08, 'RMSEA', alpha = .05, N = 250, df = 50)
+#' summary(ph)
+#' # compromise power analyses using rmsea = .08 and an abratio of 2
+#' cp <- semPower.compromise(.08, 'RMSEA', abratio = 2, N = 1000, df = 200)
+#' summary(cp)
+#'
+#' # use lavaan to define effect through covariance matrices:
+#' \dontrun{
+#' library(lavaan)
+#'
+#' # define population model (= H0)
+#' model.pop <- '
+#' f1 =~ .8*x1 + .7*x2 + .6*x3
+#' f2 =~ .7*x4 + .6*x5 + .5*x6
+#' f1 ~~ 1*f1
+#' f2 ~~ 1*f2
+#' f1 ~~ 0.5*f2
+#' '
+#' # define (wrong) H1 model
+#' model.h1 <- '
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f1 ~~ 0*f2
+#' '
+#'
+#' # get population covariance matrix; equivalent to a perfectly fitting H0 model
+#' cov.h0 <- fitted(sem(model.pop))$cov
+#' # get covariance matrix as implied by H1 model
+#' res.h1 <- sem(model.h1, sample.cov = cov.h0, sample.nobs = 1000, likelihood='wishart')
+#' cov.h1 <- fitted(res.h1)$cov
+#'
+#' ## do power analyses
+#'
+#' # post-hoc
+#' ph <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = 1)
+#' summary(ph)
+#' # => Power to reject the H1 model is > .9999 (1 - beta = 1 - 7.809097e-13) with N = 1000 at alpha = .05
+#'
+#' # compare:
+#' ph$fmin * (ph$N-1)
+#' fitmeasures(res.h1, 'chisq')
+#' # => expected chi-square matches empirical chi-square
+#'
+#' # a-priori
+#' ap <- semPower.aPriori(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, power = .80, df = 1)
+#' summary(ap)
+#' # => N = 98 gives a power of 80% to reject the H1 model at alpha = .05
+#'
+#' # compromise
+#' cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = 1)
+#' summary(cp)
+#' # => A critical Chi-Squared (df=1) of 21.0 gives balanced alpha-beta error probabilities of 4.477703e-06 at N = 1000.
+#'
+#' }
+#'
+"_PACKAGE"
+
+#library(devtools)
+#devtools::document()
+
