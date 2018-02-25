@@ -1,6 +1,6 @@
 #' semPower.aPriori
 #'
-#' determine required samples size given given alpha, beta/power, df, and effect
+#' Determine required sample size given alpha, beta/power, df, and effect
 #'
 #' @param effect effect size specifying the discrepancy between H0 and H1
 #' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
@@ -10,8 +10,8 @@
 #' @param N the number of observations
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix
-#' @param Sigma population covariance matrix
+#' @param SigmaHat model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure. 
+#' @param Sigma population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.
 #' @return list
 #' @examples
 #' \dontrun{

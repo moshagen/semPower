@@ -3,7 +3,7 @@
 
 #' validateInput
 #'
-#' validates input for power calcuation function
+#' Validates input for power calcuation function
 #'
 #'
 #' @param power.type type of power analyses, one of "a-priori", post-hoc", "compromise"
@@ -94,7 +94,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
 #' checkPositive
 #'
 #' checks whether x is defined and a positive number, stop otherwise
-#' @param x
+#' @param x x
 #' @param message identifier for x
 checkPositive <- function(x, message){
   if(is.null(x) || is.na(x) || x <= 0){
@@ -105,7 +105,7 @@ checkPositive <- function(x, message){
 #' checkBounded
 #'
 #' checks whether x is defined and lies within the specified bound
-#' @param x
+#' @param x x
 #' @param message identifier for x
 #' @param bound the boundaries, array of size two
 checkBounded <- function(x, message, bound = c(0,1)){
