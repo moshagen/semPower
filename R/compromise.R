@@ -23,7 +23,8 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  N = NULL, df = NULL, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL){
 
-
+  effect.measure <- toupper(effect.measure)
+  
   validateInput('compromise', effect = effect, effect.measure = effect.measure,
                 alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                 N = N, df = df, p = p,
