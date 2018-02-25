@@ -33,7 +33,7 @@ semPower.aPriori(effect = NULL, effect.measure = NULL, alpha = 0.05,
 list
 }
 \description{
-Determine required samples size given alpha, beta/power, df, and effect
+Determine required sample size given alpha, beta/power, df, and effect
 }
 \examples{
 \dontrun{

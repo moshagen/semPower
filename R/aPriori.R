@@ -53,14 +53,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   logBetaTarget <- log(desiredBeta)
   critChi <- qchisq(alpha, df=df, ncp = 0, lower.tail = F)
 
-  #TMP
-  #  df <- 200
-  #  alpha <- .05
-  #  critChi <- qchisq(alpha, df=df, ncp = 0, lower.tail = F)
-  #  logBetaTarget <- log(.05)
-  #  fmin <- getF.RMSEA(.9, df)
-  #TMP
-
   # make a reasonable guess about required sample size
   exponent <- -floor(log10(fmin))+1
   startN <- 5*10^(exponent)
@@ -178,6 +170,8 @@ summary.semPower.aPriori <- function(object, ...){
     cat("\n\n NOTE: Power is higher than requested even for a sample size < 10.\n\n")
 
   print(out.table, row.names = F, right = F)
+  
+  showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
 
 }
 

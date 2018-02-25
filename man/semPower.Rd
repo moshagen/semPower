@@ -5,9 +5,9 @@
 \alias{semPower}
 \alias{semPower-package}
 \alias{semPower-package}
-\title{semPower: Performs a priori, post-hoc, anc compromise power analyses structural equation models.}
+\title{semPower: Power analyses for structural equation models (SEM).}
 \description{
-semPower provides various power-analyes for structural equation (SEM) models:
+semPower may be used to perform a-priori, post-hoc, and compromise power-analyses for structural equation models (SEM).
 }
 \details{
 \itemize{
@@ -17,7 +17,8 @@ semPower provides various power-analyes for structural equation (SEM) models:
 }
 
 In SEM, the discrepancy between H0 and H1 (the magnitude of effect) refers to the difference between two models. semPower allows for expressing the  magnitude of effect by one of the following measures: F0, RMSEA, Mc, GFI, or AGFI.
-Alternatively, the implied effect can also be computed from the discrepancy between a hypothesized (model implied) covariance matrix and the population covariance matrix, see the examples below how to use this feature in conjunctino with lavaan.
+
+Alternatively, the implied effect can also be computed from the discrepancy between a hypothesized (model implied) covariance matrix and the population covariance matrix, see the examples below how to use this feature in conjunction with lavaan.
 }
 \examples{
 # a-priori power analyses using rmsea = .05 a target power (1-beta) of .80

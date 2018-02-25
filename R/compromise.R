@@ -153,8 +153,6 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 }
 
 
-#
-
 #' summary.sempower.compromise
 #'
 #' provide summary of compromise post-hoc power analyses
@@ -171,7 +169,9 @@ summary.semPower.compromise <- function(object, ...){
 
   print(out.table, row.names = F, right = F)
 
-
+  if(!object$bPrecisionWarning)
+    showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+  
 }
 
 
