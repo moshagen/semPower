@@ -131,7 +131,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 #' betaDiff <- getBetadiff(cN = 300, critChi = 350, logBetaTarget = log(.20), fmin = 0.50, df = 200)
 #' betaDiff
 #' }
-#' @export
 getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
   diff <- .Machine$integer.max
 
@@ -145,9 +144,6 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
     cLogBeta <- pchisq(critChi, df, cNCP, log.p = T)
 
     diff <- (logBetaTarget - cLogBeta)^2
-
-    # tmp
-    #print(paste(cN, cLogBeta, logBetaTarget, diff))
 
   }
 
@@ -174,22 +170,6 @@ summary.semPower.aPriori <- function(object, ...){
   showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
 
 }
-
-
-############### UNIT TESTS
-
-# pa.ap <- semPower.aPriori(effect = .05, effect.measure = "RMSEA", alpha = .05, beta = .05, df = 200, p=10)
-# # summary(pa.ap)
-# summary.semPower.aPriori(pa.ap)
-#
-# pa.ap <- semPower.aPriori(effect = .9, effect.measure = "RMSEA", alpha = .05, beta = .05, df = 200)
-# # summary(pa.ap)
-# summary.semPower.aPriori(pa.ap)
-#
-# pa.ap <- semPower.aPriori(effect = .00001, effect.measure = "RMSEA", alpha = .05, beta = .01, df = 200)
-# # summary(pa.ap)
-# summary.semPower.aPriori(pa.ap)
-
 
 
 

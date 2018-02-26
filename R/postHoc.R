@@ -91,22 +91,3 @@ summary.semPower.postHoc <- function(object, ...){
   
 }
 
-
-
-############### UNIT TESTS
-
-# pa.ph <- semPower.postHoc(effect = .015, effect.measure = "RMSEA", alpha = .05, N = 1000, df = 200)
-# # summary(pa.ph)
-# summary.semPower.postHoc(pa.ph)
-#
-# pa.ph <- semPower.postHoc(effect = .15, effect.measure = "RMSEA", alpha = .05, N = 1000, df = 200)
-# # summary(pa.ph)
-# summary.semPower.postHoc(pa.ph)
-#
-# pa.ph <- semPower.postHoc(effect = .00001, effect.measure = "RMSEA", alpha = .05, N = 10, df = 200)
-# # summary(pa.ph)
-# summary.semPower.postHoc(pa.ph)
-#
-# pa.ph <- semPower.postHoc(N = 1000, df = 5, SigmaHat = cov(matrix(rnorm(4*1000), ncol=4)), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-# # summary(pa.ph)
-# summary.semPower.postHoc(pa.ph)

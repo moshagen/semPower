@@ -71,12 +71,13 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                           method='L-BFGS-B', lower=min, upper=max)
 
     chiCrit <- chiCritOptim$par
-    impliedAlpha <- pchisq(chiCrit, df, lower=F)
+    impliedAlpha <- pchisq(chiCrit, df, lower = F)
     impliedBeta <- pchisq(chiCrit, df, ncp)
     impliedAbratio <- impliedAlpha/impliedBeta
-    impliedPower <- 1-impliedBeta
+    impliedPower <- pchisq(chiCrit, df, ncp, lower = F)
 
   }else{
+    # this is overriden later
     chiCrit <- 0
     impliedAlpha <- 0
     impliedBeta <- 0
@@ -131,7 +132,6 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 #' errorDiff <- get.error.diff(critChiSquare = 300, df = 200, ncp = 600)
 #' errorDiff
 #' }
-#' @export
 #'
 getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 
@@ -173,23 +173,5 @@ summary.semPower.compromise <- function(object, ...){
     showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
   
 }
-
-
-############### UNIT TESTS
-
-# result <- semPower.compromise(effect = .015, effect.measure = "RMSEA", abratio = 1, N = 1000, df = 200)
-#
-# cp.ph <- semPower.compromise(effect = .015, effect.measure = "RMSEA", abratio = 1, N = 1000, df = 200)
-# # summary(cp.ph)
-# summary.semPower.compromise(cp.ph)
-#
-# cp.ph <- semPower.compromise(effect = .05, effect.measure = "RMSEA", abratio = .2, N = 1000, df = 200, p =10)
-# # summary(cp.ph)
-# summary.semPower.compromise(cp.ph)
-#
-# cp.ph <- semPower.compromise(effect = .05, effect.measure = "RMSEA", abratio = 1, N = 5000, df = 2000)
-# # summary(cp.ph)
-# summary.semPower.compromise(cp.ph)
-
 
 

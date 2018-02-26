@@ -18,7 +18,6 @@
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
-#' @export
 validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NULL,
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
@@ -89,7 +88,6 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     checkPositive(abratio, 'abratio')
   }
 
-  TRUE
 }
 
 
@@ -114,4 +112,20 @@ checkBounded <- function(x, message, bound = c(0,1)){
   if(is.null(x) || is.na(x) || x <= bound[1] || x >= bound[2]){
     stop(paste(message," must must lie within 0 - 1"))
   }
+}
+
+#' checkPositiveDefinite
+#'
+#' checks whether x is positive definite
+#' @param x x
+#' @param message identifier for x
+checkPositiveDefinite <- function(x, message){
+  if(is.null(x))
+    stop(paste(message, " may not be NULL"))
+  if(!is.numeric(x))
+    stop(paste(message, " must contain numeric elements only"))
+  if(!isSymmetric(x))
+    stop(paste(message, " must be a symmetric square matrix"))
+  if(sum(eigen(x)$values < 0) > 1)
+    stop(paste(message, " must be positive definite"))
 }

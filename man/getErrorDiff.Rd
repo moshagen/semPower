@@ -26,4 +26,5 @@ determine the squared log-difference between alpha and beta error given a certai
 errorDiff <- get.error.diff(critChiSquare = 300, df = 200, ncp = 600)
 errorDiff
 }
+
 }

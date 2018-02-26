@@ -1,6 +1,3 @@
-
-
-
 ##########################  determine ncp, chi-square from Fmin   #####################
 
 
@@ -39,7 +36,6 @@ getNCP <- function(Fmin, n){
 #' chiSquare <- getChiSquare.NCP(NCP = 50, df = 100)
 #' chiSquare
 #' }
-#' @export
 getChiSquare.NCP <- function(NCP, df){
   chiSquare <- NCP + df
   chiSquare
@@ -61,7 +57,6 @@ getChiSquare.NCP <- function(NCP, df){
 #' NCP <- getChiSquare.F(Fmin = .05, n = 1000)
 #' NCP
 #' }
-#' @export
 getChiSquare.F <- function(Fmin, n, df){
   chiSquare <- getNCP(Fmin, n) + df
   chiSquare
@@ -73,7 +68,7 @@ getChiSquare.F <- function(Fmin, n, df){
 
 #' getF
 #'
-#' calculates minimum of the ML-fit-function from known fit incides
+#' calculates minimum of the ML-fit-function from known fit indices
 getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL){
   fmin <- effect
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
@@ -129,25 +124,6 @@ getF.Mc <- function(Mc){
   fmin
 }
 
-#' getF.gammaHat
-#'
-#' calculates minimum of the ML-fit-function from gammaHat
-#'
-#'
-#' @param gammaHat gammaHat
-#' @param p number of observed variables
-#' @return Fmin
-#' @examples
-#' \dontrun{
-#' F_min <- getF.gammaHat(gammaHat = .90, p=15)
-#' F_min
-#' }
-#' @export
-getF.gammaHat <- function(gammaHat, p){
-  fmin <- p/2 * (1/gammaHat - 1)
-  fmin
-}
-
 #' getF.GFI
 #'
 #' calculates minimum of the ML-fit-function from AGFI
@@ -190,7 +166,34 @@ getF.AGFI <- function(AGFI, df, p){
 }
 
 
-##########################  determine RMSEA Mc GammaHat, GFI , AGFI from Fmin   #####################
+##########################  determine RMSEA Mc GFI AGFI from Fmin   #####################
+
+#' getIndices.F
+#'
+#' calculates known indices from minimum of the ML-fit-function
+#'
+#'
+#' @param Fmin minimum of the ML-fit-function
+#' @param df model degrees of freedom
+#' @param p number of observed variables
+#' @return list of indices
+getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
+  fit <- list(
+    rmsea = getRMSEA.F(fmin, df),
+    mc = getMc.F(fmin),
+    gfi = NULL,
+    agfi = NULL
+  )
+  if(!is.null(p)){
+    fit$gfi <- getGFI.F(fmin, p)
+    fit$agfi <- getAGFI.F(fmin, df, p)
+  }
+  if(!is.null(SigmaHat)){
+    fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma)
+    fit$cfi <- getCFI.Sigma(SigmaHat, Sigma)
+  }
+  fit
+}
 
 
 #' getRMSEA.F
@@ -231,27 +234,6 @@ getMc.F <- function(Fmin){
   Mc <- exp(-.5*Fmin)
   Mc
 }
-
-
-#' getGammaHat.F
-#'
-#' calculates GammaHat from minimum of the ML-fit-function
-#'
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @param p number of observed variables
-#' @return GammaHat
-#' @examples
-#' \dontrun{
-#' GammaHat <- getGammaHat.F(Fmin = .05, p = 15)
-#' GammaHat
-#' }
-#' @export
-getGammaHat.F <- function(Fmin, p){
-  GammaHat <- p / (2*Fmin + p)
-  GammaHat
-}
-
 
 
 #' getGFI.F
@@ -295,35 +277,6 @@ getAGFI.F <- function(Fmin, df, p){
 }
 
 
-#' getIndices.F
-#'
-#' calculates known indices from minimum of the ML-fit-function
-#'
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @param df model degrees of freedom
-#' @param p number of observed variables
-#' @return list of indices
-#' @export
-getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
-  fit <- list(
-    rmsea = getRMSEA.F(fmin, df),
-    mc = getMc.F(fmin),
-    gfi = NULL,
-    agfi = NULL
-  )
-  if(!is.null(p)){
-    fit$gfi <- getGFI.F(fmin, p)
-    fit$agfi <- getAGFI.F(fmin, df, p)
-  }
-  if(!is.null(SigmaHat)){
-    fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma)
-    fit$cfi <- getCFI.Sigma(SigmaHat, Sigma)
-  }
-  fit
-}
-
-
 
 ##########################  calculate Fmin RMSEA SRMR CFI from covariance matrix #####################
 
@@ -344,6 +297,8 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
 #' }
 #' @export
 getF.Sigma <- function(SigmaHat, S){
+  checkPositiveDefinite(SigmaHat, 'SigmaHat')
+  checkPositiveDefinite(S, 'S')
   fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
   fmin
 }
@@ -363,6 +318,8 @@ getF.Sigma <- function(SigmaHat, S){
 #' }
 #' @export
 getSRMR.Sigma <- function(SigmaHat, S){
+  checkPositiveDefinite(SigmaHat, 'SigmaHat')
+  checkPositiveDefinite(S, 'S')
   p <- ncol(S)
   m <- (S - SigmaHat)
   f.ols <- .5*sum(m^2)
@@ -387,6 +344,8 @@ getSRMR.Sigma <- function(SigmaHat, S){
 #' }
 #' #' @export
 getCFI.Sigma <- function(SigmaHat, S){
+  checkPositiveDefinite(SigmaHat, 'SigmaHat')
+  checkPositiveDefinite(S, 'S')
   fm <- getF.Sigma(SigmaHat, S)
   SigmaHatNull <- diag(ncol(S))
   diag(SigmaHatNull) <- diag(S)
@@ -400,6 +359,14 @@ getCFI.Sigma <- function(SigmaHat, S){
 ##########################  output and formatting #####################
 
 
+#' getFormattedResults
+#'
+#' returned dataframe containing formatted results
+#' 
+#' @param type type of power analysis
+#' @param result result object (list)
+#' @param digits number of significant digits
+#' @return data.frame
 getFormattedResults <- function(type, result, digits = 6){
 
   ########### common across power types

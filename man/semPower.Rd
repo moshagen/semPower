@@ -57,12 +57,13 @@ f1 ~~ 0*f2
 cov.h0 <- fitted(sem(model.pop))$cov
 # get covariance matrix as implied by H1 model
 res.h1 <- sem(model.h1, sample.cov = cov.h0, sample.nobs = 1000, likelihood='wishart')
+df <- res.h1@test[[1]]$df
 cov.h1 <- fitted(res.h1)$cov
 
 ## do power analyses
 
 # post-hoc
-ph <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = 1)
+ph <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = df)
 summary(ph)
 # => Power to reject the H1 model is > .9999 (1 - beta = 1 - 7.809097e-13) with N = 1000 at alpha = .05
 
@@ -72,12 +73,12 @@ fitmeasures(res.h1, 'chisq')
 # => expected chi-square matches empirical chi-square
 
 # a-priori
-ap <- semPower.aPriori(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, power = .80, df = 1)
+ap <- semPower.aPriori(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, power = .80, df = df)
 summary(ap)
 # => N = 98 gives a power of 80\% to reject the H1 model at alpha = .05
 
 # compromise
-cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = 1)
+cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = df)
 summary(cp)
 # => A critical Chi-Squared (df=1) of 21.0 gives balanced alpha-beta error probabilities of 4.477703e-06 at N = 1000.
 

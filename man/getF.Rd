@@ -8,5 +8,5 @@ getF(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL,
   Sigma = NULL)
 }
 \description{
-calculates minimum of the ML-fit-function from known fit incides
+calculates minimum of the ML-fit-function from known fit indices
 }

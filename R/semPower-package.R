@@ -64,7 +64,7 @@
 #' # post-hoc
 #' ph <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = df)
 #' summary(ph)
-#' # => Power to reject the H1 model is > .9999 (1 - beta = 1 - 7.809097e-13) with N = 1000 at alpha = .05
+#' # => Power to reject the H1 model is > .9999 (1-beta = 1-1.347826e-08) with N = 1000 at alpha=.05
 #'
 #' # compare:
 #' ph$fmin * (ph$N-1)
@@ -74,12 +74,12 @@
 #' # a-priori
 #' ap <- semPower.aPriori(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, power = .80, df = df)
 #' summary(ap)
-#' # => N = 98 gives a power of 80% to reject the H1 model at alpha = .05
+#' # => N = 194 gives a power of ~80% to reject the H1 model at alpha = .05
 #'
 #' # compromise
 #' cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = df)
 #' summary(cp)
-#' # => A critical Chi-Squared (df=1) of 21.0 gives balanced alpha-beta error probabilities of 4.477703e-06 at N = 1000.
+#' # => A critical Chi-Squared of 33.999 gives balanced alpha-beta error probabilities of alpha=beta=0.000089 with N = 1000.
 #'
 #' }
 #'
