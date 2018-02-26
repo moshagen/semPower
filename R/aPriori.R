@@ -6,7 +6,7 @@
 #' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
 #' @param alpha alpha error
 #' @param beta beta error; set either beta or power
-#' @param beta power (1-beta); set either beta or power
+#' @param power power (1-beta); set either beta or power
 #' @param N the number of observations
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
@@ -167,7 +167,7 @@ summary.semPower.aPriori <- function(object, ...){
 
   print(out.table, row.names = F, right = F)
   
-  showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
+  sempower.showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
 
 }
 

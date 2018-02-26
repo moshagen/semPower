@@ -6,7 +6,7 @@
 #' Validates input for power calcuation function
 #'
 #'
-#' @param power.type type of power analyses, one of "a-priori", post-hoc", "compromise"
+#' @param power.type type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"
 #' @param effect effect size specifying the discrepancy between H0 and H1
 #' @param effect.measure type of effect, one of "F0, "RMSEA", "Mc", "GFI", AGFI"
 #' @param alpha alpha error
@@ -18,10 +18,19 @@
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
+#' @param power.min for plotting: minimum power
+#' @param power.max for plotting: maximum power
+#' @param effect.min for plotting: minimum effect
+#' @param effect.max for plotting: maximum effect
+#' @param steps for plotting: number of sampled points
+#' @param linewidth for plotting: linewidth
 validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NULL,
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
-                          SigmaHat = NULL, Sigma = NULL){
+                          SigmaHat = NULL, Sigma = NULL,
+                          power.min = alpha, power.max = .999,
+                          effect.min = NULL, effect.max = NULL,
+                          steps = 50, linewidth = 1){
 
   known.effects.measures <- c("F0","RMSEA","Mc","GFI", "AGFI")
 
@@ -32,7 +41,8 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop(paste("effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
     }
 
-    checkPositive(effect, effect.measure)
+    if(power.type != 'powerplot.byEffect')
+      checkPositive(effect, effect.measure)
 
     if(effect.measure == "GFI" || effect.measure == "AGFI"){
 
@@ -88,6 +98,29 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     checkPositive(abratio, 'abratio')
   }
 
+  # specifics for power plots
+  if(power.type == "powerplot.byN"){
+    checkBounded(alpha, 'alpha')
+    checkBounded(power.max, "power.max")
+    checkBounded(power.min, "power.min")
+    if(power.min < alpha){
+      power.min <- alpha
+      warning("power cannot be lower than alpha, setting power.min=alpha")
+    }
+    checkPositive(steps, "steps")
+    checkPositive(linewidth, "linewidth")
+  }
+  
+  if(power.type == "powerplot.byEffect"){
+    checkPositive(N, 'N')
+    checkBounded(alpha, 'alpha')
+    checkPositive(effect.min, "effect.min")
+    checkPositive(effect.max, "effect.max")
+    checkPositive(steps, "steps")
+    checkPositive(linewidth, "linewidth")
+  }
+  
+  
 }
 
 

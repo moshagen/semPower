@@ -17,6 +17,8 @@ semPower.aPriori(effect = NULL, effect.measure = NULL, alpha = 0.05,
 
 \item{beta}{beta error; set either beta or power}
 
+\item{power}{power (1-beta); set either beta or power}
+
 \item{df}{the model degrees of freedom}
 
 \item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
@@ -24,8 +26,6 @@ semPower.aPriori(effect = NULL, effect.measure = NULL, alpha = 0.05,
 \item{SigmaHat}{model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure.}
 
 \item{Sigma}{population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.}
-
-\item{beta}{power (1-beta); set either beta or power}
 
 \item{N}{the number of observations}
 }

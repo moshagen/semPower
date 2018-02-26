@@ -6,10 +6,12 @@
 \usage{
 validateInput(power.type = NULL, effect = NULL, effect.measure = NULL,
   alpha = NULL, beta = NULL, power = NULL, abratio = NULL, N = NULL,
-  df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL)
+  df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL,
+  power.min = alpha, power.max = 0.999, effect.min = NULL,
+  effect.max = NULL, steps = 50, linewidth = 1)
 }
 \arguments{
-\item{power.type}{type of power analyses, one of "a-priori", post-hoc", "compromise"}
+\item{power.type}{type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"}
 
 \item{effect}{effect size specifying the discrepancy between H0 and H1}
 
@@ -32,6 +34,18 @@ validateInput(power.type = NULL, effect = NULL, effect.measure = NULL,
 \item{SigmaHat}{model implied covariance matrix}
 
 \item{Sigma}{population covariance matrix}
+
+\item{power.min}{for plotting: minimum power}
+
+\item{power.max}{for plotting: maximum power}
+
+\item{effect.min}{for plotting: minimum effect}
+
+\item{effect.max}{for plotting: maximum effect}
+
+\item{steps}{for plotting: number of sampled points}
+
+\item{linewidth}{for plotting: linewidth}
 }
 \description{
 Validates input for power calcuation function
