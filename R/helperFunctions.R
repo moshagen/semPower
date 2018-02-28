@@ -443,7 +443,6 @@ getFormattedResults <- function(type, result, digits = 6){
     v.f <- rep('f', length(v))
     v.f[v < 1e-5 | v > 1e5] <- 'e'
     foot$values <- sapply(seq_along(v),  function(y, z, i) { formatC(x=v[i], format=v.f[i], digits = digits)}, y=v, z= v.f)
-    foot$values[foot$rows=='Implied Alpha/Beta Ratio'] <- substr(foot$values[foot$rows=='Implied Alpha/Beta Ratio'], 1, digits+2)
 
     # manually correct some quirks
     if(result$beta < 1e-5){
