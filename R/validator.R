@@ -159,6 +159,6 @@ checkPositiveDefinite <- function(x, message){
     stop(paste(message, " must contain numeric elements only"))
   if(!isSymmetric(x))
     stop(paste(message, " must be a symmetric square matrix"))
-  if(sum(eigen(x)$values < 0) > 1)
+  if(sum(eigen(x)$values < 0) > 0)
     stop(paste(message, " must be positive definite"))
 }

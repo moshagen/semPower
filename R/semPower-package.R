@@ -1,6 +1,6 @@
 #' semPower: Power analyses for structural equation models (SEM).
 #'
-#' semPower may be used to perform a-priori, post-hoc, and compromise power-analyses for structural equation models (SEM).
+#' semPower allows for performing a-priori, post-hoc, and compromise power-analyses for structural equation models (SEM).
 #'
 #' \itemize{
 #' \item A-priori power analysis \code{\link{semPower.aPriori}} computes the required N, given an effect, alpha, power, and the model df
@@ -8,9 +8,9 @@
 #' \item Compromise power analysis \code{\link{semPower.compromise}} computes the implied alpha and power, given an effect, the alpha/beta ratio, N, and the model df
 #' }
 #'
-#' In SEM, the discrepancy between H0 and H1 (the magnitude of effect) refers to the difference between two models. semPower allows for expressing the  magnitude of effect by one of the following measures: F0, RMSEA, Mc, GFI, or AGFI.
+#' In SEM, the discrepancy between H0 and H1 (the magnitude of effect) refers to the difference in fit between two models. If only one model is defined (which is the default), power refers to the global chi-square test. If both models are explicitly defined, power is computed for nested model tests.  semPower allows for expressing the magnitude of effect by one of the following measures: F0, RMSEA, Mc, GFI, or AGFI.
 #'
-#' Alternatively, the implied effect can also be computed from the discrepancy between a hypothesized (model implied) covariance matrix and the population covariance matrix, see the examples below how to use this feature in conjunction with lavaan.
+#' Alternatively, the implied effect can also be computed from the discrepancy between the population (or a certain model-implied) covariance matrix defining H0 and the hypothesized (model-implied) covariance matrix from a nested model defining H1. See the examples below how to use this feature in conjunction with lavaan.
 #'
 #'
 #'
@@ -26,9 +26,13 @@
 #' # a-priori power analyses using f0 = .75 and a target power of .95
 #' ap2 <- semPower.aPriori(0.75, 'F0', alpha = .05, power = .95, df = 200)
 #' summary(ap2)
+#' # create a plot showing how power varies by N (given a certain effect)
+#' sempower.powerPlot.byN(.05, 'RMSEA', alpha=.05, df=200, power.min=.05, power.max=.99)
 #' # post-hoc power analyses using rmsea = .08
 #' ph <- semPower.postHoc(.08, 'RMSEA', alpha = .05, N = 250, df = 50)
 #' summary(ph)
+#' # create a plot showing how power varies by the magnitude of effect (given a certain N)
+#' sempower.powerPlot.byEffect('RMSEA', alpha=.05, N = 100, df=200, effect.min=.001, effect.max=.10)
 #' # compromise power analyses using rmsea = .08 and an abratio of 2
 #' cp <- semPower.compromise(.08, 'RMSEA', abratio = 2, N = 1000, df = 200)
 #' summary(cp)

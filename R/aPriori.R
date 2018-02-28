@@ -24,8 +24,8 @@
 #' }
 #' @export
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
-                             alpha = .05, beta = NULL, power = NULL,
-                             df = NULL, p = NULL,
+                             alpha, beta = NULL, power = NULL,
+                             df, p = NULL,
                              SigmaHat = NULL, Sigma = NULL){
 
   effect.measure <- toupper(effect.measure)

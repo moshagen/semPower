@@ -20,8 +20,8 @@
 #' power
 #' }
 #' @export
-semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha = .05,
-                             N = NULL, df = NULL, p = NULL,
+semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
+                             N, df, p = NULL,
                              SigmaHat = NULL, Sigma = NULL){
 
   effect.measure <- toupper(effect.measure)

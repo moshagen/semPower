@@ -20,7 +20,7 @@
 #' @export
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
-                                 N = NULL, df = NULL, p = NULL,
+                                 N, df, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL){
 
   effect.measure <- toupper(effect.measure)

@@ -9,16 +9,14 @@
 #' @export
 sempower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   
-  # create random data
+  # define central and non-central chi
   maxvalue <- qchisq(.99999, df, ncp)
   minvalue <- qchisq(.00001, df, 0)
   x <- seq(minvalue, maxvalue, length=1000)
   
-  # define central and non-central chi
   xchi <- dchisq(x, df, ncp = 0)
   xncchi <- dchisq(x, df, ncp)
   
-  # draw plot
   plot(x, 
        xchi, 
        type="l", 
@@ -79,7 +77,7 @@ sempower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
 #' @export
 #' @export
 sempower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
-                                   alpha = .05, df = NULL, p = NULL,
+                                   alpha, df, p = NULL,
                                    SigmaHat = NULL, Sigma = NULL, 
                                    power.min = alpha, power.max = .999,
                                    steps = 50, linewidth = 1){
@@ -102,7 +100,6 @@ sempower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
     power.act[[i]] <- ap$impliedPower
   }
   
-  # draw plot
   plot <- plot(
     smooth.spline(N, power.act), 
     type="l", 
@@ -141,7 +138,7 @@ sempower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 #' }
 #' @export
 sempower.powerPlot.byEffect <- function(effect.measure = NULL,
-                                        alpha = .05, N = NULL, df = NULL, p = NULL,
+                                        alpha, N, df, p = NULL,
                                         effect.min = NULL, effect.max = NULL,
                                         steps = 50, linewidth = 1){
   
@@ -162,7 +159,6 @@ sempower.powerPlot.byEffect <- function(effect.measure = NULL,
     power[[i]] <- ph$power
   }
   
-  # draw plot
   plot(smooth.spline(effect, power), 
        type="l", 
        lty=1,

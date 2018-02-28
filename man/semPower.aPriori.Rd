@@ -4,9 +4,8 @@
 \alias{semPower.aPriori}
 \title{semPower.aPriori}
 \usage{
-semPower.aPriori(effect = NULL, effect.measure = NULL, alpha = 0.05,
-  beta = NULL, power = NULL, df = NULL, p = NULL, SigmaHat = NULL,
-  Sigma = NULL)
+semPower.aPriori(effect = NULL, effect.measure = NULL, alpha, beta = NULL,
+  power = NULL, df, p = NULL, SigmaHat = NULL, Sigma = NULL)
 }
 \arguments{
 \item{effect}{effect size specifying the discrepancy between H0 and H1}
