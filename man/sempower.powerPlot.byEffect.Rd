@@ -4,9 +4,8 @@
 \alias{sempower.powerPlot.byEffect}
 \title{sempower.powerPlot.byEffect}
 \usage{
-sempower.powerPlot.byEffect(effect.measure = NULL, alpha = 0.05, N = NULL,
-  df = NULL, p = NULL, effect.min = NULL, effect.max = NULL,
-  steps = 50, linewidth = 1)
+sempower.powerPlot.byEffect(effect.measure = NULL, alpha, N, df, p = NULL,
+  effect.min = NULL, effect.max = NULL, steps = 50, linewidth = 1)
 }
 \arguments{
 \item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}

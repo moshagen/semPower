@@ -27,12 +27,12 @@
 #' ap2 <- semPower.aPriori(0.75, 'F0', alpha = .05, power = .95, df = 200)
 #' summary(ap2)
 #' # create a plot showing how power varies by N (given a certain effect)
-#' sempower.powerPlot.byN(.05, 'RMSEA', alpha=.05, df=200, power.min=.05, power.max=.99)
+#' semPower.powerPlot.byN(.05, 'RMSEA', alpha=.05, df=200, power.min=.05, power.max=.99)
 #' # post-hoc power analyses using rmsea = .08
 #' ph <- semPower.postHoc(.08, 'RMSEA', alpha = .05, N = 250, df = 50)
 #' summary(ph)
 #' # create a plot showing how power varies by the magnitude of effect (given a certain N)
-#' sempower.powerPlot.byEffect('RMSEA', alpha=.05, N = 100, df=200, effect.min=.001, effect.max=.10)
+#' semPower.powerPlot.byEffect('RMSEA', alpha=.05, N = 100, df=200, effect.min=.001, effect.max=.10)
 #' # compromise power analyses using rmsea = .08 and an abratio of 2
 #' cp <- semPower.compromise(.08, 'RMSEA', abratio = 2, N = 1000, df = 200)
 #' summary(cp)

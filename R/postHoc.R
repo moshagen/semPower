@@ -87,7 +87,7 @@ summary.semPower.postHoc <- function(object, ...){
 
   print(out.table, row.names = F, right = F)
 
-  sempower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+  semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
   
 }
 

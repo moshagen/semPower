@@ -170,7 +170,7 @@ summary.semPower.compromise <- function(object, ...){
   print(out.table, row.names = F, right = F)
 
   if(!object$bPrecisionWarning)
-    sempower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+    semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
   
 }
 

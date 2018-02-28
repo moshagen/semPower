@@ -167,7 +167,7 @@ summary.semPower.aPriori <- function(object, ...){
 
   print(out.table, row.names = F, right = F)
   
-  sempower.showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
+  semPower.showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
 
 }
 

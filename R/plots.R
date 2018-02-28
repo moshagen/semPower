@@ -1,4 +1,4 @@
-#' sempower.showPlot
+#' semPower.showPlot
 #'
 #' show a plot showing central and non-central chi-square distribution
 #' 
@@ -7,7 +7,7 @@
 #' @param df degrees of freedom
 #' @param linewidth linewidth
 #' @export
-sempower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
+semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   
   # define central and non-central chi
   maxvalue <- qchisq(.99999, df, ncp)
@@ -72,11 +72,11 @@ sempower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
 #' @return powerplot
 #' @examples
 #' \dontrun{
-#' sempower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", alpha = .05, power.min = .05, power.max = .999, df = 200)
+#' semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", alpha = .05, power.min = .05, power.max = .999, df = 200)
 #' }
 #' @export
 #' @export
-sempower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
+semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
                                    alpha, df, p = NULL,
                                    SigmaHat = NULL, Sigma = NULL, 
                                    power.min = alpha, power.max = .999,
@@ -134,10 +134,10 @@ sempower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 #' @return powerplot
 #' @examples
 #' \dontrun{
-#' sempower.powerPlot.byEffect(effect.measure = "RMSEA", alpha = .05, N = 500, effect.min = .01, effect.max = .15, df = 200)
+#' semPower.powerPlot.byEffect(effect.measure = "RMSEA", alpha = .05, N = 500, effect.min = .01, effect.max = .15, df = 200)
 #' }
 #' @export
-sempower.powerPlot.byEffect <- function(effect.measure = NULL,
+semPower.powerPlot.byEffect <- function(effect.measure = NULL,
                                         alpha, N, df, p = NULL,
                                         effect.min = NULL, effect.max = NULL,
                                         steps = 50, linewidth = 1){
