@@ -10,6 +10,8 @@ getChiSquare.F(Fmin, n, df)
 \item{Fmin}{population minimum of the fit-function}
 
 \item{n}{number of observations}
+
+\item{df}{model degrees of freedom}
 }
 \value{
 NCP
@@ -24,7 +26,7 @@ note that F is the population minimum; using F_hat would give chi = (n-1)*F_hat
 }
 \examples{
 \dontrun{
-NCP <- getChiSquare.F(Fmin = .05, n = 1000)
+NCP <- getChiSquare.F(Fmin = .05, n = 1000, df = 100)
 NCP
 }
 }

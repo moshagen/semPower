@@ -7,7 +7,9 @@
 \method{summary}{semPower.postHoc}(object, ...)
 }
 \arguments{
-\item{result}{result object from semPower.posthoc}
+\item{object}{result object from semPower.posthoc}
+
+\item{...}{other}
 }
 \description{
 provide summary of post-hoc power analyses

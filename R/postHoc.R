@@ -19,6 +19,7 @@
 #' power <- semPower.postHoc(N = 1000, df = 5, SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
 #' power
 #' }
+#' @importFrom stats qchisq pchisq 
 #' @export
 semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df, p = NULL,
@@ -77,7 +78,8 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
 #' semPower.postHoc.summary
 #'
 #' provide summary of post-hoc power analyses
-#' @param result result object from semPower.posthoc
+#' @param object result object from semPower.posthoc
+#' @param ... other
 #' @export
 summary.semPower.postHoc <- function(object, ...){
 

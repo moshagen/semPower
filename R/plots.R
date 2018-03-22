@@ -6,6 +6,9 @@
 #' @param ncp non-centrality parameter under H1
 #' @param df degrees of freedom
 #' @param linewidth linewidth
+#' @importFrom stats qchisq dchisq
+#' @importFrom graphics plot abline lines polygon
+#' @importFrom grDevices rgb
 #' @export
 semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   
@@ -74,7 +77,8 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
 #' \dontrun{
 #' semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", alpha = .05, power.min = .05, power.max = .999, df = 200)
 #' }
-#' @export
+#' @importFrom stats smooth.spline
+#' @importFrom graphics plot
 #' @export
 semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
                                    alpha, df, p = NULL,
@@ -136,6 +140,8 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 #' \dontrun{
 #' semPower.powerPlot.byEffect(effect.measure = "RMSEA", alpha = .05, N = 500, effect.min = .01, effect.max = .15, df = 200)
 #' }
+#' @importFrom stats smooth.spline
+#' @importFrom graphics plot
 #' @export
 semPower.powerPlot.byEffect <- function(effect.measure = NULL,
                                         alpha, N, df, p = NULL,

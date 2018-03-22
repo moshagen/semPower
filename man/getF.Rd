@@ -2,11 +2,29 @@
 % Please edit documentation in R/helperFunctions.R
 \name{getF}
 \alias{getF}
-\title{getF}
+\title{getF
+calculates minimum of the ML-fit-function from known fit indices}
 \usage{
 getF(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL,
   Sigma = NULL)
 }
+\arguments{
+\item{effect}{magnitude of effect}
+
+\item{effect.measure}{measure of effect, one of 'fmin','rmsea','agfi','gfi','mc'}
+
+\item{df}{model degrees of freedom}
+
+\item{p}{number of observed varaibles}
+
+\item{SigmaHat}{model implied covariance matrix}
+
+\item{Sigma}{population covariance matrix}
+}
+\value{
+Fmin
+}
 \description{
+getF
 calculates minimum of the ML-fit-function from known fit indices
 }

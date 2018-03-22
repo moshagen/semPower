@@ -51,10 +51,11 @@ getChiSquare.NCP <- function(NCP, df){
 #'
 #' @param Fmin population minimum of the fit-function
 #' @param n number of observations
+#' @param df model degrees of freedom
 #' @return NCP
 #' @examples
 #' \dontrun{
-#' NCP <- getChiSquare.F(Fmin = .05, n = 1000)
+#' NCP <- getChiSquare.F(Fmin = .05, n = 1000, df = 100)
 #' NCP
 #' }
 getChiSquare.F <- function(Fmin, n, df){
@@ -63,12 +64,18 @@ getChiSquare.F <- function(Fmin, n, df){
 }
 
 
-##########################  determine Fmin from RMSEA Mc GammaHat, GFI , AGFI   #####################
+##########################  determine Fmin from RMSEA , Mc , GFI , AGFI   #####################
 
 
 #' getF
-#'
 #' calculates minimum of the ML-fit-function from known fit indices
+#' @param effect magnitude of effect
+#' @param effect.measure measure of effect, one of 'fmin','rmsea','agfi','gfi','mc'
+#' @param df model degrees of freedom
+#' @param p number of observed varaibles
+#' @param SigmaHat model implied covariance matrix
+#' @param Sigma population covariance matrix
+#' @return Fmin
 getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL){
   fmin <- effect
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
@@ -150,7 +157,7 @@ getF.GFI <- function(GFI, p){
 #'
 #' F_min = rmsea^2 * df
 #'
-#' @param RMSEA model implied covariance matrix
+#' @param AGFI AGFI
 #' @param df model degrees of freedom
 #' @param p number of observed variables
 #' @return Fmin
@@ -173,9 +180,11 @@ getF.AGFI <- function(AGFI, df, p){
 #' calculates known indices from minimum of the ML-fit-function
 #'
 #'
-#' @param Fmin minimum of the ML-fit-function
+#' @param fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
 #' @param p number of observed variables
+#' @param SigmaHat model implied covariance matrix
+#' @param Sigma population covariance matrix
 #' @return list of indices
 getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
   fit <- list(

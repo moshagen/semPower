@@ -17,6 +17,7 @@
 #' cp.ph <- sempower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
 #' summary(cp.ph)
 #' }
+#' @importFrom stats qchisq pchisq optim
 #' @export
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
@@ -48,7 +49,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   # determine max/min chi for valid alpha/beta prob
   max <- min <- NA
   # central chi always gives reusult up to 1e-320
-  max <- qchisq(log(1e-320), df, lower=F, log.p = T)
+  max <- qchisq(log(1e-320), df, lower.tail = F, log.p = T)
 
   # non-central chi accuracy is usaually lower, depending on df and ncp
   pmin <- -Inf
@@ -56,7 +57,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   while(is.infinite(pmin)){
     testp <- testp * 10
     testv <- max(log(1e-320), (log.abratio + log(testp)))
-    min <- qchisq(testv, df,  ncp , log.p = T)
+    min <- qchisq(testv, df, ncp, log.p = T)
     pmin <- pchisq(min, df, ncp, log.p = T) # beta
   }
 
@@ -71,10 +72,10 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                           method='L-BFGS-B', lower=min, upper=max)
 
     chiCrit <- chiCritOptim$par
-    impliedAlpha <- pchisq(chiCrit, df, lower = F)
+    impliedAlpha <- pchisq(chiCrit, df, lower.tail = F)
     impliedBeta <- pchisq(chiCrit, df, ncp)
     impliedAbratio <- impliedAlpha/impliedBeta
-    impliedPower <- pchisq(chiCrit, df, ncp, lower = F)
+    impliedPower <- pchisq(chiCrit, df, ncp, lower.tail = F)
 
   }else{
     # this is overriden later
@@ -132,11 +133,11 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 #' errorDiff <- get.error.diff(critChiSquare = 300, df = 200, ncp = 600)
 #' errorDiff
 #' }
-#'
+#' @importFrom stats pchisq
 getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 
-  alpha <- pchisq(critChiSquare, df, lower=F, log=T)
-  beta <- pchisq(critChiSquare, df, ncp, log=T)
+  alpha <- pchisq(critChiSquare, df, lower.tail = F, log.p = T)
+  beta <- pchisq(critChiSquare, df, ncp, log.p = T)
 
   if(is.infinite(beta) || is.infinite(alpha)){
 
@@ -156,7 +157,8 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 #' summary.sempower.compromise
 #'
 #' provide summary of compromise post-hoc power analyses
-#' @param result result object from semPower.compromise.posthoc
+#' @param object result object from semPower.compromise
+#' @param ... other
 #' @export
 summary.semPower.compromise <- function(object, ...){
 

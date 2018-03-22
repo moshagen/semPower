@@ -7,11 +7,11 @@
 getF.AGFI(AGFI, df, p)
 }
 \arguments{
+\item{AGFI}{AGFI}
+
 \item{df}{model degrees of freedom}
 
 \item{p}{number of observed variables}
-
-\item{RMSEA}{model implied covariance matrix}
 }
 \value{
 Fmin

@@ -25,8 +25,6 @@ semPower.aPriori(effect = NULL, effect.measure = NULL, alpha, beta = NULL,
 \item{SigmaHat}{model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure.}
 
 \item{Sigma}{population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.}
-
-\item{N}{the number of observations}
 }
 \value{
 list

@@ -7,7 +7,9 @@
 \method{summary}{semPower.aPriori}(object, ...)
 }
 \arguments{
-\item{result}{result object from semPower.aPriori}
+\item{object}{result object from semPower.aPriori}
+
+\item{...}{other}
 }
 \description{
 provide summary of a-priori power analyses

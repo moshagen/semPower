@@ -7,7 +7,9 @@
 \method{summary}{semPower.compromise}(object, ...)
 }
 \arguments{
-\item{result}{result object from semPower.compromise.posthoc}
+\item{object}{result object from semPower.compromise}
+
+\item{...}{other}
 }
 \description{
 provide summary of compromise post-hoc power analyses

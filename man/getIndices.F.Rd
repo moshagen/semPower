@@ -7,11 +7,15 @@
 getIndices.F(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL)
 }
 \arguments{
+\item{fmin}{minimum of the ML-fit-function}
+
 \item{df}{model degrees of freedom}
 
 \item{p}{number of observed variables}
 
-\item{Fmin}{minimum of the ML-fit-function}
+\item{SigmaHat}{model implied covariance matrix}
+
+\item{Sigma}{population covariance matrix}
 }
 \value{
 list of indices

@@ -7,7 +7,6 @@
 #' @param alpha alpha error
 #' @param beta beta error; set either beta or power
 #' @param power power (1-beta); set either beta or power
-#' @param N the number of observations
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure. 
@@ -22,6 +21,7 @@
 #' power <- semPower.aPriori(alpha = .01, beta = .05, df = 5, SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
 #' power
 #' }
+#' @importFrom stats qchisq pchisq optim
 #' @export
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
@@ -131,6 +131,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 #' betaDiff <- getBetadiff(cN = 300, critChi = 350, logBetaTarget = log(.20), fmin = 0.50, df = 200)
 #' betaDiff
 #' }
+#' @importFrom stats pchisq
 getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
   diff <- .Machine$integer.max
 
@@ -154,7 +155,8 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
 #' summary.semPower.aPriori
 #'
 #' provide summary of a-priori power analyses
-#' @param result result object from semPower.aPriori
+#' @param object result object from semPower.aPriori
+#' @param ... other
 #' @export
 summary.semPower.aPriori <- function(object, ...){
 
