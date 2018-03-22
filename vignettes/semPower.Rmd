@@ -2,8 +2,8 @@
 title: "semPower Manual"
 author: "Morten Moshagen"
 date: "`r Sys.Date()`"
-output: pdf_document
-#output: rmarkdown::html_vignette    
+#output: pdf_document
+output: rmarkdown::html_vignette    
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -53,7 +53,7 @@ When testing statistical hypotheses using this framework, two types of decision 
 If the H0 is false, the chi-square test statistic is no longer central $\chi^2$(df) distributed, but can be shown to follow a noncentral $\chi^2$(df, $\lambda$) distribution with non-centrality parameter $\lambda$ and expected value df + $\lambda$ (MacCallum, Browne, & Sugawara, 1996). The non-centrality parameter $\lambda$ shifts the expected value of the non-central $\chi^2$(df, $\lambda$) distribution to the right of the corresponding central distribution. Having determined the critical value associated with the desired alpha probability from the central $\chi^2$(df) distribution, the beta-error probability can be computed by constructing the corresponding non-central $\chi^2$(df, $\lambda$)distribution with a certain non-centrality parameter $\lambda$ and obtaining the area (i.e., the integral) of this distribution to the left of the critical value Correspondingly, statistical power is the area of the non-central $\chi^2$(df, $\lambda$) distribution to the right of the critical value. The general situation is illustrated in Figure 1.
 
 
-![Central (left) and non-central (right) chi-square distributions](figures/cncchi.jpg)
+![Central (left) and non-central (right) chi-square distributions](figures/cncchi.pdf)
 
 Figure 1 depicts a central (solid)  $\chi^2$(df) and a non-central (dashed)  $\chi^2$(df, $\lambda$) distribution with df = 200 and $\lambda = 100$. The area of the central distribution $\chi^2$(df) to the right of the critical value reflects the alpha error. The solid line indicates a critical value of 234, which corresponds to alpha = .05. The dotted line shows a critical value of 244 obtained from compromise power analyses, which is associated with alpha = .018. The area of $\chi^2$(df, $\lambda$) distribution to the left of the critical value is the beta-error probability (beta = .006 and beta = .018 for critical values of 234 and 244, respectively). Statistical power is defined as 1 - beta, that is, the area under the noncentral $\chi^2$(df, $\lambda$) distribution to the right of the critical value.
 

@@ -39,6 +39,7 @@ show a plot showing power as function of N for a given effect and alpha
 }
 \examples{
 \dontrun{
-semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", alpha = .05, power.min = .05, power.max = .999, df = 200)
+semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", 
+                       alpha = .05, power.min = .05, power.max = .999, df = 200)
 }
 }

@@ -18,7 +18,8 @@
 #' power
 #' power <- semPower.aPriori(effect = .15, effect.measure = "F0", alpha = .05, power = .80, df = 100)
 #' power
-#' power <- semPower.aPriori(alpha = .01, beta = .05, df = 5, SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
+#' power <- semPower.aPriori(alpha = .01, beta = .05, df = 5, 
+#'                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
 #' power
 #' }
 #' @importFrom stats qchisq pchisq optim

@@ -84,7 +84,8 @@ summary(ap)
 # compromise
 cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = df)
 summary(cp)
-# => A critical Chi-Squared of 33.999 gives balanced alpha-beta error probabilities of alpha=beta=0.000089 with N = 1000.
+# => A critical Chi-Squared of 33.999 gives balanced alpha-beta
+#    error probabilities of alpha=beta=0.000089 with N = 1000.
 
 }
 

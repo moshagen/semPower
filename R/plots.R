@@ -75,7 +75,8 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
 #' @return powerplot
 #' @examples
 #' \dontrun{
-#' semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", alpha = .05, power.min = .05, power.max = .999, df = 200)
+#' semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", 
+#'                        alpha = .05, power.min = .05, power.max = .999, df = 200)
 #' }
 #' @importFrom stats smooth.spline
 #' @importFrom graphics plot
@@ -138,7 +139,8 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 #' @return powerplot
 #' @examples
 #' \dontrun{
-#' semPower.powerPlot.byEffect(effect.measure = "RMSEA", alpha = .05, N = 500, effect.min = .01, effect.max = .15, df = 200)
+#' semPower.powerPlot.byEffect(effect.measure = "RMSEA", alpha = .05, 
+#'                             N = 500, effect.min = .01, effect.max = .15, df = 200)
 #' }
 #' @importFrom stats smooth.spline
 #' @importFrom graphics plot
