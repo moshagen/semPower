@@ -105,7 +105,7 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
     power.act[[i]] <- ap$impliedPower
   }
   
-  plot <- plot(
+  plot(
     smooth.spline(N, power.act), 
     type="l", 
     lty=1,
@@ -117,7 +117,6 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
     xlim=c(max(0,min(N)-10),max(N))
   )
   
-  plot
 } 
 
 
