@@ -128,11 +128,6 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 #' @param ncp the non-centrality parameter
 #' @param log.abratio log(alpha/beta)
 #' @return squared difference between alpha and beta on a log scale
-#' @examples
-#' \dontrun{
-#' errorDiff <- get.error.diff(critChiSquare = 300, df = 200, ncp = 600)
-#' errorDiff
-#' }
 #' @importFrom stats pchisq
 getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 

@@ -127,11 +127,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 #' @param fmin minimum of the ML fit function
 #' @param df the model degrees of freedom
 #' @return squared difference requested and achieved beta on a log scale
-#' @examples
-#' \dontrun{
-#' betaDiff <- getBetadiff(cN = 300, critChi = 350, logBetaTarget = log(.20), fmin = 0.50, df = 200)
-#' betaDiff
-#' }
 #' @importFrom stats pchisq
 getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
   diff <- .Machine$integer.max

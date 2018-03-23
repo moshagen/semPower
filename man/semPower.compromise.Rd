@@ -32,7 +32,7 @@ Performs a compromise power analysis, i.e. determines the critical chi-square al
 }
 \examples{
 \dontrun{
-cp.ph <- sempower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
+cp.ph <- semPower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
 summary(cp.ph)
 }
 }
