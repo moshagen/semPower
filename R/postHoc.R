@@ -16,8 +16,8 @@
 #' \dontrun{
 #' power <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", alpha = .05, N = 250, df = 200)
 #' power
-#' power <- semPower.postHoc(N = 1000, df = 5, SigmaHat = diag(4), 
-#'                           Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
+#' power <- semPower.postHoc(N = 1000, df = 5, alpha = .05,  
+#'                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
 #' power
 #' }
 #' @importFrom stats qchisq pchisq 

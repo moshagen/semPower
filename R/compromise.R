@@ -14,7 +14,7 @@
 #' @return list
 #' @examples
 #' \dontrun{
-#' cp.ph <- sempower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
+#' cp.ph <- semPower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
 #' summary(cp.ph)
 #' }
 #' @importFrom stats qchisq pchisq optim
