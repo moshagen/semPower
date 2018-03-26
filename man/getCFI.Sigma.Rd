@@ -20,10 +20,3 @@ calculates CFI given model-implied and observed covariance matrix.
 \details{
 cfi= (f_null - f_hyp) / f_null
 }
-\examples{
-\dontrun{
-CFI <- getCFI.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-CFI
-}
-#' @export
-}

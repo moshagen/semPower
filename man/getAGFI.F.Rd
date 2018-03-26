@@ -19,9 +19,3 @@ AGFI
 \description{
 calculates AGFI from minimum of the ML-fit-function
 }
-\examples{
-\dontrun{
-AGFI <- getAGFI.F(Fmin = .05, df = 100, p = 15)
-AGFI
-}
-}

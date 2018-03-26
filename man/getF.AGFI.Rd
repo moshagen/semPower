@@ -22,9 +22,3 @@ calculates minimum of the ML-fit-function from AGFI
 \details{
 F_min = rmsea^2 * df
 }
-\examples{
-\dontrun{
-fmin <- getF.AGFI(AGFI = .95, df = 100, p = 15)
-fmin
-}
-}

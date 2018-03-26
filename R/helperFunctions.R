@@ -10,12 +10,6 @@
 #' @param Fmin population minimum of the fit-function
 #' @param n number of observations
 #' @return NCP
-#' @examples
-#' \dontrun{
-#' NCP <- getNCP(Fmin = .05, n = 1000)
-#' NCP
-#' }
-#' @export
 getNCP <- function(Fmin, n){
   NCP <- (n-1) * Fmin
   NCP
@@ -31,11 +25,6 @@ getNCP <- function(Fmin, n){
 #' @param NCP non-centrality parameter
 #' @param df model degrees of freedom
 #' @return chiSquare
-#' @examples
-#' \dontrun{
-#' chiSquare <- getChiSquare.NCP(NCP = 50, df = 100)
-#' chiSquare
-#' }
 getChiSquare.NCP <- function(NCP, df){
   chiSquare <- NCP + df
   chiSquare
@@ -53,11 +42,6 @@ getChiSquare.NCP <- function(NCP, df){
 #' @param n number of observations
 #' @param df model degrees of freedom
 #' @return NCP
-#' @examples
-#' \dontrun{
-#' NCP <- getChiSquare.F(Fmin = .05, n = 1000, df = 100)
-#' NCP
-#' }
 getChiSquare.F <- function(Fmin, n, df){
   chiSquare <- getNCP(Fmin, n) + df
   chiSquare
@@ -101,12 +85,6 @@ getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, S
 #' @param RMSEA RMSEA
 #' @param df model degrees of freedom
 #' @return Fmin
-#' @examples
-#' \dontrun{
-#' fmin <- getF.RMSEA(RMSEA = .05, df = 100)
-#' fmin
-#' }
-#' @export
 getF.RMSEA <- function(RMSEA, df){
   fmin <- RMSEA^2 * df
   fmin
@@ -120,12 +98,6 @@ getF.RMSEA <- function(RMSEA, df){
 #'
 #' @param Mc Mc
 #' @return Fmin
-#' @examples
-#' \dontrun{
-#' F_min <- getF.Mc(Mc = .90)
-#' F_min
-#' }
-#' @export
 getF.Mc <- function(Mc){
   fmin <- -2 * log(Mc)
   fmin
@@ -139,12 +111,6 @@ getF.Mc <- function(Mc){
 #' @param GFI GFI
 #' @param p number of observed variables
 #' @return Fmin
-#' @examples
-#' \dontrun{
-#' F_min <- getF.GFI(GFI = .95, p = 15)
-#' F_min
-#' }
-#' @export
 getF.GFI <- function(GFI, p){
   fmin <- -(GFI-1)*p/(2*GFI)
   fmin
@@ -161,12 +127,6 @@ getF.GFI <- function(GFI, p){
 #' @param df model degrees of freedom
 #' @param p number of observed variables
 #' @return Fmin
-#' @examples
-#' \dontrun{
-#' fmin <- getF.AGFI(AGFI = .95, df = 100, p = 15)
-#' fmin
-#' }
-#' @export
 getF.AGFI <- function(AGFI, df, p){
   fmin <- -(AGFI-1)*df*p/(p*p+p+(2*AGFI-2)*df)
   fmin
@@ -214,12 +174,6 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
 #' @param Fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
 #' @return RMSEA
-#' @examples
-#' \dontrun{
-#' RMSEA <- getRMSEA.F(Fmin = .05, df = 100)
-#' RMSEA
-#' }
-#' @export
 getRMSEA.F <- function(Fmin, df){
   RMSEA <- sqrt(Fmin/df)
   RMSEA
@@ -233,12 +187,6 @@ getRMSEA.F <- function(Fmin, df){
 #'
 #' @param Fmin minimum of the ML-fit-function
 #' @return Mc
-#' @examples
-#' \dontrun{
-#' Mc <- getMc.F(Fmin = .05)
-#' Mc
-#' }
-#' @export
 getMc.F <- function(Fmin){
   Mc <- exp(-.5*Fmin)
   Mc
@@ -253,12 +201,6 @@ getMc.F <- function(Fmin){
 #' @param Fmin minimum of the ML-fit-function
 #' @param p number of observed variables
 #' @return GFI
-#' @examples
-#' \dontrun{
-#' GFI <- getGFI.F(Fmin = .05, p = 15)
-#' GFI
-#' }
-#' @export
 getGFI.F <- function(Fmin, p){
   GFI <- p/(p + 2*Fmin)
   GFI
@@ -274,12 +216,6 @@ getGFI.F <- function(Fmin, p){
 #' @param df model degrees of freedom
 #' @param p number of observed variables
 #' @return AGFI
-#' @examples
-#' \dontrun{
-#' AGFI <- getAGFI.F(Fmin = .05, df = 100, p = 15)
-#' AGFI
-#' }
-#' @export
 getAGFI.F <- function(Fmin, df, p){
   AGFI <- -(Fmin*p*p+(Fmin-df)*p-2*df*Fmin)/(df*p+2*df*Fmin)
   AGFI
@@ -299,12 +235,6 @@ getAGFI.F <- function(Fmin, df, p){
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @return Fmin
-#' @examples
-#' \dontrun{
-#' fmin <- getF.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-#' fmin
-#' }
-#' @export
 getF.Sigma <- function(SigmaHat, S){
   checkPositiveDefinite(SigmaHat, 'SigmaHat')
   checkPositiveDefinite(S, 'S')
@@ -320,12 +250,6 @@ getF.Sigma <- function(SigmaHat, S){
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @return SRMR
-#' @examples
-#' \dontrun{
-#' SRMR <- getSRMR.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-#' SRMR
-#' }
-#' @export
 getSRMR.Sigma <- function(SigmaHat, S){
   checkPositiveDefinite(SigmaHat, 'SigmaHat')
   checkPositiveDefinite(S, 'S')
@@ -346,12 +270,6 @@ getSRMR.Sigma <- function(SigmaHat, S){
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @return CFI
-#' @examples
-#' \dontrun{
-#' CFI <- getCFI.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-#' CFI
-#' }
-#' #' @export
 getCFI.Sigma <- function(SigmaHat, S){
   checkPositiveDefinite(SigmaHat, 'SigmaHat')
   checkPositiveDefinite(S, 'S')

@@ -17,9 +17,3 @@ SRMR
 \description{
 calculates SRMR given model-implied and observed covariance matrix.
 }
-\examples{
-\dontrun{
-SRMR <- getSRMR.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-SRMR
-}
-}

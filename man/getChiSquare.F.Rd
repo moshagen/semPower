@@ -24,9 +24,3 @@ chi = (n-1)*F +  df = ncp + df
 
 note that F is the population minimum; using F_hat would give chi = (n-1)*F_hat
 }
-\examples{
-\dontrun{
-NCP <- getChiSquare.F(Fmin = .05, n = 1000, df = 100)
-NCP
-}
-}

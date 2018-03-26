@@ -20,9 +20,3 @@ calculates non-centrality parameter from the population minimum of the fit-funct
 \details{
 ncp = (n-1) * F
 }
-\examples{
-\dontrun{
-NCP <- getNCP(Fmin = .05, n = 1000)
-NCP
-}
-}

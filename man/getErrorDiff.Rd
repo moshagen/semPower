@@ -21,9 +21,3 @@ squared difference between alpha and beta on a log scale
 \description{
 determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
 }
-\examples{
-\dontrun{
-errorDiff <- get.error.diff(critChiSquare = 300, df = 200, ncp = 600)
-errorDiff
-}
-}

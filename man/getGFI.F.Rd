@@ -17,9 +17,3 @@ GFI
 \description{
 calculates GFI from minimum of the ML-fit-function
 }
-\examples{
-\dontrun{
-GFI <- getGFI.F(Fmin = .05, p = 15)
-GFI
-}
-}

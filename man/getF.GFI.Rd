@@ -17,9 +17,3 @@ Fmin
 \description{
 calculates minimum of the ML-fit-function from AGFI
 }
-\examples{
-\dontrun{
-F_min <- getF.GFI(GFI = .95, p = 15)
-F_min
-}
-}

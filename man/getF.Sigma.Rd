@@ -20,9 +20,3 @@ calculates minimum of the ML-fit-function given model-implied and observed covar
 \details{
 F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
 }
-\examples{
-\dontrun{
-fmin <- getF.Sigma(SigmaHat = diag(4), S = cov(matrix(rnorm(4*100),  ncol=4)))
-fmin
-}
-}

@@ -20,9 +20,3 @@ calculates RMSEA from minimum of the ML-fit-function
 \details{
 F_min = rmsea^2 * df
 }
-\examples{
-\dontrun{
-RMSEA <- getRMSEA.F(Fmin = .05, df = 100)
-RMSEA
-}
-}

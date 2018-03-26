@@ -20,9 +20,3 @@ calculates chi-square from NCP
 \details{
 chi = ncp + df
 }
-\examples{
-\dontrun{
-chiSquare <- getChiSquare.NCP(NCP = 50, df = 100)
-chiSquare
-}
-}

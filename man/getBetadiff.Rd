@@ -23,9 +23,3 @@ squared difference requested and achieved beta on a log scale
 \description{
 get squared difference between requested and achieved beta on a logscale
 }
-\examples{
-\dontrun{
-betaDiff <- getBetadiff(cN = 300, critChi = 350, logBetaTarget = log(.20), fmin = 0.50, df = 200)
-betaDiff
-}
-}

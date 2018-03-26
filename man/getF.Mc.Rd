@@ -15,9 +15,3 @@ Fmin
 \description{
 calculates minimum of the ML-fit-function from Mc
 }
-\examples{
-\dontrun{
-F_min <- getF.Mc(Mc = .90)
-F_min
-}
-}
