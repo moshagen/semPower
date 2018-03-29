@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 #output: pdf_document
 output: rmarkdown::html_vignette    
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{semPower Manual}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
