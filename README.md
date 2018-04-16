@@ -8,7 +8,7 @@ semPower
 
 semPower is an R-package that provides several functions to perform a-priori, post-hoc, and compromise power analyses for structural equation models (SEM).
 
-Install `semPower` as follows:
+Install `semPower` via CRAN or as follows:
 ```
 install.packages("devtools")
 library("devtools")
