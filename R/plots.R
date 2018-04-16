@@ -96,6 +96,12 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
                 power.min = power.min, power.max = power.max,
                 steps = steps, linewidth = linewidth)
   
+  # do this here instead of in validator
+  if(power.min < alpha){
+    power.min <- alpha
+    warning("power cannot be lower than alpha, setting power.min=alpha")
+  }
+  
   # determine N
   power <- seq(power.min, power.max, length.out = steps)
   N <- power.act <- array()

@@ -65,7 +65,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop("Sigma and SigmaHat must be symmetric square matrices")
     if(ncol(SigmaHat) < 2)
       stop("Sigma and SigmaHat must be at least of dimension 2*2")
-    if(sum(eigen(Sigma)$values < 0) > 1 || sum(eigen(SigmaHat)$values < 0) > 1)
+    if(sum(eigen(Sigma)$values < 0) > 0 || sum(eigen(SigmaHat)$values < 0) > 0)
       stop("Sigma and SigmaHat must be positive definite")
     if(!is.null(effect) || !is.null(effect.measure))
       warning("ignoring effect and effect.measure when Sigma and SigmaHat are set")
@@ -103,10 +103,6 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     checkBounded(alpha, 'alpha')
     checkBounded(power.max, "power.max")
     checkBounded(power.min, "power.min")
-    if(power.min < alpha){
-      power.min <- alpha
-      warning("power cannot be lower than alpha, setting power.min=alpha")
-    }
     checkPositive(steps, "steps")
     checkPositive(linewidth, "linewidth")
   }
@@ -143,7 +139,7 @@ checkPositive <- function(x, message){
 #' @param bound the boundaries, array of size two
 checkBounded <- function(x, message, bound = c(0,1)){
   if(is.null(x) || is.na(x) || x <= bound[1] || x >= bound[2]){
-    stop(paste(message," must must lie within 0 - 1"))
+    stop(paste(message," must must lie within",bound[1],'and', bound[2]))
   }
 }
 
