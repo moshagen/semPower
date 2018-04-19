@@ -112,18 +112,18 @@ As the GFI depends on the number of observed variables ($p$), this number need t
 
 ## AGFI 
 
-The Adjusted Goodness-of-Fit Index (AGFI; Jöreskog & Sörbom, 1984; Steiger, 1990) modifies the GFI by including a penalty for the number pf free parameters, as measured by the model degrees of freedom: 
+The Adjusted Goodness-of-Fit Index (AGFI; Jöreskog & Sörbom, 1984; Steiger, 1990) modifies the GFI by including a penalty for the number pf free parameters, as measured (somewhat indirectly) by the model degrees of freedom: 
 
 $$AGFI = 1 - \dfrac{p(p+1)}{2df} \left(1 - \dfrac{p}{p+2F_0} \right)$$
 $$F_0 = \dfrac{p (1-AGFI) df}{p(p+1) -2df(1-AGFI)}$$
 
-Specifying an effect in terms of the AGFI requires specification of both the  number of observed variables ($p$) and the model degrees of freedom ($df$).
+Specifying an effect in terms of the AGFI requires specification of both the number of observed variables ($p$) and the model degrees of freedom ($df$).
 
 &nbsp;
 
 ## Measures not based on non-centrality 
 
-Fit-indices that are not based on non-centrality have no straightfoward relation to F0 and are thus not well suited for power-analyses. However, if defining the effect through H0 and H1 covariance matrices (see [covariance matrix input](#cov)), such measures can at least be computed.
+Fit-indices that are not based on non-centrality have no straightforward relation to F0 and are thus not well suited for power-analyses. However, if defining the effect through H0 and H1 covariance matrices (see [covariance matrix input](#cov)), such measures can at least be computed.
 
 ### SRMR
 The Standardized-Root-Mean-Square Residual (SRMR) is a measure of the (root of the) average (squared) difference between the (standardized) model-implied and population covariance matrices, so that it ranges from 0 to 1 with lower values indicating better fit. Let $E_0$ be the difference between the model-implied and the population covariance matrix, $E_0 = \Sigma - \hat{\Sigma}$, $vech$ denote the vectorization transformation, and $Q$ be a diagonal matrix of dimension $.5p(p+1)$ containing the inverse of the product of standard deviations of observed variables $i$ and $j$. Then, the SRMR can be defined as
@@ -155,7 +155,7 @@ Performing a power analysis generally requires the specification of a measure an
 
 The purpose of a-priori power analyses is to determine the required sample size to detect an effect, given a specified alpha error. In the language of structural equation modeling, an a-priori power analysis asks: How many observations do I need to falsify my model with a probability of X% (power), if it is actually wrong (to the extent as defined by the chosen effect)?
 
-Performing an a-priori power analyses requires the specfication of an alpha error, the desired power (or, equivalently the acceptable beta error), the type and magnitude of effect, and the model df. Depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
+Performing an a-priori power analyses requires the specification of an alpha error, the desired power (or, equivalently the acceptable beta error), the type and magnitude of effect, and the model df. Depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
 
 Suppose, we want the required sample size to detect misspecifications of a model (involving df = 100 degrees of freedom) with a power of 80% on an alpha error of .05., where  the amount of misfit corresponds to RMSEA = .05. After loading the `semPower` package, we call the function `semPower.aPriori` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `alpha = .05`, `power = .80`, and `df = 100`, and store the results in a list called `ap1`. 
 
@@ -165,13 +165,13 @@ ap1 <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA',
                         alpha = .05, power = .80, df = 100)
 ```
 
-Calling the `summary` method on `ap1` prints the results and a figure of the assoiated central and non-central chi-squared distributions.    
+Calling the `summary` method on `ap1` prints the results and a figure of the associated central and non-central chi-squared distributions.    
  
 ```{r}
 summary(ap1)
 ```
 
-This shows that $N = 164$ yields a power of approximately 80% to detect the specified effect. The output further shows the `Critical Chi-Square`, the non-centrality parameter (`NCP`), and the ratio between the error probabilities (`Implied Alpha/Beta ratio`). In this example, the ratio between alpha and beta is 0.25, showing that committing an beta error is four-times as likely as commiting an alpha error. This is obviously a consequence of the chosen input parameters, since a power (1 - beta) of .80 implies an beta error of .20, which is four times the chosen alpha error of .05.
+This shows that $N = 164$ yields a power of approximately 80% to detect the specified effect. The output further shows the `Critical Chi-Square`, the non-centrality parameter (`NCP`), and the ratio between the error probabilities (`Implied Alpha/Beta ratio`). In this example, the ratio between alpha and beta is 0.25, showing that committing an beta error is four-times as likely as committing an alpha error. This is obviously a consequence of the chosen input parameters, since a power (1 - beta) of .80 implies an beta error of .20, which is four times the chosen alpha error of .05.
 
 `semPower` also converts the chosen effect into other effect size measures, here into F0 and Mc: An RMSEA of .05 (based on df = 100) corresponds to F0 = 0.250 and Mc = .882. If we would also be interested in obtaining the associated GFI and AGFI, the number of variables needs to be provided. Let's assume our model involves 20 observed variables. We repeat the call above, this time including the argument `p = 20`:
 
@@ -203,7 +203,7 @@ If you are interested in how power changes for a range of sample sizes, it is us
 
 The purpose of post-hoc power analyses is to determine the actually achieved power to detect a specified effect with given  sample size on a certain alpha error. In the language of structural equation modeling, a post-hoc power analysis asks: With my sample at hand, how large is the probability (power) to falsify my model if it is actually wrong (at least to the extent as defined by the chosen effect)?
 
-Performing a post-hoc power analyses requires the specfication of an alpha error, the sample size, the type and magnitude of effect, and the model df. Again, depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
+Performing a post-hoc power analyses requires the specification of an alpha error, the sample size, the type and magnitude of effect, and the model df. Again, depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
 
 Suppose, we want the achieved power with a sample size of $N = 1000$ to detect misspecifications of a model (involving $df = 100$ degrees of freedom) on an alpha error of .05., where  the amount of misfit corresponds to RMSEA = .05. We call the function `semPower.postHoc` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `alpha = .05`, `N = 1000`, and `df = 100`, and store the results in a list called `ph1`. 
 
@@ -213,7 +213,7 @@ ph1 <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA',
 summary(ph1)
 ```
 
-Calling the `summary` method on `ph1` shows that the power is very high (`power > .9999`). The associated error probabilities are provided in higher precision. Specifically, the beta error is `beta = 2.903302e-17` which translates into $2.9 \cdot 10^{-17} = 0.000000000000000029$. In practice, you would almost never miss a model with an actual RMSEA >= .05 (or F0 >= 0.25 or Mc <= .882) under these conditions. The implied alpha/beta ratio is 1.722177e+15, showing that commiting an alpha error is about two quadrillion ($10^{15}$) times as likely as committing a beta error.
+Calling the `summary` method on `ph1` shows that the power is very high (`power > .9999`). The associated error probabilities are provided in higher precision. Specifically, the beta error is `beta = 2.903302e-17` which translates into $2.9 \cdot 10^{-17} = 0.000000000000000029$. In practice, you would almost never miss a model with an actual RMSEA >= .05 (or F0 >= 0.25 or Mc <= .882) under these conditions. The implied alpha/beta ratio is 1.722177e+15, showing that committing an alpha error is about two quadrillion ($10^{15}$) times as likely as committing a beta error.
 
 If you are interested in how power changes for a range of different magnitudes of effect (say, for RMSEA ranging from .01 to .15), it is useful to request a [power plot](#plots), as described in detail [below](#plots).
 
@@ -225,7 +225,7 @@ If you are interested in how power changes for a range of different magnitudes o
 
 The purpose of compromise power analyses is to determine alpha and beta (and the associated critical value of the chi-squared test-statistic) given a specified effect, a certain sample size, and a desired ratio between alpha and beta (Moshagen & Erdfelder, 2016). In the language of structural equation modeling, a compromise analysis asks: With my sample at hand, how should I select a critical value for the chi-square model-test to obtain proportionate alpha and beta errors in deciding whether my model is rather aligned with the hypothesis of perfect fit or with the hypothesis of unacceptable degree of misfit (as defined by the chosen effect)?
 
-Performing a compromise power analyses requires the specfication of a desired ratio between alpha and beta (which defaults to 1), the sample size, the type and magnitude of effect (defining the H1 model representing an unacceptable degree of misfit), and the model df. Again, depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
+Performing a compromise power analyses requires the specification of a desired ratio between alpha and beta (which defaults to 1), the sample size, the type and magnitude of effect (defining the H1 model representing an unacceptable degree of misfit), and the model df. Again, depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
 
 Suppose, we want to determine the critical Chi-Square and the associated alpha and beta errors, forcing them to be equal (i.e., an ratio of 1). Our model involves 100 $df$, our sample size is $N = 1000$, and we define the H1 model representing an unacceptable degree of misfit as a model associated with an RMSEA of at least .08. Thus, we call the function `semPower.postHoc` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`, store the results in a list called `cp1`, and call the `summary` method. 
 
@@ -236,7 +236,7 @@ cp1 <- semPower.compromise(effect = .08, effect.measure = 'RMSEA',
 summary(cp1)
 ```
 
-The results show that choosing a `Critical Chi-Square = 312` is associated with balanced error probabilities, `alpha = 1.212986e-23` and `beta = 1.212986e-23`. As requested, both error probabilities as just as large. In addition, commiting either error is highly unlikely: an error of `1.212986e-23` translates into $1.2 \cdot 10^{-23} = 0.000000000000000000000012$. In pratice, one almost never would make a wrong decision.   
+The results show that choosing a `Critical Chi-Square = 312` is associated with balanced error probabilities, `alpha = 1.212986e-23` and `beta = 1.212986e-23`. As requested, both error probabilities as just as large. In addition, committing either error is highly unlikely: an error of `1.212986e-23` translates into $1.2 \cdot 10^{-23} = 0.000000000000000000000012$. In practice, one almost never would make a wrong decision.   
 
 If, for some reason, you rather prefer the error probabilities to differ (for example because you consider falsely accepting an incorrect model to be 100 times as bad as falsely rejecting an correct model), you can achieve this by changing the  `abratio` argument accordingly. For example, requesting the alpha error to be 100 times as large as the beta error proceeds by setting `abratio = 100`. 
 
@@ -268,7 +268,7 @@ This shows that a model with an associated RMSEA = .05 is rejected with a very h
 &nbsp;
 
 ## Determine power as function of the magnitude of effect for a given N
-The function `semPower.powerPlot.byEffect` creates a plot showing the achieved power at a given sample size over a range of effect sizes. For example, suppose we are interested in how the power at $N = 500$ changes as function of effect size magnitude, corresponding to an RMSEA ranging from .001 to .10. This is achieved by setting the arguments `effect.measure = 'RMSEA'`, `effect.min = .001` and `effect.max = .10`. In addition, as in any post-hoc power analysis, the sample size, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
+The function `semPower.powerPlot.byEffect` creates a plot showing the achieved power at a given sample size over a range of effect sizes. For example, suppose we are interested in how the power at $N = 500$ changes as function of effect size magnitude, corresponding to an RMSEA ranging from .001 to .10. This is achieved by setting the arguments `effect.measure = 'RMSEA'`, `effect.min = .001` and `effect.max = .10`. In addition, as in any post-hoc power analysis, the sample size, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `df = 100`.
 
 
 ```{r}
@@ -303,7 +303,7 @@ semPower.powerPlot.byN(alpha = .05, df = 100, power.min = .05, power.max = .99,
                        Sigma = Sigma, SigmaHat = SigmaHat)
 ```
 
-This feature is particularly useful when used in conjunction with some other SEM software, which is used to generate the population and the model-implied covariance matrix (note that a proper definition of the latter usually requires fittting the model to the population data). For illustration, let's consider how this could be done using `lavaan`. 
+This feature is particularly useful when used in conjunction with some other SEM software, which is used to generate the population and the model-implied covariance matrix (note that a proper definition of the latter usually requires fitting the model to the population data). For illustration, let's consider how this could be done using `lavaan`. 
 
 ```{r eval=FALSE}
 library(lavaan)
@@ -324,7 +324,7 @@ f1 ~~ 0*f2
 '
 ```
 
-After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implictly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with loadings ranging from .5 to .8. The second model string (`model.h0`) is used to define the hypothesized (wrong) H0 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
+After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implicitly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with loadings ranging from .5 to .8. The second model string (`model.h0`) is used to define the hypothesized (wrong) H0 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
 
 
 Having defined the model strings, we proceed by actually obtaining the relevant covariance matrices.
@@ -348,7 +348,7 @@ ph4 <- semPower.postHoc(SigmaHat = cov.h0, Sigma = cov.h1, alpha = .05, N = 1000
 summary(ph4)
 ```
 
-The output (which is ommitted here) indicates that fitting the hypothesized model to the population data is  associated with a discrepancy of F0 = 0.081 (or RMSEA = .095 or SRMR = .139 or ...) and that the power to reject the H1 model is very high, 1 - beta = 1 - 1.347826e-08. 
+The output (which is omitted here) indicates that fitting the hypothesized model to the population data is  associated with a discrepancy of F0 = 0.081 (or RMSEA = .095 or SRMR = .139 or ...) and that the power to reject the H1 model is very high, 1 - beta = 1 - 1.347826e-08. 
 
 It is instructive to compare the expected chi-square (calculated via the obtained F0) with the chi-square model test statistics as reported by `lavaan`:
 
