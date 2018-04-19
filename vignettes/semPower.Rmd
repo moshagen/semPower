@@ -308,7 +308,7 @@ This feature is particularly useful when used in conjunction with some other SEM
 ```{r eval=FALSE}
 library(lavaan)
 
-# define (true) population model (= H0)
+# define (true) population model (= H1)
 model.pop <- '
 f1 =~ .8*x1 + .7*x2 + .6*x3
 f2 =~ .7*x4 + .6*x5 + .5*x6
@@ -316,34 +316,35 @@ f1 ~~ 1*f1
 f2 ~~ 1*f2
 f1 ~~ 0.5*f2
 '
-# define (wrong) H1 model
-model.h1 <- '
+# define (wrong) H0 model
+model.h0 <- '
 f1 =~ x1 + x2 + x3
 f2 =~ x4 + x5 + x6
 f1 ~~ 0*f2
 '
 ```
 
-After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implictly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with loadings ranging from .5 to .8. The second model string (`model.h1`) is used to define the hypothesized (wrong) H1 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
+After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implictly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with loadings ranging from .5 to .8. The second model string (`model.h0`) is used to define the hypothesized (wrong) H0 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
+
 
 Having defined the model strings, we proceed by actually obtaining the relevant covariance matrices.
 
 ```{r eval=FALSE}
-# get population covariance matrix; equivalent to a perfectly fitting H0 model
-cov.h0 <- fitted(sem(model.pop))$cov
+# get population covariance matrix; equivalent to a perfectly fitting H1 model
+cov.h1 <- fitted(sem(model.pop))$cov
 
-# get covariance matrix as implied by H1 model
-res.h1 <- sem(model.h1, sample.cov = cov.h0, sample.nobs = 1000, likelihood='wishart')
-df <- res.h1@test[[1]]$df
-cov.h1 <- fitted(res.h1)$cov
+# get covariance matrix as implied by H0 model
+res.h0 <- sem(model.h0, sample.cov = cov.h1, sample.nobs = 1000, likelihood='wishart')
+df <- res.h0@test[[1]]$df
+cov.h0 <- fitted(res.h0)$cov
 ```
 
-`cov.h0` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H1 model (`model.h1`) to the population data (`cov.h0`). The model-implied covariance matrix then can be obtained by calling `cov.h1 <- fitted(res.h1)$cov`.
+`cov.h1` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`model.h0`) to the population data (`cov.h1`). The model-implied covariance matrix then can be obtained by calling `cov.h0 <- fitted(res.h0)$cov`.
 
-We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = cov.h1` and `Sigma = cov.h0`.
+We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = cov.h0` and `Sigma = cov.h1`.
 
 ```{r eval=FALSE}
-ph4 <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = df)
+ph4 <- semPower.postHoc(SigmaHat = cov.h0, Sigma = cov.h1, alpha = .05, N = 1000, df = df)
 summary(ph4)
 ```
 
@@ -352,11 +353,11 @@ The output (which is ommitted here) indicates that fitting the hypothesized mode
 It is instructive to compare the expected chi-square (calculated via the obtained F0) with the chi-square model test statistics as reported by `lavaan`:
 
 ```{r eval=FALSE}
-fitmeasures(res.h1, 'chisq')
+fitmeasures(res.h0, 'chisq')
 ph4$fmin * (ph$N-1)
 ```
 
-`fitmeasures(res.h1, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `model.h1` to the population data (`cov.h0`, see above). The line `ph4$fmin * (ph$N-1)` computes the expected chi-square, i.e. F0 multiplied by (N - 1). Obviously, both values match (= 81.52).
+`fitmeasures(res.h0, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `model.h1` to the population data (`cov.h1`, see above). The line `ph4$fmin * (ph$N-1)` computes the expected chi-square, i.e. F0 multiplied by (N - 1). Obviously, both values match (= 81.52).
 
 
 &nbsp;

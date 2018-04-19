@@ -41,7 +41,7 @@
 #' \dontrun{
 #' library(lavaan)
 #'
-#' # define population model (= H0)
+#' # define population model (= H1)
 #' model.pop <- '
 #' f1 =~ .8*x1 + .7*x2 + .6*x3
 #' f2 =~ .7*x4 + .6*x5 + .5*x6
@@ -49,24 +49,24 @@
 #' f2 ~~ 1*f2
 #' f1 ~~ 0.5*f2
 #' '
-#' # define (wrong) H1 model
-#' model.h1 <- '
+#' # define (wrong) H0 model
+#' model.h0 <- '
 #' f1 =~ x1 + x2 + x3
 #' f2 =~ x4 + x5 + x6
 #' f1 ~~ 0*f2
 #' '
 #'
-#' # get population covariance matrix; equivalent to a perfectly fitting H0 model
-#' cov.h0 <- fitted(sem(model.pop))$cov
-#' # get covariance matrix as implied by H1 model
-#' res.h1 <- sem(model.h1, sample.cov = cov.h0, sample.nobs = 1000, likelihood='wishart')
-#' df <- res.h1@test[[1]]$df
-#' cov.h1 <- fitted(res.h1)$cov
+#' # get population covariance matrix; equivalent to a perfectly fitting H1 model
+#' cov.h1 <- fitted(sem(model.pop))$cov
+#' # get covariance matrix as implied by H0 model
+#' res.h0 <- sem(model.h0, sample.cov = cov.h1, sample.nobs = 1000, likelihood='wishart')
+#' df <- res.h0@test[[1]]$df
+#' cov.h0 <- fitted(res.h0)$cov
 #'
 #' ## do power analyses
 #'
 #' # post-hoc
-#' ph <- semPower.postHoc(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, N = 1000, df = df)
+#' ph <- semPower.postHoc(SigmaHat = cov.h0, Sigma = cov.h1, alpha = .05, N = 1000, df = df)
 #' summary(ph)
 #' # => Power to reject the H1 model is > .9999 (1-beta = 1-1.347826e-08) with N = 1000 at alpha=.05
 #'
@@ -76,12 +76,12 @@
 #' # => expected chi-square matches empirical chi-square
 #'
 #' # a-priori
-#' ap <- semPower.aPriori(SigmaHat = cov.h1, Sigma = cov.h0, alpha = .05, power = .80, df = df)
+#' ap <- semPower.aPriori(SigmaHat = cov.h0, Sigma = cov.h1, alpha = .05, power = .80, df = df)
 #' summary(ap)
 #' # => N = 194 gives a power of ~80% to reject the H1 model at alpha = .05
 #'
 #' # compromise
-#' cp <- semPower.compromise(SigmaHat = cov.h1, Sigma = cov.h0, abratio = 1, N = 1000, df = df)
+#' cp <- semPower.compromise(SigmaHat = cov.h0, Sigma = cov.h1, abratio = 1, N = 1000, df = df)
 #' summary(cp)
 #' # => A critical Chi-Squared of 33.999 gives balanced alpha-beta
 #' #    error probabilities of alpha=beta=0.000089 with N = 1000.
