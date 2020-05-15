@@ -65,7 +65,7 @@ getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, S
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     switch(effect.measure,
            "RMSEA" = fmin <- getF.RMSEA(effect, df),
-           "Mc" = fmin <- getF.Mc(effect),
+           "MC" = fmin <- getF.Mc(effect),
            "GFI" = fmin <- getF.GFI(effect, p),
            "AGFI" = fmin <- getF.AGFI(effect, df, p)
     )

@@ -32,7 +32,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
 
-  known.effects.measures <- c("F0","RMSEA","Mc","GFI", "AGFI")
+  known.effects.measures <- c("F0","RMSEA","MC","GFI", "AGFI")
 
   # do input validation
   if(is.null(SigmaHat) && is.null(Sigma)){
