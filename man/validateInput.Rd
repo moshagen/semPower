@@ -4,11 +4,26 @@
 \alias{validateInput}
 \title{validateInput}
 \usage{
-validateInput(power.type = NULL, effect = NULL, effect.measure = NULL,
-  alpha = NULL, beta = NULL, power = NULL, abratio = NULL, N = NULL,
-  df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL,
-  power.min = alpha, power.max = 0.999, effect.min = NULL,
-  effect.max = NULL, steps = 50, linewidth = 1)
+validateInput(
+  power.type = NULL,
+  effect = NULL,
+  effect.measure = NULL,
+  alpha = NULL,
+  beta = NULL,
+  power = NULL,
+  abratio = NULL,
+  N = NULL,
+  df = NULL,
+  p = NULL,
+  SigmaHat = NULL,
+  Sigma = NULL,
+  power.min = alpha,
+  power.max = 0.999,
+  effect.min = NULL,
+  effect.max = NULL,
+  steps = 50,
+  linewidth = 1
+)
 }
 \arguments{
 \item{power.type}{type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"}

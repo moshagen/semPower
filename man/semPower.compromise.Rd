@@ -4,8 +4,16 @@
 \alias{semPower.compromise}
 \title{sempower.compromise}
 \usage{
-semPower.compromise(effect = NULL, effect.measure = NULL, abratio = 1, N,
-  df, p = NULL, SigmaHat = NULL, Sigma = NULL)
+semPower.compromise(
+  effect = NULL,
+  effect.measure = NULL,
+  abratio = 1,
+  N,
+  df,
+  p = NULL,
+  SigmaHat = NULL,
+  Sigma = NULL
+)
 }
 \arguments{
 \item{effect}{effect size specifying the discrepancy between H0 and H1}

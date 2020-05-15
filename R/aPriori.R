@@ -29,7 +29,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              df, p = NULL,
                              SigmaHat = NULL, Sigma = NULL){
 
-  effect.measure <- toupper(effect.measure)
+  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
   validateInput('a-priori', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = beta, power = power, abratio = NULL,

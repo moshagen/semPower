@@ -26,7 +26,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df, p = NULL,
                              SigmaHat = NULL, Sigma = NULL){
 
-  effect.measure <- toupper(effect.measure)
+  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
   validateInput('post-hoc', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = NULL, power = NULL, abratio = NULL,

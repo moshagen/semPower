@@ -4,8 +4,16 @@
 \alias{semPower.postHoc}
 \title{semPower.postHoc}
 \usage{
-semPower.postHoc(effect = NULL, effect.measure = NULL, alpha, N, df,
-  p = NULL, SigmaHat = NULL, Sigma = NULL)
+semPower.postHoc(
+  effect = NULL,
+  effect.measure = NULL,
+  alpha,
+  N,
+  df,
+  p = NULL,
+  SigmaHat = NULL,
+  Sigma = NULL
+)
 }
 \arguments{
 \item{effect}{effect size specifying the discrepancy between H0 and H1}

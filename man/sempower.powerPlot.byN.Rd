@@ -4,9 +4,19 @@
 \alias{semPower.powerPlot.byN}
 \title{sempower.powerPlot.byN}
 \usage{
-semPower.powerPlot.byN(effect = NULL, effect.measure = NULL, alpha, df,
-  p = NULL, SigmaHat = NULL, Sigma = NULL, power.min = alpha,
-  power.max = 0.999, steps = 50, linewidth = 1)
+semPower.powerPlot.byN(
+  effect = NULL,
+  effect.measure = NULL,
+  alpha,
+  df,
+  p = NULL,
+  SigmaHat = NULL,
+  Sigma = NULL,
+  power.min = alpha,
+  power.max = 0.999,
+  steps = 50,
+  linewidth = 1
+)
 }
 \arguments{
 \item{effect}{effect size specifying the discrepancy between H0 and H1}

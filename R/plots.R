@@ -87,7 +87,7 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
                                    power.min = alpha, power.max = .999,
                                    steps = 50, linewidth = 1){
   
-  effect.measure <- toupper(effect.measure)
+  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
   validateInput('powerplot.byN', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = NULL, power = NULL, abratio = NULL,
