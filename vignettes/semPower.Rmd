@@ -21,22 +21,153 @@ Power Analysis for Structural Equation Models
 
 Contact: <morten.moshagen@uni-ulm.de>
 
+Please cite as:
+
+* Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54–60.
+
+
 &nbsp;
 
 # Introduction
 
 `semPower` provides a collection of functions to perform power analyses for structural equation models. The main functions of `semPower` are:
 
-* [semPower.aPriori](#ap): determine required N, given alpha, beta or power, effect, and df
-* [semPower.postHoc](#ph): determine achieved beta and power, given alpha, N, effect, and df
+* [semPower.aPriori](#ap): determine required sample size (N), given alpha, beta or power, effect, and df
+* [semPower.postHoc](#ph): determine achieved power (and beta), given alpha, N, effect, and df
 * [semPower.compromise](#cp): determine alpha and beta, given the alpha/beta ratio, N, effect, and df 
 
-All functions require the specification of the discrepancy between H0 and H1, i.e. the magnitude of effect in a certain metric. `semPower` understands the following effect-size measures: F0, RMSEA, Mc, GFI, AGFI (see below for details). Alternatively, it is also possible to define the effect by providing the H0 and the H1 covariance matrices (see [covariance matrix input](#cov))
+All functions require the specification of the discrepancy between H0 and H1, i.e. the magnitude of effect in a certain metric. `semPower` understands the following [effect-size measures](#effects): F0, RMSEA, Mc, GFI, AGFI (see below for details). Alternatively, it is also possible to define the effect by providing the H0 and the H1 covariance matrices (see [covariance matrix input](#cov)).
 
 In addition, `semPower` can be used to create power-plots:
 
 * [sempower.powerPlot.byN](#plots): Plot achieved power as function of N for a given effect 
-* [sempower.powerPlot.byEffect](#plots): Plot achieved power as function of the magnitude of effect for a given  N
+* [sempower.powerPlot.byEffect](#plots): Plot achieved power as function of the magnitude of effect for a given sample size
+
+For the impatient reader, this document starts with some brief examples. The remainder of this document provides some notes on the statistical background, the definition of various effect-sizes, and a detailed description of the functions contained in this package.
+
+&nbsp;
+
+
+# Examples
+
+## Determine required sample size (a priori power analysis)
+
+Use [semPower.aPriori](#ap) to determine the required sample size to detect a certain effect with a certain power. For example, let's determine the required sample size to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 with a power of 80% on an alpha error of .05. After loading the `semPower` package, call the function `semPower.aPriori` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `power = .80`, and `df = 100`.
+
+```{r}
+library(semPower)
+ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA', 
+                        alpha = .05, power = .80, df = 100)
+summary(ap)
+```
+
+The results show that a sample size of N = 164 yields a power of approximately 80% to reject a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05.
+
+## Determine achieved power (post-hoc power analysis)
+
+Use [semPower.postHoc](#ph) to determine the actually achieved power with a certain sample size. For example, let's determine the achieved power with a sample size of N = 1000 to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 on an alpha error of .05. Call the function `semPower.postHoc` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `N = 1000`, and `df = 100`: 
+
+```{r}
+ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', 
+                        alpha = .05, N = 1000, df = 100)
+summary(ph)
+```
+
+The results show that a sample size of N = 1000 is associated with a power larger than > 99.99 % (more precisely, 1 - 2.903302e-17) to reject a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05.
+
+
+## Determine critical chi-square and implied alpha and beta (compromise power analysis)
+
+Use [semPower.compromise](#cp) to determine the critical chi-square and the implied alpha and beta errors. For example, let's determine the critical chi-square such that the associated alpha and beta errors are equal, assuming sample size of N = 1000, a model involving df = 100 degrees of freedom and misspecifications corresponding to RMSEA = .05. Call the function `semPower.compromise` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`: 
+
+
+```{r}
+cp <- semPower.compromise(effect = .05, effect.measure = 'RMSEA', 
+                           abratio = 1, N = 1000, df = 100)
+summary(cp)
+```
+
+The results show that choosing a critical chi-square of 192.82 is associated with balanced error probabilties alpha = beta = .000000074 when deciding between a correct and a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05 with N = 1000.
+
+
+## Extended example: Define effect in terms of model parameters
+
+Consider the situation that one is interested in determining whether the observed responses on 8 items reflect two seperate (but correlated) factors or can be described by assuming just a single factor. A suitable model to test this hypothesis would specify two factors and constrain their correlation to 1. When this constrained model fits the data, a single factor is sufficient. Otherwise, two factors are required.   
+
+Suppose that a correlation between two factors of r > .9 is considered as implying that these are practically equivalent, so these could be collapsed into a single factor. However, if the correlations between these factors turns out smaller than .9, one might rather prefer a two-factor model. In terms of power analyses, we thus want sufficient power to identify whether the correlation between the factors is $\leq$ .9. The misfit associated with a model assuming a correlation of 1 when, in reality, the true correlation is $\leq$ .9 is supposed to define the magnitude of effect. 
+
+The problem is now that one cannot immediately say how this difference in a model parameter translates to an effect size such as the RMSEA. Instead, any type of power analysis must be performed using the [H0 and the H1 covariance matrices](#cov), obtained by the help of a suitable sem-package, such as `lavaan`.
+
+First, a suitable model that describes the true situation in the population is required. We need to define the value of each single (non-zero) parameter, so we need to specify each loading, each residual variance, the variance of the factors as well as their covariance. Note that the magnitude of effect (and thus power) does not only depend on the correlation between the factors, but also varies with other parameters of the model, such as the loading magnitude, so some reasonable guess concerning the latter required. Let us assume that the standardized loadings vary between .4 and .8. Importantly, I define that two factors exists that correlate by .9. 
+
+```{r eval=FALSE}
+library(lavaan)
+
+# define (true) population model
+model.pop <- '
+# define relations between factors and items in terms of loadings
+f1 =~ .7*x1 + .7*x2 + .5*x3 + .5*x4
+f2 =~ .8*x5 + .6*x6 + .6*x7 + .4*x8
+# define unique variances of the items to be equal to 1-loading^2, so that the loadings above are in a standardized metric
+x1 ~~ .51*x1
+x2 ~~ .51*x2
+x3 ~~ .75*x3
+x4 ~~ .75*x4
+x5 ~~ .36*x5
+x6 ~~ .64*x6
+x7 ~~ .64*x7
+x8 ~~ .84*x8
+# define variances of f1 and f2 to be 1
+f1 ~~ 1*f1   
+f2 ~~ 1*f2   
+# define covariance (=correlation, because factor variances are 1) between the factors to be .9
+f1 ~~ 0.9*f2 
+'
+```
+
+Using the model string above, we can now obtain the associated variance-covariance matrix defining the true state in the population.
+```{r eval=FALSE}
+# population covariance matrix
+cov.pop <- fitted(sem(model.pop))$cov
+```
+It is a good idea to check whether the model string actually defined all parameters as we expected. To verifiy, we can just fit the true model to the population covariance matrix which should yield a perfect fit and give the same parameter estimates we used in the definition of the model string.
+```{r eval=FALSE}
+# sanity check
+model.h1 <- '
+f1 =~ x1 + x2 + x3 + x4
+f2 =~ x5 + x6 + x7 + x8
+'
+summary(sem(model.h1, sample.cov = cov.pop, sample.nobs = 1000), stand = T, fit = T)
+```
+
+Having obtained the population covariance matrix, we now need to define and estimate the analysis model. The analysis model should make at least one  restriction which is factually wrong and thereby defines the effect of interest, in the present case the restriction that the two factors correlate to 1.  
+```{r eval=FALSE}
+# define (wrong) analysis model
+model.h0 <- '
+f1 =~ NA*x1 + x2 + x3 + x4
+f2 =~ NA*x5 + x6 + x7 + x8
+# define variances of f1 and f2 to be 1
+f1 ~~ 1*f1   
+f2 ~~ 1*f2   
+# set correlation between the factors to 1
+f1 ~~ 1*f2
+' 
+# fit analysis model to population data
+fit.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, likelihood='wishart')
+```
+
+Any type of power-analysis can now be performed using the model-implied covariance matrix along with the population covariance matrix as arguments. For example, to determine the required sample size use [semPower.aPriori](#ap) with `SigmaHat = cov.h0`, `Sigma = cov.pop`, `alpha = .05`, `power = .80`, and `df = df`.
+
+```{r eval=FALSE}
+# model implied covariance matrix
+cov.h0 <- fitted(fit.h0)$cov
+df <- fit.h0@test[[1]]$df
+# perform power analysis
+ap5 <- semPower.aPriori(SigmaHat = cov.h0, Sigma = cov.pop, 
+                        alpha = .05, power = .95, df = df)
+summary(ap5)
+```
+The output (which is omitted here) shows that N = 1258 observations are required to detect a correlation between the factors $\leq$ .9 with a power of 95% on alpha = .05. The output also shows various effect-sizes as implied by the specified covariance matrices. In the population, fitting a model assuming the two factors correlate by 1 when they actually correlate by .9 leads to a population minimum of the ML-fitting function of F0 = 0.0244, which amounts to model misfit corresponding to RMSEA = 0.035 or SRMR = 0.016.
 
 
 &nbsp;
@@ -44,7 +175,7 @@ In addition, `semPower` can be used to create power-plots:
 
 # Background
 
-The statistical evaluation of mathematical models often proceeds by considering a test-statistic that expresses the discrepancy between the observed data and the data as implied by the fitted model. In SEM, the relevant test statistic for a sample of size $N$ is given by $T = \hat{F}(N-1)$. $\hat{F}$ denotes the minimized sample value of the chosen discrepancy function (such as Maximum-Likelihood) and thereby indicates lack of fit of the model to the sample data. Thus,  $T$ permits a likelihood-ratio test of the null hypothesis (H0) that the model is correct. If the hypothesized model holds in the population, $T$ can be shown to follow asymptotically a central $\chi^2$(df) distribution with $df = .5 \cdot p(p+1) – q$ degrees of freedom, where $p$ is the number of manifest variables and $q$ denotes the number of free parameters. This is why $T$ is often referred to as “chi-square model test statistic” -- a convention which is followed here. 
+The statistical evaluation of mathematical models often proceeds by considering a test-statistic that expresses the discrepancy between the observed data and the data as implied by the fitted model. In SEM, the relevant test statistic for a sample of size $N$ is given by $T = \hat{F}(N-1)$. $\hat{F}$ denotes the minimized sample value of the chosen discrepancy function (such as Maximum-Likelihood) and thereby indicates lack of fit of the model to the sample data. Thus,  $T$ permits a likelihood-ratio test of the null hypothesis (H0) that the model is correct. If the hypothesized model holds in the population, $T$ can be shown to follow asymptotically a central $\chi^2$(df) distribution with $df = .5 \cdot p(p+1) - q$ degrees of freedom, where $p$ is the number of manifest variables and $q$ denotes the number of free parameters. This is why $T$ is often referred to as “chi-square model test statistic” -- a convention which is followed here. 
 
 Given an observed value for the chi-square test statistic, a null hypothesis significance test can be performed to evaluate whether this value is larger than would be expected by chance alone. The usual test proceeds as follows: Given a certain specified alpha-error level (typically alpha = .05), a critical chi-square value is obtained from the asymptotic central $\chi^2$(df) distribution. If the observed value for the chi-square test statistic exceeds the critical value, the null hypothesis that the model fits the data is rejected. Otherwise, H0 is retained. A finding of the observed statistic exceeding the critical value (implying an upper-tail probability  that falls below the specified alpha level) thus leads to the statistical decision that the discrepancy between the hypothesized and the actual population covariance matrix is too large to be attributable to sampling error only. Accordingly, a statistically significant chi-square test statistic provides evidence against the validity of the hypothesized model.
 
@@ -59,6 +190,7 @@ Figure 1 depicts a central (solid)  $\chi^2$(df) and a non-central (dashed)  $\c
 
 &nbsp;
 
+<a id="effects"></a>
 
 # Measures of Effect
 
@@ -92,7 +224,7 @@ Given that $F0$ is scaled by the $df$, defining an effect in terms of the RMSEA 
 
 ## Mc 
 
-The Mc (McDonald, 1989) is a transformation of $F_0$ on the interval 0-1 with higher values indicating better fit.
+Mc (McDonald, 1989) is a transformation of $F_0$ on the interval 0-1 with higher values indicating better fit.
 
 $$Mc = e^{-.5F_0}$$
 $$F_0 = -2\ln{Mc}$$
@@ -227,7 +359,7 @@ The purpose of compromise power analyses is to determine alpha and beta (and the
 
 Performing a compromise power analyses requires the specification of a desired ratio between alpha and beta (which defaults to 1), the sample size, the type and magnitude of effect (defining the H1 model representing an unacceptable degree of misfit), and the model df. Again, depending on the chosen effect-size measure, it may also be required to define the number of observed variables. 
 
-Suppose, we want to determine the critical Chi-Square and the associated alpha and beta errors, forcing them to be equal (i.e., an ratio of 1). Our model involves 100 $df$, our sample size is $N = 1000$, and we define the H1 model representing an unacceptable degree of misfit as a model associated with an RMSEA of at least .08. Thus, we call the function `semPower.postHoc` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`, store the results in a list called `cp1`, and call the `summary` method. 
+Suppose, we want to determine the critical chi-square and the associated alpha and beta errors, forcing them to be equal (i.e., an ratio of 1). Our model involves 100 $df$, our sample size is $N = 1000$, and we define the H1 model representing an unacceptable degree of misfit as a model associated with an RMSEA of at least .08. Thus, we call the function `semPower.compromise` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`, store the results in a list called `cp1`, and call the `summary` method. 
 
 
 ```{r}
@@ -308,7 +440,7 @@ This feature is particularly useful when used in conjunction with some other SEM
 ```{r eval=FALSE}
 library(lavaan)
 
-# define (true) population model (= H1)
+# define (true) population model
 model.pop <- '
 f1 =~ .8*x1 + .7*x2 + .6*x3
 f2 =~ .7*x4 + .6*x5 + .5*x6
@@ -324,27 +456,27 @@ f1 ~~ 0*f2
 '
 ```
 
-After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implicitly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with loadings ranging from .5 to .8. The second model string (`model.h0`) is used to define the hypothesized (wrong) H0 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
+After loading the `lavaan` package, two lavaan model strings are defined. The first model string (`model.pop`) is used to define the population covariance matrix, so all model parameters are defined (at least implicitly, consult the lavaan documentation for defaults). Here, we define a model comprising two latent factors (each with variance of 1), that are correlated by .5. Each latent factor is measured through three observed indicators (x1 to x6) with (unstandardized) loadings ranging from .5 to .8. The second model string (`model.h0`) is used to define the hypothesized (wrong) H0 model. To obtain the model-implied covariance matrix, we need to fit this model to the population data; so this is basically an ordinary CFA model string with many free parameters. Note that this model contraints the correlation between the two latent factors to zero. When fitting this model to the population data defined previously, the model is thus wrong, since we defined the correlation between these factors in the population to be .50.
 
 
 Having defined the model strings, we proceed by actually obtaining the relevant covariance matrices.
 
 ```{r eval=FALSE}
-# get population covariance matrix; equivalent to a perfectly fitting H1 model
-cov.h1 <- fitted(sem(model.pop))$cov
+# get population covariance matrix; equivalent to a perfectly fitting model
+cov.pop <- fitted(sem(model.pop))$cov
 
 # get covariance matrix as implied by H0 model
-res.h0 <- sem(model.h0, sample.cov = cov.h1, sample.nobs = 1000, likelihood='wishart')
+res.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, likelihood='wishart')
 df <- res.h0@test[[1]]$df
 cov.h0 <- fitted(res.h0)$cov
 ```
 
-`cov.h1` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`model.h0`) to the population data (`cov.h1`). The model-implied covariance matrix then can be obtained by calling `cov.h0 <- fitted(res.h0)$cov`.
+`cov.pop` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`model.h0`) to the population data (`cov.pop`). The model-implied covariance matrix then can be obtained by calling `cov.h0 <- fitted(res.h0)$cov`.
 
-We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = cov.h0` and `Sigma = cov.h1`.
+We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = cov.h0` and `Sigma = cov.pop`.
 
 ```{r eval=FALSE}
-ph4 <- semPower.postHoc(SigmaHat = cov.h0, Sigma = cov.h1, alpha = .05, N = 1000, df = df)
+ph4 <- semPower.postHoc(SigmaHat = cov.h0, Sigma = cov.pop, alpha = .05, N = 1000, df = df)
 summary(ph4)
 ```
 
@@ -354,10 +486,10 @@ It is instructive to compare the expected chi-square (calculated via the obtaine
 
 ```{r eval=FALSE}
 fitmeasures(res.h0, 'chisq')
-ph4$fmin * (ph$N-1)
+ph4$fmin * (ph4$N-1)
 ```
 
-`fitmeasures(res.h0, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `model.h1` to the population data (`cov.h1`, see above). The line `ph4$fmin * (ph$N-1)` computes the expected chi-square, i.e. F0 multiplied by (N - 1). Obviously, both values match (= 81.52).
+`fitmeasures(res.h0, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `model.h1` to the population data (`cov.pop`, see above). The line `ph4$fmin * (ph4$N-1)` computes the expected chi-square, i.e. F0 multiplied by (N - 1). Obviously, both values match (= 81.52).
 
 
 &nbsp;
