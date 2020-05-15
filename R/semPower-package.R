@@ -17,9 +17,12 @@
 #' @docType package
 #' @name semPower
 #' @author  Morten Moshagen \email{morten.moshagen@@uni-ulm.de}
-#' @references
+#' @Citation
+#' If you use \code{semPower} in publications, please cite the package as follows:
+#' 
 #' Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. \emph{Structural Equation Modeling, 23}, 54-60. doi: 10.1080/10705511.2014.950896
-#' @examples
+#'
+#'  @examples
 #' # a-priori power analyses using rmsea = .05 a target power (1-beta) of .80
 #' ap1 <- semPower.aPriori(0.05, 'RMSEA', alpha = .05, beta = .20, df = 200)
 #' summary(ap1)

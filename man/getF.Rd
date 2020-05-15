@@ -5,8 +5,14 @@
 \title{getF
 calculates minimum of the ML-fit-function from known fit indices}
 \usage{
-getF(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL,
-  Sigma = NULL)
+getF(
+  effect,
+  effect.measure,
+  df = NULL,
+  p = NULL,
+  SigmaHat = NULL,
+  Sigma = NULL
+)
 }
 \arguments{
 \item{effect}{magnitude of effect}
