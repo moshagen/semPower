@@ -14,7 +14,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   
   # define central and non-central chi
   maxvalue <- qchisq(.99999, df, ncp)
-  minvalue <- qchisq(.00001, df, 0)
+  minvalue <- max(.1, qchisq(.00001, df, 0))
   x <- seq(minvalue, maxvalue, length=1000)
   
   xchi <- dchisq(x, df, ncp = 0)
