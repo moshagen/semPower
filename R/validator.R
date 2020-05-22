@@ -44,22 +44,30 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if(is.null(SigmaHat) && is.null(Sigma)){
 
     if(!effect.measure %in% known.effects.measures){
-      stop(paste("effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
+      stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
     }
 
     # for multiple group analyses, check matching length
     if(is.list(N)){
-      if(!is.null(effect) && length(effect) == 1) warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
-      if(!is.null(effect) && length(N) != length(effect)) stop("Power analyses with multiple groups requires specification of the effect size in each group.")
+      if(!is.null(effect) && length(effect) == 1){
+        warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
+      }else if(!is.null(effect) && length(N) != length(effect)){
+        stop("Power analyses with multiple groups requires specification of the effect size in each group.")
+      }
     }
     if(is.list(effect) && power.type == "a-priori"){   # special messages for a priori, given weights need to be provided 
-      if(is.null(N)) stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument.")
-      if(!is.null(N) && length(N) == 1) warning("Only single sample size provided in multiple group power analyses, assuming equal weights.")
-      if(!is.null(N) && length(N) != length(effect)) stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")
+      if(is.null(N) || length(N) == 1){
+        warning("No or only a single sample weight provided in multiple group power analyses, assuming equal weights.")        
+      }else if(!is.null(N) && length(N) != length(effect)){
+        stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")      
+      } 
     }
     if(is.list(effect) && power.type == "post-hoc" || power.type == "compromise"){
-      if(!is.null(N) && length(N) == 1) warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group")
-      if(!is.null(N) && length(N) != length(effect)) stop("Power analyses with multiple groups requires specification of sample sizes for each group")
+      if(!is.null(N) && length(N) == 1){
+        warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group.")
+      }else if(!is.null(N) && length(N) != length(effect)){
+        stop("Power analyses with multiple groups requires specification of sample sizes for each group")        
+      }
     }
     
     if(power.type != 'powerplot.byEffect')
@@ -85,6 +93,13 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
 
     if(is.list(SigmaHat) || is.list(Sigma)){
       if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+      if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
+      if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
+      if(length(N) == 1){
+        warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
+      }else if(length(SigmaHat) != length(N)){
+        stop("Multiple group power analyses require specification ofN  for each group.")
+      } 
     }
     
     if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
