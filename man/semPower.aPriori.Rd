@@ -10,6 +10,7 @@ semPower.aPriori(
   alpha,
   beta = NULL,
   power = NULL,
+  N = NULL,
   df,
   p = NULL,
   SigmaHat = NULL,
@@ -26,6 +27,8 @@ semPower.aPriori(
 \item{beta}{beta error; set either beta or power}
 
 \item{power}{power (1-beta); set either beta or power}
+
+\item{N}{a list of sample weights for multiple group power analyses, e.g. list(1,2) to make the second group twice as large as the first one}
 
 \item{df}{the model degrees of freedom}
 

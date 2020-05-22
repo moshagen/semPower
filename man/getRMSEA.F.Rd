@@ -4,12 +4,14 @@
 \alias{getRMSEA.F}
 \title{getRMSEA.F}
 \usage{
-getRMSEA.F(Fmin, df)
+getRMSEA.F(Fmin, df, nGroups = 1)
 }
 \arguments{
 \item{Fmin}{minimum of the ML-fit-function}
 
 \item{df}{model degrees of freedom}
+
+\item{nGroups}{the number of groups}
 }
 \value{
 RMSEA

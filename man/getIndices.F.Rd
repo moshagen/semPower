@@ -4,7 +4,7 @@
 \alias{getIndices.F}
 \title{getIndices.F}
 \usage{
-getIndices.F(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL)
+getIndices.F(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = NULL)
 }
 \arguments{
 \item{fmin}{minimum of the ML-fit-function}
@@ -16,6 +16,8 @@ getIndices.F(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL)
 \item{SigmaHat}{model implied covariance matrix}
 
 \item{Sigma}{population covariance matrix}
+
+\item{N}{list of sample weights}
 }
 \value{
 list of indices

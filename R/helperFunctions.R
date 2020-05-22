@@ -145,10 +145,11 @@ getF.AGFI <- function(AGFI, df, p){
 #' @param p number of observed variables
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
+#' @param N list of sample weights
 #' @return list of indices
-getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
+getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = NULL){
   fit <- list(
-    rmsea = getRMSEA.F(fmin, df),
+    rmsea = getRMSEA.F(fmin, df, nGroups=length(N)),
     mc = getMc.F(fmin),
     gfi = NULL,
     agfi = NULL
@@ -158,11 +159,17 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
     fit$agfi <- getAGFI.F(fmin, df, p)
   }
   if(!is.null(SigmaHat)){
-    fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma)
-    fit$cfi <- getCFI.Sigma(SigmaHat, Sigma)
+    if(length(N) > 1){
+      fit$srmr <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, N)
+      fit$cfi <- getCFI.Sigma.mgroups(SigmaHat, Sigma, N)
+    }else{
+      fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma)
+      fit$cfi <- getCFI.Sigma(SigmaHat, Sigma)
+    }
   }
   fit
 }
+
 
 
 #' getRMSEA.F
@@ -176,10 +183,9 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
 #' @param nGroups the number of groups
 #' @return RMSEA
 getRMSEA.F <- function(Fmin, df, nGroups = 1){
-  RMSEA <- sqrt(Fmin/df)*sqrt(nGroups)
+  RMSEA <- sqrt(Fmin/df) * sqrt(nGroups)
   RMSEA
 }
-
 
 #' getMc.F
 #'
@@ -285,9 +291,12 @@ getSRMR.Sigma.mgroups <- function(SigmaHat, S, N){
   # lavaan approach: apply sample weights to srmr
   # srmr <- (sum(srmrs*N)/sum(N))
   # mplus approach: apply sample weights to squared sums of res
-  srmr <- sqrt(sum(srmrs^2*N)/sum(N))
+  srmr <- sqrt(sum(unlist(srmrs)^2*unlist(N))/sum(unlist(N)))
   srmr
 }
+
+
+
 
 #' getCFI.Sigma
 #'
@@ -309,7 +318,7 @@ getCFI.Sigma <- function(SigmaHat, S){
   cfi
 }
 
-#' getCFI.Sigma.mgroup
+#' getCFI.Sigma.mgroups
 #'
 #' calculates CFI given model-implied and observed covariance matrix for multiple group models.
 #'
@@ -319,7 +328,7 @@ getCFI.Sigma <- function(SigmaHat, S){
 #' @param S a list of observed (or population) covariance matrix
 #' @param N a list of group weights
 #' @return CFI
-CFIgetCFI.Sigma.groups <- function(SigmaHat, S, N){
+getCFI.Sigma.mgroups <- function(SigmaHat, S, N){
 
   fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
   fmin <- sum(unlist(fmin.g) * (unlist(N)-1))
