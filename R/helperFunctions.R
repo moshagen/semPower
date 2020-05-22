@@ -236,8 +236,8 @@ getAGFI.F <- function(Fmin, df, p){
 #' @param S observed (or population) covariance matrix
 #' @return Fmin
 getF.Sigma <- function(SigmaHat, S){
-  checkPositiveDefinite(SigmaHat, 'SigmaHat')
-  checkPositiveDefinite(S, 'S')
+  checkPositiveDefinite(SigmaHat)
+  checkPositiveDefinite(S)
   fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
   fmin
 }
@@ -251,12 +251,23 @@ getF.Sigma <- function(SigmaHat, S){
 #' @param S observed (or population) covariance matrix
 #' @return SRMR
 getSRMR.Sigma <- function(SigmaHat, S){
-  checkPositiveDefinite(SigmaHat, 'SigmaHat')
-  checkPositiveDefinite(S, 'S')
+  checkPositiveDefinite(SigmaHat)
+  checkPositiveDefinite(S)
   p <- ncol(S)
-  m <- (S - SigmaHat)
-  f.ols <- .5*sum(m^2)
-  srmr <- sqrt(f.ols / (.5*(p*(p+1))))
+
+  # bollen approach to standardization
+  # m <- cov2cor(S) - cov2cor(SigmaHat)
+  
+  # hu+bentler approach to std
+  sqrt.d <- 1/sqrt(diag(S))
+  D <- diag(sqrt.d, ncol=length(sqrt.d))
+  m <- D %*% (S - SigmaHat) %*% D
+  
+  fols <- sum(m[lower.tri(m, diag=T)]^2)
+  # mplus variant
+  #fols <- (sum(m[lower.tri(m, diag=F)]^2)  +  sum(((diag(S) - diag(SigmaHat))/diag(S))^2)) 
+  
+  srmr <- sqrt(fols / (p*(p+1)/2))
   srmr
 }
 
@@ -271,8 +282,8 @@ getSRMR.Sigma <- function(SigmaHat, S){
 #' @param S observed (or population) covariance matrix
 #' @return CFI
 getCFI.Sigma <- function(SigmaHat, S){
-  checkPositiveDefinite(SigmaHat, 'SigmaHat')
-  checkPositiveDefinite(S, 'S')
+  checkPositiveDefinite(SigmaHat)
+  checkPositiveDefinite(S)
   fm <- getF.Sigma(SigmaHat, S)
   SigmaHatNull <- diag(ncol(S))
   diag(SigmaHatNull) <- diag(S)
