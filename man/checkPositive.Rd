@@ -4,7 +4,7 @@
 \alias{checkPositive}
 \title{checkPositive}
 \usage{
-checkPositive(x, message)
+checkPositive(x, message = NULL)
 }
 \arguments{
 \item{x}{x}

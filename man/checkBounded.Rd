@@ -4,7 +4,7 @@
 \alias{checkBounded}
 \title{checkBounded}
 \usage{
-checkBounded(x, message, bound = c(0, 1))
+checkBounded(x, message = NULL, bound = c(0, 1))
 }
 \arguments{
 \item{x}{x}

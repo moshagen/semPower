@@ -62,7 +62,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")      
       } 
     }
-    if(is.list(effect) && power.type == "post-hoc" || power.type == "compromise"){
+    if(is.list(effect) && (power.type == "post-hoc" || power.type == "compromise")){
       if(!is.null(N) && length(N) == 1){
         warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group.")
       }else if(!is.null(N) && length(N) != length(effect)){
@@ -70,8 +70,10 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       }
     }
     
-    if(power.type != 'powerplot.byEffect')
+    if(power.type != 'powerplot.byEffect'){
+      if(is.null(effect)) stop('Effect is not defined.')
       sapply(effect, checkPositive, message = effect.measure)
+    }
 
     if(effect.measure == "GFI" || effect.measure == "AGFI"){
 
@@ -120,7 +122,8 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   
   # specifics depending on type of power analyses
 
-  if(power.type == "post-hoc" || power.type == "compromise" || (power.type == "a-priori") && is.list(effect)){
+  if(power.type == "post-hoc" || power.type == "compromise" || (power.type == "a-priori" && is.list(effect))){
+    if(is.null(N)) stop('N is not defined.')
     sapply(N, checkPositive, message = 'N')
   }
 

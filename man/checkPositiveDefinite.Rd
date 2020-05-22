@@ -4,7 +4,7 @@
 \alias{checkPositiveDefinite}
 \title{checkPositiveDefinite}
 \usage{
-checkPositiveDefinite(x, message)
+checkPositiveDefinite(x, message = NULL)
 }
 \arguments{
 \item{x}{x}

@@ -11,8 +11,8 @@
 #' @param n number of observations
 #' @return NCP
 getNCP <- function(Fmin, n){
-  NCP <- (n-1) * Fmin
-  NCP
+  NCP <- unlist(Fmin) * (unlist(n)-1)
+  sum(NCP)
 }
 
 
@@ -352,9 +352,12 @@ getFormattedResults <- function(type, result, digits = 6){
 
   if(type == 'post-hoc'){
 
-    rows <- c('df','Num Observations')
+    ifelse(!is.list(result$N), rows <- c('df','Num Observations'), rows <- c('df','Num Observations',' '))
     body <- data.frame(rows)
-    body$values <- c(result$df, result$N)
+    ifelse(!is.list(result$N), 
+           body$values <- c(result$df, result$N), 
+           body$values <- c(result$df, sum(unlist(result$N)), paste0('(',paste(result$N, collapse = ', '),')'))
+          )
 
     rows <- c('NCP', '', 'Critical Chi-Square')
     body2 <- data.frame(rows)
