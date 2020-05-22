@@ -173,9 +173,10 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL){
 #'
 #' @param Fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
+#' @param nGroups the number of groups
 #' @return RMSEA
-getRMSEA.F <- function(Fmin, df){
-  RMSEA <- sqrt(Fmin/df)
+getRMSEA.F <- function(Fmin, df, nGroups = 1){
+  RMSEA <- sqrt(Fmin/df)*sqrt(nGroups)
   RMSEA
 }
 
@@ -271,6 +272,22 @@ getSRMR.Sigma <- function(SigmaHat, S){
   srmr
 }
 
+#' getSRMR.Sigma.mgroups 
+#'
+#' calculates SRMR given model-implied and observed covariance matrix for multiple group models
+#'
+#' @param SigmaHat a list of model implied covariance matrices
+#' @param S a list of observed (or population) covariance matrices
+#' @param N a list of group weights
+#' @return SRMR
+getSRMR.Sigma.mgroups <- function(SigmaHat, S, N){
+  srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]]))
+  # lavaan approach: apply sample weights to srmr
+  # srmr <- (sum(srmrs*N)/sum(N))
+  # mplus approach: apply sample weights to squared sums of res
+  srmr <- sqrt(sum(srmrs^2*N)/sum(N))
+  srmr
+}
 
 #' getCFI.Sigma
 #'
@@ -290,6 +307,32 @@ getCFI.Sigma <- function(SigmaHat, S){
   f0 <- getF.Sigma(SigmaHatNull, S)
   cfi <- (f0-fm)/f0
   cfi
+}
+
+#' getCFI.Sigma.mgroup
+#'
+#' calculates CFI given model-implied and observed covariance matrix for multiple group models.
+#'
+#' cfi= (f_null - f_hyp) / f_null
+#'
+#' @param SigmaHat a list of model implied covariance matrix
+#' @param S a list of observed (or population) covariance matrix
+#' @param N a list of group weights
+#' @return CFI
+CFIgetCFI.Sigma.groups <- function(SigmaHat, S, N){
+
+  fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
+  fmin <- sum(unlist(fmin.g) * (unlist(N)-1))
+  
+  fnull.g <- sapply(seq_along(S), function(x){
+    SigmaHatNull <- diag(ncol(S[[x]]))
+    diag(SigmaHatNull) <- diag(S[[x]])
+    getF.Sigma(SigmaHatNull, S[[x]])
+    })
+  fnull <- sum(unlist(fnull.g) * (unlist(N)-1))
+  
+  cfi <- (fnull - fmin)/fnull
+  return(cfi)
 }
 
 
