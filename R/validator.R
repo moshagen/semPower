@@ -125,7 +125,8 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
 #' checks whether x is defined and a positive number, stop otherwise
 #' @param x x
 #' @param message identifier for x
-checkPositive <- function(x, message){
+checkPositive <- function(x, message = NULL){
+  if(is.null(message)) message <- deparse(substitute(message))
   if(is.null(x) || is.na(x) || x <= 0){
     stop(paste(message," must be larger than zero"))
   }
@@ -137,7 +138,8 @@ checkPositive <- function(x, message){
 #' @param x x
 #' @param message identifier for x
 #' @param bound the boundaries, array of size two
-checkBounded <- function(x, message, bound = c(0,1)){
+checkBounded <- function(x, message = NULL, bound = c(0,1)){
+  if(is.null(message)) message <- deparse(substitute(message))
   if(is.null(x) || is.na(x) || x <= bound[1] || x >= bound[2]){
     stop(paste(message," must must lie within",bound[1],'and', bound[2]))
   }
@@ -148,7 +150,8 @@ checkBounded <- function(x, message, bound = c(0,1)){
 #' checks whether x is positive definite
 #' @param x x
 #' @param message identifier for x
-checkPositiveDefinite <- function(x, message){
+checkPositiveDefinite <- function(x, message = NULL){
+  if(is.null(message)) message <- deparse(substitute(message))
   if(is.null(x))
     stop(paste(message, " may not be NULL"))
   if(!is.numeric(x))
