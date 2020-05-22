@@ -34,6 +34,12 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
 
   known.effects.measures <- c("F0","RMSEA","MC","GFI", "AGFI")
 
+  # remove list structure if length == 1
+  if(is.list(effect) && length(effect) == 1) effect <- unlist(effect)
+  if(is.list(N) && length(N) == 1) N <- unlist(N)
+  if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- unlist(SigmaHat)
+  if(is.list(Sigma) && length(Sigma) == 1) Sigma <- unlist(Sigma)
+  
   # do input validation
   if(is.null(SigmaHat) && is.null(Sigma)){
 
@@ -41,8 +47,23 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop(paste("effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
     }
 
+    # for multiple group analyses, check matching length
+    if(is.list(N)){
+      if(!is.null(effect) && length(effect) == 1) warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
+      if(!is.null(effect) && length(N) != length(effect)) stop("Power analyses with multiple groups requires specification of the effect size in each group.")
+    }
+    if(is.list(effect) && power.type == "a-priori"){   # special messages for a priori, given weights need to be provided 
+      if(is.null(N)) stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument.")
+      if(!is.null(N) && length(N) == 1) warning("Only single sample size provided in multiple group power analyses, assuming equal weights.")
+      if(!is.null(N) && length(N) != length(effect)) stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")
+    }
+    if(is.list(effect) && power.type == "post-hoc" || power.type == "compromise"){
+      if(!is.null(N) && length(N) == 1) warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group")
+      if(!is.null(N) && length(N) != length(effect)) stop("Power analyses with multiple groups requires specification of sample sizes for each group")
+    }
+    
     if(power.type != 'powerplot.byEffect')
-      checkPositive(effect, effect.measure)
+      sapply(effect, checkPositive, message = effect.measure)
 
     if(effect.measure == "GFI" || effect.measure == "AGFI"){
 
@@ -50,7 +71,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         stop("effect.measure GFI and AGFI require specification of p")
       }
 
-      checkPositive(p, 'p')
+      checkPositive(p)
 
     }
   }
@@ -59,28 +80,37 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
   }
   if(!is.null(SigmaHat) && !is.null(Sigma)){
-    if(ncol(SigmaHat) != ncol(Sigma) || nrow(SigmaHat) != nrow(Sigma))
-      stop("Sigma and SigmaHat must be of equal size")
-    if(!isSymmetric(Sigma) || !isSymmetric(SigmaHat))
-      stop("Sigma and SigmaHat must be symmetric square matrices")
-    if(ncol(SigmaHat) < 2)
-      stop("Sigma and SigmaHat must be at least of dimension 2*2")
-    if(sum(eigen(Sigma)$values < 0) > 0 || sum(eigen(SigmaHat)$values < 0) > 0)
-      stop("Sigma and SigmaHat must be positive definite")
     if(!is.null(effect) || !is.null(effect.measure))
-      warning("ignoring effect and effect.measure when Sigma and SigmaHat are set")
+      warning("Ignoring effect and effect.measure when Sigma and SigmaHat are set")
+
+    if(is.list(SigmaHat) || is.list(Sigma)){
+      if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+    }
+    
+    if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
+    if(!is.list(Sigma)) Sigma <- list(Sigma)
+    
+    if(any(sapply(Sigma, ncol) != sapply(SigmaHat, ncol)) || any(sapply(Sigma, nrow) != sapply(SigmaHat, nrow)))
+      stop("Sigma and SigmaHat must be of equal size")
+    if(any(!sapply(c(Sigma,SigmaHat), isSymmetric)))
+      stop("Sigma and SigmaHat must be symmetric square matrices")
+    if(any(sapply(c(Sigma,SigmaHat), ncol) < 2))
+      stop("Sigma and SigmaHat must be at least of dimension 2*2")
+    if(any(sapply(c(Sigma,SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
+      stop("Sigma and SigmaHat must be positive definite")
   }
 
-  checkPositive(df, 'df')
+  checkPositive(df)
 
+  
   # specifics depending on type of power analyses
 
-  if(power.type == "post-hoc" || power.type == "compromise"){
-    checkPositive(N, 'N')
+  if(power.type == "post-hoc" || power.type == "compromise" || (power.type == "a-priori") && is.list(effect)){
+    sapply(N, checkPositive, message = 'N')
   }
 
   if(power.type == "a-priori" || power.type == "post-hoc"){
-    checkBounded(alpha, 'alpha')
+    checkBounded(alpha)
   }
 
   if(power.type == "a-priori"){
@@ -89,31 +119,31 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     if(!is.null(beta) && !is.null(power) && power != (1-beta))
       stop("Either set beta or set power, but not both.")
     if(!is.null(beta))
-      checkBounded(beta, 'beta')
+      checkBounded(beta)
     if(!is.null(power))
-      checkBounded(power, 'power')
+      checkBounded(power)
   }
 
   if(power.type == "compromise"){
-    checkPositive(abratio, 'abratio')
+    checkPositive(abratio)
   }
 
   # specifics for power plots
   if(power.type == "powerplot.byN"){
-    checkBounded(alpha, 'alpha')
-    checkBounded(power.max, "power.max")
-    checkBounded(power.min, "power.min")
-    checkPositive(steps, "steps")
-    checkPositive(linewidth, "linewidth")
+    checkBounded(alpha)
+    checkBounded(power.max)
+    checkBounded(power.min)
+    checkPositive(steps)
+    checkPositive(linewidth)
   }
   
   if(power.type == "powerplot.byEffect"){
-    checkPositive(N, 'N')
-    checkBounded(alpha, 'alpha')
-    checkPositive(effect.min, "effect.min")
-    checkPositive(effect.max, "effect.max")
-    checkPositive(steps, "steps")
-    checkPositive(linewidth, "linewidth")
+    checkPositive(N)
+    checkBounded(alpha)
+    checkPositive(effect.min)
+    checkPositive(effect.max)
+    checkPositive(steps)
+    checkPositive(linewidth)
   }
   
   
