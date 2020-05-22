@@ -35,7 +35,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
 
   if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     effect.measure <- 'F0'
-    p <- ncol(SigmaHat)
+    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
   }
 
   fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
