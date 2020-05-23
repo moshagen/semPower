@@ -149,7 +149,7 @@ getF.AGFI <- function(AGFI, df, p){
 #' @return list of indices
 getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = NULL){
   fit <- list(
-    rmsea = getRMSEA.F(fmin, df, nGroups=length(N)),
+    rmsea = getRMSEA.F(fmin, df, nGroups=ifelse(length(N)>1, length(N), 1)),
     mc = getMc.F(fmin),
     gfi = NULL,
     agfi = NULL
