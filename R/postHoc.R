@@ -28,6 +28,10 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
+  # convert vectors to lists
+  if(!is.list(effect) && length(effect) > 1) effect <- as.list(effect)
+  if(!is.list(N) && length(N) > 1) N <- as.list(N)
+  
   validateInput('post-hoc', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = NULL, power = NULL, abratio = NULL,
                 N = N, df = df, p = p,
@@ -37,10 +41,33 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     effect.measure <- 'F0'
     p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
   }
+  
+  # make sure N/effects have the same length
+  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
+    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  }
+  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
+    effect <- as.list(rep(effect, length(N)))
+  }
+  
+  # obsolete: single group case only
+  # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
+  # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
+  
+  if(!is.null(effect)){
+    fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+  }
+  if(!is.null(SigmaHat)){
+    if(is.list(Sigma)){
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+    }else{
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
+    }
+  }
 
-  fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
-  ncp <- getNCP(fmin, N)
+  fmin <- sum(fmin.g)
+  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
+  ncp <- getNCP(fmin.g, N)
 
   beta <- pchisq(qchisq(alpha, df, lower.tail = F), df, ncp=ncp)
   power <- pchisq(qchisq(alpha, df, lower.tail = F), df, ncp=ncp, lower.tail = F)

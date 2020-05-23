@@ -387,9 +387,12 @@ getFormattedResults <- function(type, result, digits = 6){
 
   if(type == 'a-priori'){
 
-    rows <- c('df','Required Num Observations','')
+    ifelse(length(result$requiredN.g) == 1, rows <- c('df','Required Num Observations',''), rows <- c('df','Required Num Observations',' ',''))
     body <- data.frame(rows)
-    body$values <- c(result$df, result$requiredN, '')
+    ifelse(length(result$requiredN.g) == 1, 
+           body$values <- c(result$df, result$requiredN, ''),
+           body$values <- c(result$df, result$requiredN, paste0('(',paste(result$requiredN.g, collapse = ', '),')'), '')
+    )    
 
     rows <- c('Critical Chi-Square', 'NCP', 'Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
     foot <- data.frame(rows)
@@ -460,17 +463,25 @@ getFormattedResults <- function(type, result, digits = 6){
 
   if(type == 'compromise'){
 
-    rows <- c('df','Num Observations', 'Desired Alpha/Beta Ratio', '','Critical Chi-Square')
+    ifelse(!is.list(result$N), 
+           rows <- c('df','Num Observations', 'Desired Alpha/Beta Ratio', '','Critical Chi-Square'), 
+           rows <- c('df','Num Observations', ' ', 'Desired Alpha/Beta Ratio', '','Critical Chi-Square')
+           )
     body <- data.frame(rows)
+    
     if(!result$bPrecisionWarning){
-      body$values <- c(result$df, result$N, formatC(result$desiredAbratio, format = 'f', digits = digits), '',
-                       substr(formatC(result$chiCrit, format = 'f', digits = digits), 1, digits+2))
+      sChiCrit <- substr(formatC(result$chiCrit, format = 'f', digits = digits), 1, digits+2)
     }else{
       smax <- substr(formatC(result$max, format = 'f', digits = digits), 1, digits+2)
       smin <- substr(formatC(result$min, format = 'f', digits = digits), 1, digits+2)
       sChiCrit <- paste(smax,'< Chi-Square < ', smin)
-      body$values <- c(result$df, result$N, formatC(result$desiredAbratio, format = 'f', digits = digits), '',
-                       sChiCrit)
+    }
+    if(!is.list(result$N)){
+      body$values <- c(result$df, result$N, 
+                       formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
+    }else{
+      body$values <- c(result$df, sum(unlist(result$N)), paste0('(',paste(result$N, collapse = ', '),')'), 
+                       formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
     }
 
     rows <- c('Implied Alpha', 'Implied Beta', 'Implied Power (1-beta)', 'Actual Alpha/Beta Ratio')

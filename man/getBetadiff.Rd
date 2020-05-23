@@ -4,7 +4,7 @@
 \alias{getBetadiff}
 \title{getBetadiff}
 \usage{
-getBetadiff(cN, critChi, logBetaTarget, fmin, df)
+getBetadiff(cN, critChi, logBetaTarget, fmin, df, weights = NULL)
 }
 \arguments{
 \item{cN}{current N}
@@ -16,6 +16,8 @@ getBetadiff(cN, critChi, logBetaTarget, fmin, df)
 \item{fmin}{minimum of the ML fit function}
 
 \item{df}{the model degrees of freedom}
+
+\item{weights}{sample weights for multiple group models}
 }
 \value{
 squared difference requested and achieved beta on a log scale

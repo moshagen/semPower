@@ -26,6 +26,10 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
+  # convert vectors to lists
+  if(!is.list(effect) && length(effect) > 1) effect <- as.list(effect)
+  if(!is.list(N) && length(N) > 1) N <- as.list(N) 
+  
   validateInput('compromise', effect = effect, effect.measure = effect.measure,
                 alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                 N = N, df = df, p = p,
@@ -37,13 +41,38 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
   }
 
-  fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
-  ncp <- getNCP(fmin, N)
+    # make sure N/effects have the same length
+  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
+    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  }
+  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
+    effect <- as.list(rep(effect, length(N)))
+  }
+  ngroups <- ifelse(is.null(N), 1, length(N))
+  
+  # obsolete, single group case only
+  # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
+  # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
+  
+  if(!is.null(effect)){
+    fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+  }
+  if(!is.null(SigmaHat)){
+    if(is.list(Sigma)){
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+    }else{
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
+    }
+  }
+  
+  fmin <- sum(fmin.g)
+  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
+  
+  ncp <- getNCP(fmin.g, N)
   log.abratio <- log(abratio)
 
   if(ncp >= 1e5)
-    warning('ncp is larger than 1e5, this is going to cause trouble')
+    warning('NCP is larger than 100000, this is going to cause trouble.')
 
 
   # determine max/min chi for valid alpha/beta prob
@@ -51,7 +80,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   # central chi always gives reusult up to 1e-320
   max <- qchisq(log(1e-320), df, lower.tail = F, log.p = T)
 
-  # non-central chi accuracy is usaually lower, depending on df and ncp
+  # non-central chi accuracy is usually lower, depending on df and ncp
   pmin <- -Inf
   testp <- 1e-320
   while(is.infinite(pmin)){

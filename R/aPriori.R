@@ -7,6 +7,7 @@
 #' @param alpha alpha error
 #' @param beta beta error; set either beta or power
 #' @param power power (1-beta); set either beta or power
+#' @param N a list of sample weights for multiple group power analyses, e.g. list(1,2) to make the second group twice as large as the first one 
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure. 
@@ -26,24 +27,51 @@
 #' @export
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
-                             df, p = NULL,
+                             N = NULL, df, p = NULL,
                              SigmaHat = NULL, Sigma = NULL){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+
+  # convert vectors to lists
+  if(!is.list(effect) && length(effect) > 1) effect <- as.list(effect)
+  if(!is.list(N) && length(N) > 1) N <- as.list(N)  # sample weights
   
   validateInput('a-priori', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = beta, power = power, abratio = NULL,
-                N = NULL, df = df, p = p,
+                N = N, df = df, p = p,
                 SigmaHat = SigmaHat, Sigma = Sigma)
 
   if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     effect.measure <- 'F0'
     p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
   }
-
-  fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
-
+  
+  # make sure N/effects have the same length
+  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
+    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  }
+  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
+    effect <- as.list(rep(effect, length(N)))
+  }
+  ngroups <- ifelse(is.null(N), 1, length(N))
+  
+  # obsolete, single group case only
+  # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
+  # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
+  
+  if(!is.null(effect)){
+    fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+  }
+  if(!is.null(SigmaHat)){
+    if(is.list(Sigma)){
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+    }else{
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
+    }
+  }
+  
+  fmin <- sum(fmin.g)
+  
   if(!is.null(beta)){
     desiredBeta <- beta
     desiredPower <- 1 - desiredBeta
@@ -62,13 +90,16 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 
   if(!bPrecisionWarning){
 
-    chiCritOptim <- suppressWarnings( # we dont want to hear that Nelder-Mead doesn't like unidimensional optimization
-      optim(par = c(startN), fn = getBetadiff,
-            critChi=critChi, logBetaTarget=logBetaTarget, fmin=fmin, df=df,
-            method='Nelder-Mead')
-    )
+    weights <- 1
+    if(!is.null(N) && length(N) > 1){
+      weights <- unlist(N)/sum(unlist(N))
+    }
 
-    requiredN <- ceiling(chiCritOptim$par)
+    chiCritOptim <- optim(par = c(startN), fn = getBetadiff,
+            critChi=critChi, logBetaTarget=logBetaTarget, fmin=unlist(fmin.g), df=df, weights=weights,
+            method='Nelder-Mead', control = list(warn.1d.NelderMead=F))
+
+    requiredN <- sum(ceiling(weights*chiCritOptim$par))  
 
     # even N = 10 achieves or exceeds desired power
     if(requiredN < 10){
@@ -80,9 +111,14 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # even N = 10 achieves or exceeds desired power
     requiredN <- 10
   }
-
-
-  impliedNCP <- getNCP(fmin, requiredN)
+  
+  # N by group
+  requiredN.g <- ceiling(weights*requiredN)
+  
+  # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
+  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, requiredN.g)
+  
+  impliedNCP <- getNCP(fmin.g, requiredN.g)
   impliedBeta <- pchisq(critChi, df, impliedNCP)
   impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = F)
   impliedAbratio <- alpha / impliedBeta
@@ -100,6 +136,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     effect = effect,
     effect.measure = effect.measure,
     requiredN = requiredN,
+    requiredN.g = requiredN.g,
     df = df,
     p = p,
     chiCrit = critChi,
@@ -126,24 +163,25 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 #' @param logBetaTarget log(desired beta)
 #' @param fmin minimum of the ML fit function
 #' @param df the model degrees of freedom
+#' @param weights sample weights for multiple group models 
 #' @return squared difference requested and achieved beta on a log scale
 #' @importFrom stats pchisq
-getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df){
+getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL){
   diff <- .Machine$integer.max
 
   if(cN < 5){
     # avoid NA in pchisq; nelder-mead can handle NA diff
     diff <- NA
-
+    
   }else{
-
-    cNCP <- fmin * (cN - 1)
+    cNCP <- sum(fmin * ((weights *cN) - 1) )
+    
     cLogBeta <- pchisq(critChi, df, cNCP, log.p = T)
-
+    
     diff <- (logBetaTarget - cLogBeta)^2
-
+    
   }
-
+  
   diff
 }
 
