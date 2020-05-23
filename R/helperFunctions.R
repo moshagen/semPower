@@ -291,7 +291,7 @@ getSRMR.Sigma.mgroups <- function(SigmaHat, S, N){
   # lavaan approach: apply sample weights to srmr
   # srmr <- (sum(srmrs*N)/sum(N))
   # mplus approach: apply sample weights to squared sums of res
-  srmr <- sqrt(sum(unlist(srmrs)^2*unlist(N))/sum(unlist(N)))
+  srmr <- sqrt( sum(unlist(srmrs)^2 * unlist(N)) / sum(unlist(N)) )
   srmr
 }
 
@@ -329,21 +329,26 @@ getCFI.Sigma <- function(SigmaHat, S){
 #' @param N a list of group weights
 #' @return CFI
 getCFI.Sigma.mgroups <- function(SigmaHat, S, N){
+  N <- unlist(N)
 
   fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
-  fmin <- sum(unlist(fmin.g) * (unlist(N)-1))
-  
   fnull.g <- sapply(seq_along(S), function(x){
     SigmaHatNull <- diag(ncol(S[[x]]))
     diag(SigmaHatNull) <- diag(S[[x]])
     getF.Sigma(SigmaHatNull, S[[x]])
     })
-  fnull <- sum(unlist(fnull.g) * (unlist(N)-1))
   
+  # approach A: apply sampling weights to CFI
+  #cfi.g <- (fnull.g - fmin.g)/fnull.g
+  #cfi <-  sum(cfi.g * N) / sum(N)
+
+  # approach B: apply sampling weights to fmin and fnull
+  fmin <- sum(fmin.g * N) / sum(N)
+  fnull <- sum(fnull.g * N) / sum(N)
   cfi <- (fnull - fmin)/fnull
+  
   return(cfi)
 }
-
 
 
 ##########################  output and formatting #####################
