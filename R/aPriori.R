@@ -51,11 +51,13 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   # make sure N/effects have the same length
   if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
     N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  }else{
+    N <- 1 # single weight for single group model
   }
   if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
     effect <- as.list(rep(effect, length(N)))
   }
-  ngroups <- ifelse(is.null(N), 1, length(N))
+  ngroups <- length(N)
   
   # obsolete, single group case only
   # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
