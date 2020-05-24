@@ -3,18 +3,20 @@
 #'
 #' Determine power (1-beta) given alpha, df, and effect
 #'
-#' @param effect effect size specifying the discrepancy between H0 and H1
+#' @param effect effect size specifying the discrepancy between H0 and H1 (a list for multiple group models)
 #' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
 #' @param alpha alpha error
-#' @param N the number of observations
+#' @param N the number of observations (a list for multiple group models)
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GammaHat", "GFI",  and "AGFI"
-#' @param SigmaHat model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure. 
-#' @param Sigma population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.
+#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure. 
+#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.
 #' @return list
 #' @examples
 #' \dontrun{
 #' power <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", alpha = .05, N = 250, df = 200)
+#' power
+#' power <- semPower.postHoc(effect = list(.02, .01), effect.measure = "F0", alpha = .05, N = list(250, 350), df = 200)
 #' power
 #' power <- semPower.postHoc(N = 1000, df = 5, alpha = .05,  
 #'                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
