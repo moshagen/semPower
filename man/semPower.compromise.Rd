@@ -16,21 +16,21 @@ semPower.compromise(
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between H0 and H1}
+\item{effect}{effect size specifying the discrepancy between H0 and H1  (a list for multiple group models)}
 
 \item{effect.measure}{type of effect, one of "F0","RMSEA", "Mc", "GFI", AGFI"}
 
 \item{abratio}{the ratio of alpha to beta}
 
-\item{N}{the number of observations}
+\item{N}{the number of observations  (a list for multiple group models)}
 
 \item{df}{the model degrees of freedom}
 
 \item{p}{the number of observed variables, required for effect.measure = "GammaHat", "GFI",  and "AGFI"}
 
-\item{SigmaHat}{model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure.}
 
-\item{Sigma}{population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.}
 }
 \value{
 list

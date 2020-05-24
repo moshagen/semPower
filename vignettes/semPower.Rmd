@@ -54,8 +54,7 @@ For the impatient reader, this document starts with some brief examples. The rem
 
 Use [semPower.aPriori](#ap) to determine the required sample size to detect a certain effect with a certain power. For example, let's determine the required sample size to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 with a power of 80% on an alpha error of .05. After loading the `semPower` package, call the function `semPower.aPriori` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `power = .80`, and `df = 100`.
 
-```{r}
-library(semPower)
+```{r eval=FALSE}
 ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA', 
                         alpha = .05, power = .80, df = 100)
 summary(ap)
@@ -67,13 +66,13 @@ The results show that a sample size of N = 164 yields a power of approximately 8
 
 Use [semPower.postHoc](#ph) to determine the actually achieved power with a certain sample size. For example, let's determine the achieved power with a sample size of N = 1000 to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 on an alpha error of .05. Call the function `semPower.postHoc` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `N = 1000`, and `df = 100`: 
 
-```{r}
+```{r eval=FALSE}
 ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', 
                         alpha = .05, N = 1000, df = 100)
 summary(ph)
 ```
 
-The results show that a sample size of N = 1000 is associated with a power larger than > 99.99 % (more precisely, 1 - 2.903302e-17) to reject a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05.
+The results show that a sample size of N = 1000 is associated with a power larger than > 99.99 % (more precisely, 1 - beta = 1 - 2.903302e-17) to reject a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05.
 
 
 ## Determine critical chi-square and implied alpha and beta (compromise power analysis)
@@ -81,7 +80,7 @@ The results show that a sample size of N = 1000 is associated with a power large
 Use [semPower.compromise](#cp) to determine the critical chi-square and the implied alpha and beta errors. For example, let's determine the critical chi-square such that the associated alpha and beta errors are equal, assuming sample size of N = 1000, a model involving df = 100 degrees of freedom and misspecifications corresponding to RMSEA = .05. Call the function `semPower.compromise` with arguments `effect = .05`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`: 
 
 
-```{r}
+```{r eval=FALSE}
 cp <- semPower.compromise(effect = .05, effect.measure = 'RMSEA', 
                            abratio = 1, N = 1000, df = 100)
 summary(cp)
@@ -173,9 +172,9 @@ The output (which is omitted here) shows that N = 1258 observations are required
 
 ## Extended example: Power to detect invariance constraints in a multiple group model
 
-Suppose we fit a model to two groups and are interested in whether the loadings are invariant across groups. To test this hypothesis, a model with freely estiamted loadings would be compared against a model restricting the loadings to be equal across groups (metric invariance model). If the the fit of the latter model is significantly worse, this supports the conclusion that at least one loading systematically differs across groups. In terms of power analyses, the misfit associated with a model assuming equal loadings across groups when, in reality, at least one loading differs, defines the magnitude of effect, which we want to detect with a sufficient power. 
+Suppose we fit a model to two groups and are interested in whether the loadings are invariant across groups. To test this hypothesis, a model with freely estimated loadings would be compared against a model restricting the loadings to be equal across groups (metric invariance model). If the the fit of the latter model is significantly worse, this supports the conclusion that at least one loading systematically differs across groups. In terms of power analyses, the misfit associated with a model assuming equal loadings across groups when, in reality, at least one loading differs, defines the magnitude of effect, which we want to detect with a sufficient power. 
 
-Again, we need to setup a model describing the true situation in the population to obtain the magnitude of effect. Becaise we have a two-group model, the model needs to be specified for both groups. Let's assume we have a two factor model with each factor being indicated by three manifest variables. Let's further assume that the loading of `x2` differs across groups:
+Again, we need to setup a model describing the true situation in the population to obtain the magnitude of effect. Because we have a two-group model, the model needs to be specified for both groups. Let's assume we have a two factor model with each factor being indicated by three manifest variables. Let's further assume that the loading of `x2` differs across groups:
 
 ```{r eval=FALSE}
 library(lavaan)
@@ -210,14 +209,14 @@ f1 ~~ 0.5*f2
 '
 ```
 
-Note that the models are almost identical, with the exception that `x2` loads by .7 in the first group, but by .4 in the second group. Based on the the model strings above, we can obtain the associated variance-covariance matrices for both groups:
+Note that the models are almost identical, with the exception that the loading of `x2` is .7 in the first group, but .4 in the second group. Based on the the model strings above, we can obtain the associated variance-covariance matrices for both groups:
 ```{r eval=FALSE}
 # population covariance matrices
 cov.pop.g1 <- fitted(sem(model.pop.g1))$cov
 cov.pop.g2 <- fitted(sem(model.pop.g2))$cov
 ```
 
-Next, we define and estimate the analysis model. The model of interest is a metric invariance model, i.e., a multiple group model restricting the loadings to be equal across groups. By fitting the model to the population covariance matrices obtained above we obtain the model-implied covariance matrices for each group:
+Next, we define and estimate the analysis model. The model of interest is a metric invariance model, i.e., a multiple group model restricting the loadings to be equal across groups. By fitting the model to the population covariance matrices obtained above (note the `group.equal = 'loadings'` argument in the `lavaan` call) the model-implied covariance matrices for each group is obtained:
 ```{r eval=FALSE}
 # define analysis model
 model.h0 <- '
@@ -225,7 +224,7 @@ f1 =~ x1 + x2 + x3
 f2 =~ x4 + x5 + x6
 ' 
 # fit analysis model to population data; note the sample.nobs are arbitrary
-fit.h0 <- sem(model.h0, sample.cov = list(cov.h0.g1, cov.h0.g2), sample.nobs = list(1000,1000), group.equal = 'loadings', likelihood='wishart')
+fit.h0 <- sem(model.h0, sample.cov = list(cov.pop.g1, cov.pop.g2), sample.nobs = list(1000, 1000), group.equal = 'loadings', likelihood='wishart')
 # get model implied covariance matrices
 cov.h0.g1 <- fitted(fit.h0)$`Group 1`$cov
 cov.h0.g2 <- fitted(fit.h0)$`Group 2`$cov
@@ -233,28 +232,25 @@ cov.h0.g2 <- fitted(fit.h0)$`Group 2`$cov
 df <- fit.h0@test[[1]]$df
 ```
 
-In multiple group models, the total minimum of the fitting function (total effect) is just the sum of the minima of the fitting functions (effects) in each group. Thus: 
+We can now perform any type of power-analysis by using the population and the model-implied covariance matrices as obtained above. In multiple group models, the arguments `SigmaHat` and `Sigma` are lists containing the associated matrices for each group. In addition, `N` also needs to be a list specifying the sample size for each group. In a priori power analyses, `N` determines the sample size weights for each group, so setting `N = list(1, 1)` assigns the same sample size to both groups.   
 
 ```{r eval=FALSE}
-# helper fnc
-getF <- function(S, SigmaHat){
-  fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
-  fmin
-}
-f1 <- getF(cov.h0.g1, cov.h1.g1)
-f2 <- getF(cov.h0.g2, cov.h1.g2)
-f.total <- f1+f2
-```
+# perform a priori power analysis
+ap6 <- semPower.aPriori(SigmaHat = list(cov.h0.g1, cov.h0.g2), 
+                        Sigma = list(cov.pop.g1, cov.pop.g2), 
+                        alpha = .05, beta = .20, N = list(1, 1), df = df)
 
-We can now perform any type of power-analysis by using `F0` as effect size metric. For example:
-
-```{r eval=FALSE}
-# perform power analysis
-ap6 <- semPower.aPriori(effect = f.total, effect.measure = 'F0', 
-                        alpha = .05, power = .80, df = df)
 summary(ap6)
 ```
-The output (which is omitted here) shows that N = 682 observations (n = 341 by group) are required to detect the lack of metric invariance with a power of 80% on alpha = .05.
+The output (which is omitted here) shows that N = 1364 observations (n = 682 by group) are required to detect the lack of metric invariance with a power of 80% on alpha = .05. 
+
+Alternatively, `semPower` can also compute power in multiple group settings when the effect contribution of each group to the total effect of interest is provided. In the present example, F0 is 0.01102 and 0.01979 in the first and second group, respectively. Computing a post-hoc power analysis with `effect = list(0.01102, 0.01979)`, `effect.measure = 'F0'`,  and `N = list(682, 682)` thus replicates the above result in showing that the power on alpha = .05 is approximately 80%.
+```{r eval=FALSE}
+# perform post-hoc power analysis
+ph6 <- semPower.postHoc(effect = list(0.01102, 0.01979), effect.measure = 'F0', 
+                        alpha = .05, N = list(682, 682), df = df)
+summary(ph6)
+```
 
 
 
@@ -350,7 +346,7 @@ The Standardized-Root-Mean-Square Residual (SRMR) is a measure of the (root of t
 
 $$SRMR = \sqrt{\dfrac{1}{.5p(p+1)}vech(E_0) \cdot Q \cdot vech(E_0)'}$$
 
-The relation of the residual matrix $E_0$ to $F_0$ is complex and depends on the model-implied covariance matrix, so the SRMR is generally not suited to define an effect in terms of $F_0$ (based on ML estimation): 
+The relation of the residual matrix $E_0$ to $F_0$ is complex and depends on the model-implied covariance matrix, so the SRMR is not well suited to define an effect in terms of $F_0$ (based on ML estimation): 
 $$F_0 = -\ln|I + \hat{\Sigma}^{-.5} E_0 \hat{\Sigma}^{-.5}|$$
 
 
