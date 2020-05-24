@@ -65,7 +65,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     }
   }
   
-  fmin <- sum(fmin.g)
+  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
   fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
   
   ncp <- getNCP(fmin.g, N)

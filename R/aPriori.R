@@ -70,7 +70,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     }
   }
   
-  fmin <- sum(fmin.g)
+  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
   
   if(!is.null(beta)){
     desiredBeta <- beta

@@ -65,7 +65,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     }
   }
 
-  fmin <- sum(fmin.g)
+  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
   fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
   ncp <- getNCP(fmin.g, N)
 
