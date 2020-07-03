@@ -51,7 +51,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   # make sure N/effects have the same length
   if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
     N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
-  }else{
+  }else if(!(is.list(effect) || is.list(SigmaHat))){
     N <- 1 # single weight for single group model
   }
   if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){

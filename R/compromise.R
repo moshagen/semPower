@@ -41,7 +41,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
   }
 
-    # make sure N/effects have the same length
+  # make sure N/effects have the same length
   if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
     N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
   }
