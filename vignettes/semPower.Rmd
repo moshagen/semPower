@@ -231,27 +231,34 @@ fit.h0 <- sem(model.h0, sample.cov = list(cov.pop.g1, cov.pop.g2),
 # get model implied covariance matrices
 cov.h0.g1 <- fitted(fit.h0)$`Group 1`$cov
 cov.h0.g2 <- fitted(fit.h0)$`Group 2`$cov
-# store df
+# df of metric invariance model
 df <- fit.h0@test[[1]]$df
+# obtain baseline df (no invariance constraints)
+fit.bl <- sem(model.h0, sample.cov = list(cov.pop.g1, cov.pop.g2), 
+              sample.nobs = list(1000, 1000), sample.cov.rescale=F,
+              likelihood='wishart')
+df.bl <- fit.bl@test[[1]]$df
+# difference in df
+df.diff <- df - df.bl
 ```
 
-We can now perform any type of power-analysis by using the population and the model-implied covariance matrices as obtained above. In multiple group models, the arguments `SigmaHat` and `Sigma` are lists containing the associated matrices for each group. In addition, `N` also needs to be a list specifying the sample size for each group. In a priori power analyses, `N` determines the sample size weights for each group, so setting `N = list(1, 1)` assigns the same sample size to both groups.   
+We also obtain the difference in the degrees of freedom (`df.diff`) between the metric invariance model and the model without invariance constraints (configural invariance model), because the metric invariance model is usually compared to the configural invariance model (rather than to the saturated model). We can now perform any type of power-analysis by using the population and the model-implied covariance matrices as obtained above. In multiple group models, the arguments `SigmaHat` and `Sigma` are lists containing the associated matrices for each group. In addition, `N` also needs to be a list specifying the sample size for each group. In a priori power analyses, `N` determines the sample size weights for each group, so setting `N = list(1, 1)` assigns the same sample size to both groups.   
 
 ```{r eval=FALSE}
 # perform a priori power analysis
 ap6 <- semPower.aPriori(SigmaHat = list(cov.h0.g1, cov.h0.g2), 
                         Sigma = list(cov.pop.g1, cov.pop.g2), 
-                        alpha = .05, beta = .20, N = list(1, 1), df = df)
+                        alpha = .05, beta = .20, N = list(1, 1), df = df.diff)
 
 summary(ap6)
 ```
-The output (which is omitted here) shows that N = 1364 observations (n = 682 by group) are required to detect the lack of metric invariance with a power of 80% on alpha = .05. 
+The output (which is omitted here) shows that N = 778 observations (n = 389 by group) are required to detect the lack of metric invariance with a power of 80% on alpha = .05. 
 
-Alternatively, `semPower` can also compute power in multiple group settings when the effect contribution of each group to the total effect of interest is provided. In the present example, F0 is 0.01102 and 0.01979 in the first and second group, respectively. Computing a post-hoc power analysis with `effect = list(0.01102, 0.01979)`, `effect.measure = 'F0'`,  and `N = list(682, 682)` thus replicates the above result in showing that the power on alpha = .05 is approximately 80%.
+Alternatively, `semPower` can also compute power in multiple group settings when the effect contribution of each group to the total effect of interest is provided. In the present example, F0 is 0.01102 and 0.01979 in the first and second group, respectively. Computing a post-hoc power analysis with `effect = list(0.01102, 0.01979)`, `effect.measure = 'F0'`,  and `N = list(389, 389)` thus replicates the above result in showing that the power on alpha = .05 is approximately 80%.
 ```{r eval=FALSE}
 # perform post-hoc power analysis
 ph6 <- semPower.postHoc(effect = list(0.01102, 0.01979), effect.measure = 'F0', 
-                        alpha = .05, N = list(682, 682), df = df)
+                        alpha = .05, N = list(389, 389), df = df.diff)
 summary(ph6)
 ```
 
