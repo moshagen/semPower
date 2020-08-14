@@ -1,7 +1,7 @@
 Package: semPower
 Type: Package
 Title: Power Analyses for SEM
-Version: 1.0.1
+Version: 1.1.0
 Author: Morten Moshagen
 Maintainer: Morten Moshagen <morten.moshagen@uni-ulm.de>
 Description: Provides a-priori, post-hoc, and compromise power-analyses for structural equation models (SEM). Moshagen & Erdfelder (2016) <doi:10.1080/10705511.2014.950896>.
