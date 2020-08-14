@@ -107,7 +107,8 @@ model.pop <- '
 # define relations between factors and items in terms of loadings
 f1 =~ .7*x1 + .7*x2 + .5*x3 + .5*x4
 f2 =~ .8*x5 + .6*x6 + .6*x7 + .4*x8
-# define unique variances of the items to be equal to 1-loading^2, so that the loadings above are in a standardized metric
+# define unique variances of the items to be equal to 1-loading^2, 
+# so that the loadings above are in a standardized metric
 x1 ~~ .51*x1
 x2 ~~ .51*x2
 x3 ~~ .75*x3
@@ -136,7 +137,7 @@ model.h1 <- '
 f1 =~ x1 + x2 + x3 + x4
 f2 =~ x5 + x6 + x7 + x8
 '
-summary(sem(model.h1, sample.cov = cov.pop, sample.nobs = 1000), stand = T, fit = T)
+summary(sem(model.h1, sample.cov = cov.pop, sample.nobs = 1000, sample.cov.rescale = F), stand = T, fit = T)
 ```
 
 Having obtained the population covariance matrix, we now need to define and estimate the analysis model. The analysis model should make at least one  restriction which is factually wrong and thereby defines the effect of interest, in the present case the restriction that the two factors correlate to 1.  
@@ -152,7 +153,7 @@ f2 ~~ 1*f2
 f1 ~~ 1*f2
 ' 
 # fit analysis model to population data; note the sample.nobs are arbitrary
-fit.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, likelihood='wishart')
+fit.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, sample.cov.rescale = F, likelihood='wishart')
 ```
 
 Any type of power-analysis can now be performed using the model-implied covariance matrix along with the population covariance matrix as arguments. For example, to determine the required sample size use [semPower.aPriori](#ap) with `SigmaHat = cov.h0`, `Sigma = cov.pop`, `alpha = .05`, `power = .80`, and `df = df`.
@@ -224,7 +225,9 @@ f1 =~ x1 + x2 + x3
 f2 =~ x4 + x5 + x6
 ' 
 # fit analysis model to population data; note the sample.nobs are arbitrary
-fit.h0 <- sem(model.h0, sample.cov = list(cov.pop.g1, cov.pop.g2), sample.nobs = list(1000, 1000), group.equal = 'loadings', likelihood='wishart')
+fit.h0 <- sem(model.h0, sample.cov = list(cov.pop.g1, cov.pop.g2), 
+              sample.nobs = list(1000, 1000), sample.cov.rescale = F,
+              group.equal = 'loadings', likelihood='wishart')
 # get model implied covariance matrices
 cov.h0.g1 <- fitted(fit.h0)$`Group 1`$cov
 cov.h0.g2 <- fitted(fit.h0)$`Group 2`$cov
@@ -550,7 +553,8 @@ Having defined the model strings, we proceed by actually obtaining the relevant 
 cov.pop <- fitted(sem(model.pop))$cov
 
 # get covariance matrix as implied by H0 model
-res.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, likelihood='wishart')
+res.h0 <- sem(model.h0, sample.cov = cov.pop, 
+              sample.nobs = 1000, sample.cov.rescale = F, likelihood='wishart')
 df <- res.h0@test[[1]]$df
 cov.h0 <- fitted(res.h0)$cov
 ```

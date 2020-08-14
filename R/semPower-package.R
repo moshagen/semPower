@@ -62,7 +62,7 @@
 #' # get population covariance matrix; equivalent to a perfectly fitting H1 model
 #' cov.h1 <- fitted(sem(model.pop))$cov
 #' # get covariance matrix as implied by H0 model
-#' res.h0 <- sem(model.h0, sample.cov = cov.h1, sample.nobs = 1000, likelihood='wishart')
+#' res.h0 <- sem(model.h0, sample.cov = cov.h1, sample.nobs = 1000, likelihood='wishart', sample.cov.rescale = F)
 #' df <- res.h0@test[[1]]$df
 #' cov.h0 <- fitted(res.h0)$cov
 #'
