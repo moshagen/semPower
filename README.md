@@ -1,7 +1,7 @@
-[![CRAN_Status_Badge](https://cran.r-project.org/package=semPower)](https://cran.r-project.org/package=semPower)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/semPower)](https://www.r-pkg.org/badges/version/semPower)
 [![Licence](https://img.shields.io/badge/licence-GPL--2-green.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 [![monthly downloads](https://cranlogs.r-pkg.org:443/badges/semPower)](https://cranlogs.r-pkg.org:443/badges/semPower)
-[![total downloads](https://cranlogs.r-pkg.org:443/badges/grand-total/semPowerr)](https://cranlogs.r-pkg.org:443/badges/grand-total/semPower)
+[![total downloads](https://cranlogs.r-pkg.org:443/badges/grand-total/semPower)](https://cranlogs.r-pkg.org:443/badges/grand-total/semPower)
 
 semPower
 =====
