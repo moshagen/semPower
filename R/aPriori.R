@@ -93,12 +93,12 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 
   bPrecisionWarning <- (startN <= 10)
 
-  if(!bPrecisionWarning){
+  weights <- 1
+  if(!is.null(N) && length(N) > 1){
+    weights <- unlist(N)/sum(unlist(N))
+  }
 
-    weights <- 1
-    if(!is.null(N) && length(N) > 1){
-      weights <- unlist(N)/sum(unlist(N))
-    }
+  if(!bPrecisionWarning){
 
     chiCritOptim <- optim(par = c(startN), fn = getBetadiff,
             critChi=critChi, logBetaTarget=logBetaTarget, fmin=unlist(fmin.g), df=df, weights=weights,
