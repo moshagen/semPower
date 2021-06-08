@@ -8,16 +8,15 @@ semPower
 
 semPower is an R-package that provides several functions to perform a-priori, post-hoc, and compromise power analyses for structural equation models (SEM). 
 
+Basic functionality is also provided as a shiny app, which you can use online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower/).
+
 ### Installation
 
 Install `semPower` via [CRAN](https://CRAN.R-project.org/package=semPower) or as follows:
 ```
 install.packages("devtools")
-library("devtools")
-install_github("moshagen/semPower")
+devtools::install_github("moshagen/semPower")
 ```
-
-Basic functionality is also provided as a shiny app, which you can use online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower/).
 
 ### Manual
 
@@ -25,8 +24,10 @@ Read the manual by typing
 ```
 vignette("semPower")
 ```
-or [view the manual online](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf).
+or [view the manual online](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf). I also warmly recommend this in-depth tutorial on power analyses in SEM using semPower:
 
+Jobst, L., Bader, M., & Moshagen, M. (in press). A tutorial on power analysis and sample size planning in structural equation modeling. *Psychological Methods*. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/vignettes/semPowerTutorial.pdf)
+ 
 
 ### Quick Examples
 
