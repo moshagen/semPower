@@ -91,7 +91,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   exponent <- -floor(log10(fmin))+1
   startN <- 5*10^(exponent)
 
-  bPrecisionWarning <- (startN <= 10)
+  bPrecisionWarning <- (startN < 5)  # skip estm for N < 5, but take N = 10 as effective minimum 
 
   weights <- 1
   if(!is.null(N) && length(N) > 1){
