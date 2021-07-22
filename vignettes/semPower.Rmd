@@ -1,5 +1,5 @@
 ---
-title: "semPower Manual"
+title: "Power Analysis for Structural Equation Models: semPower Manual"
 author: "Morten Moshagen"
 date: "`r Sys.Date()`"
 #output: pdf_document
@@ -25,8 +25,27 @@ Please cite as:
 
 * Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54–60.
 
+An in-depth tutorial on power analyses in SEM using `semPower` is also provided in the following paper:
+
+* Jobst, L., Bader, M., & Moshagen, M. (in press). A tutorial on power analysis and sample size planning in structural equation modeling. *Psychological Methods*. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)
 
 &nbsp;
+
+
+# Installation
+
+The `semPower` package can be installed via [CRAN](https://cran.r-project.org/package=semPower). The latest development version and some supporting information is available from github at [https://github.com/moshagen/semPower](https://github.com/moshagen/semPower) and can be installed as follows
+
+```{r eval=FALSE}
+install.packages("devtools")
+devtools::install_github("moshagen/semPower")
+```
+
+
+Basic functionality is also provided as a shiny app, which can be used online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower).
+
+&nbsp;
+
 
 # Introduction
 
