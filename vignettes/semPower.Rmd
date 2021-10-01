@@ -107,6 +107,33 @@ summary(cp)
 
 The results show that choosing a critical chi-square of 192.82 is associated with balanced error probabilties alpha = beta = .000000074 when deciding between a correct and a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05 with N = 1000.
 
+## Obtaining the model degrees of freedom (df)
+
+Knowledge of the degrees of freedom (df) is required to perform a power analyes. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
+
+$$df = p\cdot(p+1)/2 - q$$
+
+where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.]. For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
+
+Alternatively, we can use s suitable sem-package, such as `lavaan`, to determine the model df, even if we don't have any data at hand. To do so, we need to specify the hypothesized model using the lavaan standard syntax, create a dummy covariance-matrix, and then fit the model to the dummy covariance matrix. This will give warnings and non-sensical results, but we will also obtain the correct df.
+
+```{r eval=FALSE}
+library(lavaan)
+# define model using indicator names from x1 to xp
+model <- '
+f1 =~ x1 + x2 + x3 + x4
+f2 =~ x5 + x6 + x7 + x8
+'
+# set number of observed variables 
+p <- 8
+# create dummy covariance matrix
+dummyS <- diag(p)
+rownames(dummyS) <- paste0('x',1:p)
+# fit model to dummy covariance matrix. This will give warnings we just can ignore
+dummyFit <- sem(model, sample.cov = dummyS, sample.nobs = 10, warn = F)
+# obtain df
+dummyFit@test$standard$df
+```
 
 ## Extended example: Define effect in terms of model parameters
 
@@ -139,7 +166,8 @@ x8 ~~ .84*x8
 # define variances of f1 and f2 to be 1
 f1 ~~ 1*f1   
 f2 ~~ 1*f2   
-# define covariance (=correlation, because factor variances are 1) between the factors to be .9
+# define covariance (=correlation, because factor variances are 1) 
+# between the factors to be .9
 f1 ~~ 0.9*f2 
 '
 ```
@@ -156,7 +184,9 @@ model.h1 <- '
 f1 =~ x1 + x2 + x3 + x4
 f2 =~ x5 + x6 + x7 + x8
 '
-summary(sem(model.h1, sample.cov = cov.pop, sample.nobs = 1000, sample.cov.rescale = F), stand = T, fit = T)
+summary(sem(model.h1, sample.cov = cov.pop, 
+            sample.nobs = 1000, sample.cov.rescale = F), 
+        stand = T, fit = T)
 ```
 
 Having obtained the population covariance matrix, we now need to define and estimate the analysis model. The analysis model should make at least one  restriction which is factually wrong and thereby defines the effect of interest, in the present case the restriction that the two factors correlate to 1.  
@@ -172,7 +202,9 @@ f2 ~~ 1*f2
 f1 ~~ 1*f2
 ' 
 # fit analysis model to population data; note the sample.nobs are arbitrary
-fit.h0 <- sem(model.h0, sample.cov = cov.pop, sample.nobs = 1000, sample.cov.rescale = F, likelihood='wishart')
+fit.h0 <- sem(model.h0, sample.cov = cov.pop, 
+              sample.nobs = 1000, sample.cov.rescale = F, 
+              likelihood='wishart')
 ```
 
 Any type of power-analysis can now be performed using the model-implied covariance matrix along with the population covariance matrix as arguments. For example, to determine the required sample size use [semPower.aPriori](#ap) with `SigmaHat = cov.h0`, `Sigma = cov.pop`, `alpha = .05`, `power = .80`, and `df = df`.
