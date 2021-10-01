@@ -111,7 +111,11 @@ The results show that choosing a critical chi-square of 192.82 is associated wit
 
 Knowledge of the degrees of freedom (df) is required to perform a power analyes. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
 
+<<<<<<< HEAD
 $$df = p\cdot(p+1)/2 - q$$
+=======
+$$df = p\cdot(p-1)/2 - q$$
+>>>>>>> f6108d257b98a38a8074fa41722cd454884dfbc0
 
 where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.]. For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
 
