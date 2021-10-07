@@ -7,7 +7,7 @@
 #' @param alpha alpha error
 #' @param N the number of observations (a list for multiple group models)
 #' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GammaHat", "GFI",  and "AGFI"
+#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure. 
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.
 #' @return list
