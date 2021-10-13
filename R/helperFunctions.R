@@ -270,7 +270,7 @@ getSRMR.Sigma <- function(SigmaHat, S){
   D <- diag(sqrt.d, ncol=length(sqrt.d))
   m <- D %*% (S - SigmaHat) %*% D
   
-  fols <- sum(m[lower.tri(m, diag=T)]^2)
+  fols <- sum(m[lower.tri(m, diag=TRUE)]^2)
   # mplus variant
   #fols <- (sum(m[lower.tri(m, diag=F)]^2)  +  sum(((diag(S) - diag(SigmaHat))/diag(S))^2)) 
   

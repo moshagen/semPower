@@ -71,8 +71,8 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
   ncp <- getNCP(fmin.g, N)
 
-  beta <- pchisq(qchisq(alpha, df, lower.tail = F), df, ncp=ncp)
-  power <- pchisq(qchisq(alpha, df, lower.tail = F), df, ncp=ncp, lower.tail = F)
+  beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp=ncp)
+  power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp=ncp, lower.tail = FALSE)
   impliedAbratio <- alpha/beta
 
 
@@ -89,7 +89,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     N = N,
     df = df,
     p = p,
-    chiCrit = qchisq(alpha, df,ncp = 0, lower.tail = F),
+    chiCrit = qchisq(alpha, df,ncp = 0, lower.tail = FALSE),
     rmsea = fit$rmsea,
     mc = fit$mc,
     gfi = fit$gfi,
@@ -117,7 +117,7 @@ summary.semPower.postHoc <- function(object, ...){
 
   cat("\n semPower: Post-hoc power analysis\n")
 
-  print(out.table, row.names = F, right = F)
+  print(out.table, row.names = FALSE, right = FALSE)
 
   semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
   

@@ -85,7 +85,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     desiredBeta <- 1 - power
   }
   logBetaTarget <- log(desiredBeta)
-  critChi <- qchisq(alpha, df=df, ncp = 0, lower.tail = F)
+  critChi <- qchisq(alpha, df=df, ncp = 0, lower.tail = FALSE)
 
   # make a reasonable guess about required sample size
   exponent <- -floor(log10(fmin))+1
@@ -102,14 +102,14 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 
     chiCritOptim <- optim(par = c(startN), fn = getBetadiff,
             critChi=critChi, logBetaTarget=logBetaTarget, fmin=unlist(fmin.g), df=df, weights=weights,
-            method='Nelder-Mead', control = list(warn.1d.NelderMead=F))
+            method='Nelder-Mead', control = list(warn.1d.NelderMead=FALSE))
 
     requiredN <- sum(ceiling(weights*chiCritOptim$par))  
 
     # even N = 10 achieves or exceeds desired power
     if(requiredN < 10){
       requiredN <- 10
-      bPrecisionWarning = T
+      bPrecisionWarning <- TRUE
     }
 
   }else{
@@ -125,7 +125,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   
   impliedNCP <- getNCP(fmin.g, requiredN.g)
   impliedBeta <- pchisq(critChi, df, impliedNCP)
-  impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = F)
+  impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = FALSE)
   impliedAbratio <- alpha / impliedBeta
 
   result <- list(
@@ -181,7 +181,7 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL){
   }else{
     cNCP <- sum(fmin * ((weights *cN) - 1) )
     
-    cLogBeta <- pchisq(critChi, df, cNCP, log.p = T)
+    cLogBeta <- pchisq(critChi, df, cNCP, log.p = TRUE)
     
     diff <- (logBetaTarget - cLogBeta)^2
     
@@ -206,7 +206,7 @@ summary.semPower.aPriori <- function(object, ...){
   if(object$bPrecisionWarning)
     cat("\n\n NOTE: Power is higher than requested even for a sample size < 10.\n\n")
 
-  print(out.table, row.names = F, right = F)
+  print(out.table, row.names = FALSE, right = FALSE)
   
   semPower.showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
 

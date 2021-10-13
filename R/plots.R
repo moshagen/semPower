@@ -48,8 +48,8 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   
   # shade beta error
   color <- rgb(0, 0, 255, alpha=70, maxColorValue=255)
-  lb = minvalue
-  ub = chiCrit
+  lb <- minvalue
+  ub <- chiCrit
   i <- x >= lb & x <= ub
   polygon(c(lb,x[i],ub), c(0,xncchi[i],0), col=color, border = NA)
   

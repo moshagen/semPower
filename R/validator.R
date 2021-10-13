@@ -187,11 +187,11 @@ checkPositive <- function(x, message = NULL){
 #' @param message identifier for x
 #' @param bound the boundaries, array of size two
 #' @param inclusive whether x might lie on boundary
-checkBounded <- function(x, message = NULL, bound = c(0,1), inclusive = F){
+checkBounded <- function(x, message = NULL, bound = c(0,1), inclusive = FALSE){
   if(is.null(message)) message <- deparse(substitute(message))
   inv <- is.null(x) || is.na(x) 
-  if(!inv & !inclusive & (x <= bound[1] || x >= bound[2])) inv <- T
-  if(!inv & inclusive & (x < bound[1] || x > bound[2])) inv <- T
+  if(!inv & !inclusive & (x <= bound[1] || x >= bound[2])) inv <- TRUE
+  if(!inv & inclusive & (x < bound[1] || x > bound[2])) inv <- TRUE
   if(inv) stop(paste(message,"must must lie within",bound[1],'and', bound[2]))
 }
 
