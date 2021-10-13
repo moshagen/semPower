@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
   semPowerVersion <- tryCatch(utils::packageDescription("semPower", fields = "Version"),
-                            warning=function(w) return(""),
-                            error=function(e) return(""))
+                            warning = function(w) return(""),
+                            error = function(e) return(""))
   txt <- paste0("\n### Welcome to semPower ", semPowerVersion, " ###",
                 "\n",
                 "\nSee https://github.com/moshagen/semPower for quick examples and a detailed manual.",

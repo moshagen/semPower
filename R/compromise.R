@@ -48,8 +48,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
     effect <- as.list(rep(effect, length(N)))
   }
-  ngroups <- ifelse(is.null(N), 1, length(N))
-  
+
   # obsolete, single group case only
   # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
   # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
@@ -59,7 +58,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   }
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]])})
     }else{
       fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
     }
@@ -95,15 +94,15 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
   if(!bPrecisionWarning){
     # rough estm
-    start <- df + ncp/3
+    start <- df + ncp / 3
     chiCritOptim <- optim(par = c(start), fn = getErrorDiff,
-                          df=df, ncp=ncp, log.abratio = log.abratio,
-                          method='L-BFGS-B', lower=min, upper=max)
+                          df = df, ncp = ncp, log.abratio = log.abratio,
+                          method = 'L-BFGS-B', lower = min, upper = max)
 
     chiCrit <- chiCritOptim$par
     impliedAlpha <- pchisq(chiCrit, df, lower.tail = FALSE)
     impliedBeta <- pchisq(chiCrit, df, ncp)
-    impliedAbratio <- impliedAlpha/impliedBeta
+    impliedAbratio <- impliedAlpha / impliedBeta
     impliedPower <- pchisq(chiCrit, df, ncp, lower.tail = FALSE)
 
   }else{
@@ -170,7 +169,7 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 
   }else{
 
-    diff <- (alpha - (log.abratio+beta))^2     # note log scale
+    diff <- (alpha - (log.abratio + beta))^2     # note log scale
 
   }
 

@@ -11,7 +11,7 @@
 #' @param n number of observations
 #' @return NCP
 getNCP <- function(Fmin, n){
-  NCP <- unlist(Fmin) * (unlist(n)-1)
+  NCP <- unlist(Fmin) * (unlist(n) - 1)
   sum(NCP)
 }
 
@@ -112,7 +112,7 @@ getF.Mc <- function(Mc){
 #' @param p number of observed variables
 #' @return Fmin
 getF.GFI <- function(GFI, p){
-  fmin <- -(GFI-1)*p/(2*GFI)
+  fmin <- -(GFI - 1) * p / (2 * GFI)
   fmin
 }
 
@@ -128,7 +128,7 @@ getF.GFI <- function(GFI, p){
 #' @param p number of observed variables
 #' @return Fmin
 getF.AGFI <- function(AGFI, df, p){
-  fmin <- -(AGFI-1)*df*p/(p*p+p+(2*AGFI-2)*df)
+  fmin <- -(AGFI - 1) * df * p / (p * p + p + (2 * AGFI - 2) * df)
   fmin
 }
 
@@ -149,7 +149,7 @@ getF.AGFI <- function(AGFI, df, p){
 #' @return list of indices
 getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = NULL){
   fit <- list(
-    rmsea = getRMSEA.F(fmin, df, nGroups=ifelse(length(N)>1, length(N), 1)),
+    rmsea = getRMSEA.F(fmin, df, nGroups = ifelse(length(N) > 1, length(N), 1)),
     mc = getMc.F(fmin),
     gfi = NULL,
     agfi = NULL
@@ -183,7 +183,7 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = 
 #' @param nGroups the number of groups
 #' @return RMSEA
 getRMSEA.F <- function(Fmin, df, nGroups = 1){
-  RMSEA <- sqrt(Fmin/df) * sqrt(nGroups)
+  RMSEA <- sqrt(Fmin / df) * sqrt(nGroups)
   RMSEA
 }
 
@@ -195,7 +195,7 @@ getRMSEA.F <- function(Fmin, df, nGroups = 1){
 #' @param Fmin minimum of the ML-fit-function
 #' @return Mc
 getMc.F <- function(Fmin){
-  Mc <- exp(-.5*Fmin)
+  Mc <- exp(-.5 * Fmin)
   Mc
 }
 
@@ -209,7 +209,7 @@ getMc.F <- function(Fmin){
 #' @param p number of observed variables
 #' @return GFI
 getGFI.F <- function(Fmin, p){
-  GFI <- p/(p + 2*Fmin)
+  GFI <- p / (p + 2 * Fmin)
   GFI
 }
 
@@ -224,7 +224,7 @@ getGFI.F <- function(Fmin, p){
 #' @param p number of observed variables
 #' @return AGFI
 getAGFI.F <- function(Fmin, df, p){
-  AGFI <- -(Fmin*p*p+(Fmin-df)*p-2*df*Fmin)/(df*p+2*df*Fmin)
+  AGFI <- -(Fmin * p * p + (Fmin - df) * p - 2 * df * Fmin) / (df * p + 2 * df * Fmin)
   AGFI
 }
 
@@ -266,15 +266,15 @@ getSRMR.Sigma <- function(SigmaHat, S){
   # m <- cov2cor(S) - cov2cor(SigmaHat)
   
   # hu+bentler approach to std
-  sqrt.d <- 1/sqrt(diag(S))
-  D <- diag(sqrt.d, ncol=length(sqrt.d))
+  sqrt.d <- 1 / sqrt(diag(S))
+  D <- diag(sqrt.d, ncol = length(sqrt.d))
   m <- D %*% (S - SigmaHat) %*% D
   
-  fols <- sum(m[lower.tri(m, diag=TRUE)]^2)
+  fols <- sum(m[lower.tri(m, diag = TRUE)]^2)
   # mplus variant
   #fols <- (sum(m[lower.tri(m, diag=F)]^2)  +  sum(((diag(S) - diag(SigmaHat))/diag(S))^2)) 
   
-  srmr <- sqrt(fols / (p*(p+1)/2))
+  srmr <- sqrt(fols / (p * (p + 1) / 2))
   srmr
 }
 
@@ -339,13 +339,13 @@ getCFI.Sigma.mgroups <- function(SigmaHat, S, N){
     })
   
   # approach A: apply sampling weights to CFI
-  #cfi.g <- (fnull.g - fmin.g)/fnull.g
+  #cfi.g <- (fnull.g - fmin.g) / fnull.g
   #cfi <-  sum(cfi.g * N) / sum(N)
 
   # approach B: apply sampling weights to fmin and fnull
   fmin <- sum(fmin.g * N) / sum(N)
   fnull <- sum(fnull.g * N) / sum(N)
-  cfi <- (fnull - fmin)/fnull
+  cfi <- (fnull - fmin) / fnull
   
   return(cfi)
 }
@@ -367,49 +367,49 @@ getFormattedResults <- function(type, result, digits = 6){
   ########### common across power types
 
   if(!is.null(result$srmr) && !is.null(result$gfi)){
-    rows <- c('F0','RMSEA','SRMR','Mc','GFI','AGFI','CFI', '')
+    rows <- c('F0', 'RMSEA', 'SRMR', 'Mc', 'GFI', 'AGFI', 'CFI', '')
     head <- data.frame(rows)
     values <- c(result$fmin, result$rmsea, result$srmr, result$mc, result$gfi, result$agfi, result$cfi)
   }else if(!is.null(result$gfi)){
-    rows <- c('F0','RMSEA','Mc','GFI','AGFI', '')
+    rows <- c('F0', 'RMSEA', 'Mc', 'GFI', 'AGFI', '')
     head <- data.frame(rows)
     values <- c(result$fmin, result$rmsea, result$mc, result$gfi, result$agfi)
   }else{
-    rows <- c('F0','RMSEA','Mc', '')
+    rows <- c('F0', 'RMSEA', 'Mc', '')
     head <- data.frame(rows)
     values <- c(result$fmin, result$rmsea, result$mc)
   }
 
-  head$values <- c(formatC(values, format='f', digits = digits),'')
+  head$values <- c(formatC(values, format='f', digits = digits), '')
 
 
   ########### a-priori
 
   if(type == 'a-priori'){
 
-    ifelse(length(result$requiredN.g) == 1, rows <- c('df','Required Num Observations',''), rows <- c('df','Required Num Observations',' ',''))
+    ifelse(length(result$requiredN.g) == 1, rows <- c('df', 'Required Num Observations', ''), rows <- c('df', 'Required Num Observations', ' ', ''))
     body <- data.frame(rows)
     ifelse(length(result$requiredN.g) == 1, 
            body$values <- c(result$df, result$requiredN, ''),
-           body$values <- c(result$df, result$requiredN, paste0('(',paste(result$requiredN.g, collapse = ', '),')'), '')
+           body$values <- c(result$df, result$requiredN, paste0('(', paste(result$requiredN.g, collapse = ', '), ')'), '')
     )    
 
     rows <- c('Critical Chi-Square', 'NCP', 'Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
     foot <- data.frame(rows)
 
     v1 <- formatC(c(result$chiCrit, result$impliedNCP), format = 'f', digits = digits)
-    v1 <- sapply(v1, substr, 1, digits+2)
+    v1 <- sapply(v1, substr, 1, digits + 2)
 
     v2 <- c(result$alpha, result$impliedBeta, result$impliedPower, result$impliedAbratio)
     # determine whether to use float or scientific number format
     v2.f <- rep('f', length(v2))
     v2.f[v2 < 1e-5 | v2 > 1e5] <- 'e'
-    v2 <- sapply(seq_along(v2),  function(y, z, i) { formatC(x=v2[i], format=v2.f[i], digits = digits)}, y=v2, z= v2.f)
+    v2 <- sapply(seq_along(v2), function(y, z, i){formatC(x = v2[i], format = v2.f[i], digits = digits)}, y = v2, z = v2.f)
     foot$values <- c(v1, v2)
 
     # manually correct some quirks
     if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows=='Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
     }
 
 
@@ -423,11 +423,11 @@ getFormattedResults <- function(type, result, digits = 6){
 
   if(type == 'post-hoc'){
 
-    ifelse(!is.list(result$N), rows <- c('df','Num Observations'), rows <- c('df','Num Observations',' '))
+    ifelse(!is.list(result$N), rows <- c('df', 'Num Observations'), rows <- c('df', 'Num Observations', ' '))
     body <- data.frame(rows)
     ifelse(!is.list(result$N), 
            body$values <- c(result$df, result$N), 
-           body$values <- c(result$df, sum(unlist(result$N)), paste0('(',paste(result$N, collapse = ', '),')'))
+           body$values <- c(result$df, sum(unlist(result$N)), paste0('(', paste(result$N, collapse = ', '), ')'))
           )
 
     rows <- c('NCP', '', 'Critical Chi-Square')
@@ -435,7 +435,7 @@ getFormattedResults <- function(type, result, digits = 6){
     v1 <- c(formatC(result$ncp, format = 'f', digits = digits), '',
                       formatC(result$chiCrit, format = 'f', digits = digits)
                       )
-    body2$values <- sapply(v1, substr, 1, (digits+2))
+    body2$values <- sapply(v1, substr, 1, (digits + 2))
 
     rows <- c('Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
     foot <- data.frame(rows)
@@ -443,15 +443,15 @@ getFormattedResults <- function(type, result, digits = 6){
     # determine whether to use float or scientific number format
     v.f <- rep('f', length(v))
     v.f[v < 1e-5 | v > 1e5] <- 'e'
-    foot$values <- sapply(seq_along(v),  function(y, z, i) { formatC(x=v[i], format=v.f[i], digits = digits)}, y=v, z= v.f)
+    foot$values <- sapply(seq_along(v),  function(y, z, i) {formatC(x = v[i], format = v.f[i], digits = digits)}, y = v, z = v.f)
 
     # manually correct some quirks
     if(result$beta < 1e-5){
-      foot$values[foot$rows=='Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
     }
     if(result$beta == 0){
-      foot$values[foot$rows=='Beta'] <- '< 1.00e-320'
-      foot$values[foot$rows=='Implied Alpha/Beta Ratio'] <- '> 1.00e-320'
+      foot$values[foot$rows == 'Beta'] <- '< 1.00e-320'
+      foot$values[foot$rows == 'Implied Alpha/Beta Ratio'] <- '> 1.00e-320'
     }
 
     out <- rbind(head, body, body2, foot)
@@ -464,23 +464,23 @@ getFormattedResults <- function(type, result, digits = 6){
   if(type == 'compromise'){
 
     ifelse(!is.list(result$N), 
-           rows <- c('df','Num Observations', 'Desired Alpha/Beta Ratio', '','Critical Chi-Square'), 
-           rows <- c('df','Num Observations', ' ', 'Desired Alpha/Beta Ratio', '','Critical Chi-Square')
+           rows <- c('df','Num Observations', 'Desired Alpha/Beta Ratio', '', 'Critical Chi-Square'), 
+           rows <- c('df','Num Observations', ' ', 'Desired Alpha/Beta Ratio', '', 'Critical Chi-Square')
            )
     body <- data.frame(rows)
     
     if(!result$bPrecisionWarning){
-      sChiCrit <- substr(formatC(result$chiCrit, format = 'f', digits = digits), 1, digits+2)
+      sChiCrit <- substr(formatC(result$chiCrit, format = 'f', digits = digits), 1, digits + 2)
     }else{
-      smax <- substr(formatC(result$max, format = 'f', digits = digits), 1, digits+2)
-      smin <- substr(formatC(result$min, format = 'f', digits = digits), 1, digits+2)
+      smax <- substr(formatC(result$max, format = 'f', digits = digits), 1, digits + 2)
+      smin <- substr(formatC(result$min, format = 'f', digits = digits), 1, digits + 2)
       sChiCrit <- paste(smax,'< Chi-Square < ', smin)
     }
     if(!is.list(result$N)){
       body$values <- c(result$df, result$N, 
                        formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
     }else{
-      body$values <- c(result$df, sum(unlist(result$N)), paste0('(',paste(result$N, collapse = ', '),')'), 
+      body$values <- c(result$df, sum(unlist(result$N)), paste0('(', paste(result$N, collapse = ', '), ')'), 
                        formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
     }
 
@@ -490,16 +490,16 @@ getFormattedResults <- function(type, result, digits = 6){
     # determine whether to use float or scientific number format
     v.f <- rep('f', length(v))
     v.f[v < 1e-5 | v > 1e5] <- 'e'
-    foot$values <- sapply(seq_along(v),  function(y, z, i) { formatC(x=v[i], format=v.f[i], digits = digits)}, y=v, z= v.f)
+    foot$values <- sapply(seq_along(v), function(y, z, i) {formatC(x = v[i], format = v.f[i], digits = digits)}, y = v, z = v.f)
 
     # manually correct some quirks
     if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows=='Implied Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Implied Power (1-beta)'] <- '> 0.9999'
     }
     if(result$bPrecisionWarning){
-      foot$values[foot$rows=='Implied Beta'] <- '< 1.00e-240'
-      foot$values[foot$rows=='Implied Alpha'] <- '< 1.00e-320'
-      foot$values[foot$rows=='Actual Alpha/Beta Ratio'] <- ' '
+      foot$values[foot$rows == 'Implied Beta'] <- '< 1.00e-240'
+      foot$values[foot$rows == 'Implied Alpha'] <- '< 1.00e-320'
+      foot$values[foot$rows == 'Actual Alpha/Beta Ratio'] <- ' '
     }
 
     out <- rbind(head, body, foot)
@@ -510,4 +510,3 @@ getFormattedResults <- function(type, result, digits = 6){
 
   out
 }
-

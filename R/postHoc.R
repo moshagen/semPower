@@ -61,7 +61,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   }
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]])})
     }else{
       fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
     }
@@ -71,9 +71,9 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
   ncp <- getNCP(fmin.g, N)
 
-  beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp=ncp)
-  power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp=ncp, lower.tail = FALSE)
-  impliedAbratio <- alpha/beta
+  beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
+  power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp, lower.tail = FALSE)
+  impliedAbratio <- alpha / beta
 
 
   result <- list(
@@ -89,7 +89,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     N = N,
     df = df,
     p = p,
-    chiCrit = qchisq(alpha, df,ncp = 0, lower.tail = FALSE),
+    chiCrit = qchisq(alpha, df, ncp = 0, lower.tail = FALSE),
     rmsea = fit$rmsea,
     mc = fit$mc,
     gfi = fit$gfi,

@@ -1,20 +1,24 @@
-Package: semPower
 Type: Package
+Package: semPower
 Title: Power Analyses for SEM
 Version: 1.1.0
 Author: Morten Moshagen
 Maintainer: Morten Moshagen <morten.moshagen@uni-ulm.de>
-Description: Provides a-priori, post-hoc, and compromise power-analyses for structural equation models (SEM). Moshagen & Erdfelder (2016) <doi:10.1080/10705511.2014.950896>.
+Description: Provides a-priori, post-hoc, and compromise power-analyses
+    for structural equation models (SEM). Moshagen & Erdfelder (2016)
+    <doi:10.1080/10705511.2014.950896>.
 License: LGPL
 URL: https://github.com/moshagen/semPower
 BugReports: https://github.com/moshagen/semPower/issues
+Imports:
+    graphics,
+    grDevices,
+    stats
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: 
+    knitr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-Imports:
-    stats,
-    grDevices,
-    graphics
-Suggests: knitr,
-    rmarkdown
-VignetteBuilder: knitr

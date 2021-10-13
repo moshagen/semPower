@@ -15,43 +15,43 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   # define central and non-central chi
   maxvalue <- qchisq(.99999, df, ncp)
   minvalue <- max(.1, qchisq(.00001, df, 0))
-  x <- seq(minvalue, maxvalue, length=1000)
+  x <- seq(minvalue, maxvalue, length = 1000)
   
   xchi <- dchisq(x, df, ncp = 0)
   xncchi <- dchisq(x, df, ncp)
   
   plot(x, 
        xchi, 
-       type="l", 
-       lty=1,
-       lwd=linewidth,
-       col="red",
-       xlab="Chi-Square",
-       ylab="Density",
-       ylim=c(0,max(xchi)),
-       xlim=c(minvalue,maxvalue)
+       type = "l", 
+       lty = 1,
+       lwd = linewidth,
+       col = "red",
+       xlab = "Chi-Square",
+       ylab = "Density",
+       ylim = c(0, max(xchi)),
+       xlim = c(minvalue, maxvalue)
   )
 
   # add noncentral chi
-  lines(x, xncchi, lty=2, lwd=linewidth, col='blue')
+  lines(x, xncchi, lty = 2, lwd = linewidth, col = 'blue')
   
   # add critical value
-  abline(v=chiCrit,col=1,lty=1,lwd=1)
+  abline(v=chiCrit,col = 1, lty = 1, lwd = 1)
 
   # shade alpha error
-  color <- rgb(255, 0, 0, alpha=70, maxColorValue=255)
+  color <- rgb(255, 0, 0, alpha = 70, maxColorValue = 255)
   lb <- chiCrit
   ub <- maxvalue
   i <- x >= lb & x <= ub
-  polygon(c(lb,x[i],ub), c(0,xchi[i],0), col=color, border = NA)
+  polygon(c(lb, x[i], ub), c(0, xchi[i], 0), col = color, border = NA)
   
   
   # shade beta error
-  color <- rgb(0, 0, 255, alpha=70, maxColorValue=255)
+  color <- rgb(0, 0, 255, alpha = 70, maxColorValue = 255)
   lb <- minvalue
   ub <- chiCrit
   i <- x >= lb & x <= ub
-  polygon(c(lb,x[i],ub), c(0,xncchi[i],0), col=color, border = NA)
+  polygon(c(lb, x[i], ub), c(0, xncchi[i], 0), col = color, border = NA)
   
 }
 
@@ -113,14 +113,14 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
   
   plot(
     smooth.spline(N, power.act), 
-    type="l", 
-    lty=1,
-    lwd=linewidth,
-    main=paste('Power for',effect.measure,'=',effect),
-    xlab="N",
-    ylab="Power",
-    ylim=c(0,1),
-    xlim=c(max(0,min(N)-10),max(N))
+    type = "l", 
+    lty = 1,
+    lwd = linewidth,
+    main = paste('Power for', effect.measure, '=', effect),
+    xlab = "N",
+    ylab = "Power",
+    ylim = c(0, 1),
+    xlim = c(max(0, min(N) - 10), max(N))
   )
   
 } 
@@ -173,15 +173,14 @@ semPower.powerPlot.byEffect <- function(effect.measure = NULL,
   }
   
   plot(smooth.spline(effect, power), 
-       type="l", 
-       lty=1,
-       lwd=linewidth,
-       main=paste('Power for',effect.measure,'with N = ',N),
-       xlab="Effect",
-       ylab="Power",
-       ylim=c(0,1),
-       xlim=c(max(0,min(effect)-.1*effect),max(effect))
+       type = "l", 
+       lty = 1,
+       lwd = linewidth,
+       main = paste('Power for', effect.measure, 'with N = ', N),
+       xlab = "Effect",
+       ylab = "Power",
+       ylim = c(0, 1),
+       xlim = c(max(0, min(effect) - .1 * effect), max(effect))
   )
   
 } 
-

@@ -58,8 +58,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
     effect <- as.list(rep(effect, length(N)))
   }
-  ngroups <- length(N)
-  
+
   # obsolete, single group case only
   # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
   # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
@@ -85,7 +84,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     desiredBeta <- 1 - power
   }
   logBetaTarget <- log(desiredBeta)
-  critChi <- qchisq(alpha, df=df, ncp = 0, lower.tail = FALSE)
+  critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
 
   # make a reasonable guess about required sample size
   exponent <- -floor(log10(fmin))+1
@@ -95,14 +94,14 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 
   weights <- 1
   if(!is.null(N) && length(N) > 1){
-    weights <- unlist(N)/sum(unlist(N))
+    weights <- unlist(N) / sum(unlist(N))
   }
 
   if(!bPrecisionWarning){
 
     chiCritOptim <- optim(par = c(startN), fn = getBetadiff,
-            critChi=critChi, logBetaTarget=logBetaTarget, fmin=unlist(fmin.g), df=df, weights=weights,
-            method='Nelder-Mead', control = list(warn.1d.NelderMead=FALSE))
+            critChi = critChi, logBetaTarget = logBetaTarget, fmin = unlist(fmin.g), df = df, weights = weights,
+            method = 'Nelder-Mead', control = list(warn.1d.NelderMead = FALSE))
 
     requiredN <- sum(ceiling(weights*chiCritOptim$par))  
 
@@ -118,7 +117,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   }
   
   # N by group
-  requiredN.g <- ceiling(weights*requiredN)
+  requiredN.g <- ceiling(weights * requiredN)
   
   # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
   fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, requiredN.g)
@@ -179,7 +178,7 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL){
     diff <- NA
     
   }else{
-    cNCP <- sum(fmin * ((weights *cN) - 1) )
+    cNCP <- sum(fmin * ((weights * cN) - 1) )
     
     cLogBeta <- pchisq(critChi, df, cNCP, log.p = TRUE)
     
