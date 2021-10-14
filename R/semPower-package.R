@@ -22,10 +22,13 @@
 #' 
 #' Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. \emph{Structural Equation Modeling, 23}, 54-60. doi: 10.1080/10705511.2014.950896
 #'
-#'  @examples
+#' @examples
 #' # a-priori power analyses using rmsea = .05 a target power (1-beta) of .80
 #' ap1 <- semPower.aPriori(0.05, 'RMSEA', alpha = .05, beta = .20, df = 200)
 #' summary(ap1)
+#' # generic version
+#' gap1 <- semPower(type = 'a-priori', 0.05, 'RMSEA', alpha = .05, beta = .20, df = 200)
+#' summary(gap1)
 #' # a-priori power analyses using f0 = .75 and a target power of .95
 #' ap2 <- semPower.aPriori(0.75, 'F0', alpha = .05, power = .95, df = 200)
 #' summary(ap2)
@@ -34,11 +37,17 @@
 #' # post-hoc power analyses using rmsea = .08
 #' ph <- semPower.postHoc(.08, 'RMSEA', alpha = .05, N = 250, df = 50)
 #' summary(ph)
+#' # generic version
+#' gph1 <- semPower(type = 'post-hoc', .08, 'RMSEA', alpha = .05, N = 250, df = 50)
+#' summary(gph1)
 #' # create a plot showing how power varies by the magnitude of effect (given a certain N)
 #' semPower.powerPlot.byEffect('RMSEA', alpha=.05, N = 100, df=200, effect.min=.001, effect.max=.10)
 #' # compromise power analyses using rmsea = .08 and an abratio of 2
 #' cp <- semPower.compromise(.08, 'RMSEA', abratio = 2, N = 1000, df = 200)
 #' summary(cp)
+#' # generic version
+#' gcp <- semPower(type = 'compromise', .08, 'RMSEA', abratio = 2, N = 1000, df = 200)
+#' summary(gcp)
 #'
 #' # use lavaan to define effect through covariance matrices:
 #' \dontrun{
