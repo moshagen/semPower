@@ -47,14 +47,14 @@ Determine required sample size given alpha, beta/power, df, and effect
 \examples{
 \dontrun{
 power <- semPower.aPriori(effect = .05, effect.measure = "RMSEA", alpha = .05, beta = .05, df = 200)
-power
+summary(power)
 power <- semPower.aPriori(effect = .15, effect.measure = "F0", alpha = .05, power = .80, df = 100)
-power
+summary(power)
 power <- semPower.aPriori(effect = list(.05, .10), effect.measure = "F0", alpha = .05, 
                           power = .80, N = list(1, 1), df = 100)
-power
+summary(power)
 power <- semPower.aPriori(alpha = .01, beta = .05, df = 5, 
                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-power
+summary(power)
 }
 }

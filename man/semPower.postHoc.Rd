@@ -26,7 +26,7 @@ semPower.postHoc(
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GammaHat", "GFI",  and "AGFI"}
+\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
 
 \item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure.}
 
@@ -41,12 +41,12 @@ Determine power (1-beta) given alpha, df, and effect
 \examples{
 \dontrun{
 power <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", alpha = .05, N = 250, df = 200)
-power
+summary(power)
 power <- semPower.postHoc(effect = list(.02, .01), effect.measure = "F0", 
                           alpha = .05, N = list(250, 350), df = 200)
-power
+summary(power)
 power <- semPower.postHoc(N = 1000, df = 5, alpha = .05,  
                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-power
+summary(power)
 }
 }

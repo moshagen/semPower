@@ -4,7 +4,7 @@
 \alias{checkBounded}
 \title{checkBounded}
 \usage{
-checkBounded(x, message = NULL, bound = c(0, 1))
+checkBounded(x, message = NULL, bound = c(0, 1), inclusive = FALSE)
 }
 \arguments{
 \item{x}{x}
@@ -12,6 +12,8 @@ checkBounded(x, message = NULL, bound = c(0, 1))
 \item{message}{identifier for x}
 
 \item{bound}{the boundaries, array of size two}
+
+\item{inclusive}{whether x might lie on boundary}
 }
 \description{
 checks whether x is defined and lies within the specified bound

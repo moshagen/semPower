@@ -26,7 +26,7 @@ semPower.compromise(
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GammaHat", "GFI",  and "AGFI"}
+\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
 
 \item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure.}
 
