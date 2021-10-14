@@ -7,7 +7,7 @@
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
 #' @param phi factor correlation matrix or single number giving correlation between all factors 
 #' @param nullCor vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor
-#' @param lambda reduced factor loading matrix: provide primary loadings by factor, with factors in rows and indicators in columns. Must not contain secondary loadings.   
+#' @param lambda a list providing factor loadings by factor. Must not contain secondary loadings.   
 #' @param nIndicator vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
 #' @param loadM vector giving mean loadings for each factor or single number to use for every loading
 #' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
@@ -63,12 +63,12 @@
 #'                 c(0.1, 1.0)
 #'               ), byrow = T, ncol = 2)
 #'
-#' # lambda: only define non-zero loadings, factors in rows, 
+#' # lambda: only define primary loadings 
 #' # must not contain secondary loadings
-#' lambda <- matrix(c(
-#'                    c(0.4, 0.5, 0.8),
-#'                    c(0.7, 0.6, 0.5)
-#'                   ), nrow = 2)
+#' lambda <- list(
+#'                c(0.4, 0.5, 0.8),
+#'                c(0.7, 0.6, 0.5, 0.4)
+#'                )
 #'
 #' cfapower <- semPower.powerCFA(type = 'post-hoc',
 #'                               phi = phi, nullCor = c(1, 2), lambda = lambda,
@@ -139,11 +139,11 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   comparison <- tolower(comparison)
   if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
   
-  if(is.null(nIndicator) & is.null(lambda)) stop('Either provide loadingmatrix or number of indicators')
-  if(!is.null(nIndicator) & !is.null(lambda)) stop('Either provide loadingmatrix or number of indicators, but not both.')
-  if(is.null(nIndicator) & !is.matrix(lambda)) stop('Loading matrix must be a matrix')
+  if(is.null(nIndicator) & is.null(lambda)) stop('Either provide lambda or number of indicators')
+  if(!is.null(nIndicator) & !is.null(lambda)) stop('Either provide lambda or number of indicators, but not both.')
+  if(is.null(nIndicator) & !is.list(lambda)) stop('Lambda must be a list')
   
-  nfac <- ifelse(is.null(lambda), length(nIndicator), nrow(lambda))
+  nfac <- ifelse(is.null(lambda), length(nIndicator), length(lambda))
   if(nfac < 2) stop('At least two factors are required')
   
   if(is.null(nullCor) & length(phi) == 1) nullCor <- c(1, 2)
@@ -175,9 +175,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     if(is.null(loadMinMax) && length(loadSD) == 1) loadSD <- rep(loadSD,nfac)
     if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
   }else{
-    if(ncol(lambda) < nrow(lambda)) stop('Lambda must contain more columns (indicators) than rows (factors)')
-    invisible(apply(lambda, c(1, 2), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1))))
-    nIndicator <- apply(lambda, 1, length)  # crossloadings are disallowed
+    invisible(lapply(lambda, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1)))))
+    nIndicator <- unlist(lapply(lambda, length))  # crossloadings are disallowed
   }
   
   
@@ -195,7 +194,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     }else if(!is.null(loadMinMax)){
       cload <- round(runif(nIndicator[f], loadMinMax[f, 1], loadMinMax[f, 2]), 2)
     }else{
-      cload <- lambda[f, ]  # lambda only contains primary loadings
+      cload <- lambda[[f]]  # lambda only contains primary loadings
     }
     tok[f] <- 
       paste(
