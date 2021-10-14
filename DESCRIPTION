@@ -13,10 +13,12 @@ BugReports: https://github.com/moshagen/semPower/issues
 Imports:
     graphics,
     grDevices,
-    stats
+    stats,
+    utils
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    lavaan
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
