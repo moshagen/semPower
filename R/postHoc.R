@@ -14,13 +14,13 @@
 #' @examples
 #' \dontrun{
 #' power <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", alpha = .05, N = 250, df = 200)
-#' power
+#' summary(power)
 #' power <- semPower.postHoc(effect = list(.02, .01), effect.measure = "F0", 
 #'                           alpha = .05, N = list(250, 350), df = 200)
-#' power
+#' summary(power)
 #' power <- semPower.postHoc(N = 1000, df = 5, alpha = .05,  
 #'                           SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-#' power
+#' summary(power)
 #' }
 #' @importFrom stats qchisq pchisq 
 #' @export
