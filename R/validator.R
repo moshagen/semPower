@@ -211,3 +211,17 @@ checkPositiveDefinite <- function(x, message = NULL){
   if(sum(eigen(x)$values < 0) > 0)
     stop(paste(message, " must be positive definite"))
 }
+
+#' checkPowerTypes
+#'
+#' checks whether type is one of 'a-priori', 'post-hoc', or 'compromise'.
+#' @param type type
+#' @return  valid type
+checkPowerTypes <- function(type){
+  if(is.null(type) | length(type) != 1 | typeof(type) != 'character') stop('Type must be one of a-priori, post-hoc, or compromise.')
+  type <- tolower(type)
+  if(type == 'a priori' | type == 'apriori'| type == 'a_priori') type = 'a-priori'
+  if(type == 'post hoc' | type == 'posthoc'| type == 'post_hoc') type = 'post-hoc'
+  if(!type %in% c('a-priori','post-hoc','compromise')) stop('Type must be one of a-priori, post-hoc, or compromise.')
+  type
+}
