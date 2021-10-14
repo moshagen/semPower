@@ -55,7 +55,7 @@ Basic functionality is also provided as a shiny app, which can be used online at
 * [semPower.postHoc](#ph): determine achieved power (and beta), given alpha, N, effect, and df
 * [semPower.compromise](#cp): determine alpha and beta, given the alpha/beta ratio, N, effect, and df 
 
-All functions require the specification of the discrepancy between H0 and H1, i.e. the magnitude of effect in a certain metric. `semPower` understands the following [effect-size measures](#effects): F0, RMSEA, Mc, GFI, AGFI (see below for details). Alternatively, it is also possible to define the effect by providing the H0 and the H1 covariance matrices (see [covariance matrix input](#cov)).
+All functions require the specification of the discrepancy between H0 and H1, i.e. the magnitude of effect in a certain metric. `semPower` understands the following [effect-size measures](#effects): F0, RMSEA, Mc, GFI, AGFI (see below for details). Alternatively, it is also possible to define the effect by providing the H0 and the H1 covariance matrices (see [covariance matrix input](#cov)). For a simple CFA model, this process is simplified by using the [semPower.powerCFA](#cfapower) convenience function. Finally, power analyses always require specification of the model degrees of freedom, which can be obtained using the [semPower.getDf](#df) convenience function.
 
 In addition, `semPower` can be used to create power-plots:
 
@@ -79,6 +79,14 @@ ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA',
 summary(ap)
 ```
 
+Equivalently, you can use the generic `semPower` function with the additional `type = 'a-priori'` argument: 
+
+```{r eval=FALSE}
+ap <- semPower(type = 'a-priori', effect = .05, effect.measure = 'RMSEA', 
+               alpha = .05, power = .80, df = 100)
+summary(ap)
+```
+
 The results show that a sample size of N = 164 yields a power of approximately 80% to reject a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05.
 
 ## Determine achieved power (post-hoc power analysis)
@@ -88,6 +96,14 @@ Use [semPower.postHoc](#ph) to determine the actually achieved power with a cert
 ```{r eval=FALSE}
 ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', 
                         alpha = .05, N = 1000, df = 100)
+summary(ph)
+```
+
+Or use the generic `semPower` function with the additional `type = 'post-hoc'` argument: 
+
+```{r eval=FALSE}
+ph <- semPower(type = 'post-hoc', effect = .05, effect.measure = 'RMSEA',
+               alpha = .05, N = 1000, df = 100)
 summary(ph)
 ```
 
@@ -105,35 +121,80 @@ cp <- semPower.compromise(effect = .05, effect.measure = 'RMSEA',
 summary(cp)
 ```
 
+Or use the generic `semPower` function with the additional `type = 'compromise'` argument: 
+
+```{r eval=FALSE}
+cp <- semPower(type = 'compromise', effect = .05, effect.measure = 'RMSEA', 
+               abratio = 1, N = 1000, df = 100)
+summary(cp)
+```
+
 The results show that choosing a critical chi-square of 192.82 is associated with balanced error probabilties alpha = beta = .000000074 when deciding between a correct and a wrong model (with df = 100) with an amount of misspecification corresponding to RMSEA = .05 on alpha = .05 with N = 1000.
+
+<a id="df"></a>
 
 ## Obtaining the model degrees of freedom (df)
 
-Knowledge of the degrees of freedom (df) is required to perform a power analyes. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
+Knowledge of the degrees of freedom (df) is required to perform a power analysis. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
 
 $$df = p\cdot(p+1)/2 - q$$
 
 where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.]. For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
 
-Alternatively, we can use s suitable sem-package, such as `lavaan`, to determine the model df, even if we don't have any data at hand. To do so, we need to specify the hypothesized model using the lavaan standard syntax, create a dummy covariance-matrix, and then fit the model to the dummy covariance matrix. This will give warnings and non-sensical results, but we will also obtain the correct df.
+If you are unsure or have a more complicated model (or both), `semPower` also includes a convenience function called `semPower.getDf` that determines the df for a model provided in the `lavaan` syntax (note that this function requires the `lavaan` package). For the model sketched above, running 
 
 ```{r eval=FALSE}
-library(lavaan)
-# define model using indicator names from x1 to xp
-model <- '
+# define model using standard lavaan syntax
+lavmodel <- '
 f1 =~ x1 + x2 + x3 + x4
 f2 =~ x5 + x6 + x7 + x8
 '
-# set number of observed variables 
-p <- 8
-# create dummy covariance matrix
-dummyS <- diag(p)
-rownames(dummyS) <- paste0('x',1:p)
-# fit model to dummy covariance matrix. This will give warnings we just can ignore
-dummyFit <- sem(model, sample.cov = dummyS, sample.nobs = 10, warn = F)
 # obtain df
-dummyFit@test$standard$df
+semPower.getDf(lavmodel)
 ```
+
+gives 19 as result, which matches what we calculated by hand.
+
+
+<a id="cfapower"></a>
+
+## Obtain power for factor correlations in a standard CFA model
+It is rather common to test whether the correlation between two factors defined in a standard CFA model significantly differs from zero. Suppose that we want sufficient power to detect a correlation between two factors of |r| $\geq$ .2. Performing a power analysis in this scenario is complicated by the fact that one needs to translate the hypothesized magnitude of a certain model parameter (i.e., the correlation between two factors) into a measure of effect such as the RMSEA, which is not easily possible. 
+
+To simplify this process, `semPower` provides the option to define the effect in terms of the discrepancy between covariance matrices (see next section). When the correlation between two factors in a standard CFA model is of interest, the `semPower.powerCFA` function is a simple shortcut. Note that this function requires the `lavaan` package. 
+
+`semPower.powerCFA` is quite flexible, but first consider the simplest case of a two factor CFA model with equal loadings on both factors. The argument `phi` defines the population correlation between these factors, `nIndicator` is a vector indicating the number of indicators for the first and the second factor, respectively, and `loadM` gives the loading for all indicators. Thus, the following defines two factors that are correlated by .2 in the population, one measured by 5 and one measured by 6 indicators, and each loading being equal to .5: 
+
+```{r eval=FALSE}
+# a priori power analysis providing the number of indicators to define 
+# two factors with correlation of phi and equal loading for all indicators
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              phi = .2, nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, power = .95)
+summary(cfapower$power)
+```
+The output shows that 774 observations are required to detect a correlation between the two factors of at least .2 with a power of 95% on alpha = 5%, when the model with the freely estimated correlation is compared against a model that constrains this correlation to zero.
+
+Obviously, the above is a gross simplification, so `semPower.powerCFA` also understands more complex models. For example: 
+```{r eval=FALSE}
+# define correlation matrix between 3 factors
+phi <- matrix(c(
+  c(1.0, 0.2, 0.5),
+  c(0.2, 1.0, 0.3),
+  c(0.5, 0.3, 1.0)
+), byrow = T, ncol=3)
+# a priori power analysis providing factor correlation matrix (phi), 
+# the number of indicators by factor, and mean and SD of loadings by factor.
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              phi = phi, nullCor = c(1, 2), nIndicator = c(5, 6, 4), 
+                              loadM = c(.5, .6, .7), loadSD = c(.1, .05, 0),
+                              alpha = .05,  power = .95)
+summary(cfapower$power)
+```
+which shows that 645 observations are required to detect a correlation between the first two factors of at least .2 with a power of 95% on alpha = 5% (note that having additional factors that are correlated with the factors of interest helps). 
+
+For more details on `semPower.powerCFA`, see the section [further below](#cfapower2).
+
 
 ## Extended example: Define effect in terms of model parameters
 
@@ -611,13 +672,14 @@ Having defined the model strings, we proceed by actually obtaining the relevant 
 cov.pop <- fitted(sem(model.pop))$cov
 
 # get covariance matrix as implied by H0 model
-res.h0 <- sem(model.h0, sample.cov = cov.pop, 
-              sample.nobs = 1000, sample.cov.rescale = F, likelihood='wishart')
-df <- res.h0@test[[1]]$df
-cov.h0 <- fitted(res.h0)$cov
+fit.h0 <- sem(model.h0, sample.cov = cov.pop, 
+              sample.nobs = 1000, sample.cov.rescale = F, 
+              likelihood='wishart')
+df <- fit.h0@test[[1]]$df
+cov.h0 <- fitted(fit.h0)$cov
 ```
 
-`cov.pop` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`model.h0`) to the population data (`cov.pop`). The model-implied covariance matrix then can be obtained by calling `cov.h0 <- fitted(res.h0)$cov`.
+`cov.pop` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`model.h0`) to the population data (`cov.pop`). The model-implied covariance matrix then can be obtained by calling `cov.h0 <- fitted(fit.h0)$cov`.
 
 We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = cov.h0` and `Sigma = cov.pop`.
 
@@ -637,6 +699,106 @@ ph4$fmin * (ph4$N-1)
 
 `fitmeasures(res.h0, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `model.h1` to the population data (`cov.pop`, see above). The line `ph4$fmin * (ph4$N-1)` computes the expected chi-square, i.e. F0 multiplied by (N - 1). Obviously, both values match (= 81.52).
 
+
+
+
+&nbsp;
+
+
+<a id="powercor2"></a>
+
+# Power for factor correlations ina standard CFA model
+
+Given that obtaining the relevant covariance matrix to define an effect of interest can be rather cumbersome, `semPower` also provides the `semPower.powerCFA` that simplifies this process for the common case that the correlation between two factors in a standard CFA model is of interest.  Note that this function requires the `lavaan` package. 
+
+Generally, `semPower.powerCFA` requires that a certain CFA model is defined in terms of the number of factors, loadings, and (population) correlations between the factors. One of these correlations defines the effect of interest. `semPower.powerCFA` then obtains the true population covariance matrix, fits a model contraining the chosen correlation to be zero, obtains the associated model-implied covariance matrix, and finally performs power analysis on these matrices. 
+
+In this context, there are two relevant comparison models. By default (`comparison = 'restricted'`), the model restricting the correlation to zero is compared against the model that freely estimates this correlation. Alternatively (`comparison = 'saturated'`), one might also use the saturated model as relevant comparison model.
+
+In the simplest case, only the number of indicators by factor (`nIndicator = c(3, 6)`), the factor correlation (`phi = .3`), and a single loading (`loadM = .6`) is provided to define a two factor CFA:
+
+```{r eval=FALSE}
+cfapower <- semPower.powerCFA(type = 'a-priori', comparison = 'restricted',
+                              phi = .3, nIndicator = c(3, 6), loadM = .6,
+                              alpha = .05, power = .80)
+```
+
+The result `cfapower` is a list comprising the results of the power analyses, the population and model-implied covariance matrices, and several lavaan model strings. To view the power output, call:
+
+```{r eval=FALSE}
+summary(cfapower$power)
+```
+
+To peek into the lavaan model strings, use:
+
+```{r eval=FALSE}
+# population model
+cfapower$modelPop
+# (incorrect) analysis model
+cfapower$modelAna
+```
+
+It is a good idea to check whether everything was set up as intended by fitting the true model to the population covariance matrix:
+
+```{r eval=FALSE}
+summary(lavaan::sem(cfapower$modelTrue, sample.cov = cfapower$Sigma,
+                    sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE),
+        stand = TRUE)
+```
+
+You can of course also plug the the population and model-implied covariance matrices into a power analysis:
+
+```{r eval=FALSE}
+ph <- semPower.aPriori(SigmaHat = cfapower$SigmaHat, Sigma = cfapower$Sigma, 
+                       df = 1, alpha = .05, beta = .05)
+summary(ph)
+```
+
+Instead of just defining two factors with equal loadings, one may also define more than two factors with varying loadings. Then, `phi` becomes a factor correlation matrix. For example, let's define three factors with the following correlations: 
+```{r eval=FALSE}
+# define correlation matrix between 3 factors
+phi <- matrix(c(
+  c(1.0, 0.3, 0.7),
+  c(0.3, 1.0, 0.4),
+  c(0.7, 0.4, 1.0)
+), byrow = T, ncol=3)
+```
+Given that there are now more than two factors and thus more than a single factor correlation, we need to define on which of the factor correlations power analysis should be performed using the `nullCor` argument. For example, `nullCor = c(1, 2)` defines that we are interested in the correlation between the first and the second factor.
+
+Having defined the factor correlations, we also need to define the number of indicators via `nIndicator` by factor and the factor loadings. Concerning the latter, we can have equal loadings for all indicators, define specific loadings for each indicator, or sample the loadings from a normal distribution with given mean and standard deviation or from a uniform distribution providing minimum and maximum loading: 
+
+```{r eval=FALSE}
+# sample loadings from normal distribution using mean and sd; same for all factors
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              phi = phi, nullCor = c(1, 2), 
+                              nIndicator = c(6, 5, 4), loadM = .5, loadSD = .1, 
+                              alpha = .05, N = 250)
+
+# sample loadings from normal distribution using mean and sd for each factor
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              phi = phi, nullCor = c(1, 2), 
+                              nIndicator = c(3, 6, 5), 
+                              loadM = c(.5, .6, .7), loadSD = c(.1, .05, 0),
+                              alpha = .05, N = 250)
+
+# sample loadings from uniform using min-max; same for all factors
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              phi = phi, nullCor = c(1, 2), 
+                              nIndicator = c(6, 5, 4), loadMinMax = c(.3, .8),
+                              alpha = .05, N = 250)
+
+# sample loadings from uniform using min-max for each factor
+loadMinMax <- matrix(c(
+  c(.4, .6),
+  c(.5, .8),
+  c(.3, .7)
+), byrow = T, nrow=3)
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              phi = phi, nullCor = c(1, 2), 
+                              nIndicator = c(6, 5, 4), loadMinMax = loadMinMax,
+                              alpha = .05, N = 250)
+
+```
 
 
 
