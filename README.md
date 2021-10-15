@@ -64,6 +64,34 @@ Plot power as function of the magnitude of effect (measured through the RMSEA as
 semPower.powerPlot.byEffect(effect.measure = 'RMSEA', alpha = .05, N = 500, df = 100, effect.min = .001, effect.max = .10)
 ```
 
+Obtain the df of a model provided as lavaan model string (this requires the lavaan package):
+
+```
+lavModel <- '
+f1 ~ x1 + x2 + x3
+f2 ~ x4 + x5 + x6
+'
+semPower.getDf(lavModel)
+```
+
+Determine the required sample size on alpha = .05 to detect (with a power of 80%) a correlation of a least .20 between two factors in a standard CFA model involving three factors with 10, 5, and 7 indicators, respectively, and loadings sampled from a normal distribution with given mean and sd for each factor (this requires the lavaan package):
+
+```
+phi <- matrix(c(
+                 c(1.0, 0.2, 0.5),
+                 c(0.2, 1.0, 0.3),
+                 c(0.5, 0.3, 1.0)
+                ), byrow = TRUE, ncol = 3)
+cfapower <- semPower.powerCFA(type = 'a-priori', 
+                              phi = phi, nullCor = c(1, 2), 
+                              nIndicator = c(10, 5, 7),
+                              loadM = c(.5, .7, .6), 
+                              loadSD = c(.15, .01, .05),
+                              alpha = .05, power = .80)
+summary(cfapower$power)				
+```
+
+
 For more details and for a description how to express the magnitude of effect in terms of model parameters, see the [manual](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf).
 
 
