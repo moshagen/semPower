@@ -68,8 +68,8 @@ Obtain the df of a model provided as lavaan model string (this requires the lava
 
 ```
 lavModel <- '
-f1 ~ x1 + x2 + x3
-f2 ~ x4 + x5 + x6
+f1 =~ x1 + x2 + x3
+f2 =~ x4 + x5 + x6
 '
 semPower.getDf(lavModel)
 ```
