@@ -26,7 +26,7 @@ vignette("semPower")
 ```
 or [view the manual online](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf). I also warmly recommend this in-depth tutorial on power analyses in SEM using semPower:
 
-Jobst, L., Bader, M., & Moshagen, M. (in press). A tutorial on power analysis and sample size planning in structural equation modeling. *Psychological Methods*. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/vignettes/semPowerTutorial.pdf)
+Jobst, L., Bader, M., & Moshagen, M. (in press). A Tutorial on Assessing Statistical Power and Determining Sample Size for Structural Equation Models. *Psychological Methods*. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/vignettes/semPowerTutorial.pdf)
  
 
 ### Quick Examples
@@ -34,34 +34,39 @@ Jobst, L., Bader, M., & Moshagen, M. (in press). A tutorial on power analysis an
 Determine the required sample size to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 with a power of 80% on an alpha error of .05:
 
 ```
-ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA', alpha = .05, power = .80, df = 100)
+ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA', 
+                       alpha = .05, power = .80, df = 100)
 summary(ap)
 ```
 
 Determine the achieved power with a sample size of N = 1000 to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 on an alpha error of .05:
 
 ```
-ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', alpha = .05, N = 1000, df = 100)
+ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', 
+                       alpha = .05, N = 1000, df = 100)
 summary(ph)
 ```
 
 Determine the critical chi-square such that the associated alpha and beta errors are equal, assuming sample size of N = 1000, a model involving df = 100 degrees of freedom, and misspecifications corresponding to RMSEA = .05:
 
 ```
-cp <- semPower.compromise(effect = .05, effect.measure = 'RMSEA', abratio = 1, N = 1000, df = 100)
+cp <- semPower.compromise(effect = .05, effect.measure = 'RMSEA', 
+                          abratio = 1, N = 1000, df = 100)
 summary(cp)
 ```
 
 Plot power as function of the sample size to detect misspecifications corresponding to RMSEA = .05 (assuming df = 100) on alpha = .05:
 
 ```
-semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', alpha = .05, df = 100, power.min = .05, power.max = .99)
+semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', 
+                       alpha = .05, df = 100, power.min = .05, power.max = .99)
 ```
 
 Plot power as function of the magnitude of effect (measured through the RMSEA assuming df = 100) at N = 500 on alpha = .05:
 
 ```
-semPower.powerPlot.byEffect(effect.measure = 'RMSEA', alpha = .05, N = 500, df = 100, effect.min = .001, effect.max = .10)
+semPower.powerPlot.byEffect(effect.measure = 'RMSEA', alpha = .05, N = 500, 
+                            df = 100, effect.min = .001, effect.max = .10)
 ```
 
 Obtain the df of a model provided as lavaan model string (this requires the lavaan package):
@@ -100,5 +105,5 @@ For more details and for a description how to express the magnitude of effect in
 
 If you use `semPower` in publications, please cite the package as follows:
 
-Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models.*Structural Equation Modeling, 23*, 54-60. doi: 10.1080/10705511.2014.950896
+Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54-60. doi: 10.1080/10705511.2014.950896
  
