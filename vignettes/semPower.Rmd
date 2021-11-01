@@ -707,11 +707,11 @@ ph4$fmin * (ph4$N-1)
 
 <a id="powercor2"></a>
 
-# Power for factor correlations ina standard CFA model
+# Power for factor correlations in a standard CFA model
 
 Given that obtaining the relevant covariance matrix to define an effect of interest can be rather cumbersome, `semPower` also provides the `semPower.powerCFA` that simplifies this process for the common case that the correlation between two factors in a standard CFA model is of interest.  Note that this function requires the `lavaan` package. 
 
-Generally, `semPower.powerCFA` requires that a certain CFA model is defined in terms of the number of factors, loadings, and (population) correlations between the factors. One of these correlations defines the effect of interest. `semPower.powerCFA` then obtains the true population covariance matrix, fits a model contraining the chosen correlation to be zero, obtains the associated model-implied covariance matrix, and finally performs power analysis on these matrices. 
+Generally, `semPower.powerCFA` requires that a certain CFA model is defined in terms of the number of factors, loadings, and (population) correlations between the factors. One of these correlations defines the effect of interest. `semPower.powerCFA` then obtains the true population covariance matrix, fits a model contraining the chosen correlation to be zero, obtains the associated model-implied covariance matrix, and finally performs a power analysis on these matrices. 
 
 In this context, there are two relevant comparison models. By default (`comparison = 'restricted'`), the model restricting the correlation to zero is compared against the model that freely estimates this correlation. Alternatively (`comparison = 'saturated'`), one might also use the saturated model as relevant comparison model.
 
@@ -723,7 +723,7 @@ cfapower <- semPower.powerCFA(type = 'a-priori', comparison = 'restricted',
                               alpha = .05, power = .80)
 ```
 
-The result `cfapower` is a list comprising the results of the power analyses, the population and model-implied covariance matrices, and several lavaan model strings. To view the power output, call:
+The result `cfapower` is a list comprising the results of the power analysis, the population and model-implied covariance matrices, and several lavaan model strings. To view the power output, call:
 
 ```{r eval=FALSE}
 summary(cfapower$power)
