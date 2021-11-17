@@ -256,6 +256,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' This requires the lavaan package.
 #' 
 #' @param lavModel the lavaan model string 
+#' @param nGroups for multigroup models: the number of groups 
+#' @param group.equal for multigroup models: type of group equality constraints (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)
 #' @return df
 #' @examples
 #' \dontrun{
@@ -266,21 +268,34 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' f3 ~ f1 + f2
 #' '
 #' semPower.getDf(lavModel)
+#' 
+#' # multigroup version
+#' semPower.getDf(lavModel, nGroups = 3)  
+#' semPower.getDf(lavModel, nGroups = 3, group.equal = c('loadings'))
+#' semPower.getDf(lavModel, nGroups = 3, group.equal = c('loadings', 'intercepts'))
 #' }
 #' @importFrom utils installed.packages
 #' @export
-semPower.getDf <- function(lavModel){
-  # check whether lavaan is availabe
+semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
+  # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
   
   # Fit model to dummy covariance matrix instead of counting parameters. 
   # This should also account for parameter restrictions and other intricacies
+  # Model fitting will give warnings we just can ignore
   tryCatch({
     params <- lavaan::sem(lavModel)
     dummyS <- diag(params@Model@nvar)
     rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
-    # fit model to dummy covariance matrix. This will give warnings we just can ignore
-    dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = F))
+    if(is.null(nGroups) || nGroups == 1){
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = F))
+    }else{
+      if(is.null(group.equal)){
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = F))
+      }else{
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = F))
+      }
+    }
     dummyFit@test$standard$df
   }, 
   warning = function(w){
