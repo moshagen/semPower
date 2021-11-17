@@ -7,12 +7,12 @@
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
 #' @param phi factor correlation matrix or single number giving correlation between all factors 
 #' @param nullCor vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor
-#' @param lambda a list providing factor loadings by factor. Must not contain secondary loadings.   
+#' @param loadings a list providing factor loadings by factor. Must not contain secondary loadings.   
 #' @param nIndicator vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
 #' @param loadM vector giving mean loadings for each factor or single number to use for every loading
 #' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax matrix giving the minimum and maximum loading for each factor or vector to apply to all factors 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @param ... other parameters related to the specific type of power analysis requested
 #' @examples
 #' \dontrun{
@@ -63,15 +63,15 @@
 #'                 c(0.1, 1.0)
 #'               ), byrow = T, ncol = 2)
 #'
-#' # lambda: only define primary loadings 
+#' # loadings: only define primary loadings 
 #' # must not contain secondary loadings
-#' lambda <- list(
+#' loadings <- list(
 #'                c(0.4, 0.5, 0.8),
 #'                c(0.7, 0.6, 0.5, 0.4)
 #'                )
 #'
 #' cfapower <- semPower.powerCFA(type = 'post-hoc',
-#'                               phi = phi, nullCor = c(1, 2), lambda = lambda,
+#'                               phi = phi, nullCor = c(1, 2), loadings = loadings,
 #'                               alpha = .05, N = 250)
 #'
 #' # post-hoc power analysis providing factor correlation matrix, 
@@ -107,11 +107,11 @@
 #'                               alpha = .05, N = 250)
 #'
 #' # same as above, but using min-max loadings for each factor
-#' loadMinMax <- matrix(c(
-#'                        c(.4, .6),
-#'                        c(.5, .8),
-#'                        c(.3, .7)
-#'                        ), byrow = TRUE, nrow = 3)
+#' loadMinMax <- list(
+#'                    c(.4, .6),
+#'                    c(.5, .8),
+#'                    c(.3, .7)
+#'                    )
 #'
 #' cfapower <- semPower.powerCFA(type = 'post-hoc',
 #'                               phi = phi, nullCor = c(1, 2), nIndicator = c(3, 6, 5), 
@@ -123,7 +123,7 @@
 #' @importFrom utils installed.packages
 #' @export
 semPower.powerCFA <- function(type, comparison = 'restricted',
-                              phi, nullCor = NULL, lambda = NULL, 
+                              phi, nullCor = NULL, loadings = NULL, 
                               nIndicator = NULL, 
                               loadM = NULL, loadSD = NULL, 
                               loadMinMax = NULL, 
@@ -139,11 +139,11 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   comparison <- tolower(comparison)
   if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
   
-  if(is.null(nIndicator) & is.null(lambda)) stop('Either provide lambda or number of indicators')
-  if(!is.null(nIndicator) & !is.null(lambda)) stop('Either provide lambda or number of indicators, but not both.')
-  if(is.null(nIndicator) & !is.list(lambda)) stop('Lambda must be a list')
+  if(is.null(nIndicator) & is.null(loadings)) stop('Either provide loadings or number of indicators')
+  if(!is.null(nIndicator) & !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
+  if(is.null(nIndicator) & !is.list(loadings)) stop('loadings must be a list')
   
-  nfac <- ifelse(is.null(lambda), length(nIndicator), length(lambda))
+  nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
   if(nfac < 2) stop('At least two factors are required')
   
   if(is.null(nullCor) & length(phi) == 1) nullCor <- c(1, 2)
@@ -160,7 +160,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   invisible(apply(phi, c(1, 2), function(x) checkBounded(x, 'All elements in phi', bound = c(-1, 1), inclusive = TRUE)))
   if(nullCor[1] > nrow(phi) | nullCor[2] > ncol(phi)) stop('nullCor does not refer to a valid correlation in phi')
   
-  if(is.null(lambda)){
+  if(is.null(loadings)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
     invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
     if(is.null(loadM) & is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
@@ -169,20 +169,20 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     if(is.null(loadMinMax)) invisible(sapply(loadM, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
     
     if(!is.null(loadMinMax) && (!is.null(loadM) || !is.null(loadSD))) stop('Either specify mean and SD of loadings or specify min-max loading, both not both.')
-    if(!is.null(loadMinMax)) invisible(sapply(loadMinMax, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
-    if(length(loadMinMax) == 2) loadMinMax <- matrix(rep(loadMinMax, nfac), nrow = nfac, byrow = TRUE)
+    if(!is.null(loadMinMax)) invisible(sapply(unlist(loadMinMax), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
+    if(length(loadMinMax) == 2) loadMinMax <- lapply(1:nfac, function(x) loadMinMax)
     if(is.null(loadMinMax) && is.null(loadSD)) loadSD <- rep(0, nfac)
     if(is.null(loadMinMax) && length(loadSD) == 1) loadSD <- rep(loadSD,nfac)
     if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
   }else{
-    invisible(lapply(lambda, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1)))))
-    nIndicator <- unlist(lapply(lambda, length))  # crossloadings are disallowed
+    invisible(lapply(loadings, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1)))))
+    nIndicator <- unlist(lapply(loadings, length))  # crossloadings are disallowed
   }
-  
-  
+
   ### pop model
   # define factors
   tok <- list()
+  lambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator)) # store loading matrix
   sidx <- 1
   for(f in 1:nfac){
     eidx <- sidx + (nIndicator[f] - 1)
@@ -192,10 +192,11 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
       cload[cload <= -1] <- -.99
       cload[cload >= 1] <- .99
     }else if(!is.null(loadMinMax)){
-      cload <- round(runif(nIndicator[f], loadMinMax[f, 1], loadMinMax[f, 2]), 2)
+      cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
     }else{
-      cload <- lambda[[f]]  # lambda only contains primary loadings
+      cload <- loadings[[f]]  # loadings only contains primary loadings
     }
+    lambda[sidx:eidx, f] <- cload
     tok[f] <- 
       paste(
         paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', sidx:eidx), collapse = ' + ')),
@@ -244,7 +245,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   df <- ifelse(comparison == 'saturated', hyp.model@test$standard$df, 1)
   power <- semPower(type = type, Sigma = Sigma, SigmaHat = SigmaHat, df = df, ...)
   
-  list(power = power, Sigma = Sigma, SigmaHat = SigmaHat, modelPop = modelPop, modelTrue = modelTrue, modelAna = modelAna)  
+  list(power = power, Sigma = Sigma, SigmaHat = SigmaHat, modelPop = modelPop, modelTrue = modelTrue, modelAna = modelAna, lambda = lambda, phi = phi)  
   
 }
 
