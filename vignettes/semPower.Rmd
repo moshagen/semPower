@@ -141,7 +141,7 @@ $$df = p\cdot(p+1)/2 - q$$
 
 where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.]. For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
 
-If you are unsure or have a more complicated model (or both), `semPower` also includes a convenience function called `semPower.getDf` that determines the df for a (single-group) model provided in the `lavaan` syntax (note that this function requires the `lavaan` package). For the model sketched above, running 
+If you are unsure or have a more complicated model (or both), `semPower` also includes a convenience function called `semPower.getDf` that determines the df for a model provided in the `lavaan` syntax (note that this function requires the `lavaan` package). For the model sketched above, running 
 
 ```{r eval=FALSE}
 # define model using standard lavaan syntax
@@ -153,7 +153,36 @@ f2 =~ x5 + x6 + x7 + x8
 semPower.getDf(lavmodel)
 ```
 
-gives 19 as result, which matches what we calculated by hand.
+gives 19 as result, which matches what we calculated by hand. `semPower.getDf` can also be used to obtain the df in multigroup settings by setting the arguments `nGroups` (and `group.equal` for models involving equality constraints).
+
+```{r eval=FALSE}
+# configural invariance
+semPower.getDf(lavmodel, nGroups = 3)
+# metric invariance
+semPower.getDf(lavmodel, nGroups = 3, group.equal = c('loadings'))
+# scalar invariance
+semPower.getDf(lavmodel, nGroups = 3, group.equal = c('loadings', 'intercepts'))
+```
+
+
+## Obtain power to detect a difference between two not explicitly specified models
+A common scenario is to test two competing models against each other, where a more restrictive model (involving more df) is compared against a less restrictive model (involving less df). When the difference between these models lies just in a single (or few) particular parameter(s), the effect should be determined in terms of the model parameters (see below). If, however, the difference between the models potentially spreads across multiple parameters (as, say, when comparing a 3-factor with a 5-factor model), one approach to power analysis it to define the models in terms of overall fit. 
+
+For example, to obtain the required sample size to yield a power of 80% to discriminate a model with an associated RMSEA of .04 and 44 df from a model with an associated RMSEA of .05 and 41 df, define both the `effect` and `df` arguments as vectors (don't define lists!) comprising two elements:
+```{r eval=FALSE}
+ap <- semPower.aPriori(effect = c(.04, .05), effect.measure = 'RMSEA', 
+                       alpha = .05, power = .80, df = c(44, 41))
+summary(ap)
+```
+which shows that 340 observations are required.
+
+A similar situation often occurs in tests of measurement invariance, where one wants sufficient power to detect whether certain cross-group constraints on the model parameters (such as loadings) are viable. The general syntax is the same as above, but we now also need to set the `N` argument, which gives the number of observations by group in compromise and post-hoc power analysis, and the group weights in a-priori power analysis. For example, the following asks for the required sample size to detect a change in the Mc of .01 in a three-group model, where all groups are equal-sized: 
+```{r eval=FALSE}
+ap <- semPower.aPriori(effect = c(.99, .98), effect.measure = 'Mc', 
+                        alpha = .05, power = .80, df = c(69, 57), N = c(1, 1, 1))
+summary(ap)
+```
+This shows that 858 observations (286 by group) are required for a power of 80%. 
 
 
 <a id="cfapower"></a>
@@ -732,6 +761,12 @@ cfapower$modelPop
 cfapower$modelAna
 ```
 
+When using sampled loadings (see below), view the generated loading matrix using
+
+```{r eval=FALSE}
+cfapower$lambda
+```
+
 It is a good idea to check whether everything was set up as intended by fitting the true model to the population covariance matrix:
 
 ```{r eval=FALSE}
@@ -782,11 +817,11 @@ cfapower <- semPower.powerCFA(type = 'post-hoc',
                               alpha = .05, N = 250)
 
 # sample loadings from uniform using min-max for each factor
-loadMinMax <- matrix(c(
+loadMinMax <- list(
   c(.4, .6),
   c(.5, .8),
   c(.3, .7)
-), byrow = T, nrow=3)
+)
 cfapower <- semPower.powerCFA(type = 'post-hoc',
                               phi = phi, nullCor = c(1, 2), 
                               nIndicator = c(6, 5, 4), loadMinMax = loadMinMax,
