@@ -46,12 +46,23 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     if(!effect.measure %in% known.effects.measures){
       stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
     }
+    
+    # for effect-size differences, check matching length
+    if(!is.null(effect) && !is.list(effect)){
+      if(length(effect) > 2){
+        stop("Power analyses with multiple groups requires specification of the effect size in each group provided as a list.")
+      }else{
+        if(length(effect) == 2 && length(df) != 2){
+          stop("Power analyses for effect size differences requires specification of the df of the model pairs.")
+        }
+      }
+    }
 
     # for multiple group analyses, check matching length
     if(is.list(N)){
-      if(!is.null(effect) && length(effect) == 1){
+      if(is.list(effect) && length(effect) == 1){
         warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
-      }else if(!is.null(effect) && length(N) != length(effect)){
+      }else if(is.list(effect) && length(N) != length(effect)){
         stop("Power analyses with multiple groups requires specification of the effect size in each group.")
       }
     }
@@ -76,13 +87,10 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     }
 
     if(effect.measure == "GFI" || effect.measure == "AGFI"){
-
       if(is.null(p)){
         stop("effect.measure GFI and AGFI require specification of p")
       }
-
       checkPositive(p)
-
     }
   }
 
@@ -117,7 +125,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop("Sigma and SigmaHat must be positive definite")
   }
 
-  checkPositive(df)
+  sapply(df, checkPositive, message = 'df')
 
   
   # specifics depending on type of power analyses

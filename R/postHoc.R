@@ -2,14 +2,14 @@
 #'
 #' Determine power (1-beta) given alpha, df, and effect
 #'
-#' @param effect effect size specifying the discrepancy between H0 and H1 (a list for multiple group models)
+#' @param effect effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)
 #' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
 #' @param alpha alpha error
 #' @param N the number of observations (a list for multiple group models)
-#' @param df the model degrees of freedom
+#' @param df the model degrees of freedom 
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure. 
-#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.
+#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure. 
+#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
 #' @return list
 #' @examples
 #' \dontrun{
@@ -31,7 +31,6 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
   # convert vectors to lists
-  if(!is.list(effect) && length(effect) > 1) effect <- as.list(effect)
   if(!is.list(N) && length(N) > 1) N <- as.list(N)
   
   validateInput('post-hoc', effect = effect, effect.measure = effect.measure,
@@ -51,13 +50,18 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
     effect <- as.list(rep(effect, length(N)))
   }
-  
-  # obsolete: single group case only
-  # fmin <- getF(effect, effect.measure, df, p, SigmaHat, Sigma)
-  # fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma)
-  
+
   if(!is.null(effect)){
-    fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+    if(is.list(effect) || length(effect) == 1){
+      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+    }else{
+      # power for effect differences
+      f1 <- getF(effect[1], effect.measure, df[1], p)
+      f2 <- getF(effect[2], effect.measure, df[2], p)
+      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
+      fmin.g <- rep(fdiff, length(N)) 
+      df <- abs(df[2] - df[1]) # let's make order arbitrary  
+    }
   }
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
