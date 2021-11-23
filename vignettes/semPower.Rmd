@@ -837,14 +837,14 @@ Among other things, `semPower.powerCFA` also returns the model-implied covarianc
 # factors 1 and 2 act as predictors, 3 is the criterion
 phi <- matrix(c(
   c(1.0, 0.5, 0.3),
-  c(0.5, 1.0, 0.246),
-  c(0.3, 0.246, 1.0)
+  c(0.5, 1.0, 0.276),
+  c(0.3, 0.276, 1.0)
 ), byrow = T, ncol=3)
 # perform dummy power analysis
 dummypower <- semPower.powerCFA(type = 'post-hoc',
                                 phi = phi, nullCor = c(1, 2), 
                                 nIndicator = c(5, 4, 3), 
-								loadM = .6, loadSD = .05,
+								                loadM = .6,
                                 alpha = .05, N = 1000)
 # store implied covariance matrix
 Sigma <- dummypower$Sigma
@@ -886,17 +886,18 @@ R2r <- 1 - par[par$lhs == 'f3' & par$op == '~~' & par$rhs == 'f3', 'std.all']
 R2 - R2r
 ```
 
-Using the model-implied covariance matrix associated with the restricted regression model, we are now in the position to perform any type of power analysis. For example, to obtain the required number of observations to detect an $R^2$ increase of $\geq .01$ in the situation defined above with a power of 80% on alpha = .05, we can use:  
+Using the model-implied covariance matrix associated with the restricted regression model, we are now in the position to perform any type of power analysis. For example, to obtain the required number of observations to detect an $R^2$ increase of $\geq .01$ in the situation defined above with a power of 80% on alpha = .05, we can use  
 
 ```{r eval=FALSE}
 # obtain model-implied covariance matrix
 SigmaHat <- fitted(resr)$cov
 
 # do power analysis
-semPower.aPriori(alpha = .05, power = .80, df = 1, 
-                 Sigma = Sigma, SigmaHat = SigmaHat)
+ap <- semPower.aPriori(alpha = .05, power = .80, df = 1, 
+                      Sigma = Sigma, SigmaHat = SigmaHat)
+summary(ap)
 ```
-
+which shows that 977 observations are required.
 
 
 
