@@ -6,7 +6,7 @@
 semPower
 =====
 
-semPower is an R-package that provides several functions to perform a-priori, post-hoc, and compromise power analyses for structural equation models (SEM). 
+semPower is an R-package that provides several functions to perform a-priori, compromise, and post-hoc power analyses for structural equation models (SEM). 
 
 Basic functionality is also provided as a shiny app, which you can use online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower/).
 
