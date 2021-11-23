@@ -843,14 +843,14 @@ phi <- matrix(c(
 # perform dummy power analysis
 dummypower <- semPower.powerCFA(type = 'post-hoc',
                                 phi = phi, nullCor = c(1, 2), 
-                                nIndicator = c(5, 4, 3), 
-								                loadM = .6,
+                                nIndicator = c(5, 4, 3),
+                                loadM = .6,
                                 alpha = .05, N = 1000)
 # store implied covariance matrix
 Sigma <- dummypower$Sigma
 ```
 
-In the above, we first define the correlation matrix between three factors. Then we use the `semPower.powerCFA` command to define the factors in terms of the number of indicators and the mean (and SD) loadings. Here, we are not interested in the computed power, but rather just want the generated covariance matrix of the observed variables, which we store the the variable `Sigma`.
+In the above, we first define the correlation matrix between three factors. Then we use the `semPower.powerCFA` command to define the factors in terms of the number of indicators and the loadings. Here, we are not interested in the computed power, but rather just want the generated covariance matrix of the observed variables, which we store the the variable `Sigma`.
 
 By fitting two regression models to Sigma, we can confirm that the factor correlations realized above (phi) indeed correspond to an $R^2$ increase of about .01 in a latent regression model predicting the third factor:  
 
