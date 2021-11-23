@@ -79,7 +79,7 @@ f2 =~ x4 + x5 + x6
 semPower.getDf(lavModel)
 ```
 
-Determine the required sample size to discriminate a model exhibiting an RMSEA of .04 on 44 df from a model with RMSEA =  .05 on 41 df with a power of 80% on an alpha error of .05:
+Determine the required sample size to discriminate a model exhibiting an RMSEA of .04 on 44 df from a model with RMSEA = .05 on 41 df with a power of 80% on an alpha error of .05:
 
 ```
 ap <- semPower.aPriori(effect = c(.04, .05), effect.measure = 'RMSEA', 
@@ -88,7 +88,7 @@ summary(ap)
 ```
 
 
-Determine the required sample size on alpha = .05 to detect (with a power of 80%) a correlation of a least .20 between two factors in a standard CFA model, where the first and second factor are indicated by 10 and 5 manifest variables, respectively, and the loadings are sampled from a normal distribution with given mean and sd for each factor (this requires the lavaan package):
+Determine the required sample size on alpha = .05 to detect with a power of 80% a correlation of at least .20 between two factors in a standard CFA model, where the first and second factor are indicated by 10 and 5 manifest variables, respectively, and the loadings are sampled from a normal distribution with given mean and sd for each factor (this requires the lavaan package):
 
 ```
 cfapower <- semPower.powerCFA(type = 'a-priori', 
