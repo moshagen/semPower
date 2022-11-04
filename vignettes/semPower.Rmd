@@ -2,8 +2,8 @@
 title: "Power Analysis for Structural Equation Models: semPower Manual"
 author: "Morten Moshagen"
 date: "`r Sys.Date()`"
-#output: pdf_document
-output: rmarkdown::html_vignette    
+output: pdf_document
+#output: rmarkdown::html_vignette    
 vignette: >
   %\VignetteIndexEntry{semPower Manual}
   %\VignetteEngine{knitr::rmarkdown}
