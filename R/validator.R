@@ -18,6 +18,8 @@
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @param power.min for plotting: minimum power
 #' @param power.max for plotting: maximum power
 #' @param effect.min for plotting: minimum effect
@@ -27,7 +29,7 @@
 validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NULL,
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
-                          SigmaHat = NULL, Sigma = NULL,
+                          SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
@@ -39,6 +41,8 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if(is.list(N) && length(N) == 1) N <- unlist(N)
   if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- unlist(SigmaHat)
   if(is.list(Sigma) && length(Sigma) == 1) Sigma <- unlist(Sigma)
+  if(is.list(muHat) && length(muHat) == 1) muHat <- unlist(muHat)
+  if(is.list(mu) && length(mu) == 1) mu <- unlist(mu)
   
   # do input validation
   if(is.null(SigmaHat) && is.null(Sigma)){
@@ -97,18 +101,28 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if((!is.null(SigmaHat) && is.null(Sigma)) || (is.null(Sigma) && !is.null(SigmaHat))){
     stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
   }
+  if((!is.null(muHat) && is.null(mu)) || (is.null(mu) && !is.null(muHat))){
+    stop("Both muHat and mu must be defined when effect is determined from covariance matrices and meanstructures.")
+  }
+  if((!is.null(muHat) || !is.null(mu)) && (is.null(Sigma) || is.null(SigmaHat))){
+    stop("When effect is to be determined from covariance matrices and meanstructures, Sigma, SigmaHat, mu, and muHat must be provided.")
+  }
   if(!is.null(SigmaHat) && !is.null(Sigma)){
     if(!is.null(effect) || !is.null(effect.measure))
       warning("Ignoring effect and effect.measure when Sigma and SigmaHat are set")
 
     if(is.list(SigmaHat) || is.list(Sigma)){
       if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+      if(!is.null(muHat) && !is.null(mu)){
+        if(length(muHat) != length(mu) || length(mu) != length(Sigma))
+          stop("Multiple group power analyses require specification of mu and muHat for each group.")
+      }
       if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
       if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
       if(length(N) == 1){
         warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
       }else if(length(SigmaHat) != length(N)){
-        stop("Multiple group power analyses require specification ofN  for each group.")
+        stop("Multiple group power analyses require specification of N for each group.")
       } 
     }
     
@@ -123,8 +137,23 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop("Sigma and SigmaHat must be at least of dimension 2*2")
     if(any(sapply(c(Sigma, SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
       stop("Sigma and SigmaHat must be positive definite")
+    
+    if(!is.null(muHat) && !is.null(mu)){
+      
+      if(!is.list(muHat)) muHat <- list(muHat)
+      if(!is.list(mu)) mu <- list(mu)
+
+      if(any(sapply(c(mu, muHat), is.na)))
+        stop("mu and muHat must not contain NA values.")
+      if(any(sapply(mu, length) != sapply(muHat, length)))
+        stop("mu and muHat must be of same size.")
+      if(any(sapply(mu, length) != sapply(Sigma, ncol)))
+        stop("mu and muHat must be of same length as Sigma and SigmaHat.")
+    }
+    
   }
 
+  
   sapply(df, checkPositive, message = 'df')
 
   

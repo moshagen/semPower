@@ -11,6 +11,8 @@
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.  
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return list
 #' @examples
 #' \dontrun{
@@ -22,7 +24,7 @@
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
                                  N, df, p = NULL,
-                                 SigmaHat = NULL, Sigma = NULL){
+                                 SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
@@ -32,7 +34,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   validateInput('compromise', effect = effect, effect.measure = effect.measure,
                 alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                 N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma)
+                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
 
 
   if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
@@ -62,14 +64,14 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
   }
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]])})
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
     }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
     }
   }
   
   fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, N)
+  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, N)
   
   ncp <- getNCP(fmin.g, N)
   log.abratio <- log(abratio)

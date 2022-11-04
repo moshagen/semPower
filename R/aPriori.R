@@ -12,6 +12,8 @@
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
 #' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure. 
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return list
 #' @examples
 #' \dontrun{
@@ -31,7 +33,7 @@
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
                              N = NULL, df, p = NULL,
-                             SigmaHat = NULL, Sigma = NULL){
+                             SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
 
@@ -41,7 +43,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   validateInput('a-priori', effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = beta, power = power, abratio = NULL,
                 N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma)
+                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
 
   if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     effect.measure <- 'F0'
@@ -74,9 +76,9 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   }
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]]) })
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]]) })
     }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma)
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
     }
   }
   
@@ -126,7 +128,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   requiredN.g <- ceiling(weights * requiredN)
   
   # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, requiredN.g)
+  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, requiredN.g)
   
   impliedNCP <- getNCP(fmin.g, requiredN.g)
   impliedBeta <- pchisq(critChi, df, impliedNCP)

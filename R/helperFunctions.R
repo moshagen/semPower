@@ -59,8 +59,10 @@ getChiSquare.F <- function(Fmin, n, df){
 #' @param p number of observed varaibles
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return Fmin
-getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL){
+getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
   fmin <- effect
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     switch(effect.measure,
@@ -70,7 +72,7 @@ getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, S
            "AGFI" = fmin <- getF.AGFI(effect, df, p)
     )
   }else{
-    fmin <- effect <- getF.Sigma(SigmaHat, Sigma)
+    fmin <- effect <- getF.Sigma(SigmaHat, Sigma, muHat, mu)
   }
   fmin
 }
@@ -147,7 +149,7 @@ getF.AGFI <- function(AGFI, df, p){
 #' @param Sigma population covariance matrix
 #' @param N list of sample weights
 #' @return list of indices
-getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = NULL){
+getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL, N = NULL){
   fit <- list(
     rmsea = getRMSEA.F(fmin, df, nGroups = ifelse(length(N) > 1, length(N), 1)),
     mc = getMc.F(fmin),
@@ -160,11 +162,11 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, N = 
   }
   if(!is.null(SigmaHat)){
     if(length(N) > 1){
-      fit$srmr <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, N)
-      fit$cfi <- getCFI.Sigma.mgroups(SigmaHat, Sigma, N)
+      fit$srmr <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
+      fit$cfi <- getCFI.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
     }else{
-      fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma)
-      fit$cfi <- getCFI.Sigma(SigmaHat, Sigma)
+      fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma, muHat, mu)
+      fit$cfi <- getCFI.Sigma(SigmaHat, Sigma, muHat, mu)
     }
   }
   fit
@@ -238,14 +240,21 @@ getAGFI.F <- function(Fmin, df, p){
 #' calculates minimum of the ML-fit-function given model-implied and observed covariance matrix.
 #'
 #' F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
+#' with meanstructure add (mu - muHat)' SigmaHat^-1 (mu - muHat)
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return Fmin
-getF.Sigma <- function(SigmaHat, S){
+getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
   fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
+  if(!is.null(mu)){
+    fmean <- t(c(mu - muHat)) %*% solve(SigmaHat) %*% c(mu - muHat)
+    fmin <- fmin + fmean  
+  }
   fmin
 }
 
@@ -256,8 +265,10 @@ getF.Sigma <- function(SigmaHat, S){
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return SRMR
-getSRMR.Sigma <- function(SigmaHat, S){
+getSRMR.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
   p <- ncol(S)
@@ -271,10 +282,25 @@ getSRMR.Sigma <- function(SigmaHat, S){
   m <- D %*% (S - SigmaHat) %*% D
   
   fols <- sum(m[lower.tri(m, diag = TRUE)]^2)
+  
   # mplus variant
   #fols <- (sum(m[lower.tri(m, diag=F)]^2)  +  sum(((diag(S) - diag(SigmaHat))/diag(S))^2)) 
+
+  enum <- fols
+  denum <- (p * (p + 1) / 2)
   
-  srmr <- sqrt(fols / (p * (p + 1) / 2))
+  if(!is.null(mu)){
+    # mplus / bollen approach
+    #stdMeanResid <- sum( mu/sqrt(diag(S)) - muHat/sqrt(diag(SigmaHat)) )^2
+    
+    # hu+bentler approach
+    stdMeanResid <- sum( D %*% (mu - muHat) )^2
+    
+    enum <- enum + stdMeanResid
+    denum <- denum + p
+  }
+  
+  srmr <- sqrt(enum / denum)    
   srmr
 }
 
@@ -284,10 +310,17 @@ getSRMR.Sigma <- function(SigmaHat, S){
 #'
 #' @param SigmaHat a list of model implied covariance matrices
 #' @param S a list of observed (or population) covariance matrices
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @param N a list of group weights
 #' @return SRMR
-getSRMR.Sigma.mgroups <- function(SigmaHat, S, N){
-  srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]]))
+getSRMR.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
+  if(is.null(mu)){
+    srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]]))
+  }else{
+    srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]]))
+  }
+    
   # lavaan approach: apply sample weights to srmr
   # srmr <- (sum(srmrs*N)/sum(N))
   # mplus approach: apply sample weights to squared sums of res
@@ -306,14 +339,17 @@ getSRMR.Sigma.mgroups <- function(SigmaHat, S, N){
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @return CFI
-getCFI.Sigma <- function(SigmaHat, S){
+getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
-  fm <- getF.Sigma(SigmaHat, S)
+  fm <- getF.Sigma(SigmaHat, S, muHat, mu)
   SigmaHatNull <- diag(ncol(S))
   diag(SigmaHatNull) <- diag(S)
-  f0 <- getF.Sigma(SigmaHatNull, S)
+  muHatNull <- mu # as in mplus: baseline model has unrestricted means
+  f0 <- getF.Sigma(SigmaHatNull, S, muHatNull, mu)
   cfi <- (f0-fm)/f0
   cfi
 }
@@ -326,17 +362,30 @@ getCFI.Sigma <- function(SigmaHat, S){
 #'
 #' @param SigmaHat a list of model implied covariance matrix
 #' @param S a list of observed (or population) covariance matrix
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
 #' @param N a list of group weights
 #' @return CFI
-getCFI.Sigma.mgroups <- function(SigmaHat, S, N){
+getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
   N <- unlist(N)
 
-  fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
-  fnull.g <- sapply(seq_along(S), function(x){
-    SigmaHatNull <- diag(ncol(S[[x]]))
-    diag(SigmaHatNull) <- diag(S[[x]])
-    getF.Sigma(SigmaHatNull, S[[x]])
+  if(is.null(mu)){
+    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
+    fnull.g <- sapply(seq_along(S), function(x){
+      SigmaHatNull <- diag(ncol(S[[x]]))
+      diag(SigmaHatNull) <- diag(S[[x]])
+      getF.Sigma(SigmaHatNull, S[[x]])
     })
+  }else{
+    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]])})
+    fnull.g <- sapply(seq_along(S), function(x){
+      SigmaHatNull <- diag(ncol(S[[x]]))
+      diag(SigmaHatNull) <- diag(S[[x]])
+      muHatNull <- mu[[x]]   # as in mplus: baseline model has unrestricted means
+      getF.Sigma(SigmaHatNull, S[[x]], muHatNull[[x]], mu[[x]])
+    })
+  }
+  
   
   # approach A: apply sampling weights to CFI
   #cfi.g <- (fnull.g - fmin.g) / fnull.g
