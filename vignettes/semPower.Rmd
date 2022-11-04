@@ -308,6 +308,8 @@ The output (which is omitted here) shows that N = 1258 observations are required
 
 ## Extended example: Power to detect invariance constraints in a multiple group model
 
+### Models without meanstructures
+
 Suppose we fit a model to two groups and are interested in whether the loadings are invariant across groups. To test this hypothesis, a model with freely estimated loadings would be compared against a model restricting the loadings to be equal across groups (metric invariance model). If the the fit of the latter model is significantly worse, this supports the conclusion that at least one loading systematically differs across groups. In terms of power analyses, the misfit associated with a model assuming equal loadings across groups when, in reality, at least one loading differs, defines the magnitude of effect, which we want to detect with a sufficient power. 
 
 Again, we need to setup a model describing the true situation in the population to obtain the magnitude of effect. Because we have a two-group model, the model needs to be specified for both groups. Let's assume we have a two factor model with each factor being indicated by three manifest variables. Let's further assume that the loading of `x2` differs across groups:
@@ -397,6 +399,112 @@ ph6 <- semPower.postHoc(effect = list(0.01102, 0.01979), effect.measure = 'F0',
 summary(ph6)
 ```
 
+
+### Models including meanstructures
+The process described in the previous section is highly similar when power to detect invariance constrains concerning means (i.e., intercepts or latent means) is of concern. The main difference is that the model strings need to define intercepts as well as latent means and the population and implied means need to be obtained as well. 
+
+For illustration, we add information on means to the models defined above. Specifically, we define all intercepts and latent means to be zero in the first group, whereas the intercept of `x4` is .5 is the second group, which also has a latent mean on the first factor `f1` of 1: 
+```{r eval=FALSE}
+library(lavaan)
+
+# population model group 1
+model.pop.g1 <- '
+f1 =~ .8*x1 + .7*x2 + .6*x3
+f2 =~ .7*x4 + .6*x5 + .5*x6
+x1 ~~ .36*x1
+x2 ~~ .51*x2
+x3 ~~ .64*x3
+x4 ~~ .51*x4
+x5 ~~ .64*x5
+x6 ~~ .75*x6
+f1 ~~ 1*f1
+f2 ~~ 1*f2
+f1 ~~ 0.5*f2
+x1 ~ 0*1
+x2 ~ 0*1
+x3 ~ 0*1
+x4 ~ 0*1
+x5 ~ 0*1
+x6 ~ 0*1
+f1 ~ 0*1
+f2 ~ 0*1
+'
+# population model group 2
+model.pop.g2 <- '
+f1 =~ .8*x1 + .4*x2 + .6*x3
+f2 =~ .7*x4 + .6*x5 + .5*x6
+x1 ~~ .36*x1
+x2 ~~ .84*x2
+x3 ~~ .64*x3
+x4 ~~ .51*x4
+x5 ~~ .64*x5
+x6 ~~ .75*x6
+f1 ~~ 1*f1
+f2 ~~ 1*f2
+f1 ~~ 0.5*f2
+x1 ~ 0*1
+x2 ~ 0*1
+x3 ~ 0*1
+x4 ~ .5*1 # no inv
+x5 ~ 0*1
+x6 ~ 0*1
+f1 ~ 1*1  #no inv
+f2 ~ 0*1
+'
+```
+We then obtain both the model-implied covariance matrices and the model-implied means:
+```{r eval=FALSE}
+# population covariance matrices
+cov.pop.g1 <- fitted(sem(model.pop.g1))$cov
+cov.pop.g2 <- fitted(sem(model.pop.g2))$cov
+# population means
+mu.pop.g1 <- fitted(sem(model.pop.g1))$mean
+mu.pop.g2 <- fitted(sem(model.pop.g2))$mean
+```
+
+We next fit the hypothesized model (here assuming scalar invariance) to the population data, obtain the associated model-implied covariance matrices and mean vectors, and again store the df of the models.
+
+```{r eval=FALSE}
+# define analysis model
+model.h0 <- '
+f1 =~ x1 + x2 + x3
+f2 =~ x4 + x5 + x6
+' 
+# fit analysis model to population data; note the sample.nobs are arbitrary
+fit.h0 <- sem(model.h0,
+              sample.cov = list(cov.pop.g1, cov.pop.g2),
+              sample.mean = list(mu.pop.g1, mu.pop.g2),
+              sample.nobs = list(1000, 1000), sample.cov.rescale = F,
+              group.equal = c('loadings', 'intercepts'), likelihood='wishart')
+# get model implied covariance matrices
+cov.h0.g1 <- fitted(fit.h0)$`Group 1`$cov
+cov.h0.g2 <- fitted(fit.h0)$`Group 2`$cov
+# get model implied means
+mu.h0.g1 <- fitted(fit.h0)$`Group 1`$mean
+mu.h0.g2 <- fitted(fit.h0)$`Group 2`$mean
+# df of metric invariance model
+df <- fit.h0@test[[1]]$df
+# obtain baseline df (no invariance constraints)
+fit.bl <- sem(model.h0,
+              sample.cov = list(cov.pop.g1, cov.pop.g2),
+              sample.mean = list(mu.pop.g1, mu.pop.g2),
+              sample.nobs = list(1000, 1000), sample.cov.rescale = F, likelihood='wishart')
+df.bl <- fit.bl@test[[1]]$df
+# difference in df
+df.diff <- df - df.bl
+```
+
+Finally, we can plug all matrices and vectors in the `semPower.aPriori` command: 
+
+```{r eval=FALSE}
+#  apriori power using cov matrices and mean vectors
+ap6b <- semPower.aPriori(SigmaHat = list(cov.h0.g1, cov.h0.g2),
+                         Sigma = list(cov.pop.g1, cov.pop.g2),
+                         muHat = list(mu.h0.g1, mu.h0.g2),
+                         mu = list(mu.pop.g1, mu.pop.g2),
+                         alpha = .05, beta = .20, N = list(1, 1), df = df.diff)
+summary(ap6b)
+```
 
 
 &nbsp;
