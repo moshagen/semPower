@@ -294,7 +294,7 @@ getSRMR.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
     #stdMeanResid <- sum( mu/sqrt(diag(S)) - muHat/sqrt(diag(SigmaHat)) )^2
     
     # hu+bentler approach
-    stdMeanResid <- sum( D %*% (mu - muHat) )^2
+    stdMeanResid <- sum( (D %*% (mu - muHat))^2 )
     
     enum <- enum + stdMeanResid
     denum <- denum + p
