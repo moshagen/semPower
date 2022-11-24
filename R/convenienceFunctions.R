@@ -1,3 +1,104 @@
+#' semPower.powerLav
+#'
+#' Perform power analysis on population and model-implied Sigmas as defined 
+#' through lavaan model strings
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param modelPop lavaan model string defining the true model.
+#' @param modelH0 lavaan model string defining the (incorrect) analysis model
+#' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param Sigma population covariance matrix (if modelPop is not set).
+#' @param mu population means (if modelPop is not set).
+#' @param ... other parameters related to the specific type of power analysis requested
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, and the H1 matrix SigmaH1, as well as various lavaan model strings
+#' @examples
+#' \dontrun{
+#' ## a priori power analysis for the null hypothesis that the correlation between 
+#' ## two cfa factors with a true correlation of .2 differs from zero
+#' # define population model 
+#' mPop = '
+#'   f1 =~ .5*x1 + .6*x2 + .4*x3
+#'   f2 =~ .7*x4 + .8*x5 + .3*x6
+#'   x1 ~~ .75*x1
+#'   x2 ~~ .64*x2
+#'   x3 ~~ .84*x3
+#'   x4 ~~ .51*x4
+#'   x5 ~~ .36*x5
+#'   x6 ~~ .91*x6
+#'   f1 ~~ 1*f1
+#'   f2 ~~ 1*f2
+#'   f1 ~~ .2*f2
+#' '
+#' # define analysis model (restricting the factor correlation to zero) 
+#' mAna = '
+#'   f1 =~ x1 + x2 + x3
+#'   f2 =~ x4 + x5 + x6
+#'   f1 ~~ 0*f2
+#' '
+#' # do a priori power analsis
+#' lavpower.ap <- semPower.powerLav(type = 'a-priori', 
+#'                                  modelPop = mPop, modelH0 = mAna,
+#'                                  alpha = .05, beta = .05)
+#' summary(lavpower.ap$power)
+#'
+#' }
+#' @importFrom utils installed.packages
+#' @export
+semPower.powerLav <- function(type, 
+                              modelPop = NULL, modelH0 = NULL, modelH1 = NULL, 
+                              Sigma = NULL, mu = NULL, ...){
+
+  # check whether lavaan is available
+  if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
+  # validate power type
+  type <- checkPowerTypes(type)
+  # validate input
+  if(is.null(modelH0)) stop('Provide a lavaan model string defining the analysis (H0) model.')
+  if(is.null(modelPop) & is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
+  
+  
+  # determine population Sigma and mu
+  SigmaH1 <- Sigma
+  muH1 <- mu
+  if(is.null(Sigma)){
+    SigmaH1 <- Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
+    muH1 <- mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
+  }
+  # override H1 sigma when comparison model differs from the saturated model 
+  if(!is.null(modelH1)){
+    h1.model <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+    if(!h1.model@optim$converged) stop('The H1 model did not converge.')
+    SigmaH1 <- lavaan::fitted(h1.model)$cov
+    if(!is.null(mu)) muH1 <- lavaan::fitted(h1.model)$mean
+  }
+  
+  # get H0 sigmaHat
+  h0.model <- lavaan::sem(modelH0, sample.cov = Sigma,  sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+  if(!h0.model@optim$converged) stop('The H0 model did not converge.')
+  SigmaHat <- lavaan::fitted(h0.model)$cov
+  muHat <- lavaan::fitted(h0.model)$mean
+
+  # determine df
+  df.h0 <- df <- h0.model@test$standard$df
+  if(!is.null(modelH1)){
+    df.h1 <- h1.model@test$standard$df
+    df <- df.h0 - df.h1
+  }
+  
+  # do power analysis
+  power <- semPower(type = type, 
+                    SigmaHat = SigmaHat, Sigma = SigmaH1, 
+                    muHat = muHat, mu = muH1, 
+                    df = df, ...)
+  
+  list(power = power, 
+       SigmaHat = SigmaHat, SigmaHatH1 = SigmaH1, Sigma = Sigma,
+       muHat = muHat, muHatH1 = muH1, mu = mu,
+       modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)  
+  
+}
+
+
+
 #' semPower.powerCFA
 #'
 #' Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
@@ -12,8 +113,8 @@
 #' @param loadM vector giving mean loadings for each factor or single number to use for every loading
 #' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
 #' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @param ... other parameters related to the specific type of power analysis requested
+#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
 #' # a priori power analysis only providing the number of indicators to define 
