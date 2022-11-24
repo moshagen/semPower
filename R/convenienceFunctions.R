@@ -407,8 +407,7 @@ semPower.powerLav <- function(type,
 semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, ...){
 
   # validate input
-  comparison <- tolower(comparison)
-  if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
+  comparison <- checkComparisonModel(comparison)
   
   # generate sigma 
   generated <- semPower.genSigma(...)

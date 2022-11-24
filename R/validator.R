@@ -263,3 +263,17 @@ checkPowerTypes <- function(type){
   if(!type %in% c('a-priori', 'post-hoc', 'compromise')) stop('Type must be one of a-priori, post-hoc, or compromise.')
   type
 }
+
+#' checkComparisonModel
+#'
+#' checks whether comparison is one of 'restricted' or 'saturated' (or respective shortcuts)
+#' @param comparison comparison
+#' @return  valid type
+checkComparisonModel <- function(comparison){
+  if(is.null(comparison) | length(comparison) != 1 | typeof(comparison) != 'character') stop('Comparison model must be one of a-priori, post-hoc, or compromise.')
+  comparison <- tolower(trimws(comparison))
+  if(comparison == 'saturated' | comparison == 'sat') comparison = 'saturated'
+  if(comparison == 'restricted' | comparison == 'restr') comparison = 'restricted'
+  if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
+  comparison
+}
