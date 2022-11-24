@@ -1,7 +1,176 @@
+
+#' semPower.genSigma
+#'
+#' Convenience function to generate a covariance matrix and associated lavaan model strings based on defined model features.
+#' This requires the lavaan package.
+#' 
+#' @param Phi factor correlation matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
+#' @param Lambda factor loading matrix (standardized). 
+#' @param tau intercepts. If NULL and alpha is set, these are assumed to be zero. 
+#' @param alpha factor means. If NUll and tau is set, these are assumed to be zero.
+#' @param loadings a list providing the standardized factor loadings by factor. Must not contain secondary loadings.   
+#' @param nIndicator vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM vector giving mean loadings for each factor or single number to use for every loading
+#' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
+#' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @return a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue) 
+#' @examples
+#' \dontrun{
+#' }
+#' @importFrom stats rnorm runif 
+#' @importFrom utils installed.packages
+#' @export
+semPower.genSigma <- function(Phi = NULL, 
+                              Lambda = NULL,
+                              tau = NULL,
+                              alpha = NULL,
+                              loadings = NULL, 
+                              nIndicator = NULL, 
+                              loadM = NULL, 
+                              loadSD = NULL, 
+                              loadMinMax = NULL){
+  
+  # validate input
+  
+  if(is.null(nIndicator) & is.null(loadings) & is.null(Lambda)) stop('Either provide Labmda, loadings, or number of indicators')
+  if(!is.null(nIndicator) & !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
+  if(!is.null(nIndicator) & !is.null(Lambda)) stop('Either provide Lambda or number of indicators, but not both.')
+  if(!is.null(Lambda) & !is.null(loadings)) stop('Either provide Lambda or loadings, but not both.')
+  if(is.null(nIndicator) & !is.list(loadings)) stop('loadings must be a list')
+  
+  if(!is.null(Lambda)){
+    nfac <- ncol(Lambda)
+  }else{
+    nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
+  }
+  
+  if(is.null(Phi)) Phi <- diag(nfac)
+  if(length(Phi) == 1){
+    Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
+    diag(Phi) <- 1
+  } 
+  checkPositiveDefinite(Phi)
+  if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
+  invisible(apply(Phi, c(1, 2), function(x) checkBounded(x, 'All elements in Phi', bound = c(-1, 1), inclusive = TRUE)))
+  
+  if(is.null(loadings)){
+    if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
+    invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
+    if(is.null(loadM) & is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
+    if(is.null(loadMinMax) & length(loadM) == 1) loadM <- rep(loadM, nfac)
+    if(is.null(loadMinMax) & length(loadM) != nfac) stop('Nindicator and mean loading must of same size')
+    if(is.null(loadMinMax)) invisible(sapply(loadM, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
+    
+    if(!is.null(loadMinMax) && (!is.null(loadM) || !is.null(loadSD))) stop('Either specify mean and SD of loadings or specify min-max loading, both not both.')
+    if(!is.null(loadMinMax)) invisible(sapply(unlist(loadMinMax), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
+    if(length(loadMinMax) == 2) loadMinMax <- lapply(1:nfac, function(x) loadMinMax)
+    if(is.null(loadMinMax) && is.null(loadSD)) loadSD <- rep(0, nfac)
+    if(is.null(loadMinMax) && length(loadSD) == 1) loadSD <- rep(loadSD,nfac)
+    if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
+  }else{
+    if(is.null(Lambda)){
+      invisible(lapply(loadings, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1)))))
+      nIndicator <- unlist(lapply(loadings, length))  # crossloadings are disallowed
+    }else{
+      invisible(apply(Lambda, c(1, 2), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1))))
+      if(any(apply(Lambda, 1, function(x) sum(x^2)) > 1)) stop('Loadings imply negative residual variance(s). Note that loadings must be standardized.')
+      nIndicator <- apply(Lambda, 2, function(x) length(x))
+    }
+  }
+  
+  if(!is.null(tau)){
+    if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators')
+  }
+  if(!is.null(alpha)){
+    if(length(alpha) != nfac) stop('Latent means (alpha) must be of same length as the number of factors')
+  }
+  if(!is.null(tau) & is.null(alpha)) alpha <- rep(0, nfac)
+  if(!is.null(alpha) & is.null(tau)) tau <- rep(0, sum(nIndicator))
+  
+  
+  ### pop model
+  # define factors
+  tok <- list()
+  iLambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator)) # store loading matrix
+  sidx <- 1
+  for(f in 1:nfac){
+    eidx <- sidx + (nIndicator[f] - 1)
+    if(!is.null(loadM)){
+      cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
+      if(any(cload <= -1) | any(cload >= 1)) warning('Sampled loadings outside [-1, 1] were set to -.99 or .99.')
+      cload[cload <= -1] <- -.99
+      cload[cload >= 1] <- .99
+    }else if(!is.null(loadMinMax)){
+      cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
+    }else if(!is.null(loadings)){
+      cload <- loadings[[f]]  # loadings only contains primary loadings
+    }else{
+      cload <- Lambda[sidx:eidx, f]  # loadings only contains primary loadings
+    }
+    iLambda[sidx:eidx, f] <- cload
+    tok[f] <- 
+      paste(
+        paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', sidx:eidx), collapse = ' + ')),
+        paste0('f', f, ' ~~ 1*', 'f', f),
+        paste0(paste0('x', sidx:eidx), ' ~~ ', 1 - cload^2, '*', paste0('x', sidx:eidx), collapse = '\n'),
+        sep='\n')
+    sidx <- eidx + 1
+  }
+  
+  # define factor cor
+  for(f in 1:(nfac - 1)){
+    for(ff in (f + 1):nfac){
+      tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+    }
+  }
+  
+  # add means
+  if(!is.null(tau)){
+    tok <- append(tok, paste0(paste0('x', 1:sum(nIndicator)), ' ~ ', tau, '*1', collapse = '\n'))
+  }
+  if(!is.null(alpha)){
+    tok <- append(tok, paste0(paste0('f', 1:nfac), ' ~ ', alpha, '*1', collapse = '\n'))
+  }
+  
+  modelPop <- paste(unlist(tok), collapse = '\n')
+  
+  
+  ### create true cfa analysis model string 
+  tok <- list()
+  sidx <- 1
+  for(f in 1:nfac){
+    eidx <- sidx + (nIndicator[f] - 1)
+    tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+    sidx <- eidx + 1
+  }
+  modelTrue <- paste(c(
+    unlist(tok),
+    sapply(1:nfac, function(x) paste0('f', x, ' ~~ 1*f', x))), 
+    collapse = '\n')
+  
+  
+  # get Sigma (and mu)
+  Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
+  mu <- NULL
+  if(!is.null(tau)) mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
+  
+  list(Sigma = Sigma, 
+       mu = mu,
+       Lambda = iLambda, 
+       Phi = Phi,
+       tau = tau,
+       alpha = alpha,
+       modelPop = modelPop, 
+       modelTrue = modelTrue)
+  
+}
+
+
 #' semPower.powerLav
 #'
-#' Perform power analysis on population and model-implied Sigmas as defined 
-#' through lavaan model strings
+#' Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
+#' This requires the lavaan package.
+#' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param modelPop lavaan model string defining the true model.
 #' @param modelH0 lavaan model string defining the (incorrect) analysis model
@@ -221,7 +390,6 @@ semPower.powerLav <- function(type,
 #' 
 #' }
 #' @importFrom stats rnorm runif 
-#' @importFrom utils installed.packages
 #' @export
 semPower.powerCFA <- function(type, comparison = 'restricted',
                               phi, nullCor = NULL, loadings = NULL, 
@@ -229,13 +397,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
                               loadM = NULL, loadSD = NULL, 
                               loadMinMax = NULL, 
                               ...){
-  
-  # check whether lavaan is availabe
-  if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
-  
-  # validate power type
-  type <- checkPowerTypes(type)
-  
+
   # validate input
   comparison <- tolower(comparison)
   if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
@@ -337,17 +499,20 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     collapse = '\n')
   
   
-  # get sigmas
-  Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
-  hyp.model <- lavaan::sem(modelAna, sample.cov = Sigma, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-  SigmaHat <- lavaan::fitted(hyp.model)$cov
+  ### plug model strings into lavpower
+  modelH1 <- NULL
+  if(comparison == 'restricted') modelH1 <- modelTrue
+  lavpower <- semPower.powerLav(type = type,
+                                modelPop = modelPop,
+                                modelH0 = modelAna,
+                                modelH1 = modelH1,
+                                ...)
   
-  # do power analysis
-  df <- ifelse(comparison == 'saturated', hyp.model@test$standard$df, 1)
-  power <- semPower(type = type, Sigma = Sigma, SigmaHat = SigmaHat, df = df, ...)
-  
-  list(power = power, Sigma = Sigma, SigmaHat = SigmaHat, modelPop = modelPop, modelTrue = modelTrue, modelAna = modelAna, lambda = lambda, phi = phi)  
-  
+  list(power = lavpower$power, 
+       SigmaHat = lavpower$SigmaHat, SigmaH1 = lavpower$SigmaH1, Sigma = lavpower$Sigma, 
+       modelPop = modelPop, modelTrue = modelTrue, modelAna = modelAna, 
+       lambda = lambda, phi = phi)    
+
 }
 
 
