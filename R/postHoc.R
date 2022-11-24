@@ -28,7 +28,8 @@
 #' @export
 semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df, p = NULL,
-                             SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+                             SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                             ...){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   

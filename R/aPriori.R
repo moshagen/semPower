@@ -33,7 +33,8 @@
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
                              N = NULL, df, p = NULL,
-                             SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+                             SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                             ...){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
 

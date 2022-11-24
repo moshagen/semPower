@@ -24,7 +24,8 @@
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
                                  N, df, p = NULL,
-                                 SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+                                 SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                                 ...){
 
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
