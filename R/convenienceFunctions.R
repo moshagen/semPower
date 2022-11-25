@@ -1,4 +1,3 @@
-
 #' semPower.genSigma
 #'
 #' Convenience function to generate a covariance matrix and associated lavaan model strings based on defined model features.
@@ -224,7 +223,6 @@ semPower.genSigma <- function(Phi = NULL,
        Alpha = Alpha,
        modelPop = modelPop, 
        modelTrue = modelTrue)
-  
 }
 
 
@@ -325,8 +323,7 @@ semPower.powerLav <- function(type,
   list(power = power, 
        SigmaHat = SigmaHat, SigmaHatH1 = SigmaH1, Sigma = Sigma,
        muHat = muHat, muHatH1 = muH1, mu = mu,
-       modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)  
-  
+       modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
 }
 
 
@@ -436,10 +433,177 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
                                 ...)
   
   append(lavpower, generated)
-  
 }
 
 
+#' semPower.powerMediation
+#'
+#' Convenience function for performing power analysis concerning indirect effect(s) in a mediation model.
+#' This requires the lavaan package.
+#' 
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
+#' @param bYX the standardized slope (direct effect) for X -> Y 
+#' @param bMX the standardized slope for X -> M
+#' @param bYM the standardized slope for M -> Y
+#' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation. Note that in case of > 3 factors power is only approximate. 
+#' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
+#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @examples
+#' \dontrun{
+#' # simple case of X -> M -> Y mediation
+#' # X -- .30 --> M -- .40 --> Y 
+#' # X --------- .25 --------> Y 
+#' # providing the number of indicators by factor (X, M, Y) each loading by the same magnitude on its designed factor.
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     bYX = .25, bMX = .3, bYM = .4,
+#'                                     nIndicator = c(3, 5, 4), 
+#'                                     loadM = c(.5, .6, .7),                                     
+#'                                     alpha = .05, beta = .05)
+#' summary(medPower$power)
+#'                                     
+#' # same mediation model as above, but assuming single loading of 1 for all factors (=> mediation model with manifest variables)
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     bYX = .25, bMX = .3, bYM = .4,
+#'                                     nIndicator = c(1, 1, 1), loadM = 1,
+#'                                     alpha = .05, beta = .05)
+#' 
+#' # same latent mediation model as above, but specifying loadings through Lambda 
+#' Lambda <- matrix(c(
+#'                 c(0.5, 0.0, 0.0),    # X, M, Y
+#'                 c(0.4, 0.0, 0.0),
+#'                 c(0.3, 0.0, 0.0),
+#'                 c(0.0, 0.7, 0.0),
+#'                 c(0.0, 0.8, 0.0),
+#'                 c(0.0, 0.5, 0.0),
+#'                 c(0.0, 0.0, 0.5),
+#'                 c(0.0, 0.0, 0.4),
+#'                 c(0.0, 0.0, 0.6),
+#'                ), byrow = TRUE, ncol = 3)
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     bYX = .25, bMX = .3, bYM = .4,
+#'                                     Lambda = Lambda,                                     
+#'                                     alpha = .05, beta = .05)
+#'
+#' # same mediation model as above, but specifying Beta 
+#' B <- matrix(c(
+#'               c(.00, .00, .00),
+#'               c(.30, .00, .00),
+#'               c(.25, .40, .00)
+#'               ), byrow = TRUE, ncol = 3)
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     Beta = B, indirect = list(c(2,1), c(3,2)),
+#'                                     Lambda = Lambda,
+#'                                     alpha = .05, beta = .05)
+#' 
+#' # Beta for a more complex mediation hypothesis
+#' # of the form X -> M1 -> M2 -> Y 
+#' # and using a reduced loading matrix
+#' B <- matrix(c(
+#'               c(.00, .00, .00, .00),
+#'               c(.20, .00, .00, .00),
+#'               c(.00, .30, .00, .00),
+#'               c(.00, .00, .40, .00)
+#'               ), byrow = TRUE, ncol = 4)
+#' # only define primary loadings by factor
+#' loadings <- list(
+#'                c(0.4, 0.5, 0.8),
+#'                c(0.7, 0.6, 0.5, 0.8),
+#'                c(0.5, 0.6, 0.3, 0.4, 0.6),
+#'                c(0.6, 0.7, 0.8)
+#'                )
+#'
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+#'                                     loadings = loadings,
+#'                                     alpha = .05, beta = .05)
+#'  
+#' }
+#' @seealso [semPower.genSigma()]
+#' @export
+semPower.powerMediation <- function(type, comparison = 'restricted',
+                                    bYX = NULL, bMX = NULL, bYM = NULL,
+                                    Beta = NULL, indirect = NULL, ...){
+  
+  comparison <- checkComparisonModel(comparison)
+  
+  # we override Phi and Sigma later, so let's make sure it is not set in ellipsis argument
+  if('Phi' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Phi, because the factor correlations depend on Beta (or the slopes).')
+  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of Beta (or the slopes).')
+  
+  # validate input
+  if(!is.null(Beta) & (!is.null(bYX) | !is.null(bMX) | !is.null(bYM))) stop('Either provide bYX, bMX, and bYM or provide Beta, but not both.')
+  if(is.null(Beta)){
+    if(is.null(bYX) | is.null(bMX) | is.null(bYM)) stop('Provide bYX, bYM, and bYM or provide Beta')
+    if(length(bYX) != 1) stop('bYX must be a single slope (X -> Y)')
+    if(length(bMX) != 1) stop('bMX must be a single slope (X -> M)')
+    if(length(bYM) != 1) stop('bYM must be a single slope (M -> Y)')
+    invisible(lapply(c(bYX, bMX, bYM), function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
+    if((bYX^2 + bYM^2) > 1) stop('bYX and bYM imply a negative residual variance for Y, make sure that the sum of the squared slopes on Y is < 1')
+    if(bMX == 0 | bYM == 0) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
+    indirect <- list(c(2,1), c(3,2))
+  }
+  
+  if(!is.null(Beta)){
+    if(is.null(indirect)) stop('indirect must not be NULL when Beta is defined.')
+    if(isSymmetric(Beta)) stop('Beta must be symmetric.')
+    invisible(apply(Beta, c(1, 2), function(x) checkBounded(x, 'All elements in Beta', bound = c(-1, 1), inclusive = TRUE)))
+    if(any(diag(Beta) != 0)) stop('All diagonal elements of Beta must be zero.')
+    # negative implied residual variances are checked later
+    if(any(lapply(indirect, function(x) length(x)) != 2)) stop('Indirect must be a list containing vectors of size two each')
+    if(any(unlist(lapply(indirect, function(x) any(x > ncol(B)))))) stop('At least one element in indirect is an out of bounds index concerning B')
+    if(any(unlist(lapply(indirect, function(x) B[x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
+  }
+  
+  B <- Beta
+  if(is.null(B)){
+    B <- matrix(c(
+      c(0, 0, 0),      # X
+      c(bMX, 0, 0),    # M
+      c(bYX, bYM, 0)   # Y
+    ), byrow = TRUE, ncol = 3)
+  }
+  
+  ### get Sigma
+  # first calc implied phi
+  invIB <- solve(diag(ncol(B)) - B)
+  BB <- B %*% t(B)
+  Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB))) # this does not always work for models with > 3 factors 
+  if(any(Psi < 0)) stop('Beta implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  Phi <- invIB %*% Psi %*% t(invIB)
+  Phi <- cov2cor(Phi) # just to be sure...
+  # now get sigma
+  generated <- semPower.genSigma(Phi = Phi, ...)
+  Sigma <- generated$Sigma
+  
+  ### create ana model string
+  # remove factor variance identification
+  tok <- strsplit(generated$modelTrue, '\n')[[1]]  
+  model <- paste(sub('NA\\*', '', unlist(tok[1:ncol(B)])), '\n', collapse = '') 
+  # add mediation structure
+  for(f in 1:ncol(B)){
+    fidx <- which(B[f, ] != 0)
+    if(length(fidx) != 0){
+      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(f, fidx), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
+      model <- paste(model, tok, sep='\n')
+    }
+  }
+  # add indirect effects
+  ind <- unlist(lapply(indirect, function(x) paste0('pf', paste0(x, collapse = ''))))
+  modelTrue <- paste(model, '\n', 'ind := ', paste(ind, collapse = '*'))
+  
+  # lav doesn't like constraining the indirect effect to zero, 
+  # so we constrain the smallest of the contained direct effects (though the choice does not matter anyway)
+  #modelAna <- paste(modelTrue, '\n', 'ind == 0')  
+  mb <- paste0('pf', paste(which(B == min(B[B != 0]), arr.ind = TRUE)[1, ], collapse = ''))
+  modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
+
+  modelH1 <- NULL
+  if(comparison == 'restricted') modelH1 <- modelTrue
+  
+  semPower.powerLav(type, modelH0 = modelAna, modelH1 = modelH1, Sigma = Sigma, ...)
+}
 
 
 #' semPower.getDf
