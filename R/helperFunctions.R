@@ -443,7 +443,7 @@ getFormattedResults <- function(type, result, digits = 6){
            body$values <- c(result$df, result$requiredN, paste0('(', paste(result$requiredN.g, collapse = ', '), ')'), '')
     )    
 
-    rows <- c('Critical Chi-Square', 'NCP', 'Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
+    rows <- c('Critical Chi-Square', 'NCP', 'Alpha', 'Beta', 'Power (1 - Beta)', 'Implied Alpha/Beta Ratio')
     foot <- data.frame(rows)
 
     v1 <- formatC(c(result$chiCrit, result$impliedNCP), format = 'f', digits = digits)
@@ -486,7 +486,7 @@ getFormattedResults <- function(type, result, digits = 6){
                       )
     body2$values <- sapply(v1, substr, 1, (digits + 2))
 
-    rows <- c('Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
+    rows <- c('Alpha', 'Beta', 'Power (1 - Beta)', 'Implied Alpha/Beta Ratio')
     foot <- data.frame(rows)
     v <- c(result$alpha, result$beta, result$power, result$impliedAbratio)
     # determine whether to use float or scientific number format
@@ -496,7 +496,7 @@ getFormattedResults <- function(type, result, digits = 6){
 
     # manually correct some quirks
     if(result$beta < 1e-5){
-      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Power (1 - Beta)'] <- '> 0.9999'
     }
     if(result$beta == 0){
       foot$values[foot$rows == 'Beta'] <- '< 1.00e-320'
@@ -533,7 +533,7 @@ getFormattedResults <- function(type, result, digits = 6){
                        formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
     }
 
-    rows <- c('Implied Alpha', 'Implied Beta', 'Implied Power (1-beta)', 'Actual Alpha/Beta Ratio')
+    rows <- c('Implied Alpha', 'Implied Beta', 'Implied Power (1 - Beta)', 'Actual Alpha/Beta Ratio')
     foot <- data.frame(rows)
     v <- c(result$impliedAlpha, result$impliedBeta, result$impliedPower, result$impliedAbratio)
     # determine whether to use float or scientific number format
@@ -543,7 +543,7 @@ getFormattedResults <- function(type, result, digits = 6){
 
     # manually correct some quirks
     if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows == 'Implied Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Implied Power (1 - Beta)'] <- '> 0.9999'
     }
     if(result$bPrecisionWarning){
       foot$values[foot$rows == 'Implied Beta'] <- '< 1.00e-240'
