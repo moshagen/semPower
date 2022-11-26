@@ -566,14 +566,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   }
   
   ### get Sigma
-  # first calc implied phi
-  invIB <- solve(diag(ncol(B)) - B)
-  BB <- B %*% t(B)
-  Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB))) # this does not always work for models with > 3 factors 
-  if(any(Psi < 0)) stop('Beta implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
-  Phi <- invIB %*% Psi %*% t(invIB)
-  Phi <- cov2cor(Phi) # just to be sure...
-  # now get sigma
+  # transform to standard cfa model by converting B to implied phi
+  Phi <- getPhi.B(B) 
   generated <- semPower.genSigma(Phi = Phi, ...)
   Sigma <- generated$Sigma
   

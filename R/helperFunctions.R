@@ -399,6 +399,54 @@ getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
   return(cfi)
 }
 
+##########################  other helper functions  #####################
+
+#' getPhi.B
+#'
+#' Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
+#' 
+#' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
+#' @return the implied correlation matrix
+#' @examples
+#' \dontrun{
+#' B <- matrix(c(
+#' c(.00, .00, .00),
+#' c(.10, .00, .00),
+#' c(.20, .30, .00)
+#' ), byrow = TRUE, ncol = 3)
+#' Phi <- getPhi.B(B)
+#' }
+getPhi.B <- function(B){
+  
+  if(!is.matrix(B)) stop('B must be a square matrix.')
+  if(nrow(B) != ncol(B)) stop('B must be a square matrix.')
+  if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
+  if(any(rowSums(B^2) < 0)) stop('Beta implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  
+  
+  ## there must be a simpler way to do this, but the following
+  ## does not always work for models with > 3 factors 
+  # invIB <- solve(diag(ncol(B)) - B)
+  # BB <- B %*% t(B)
+  # Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB))) 
+  # Phi <- invIB %*% Psi %*% t(invIB)
+  
+  exog <- apply(B, 1, function(x) !any(x != 0))
+  Be <- B[!exog, ]
+  if(!is.matrix(Be)) Be <- t(matrix(Be))
+  
+  Phi <- diag(ncol(B)) 
+  for(i in 1:nrow(Be)){
+    idx <- i + sum(exog) - 1
+    cb <- matrix(Be[i, 1:idx])
+    cr <- Phi[1:idx, 1:idx]
+    Phi[(idx+1), 1:idx] <- t(cr %*% cb)
+    Phi[1:idx, (idx+1)] <- cr %*% cb
+  }
+  
+  Phi
+}
+
 
 ##########################  output and formatting #####################
 
