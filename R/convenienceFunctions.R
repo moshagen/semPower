@@ -587,8 +587,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   ind <- unlist(lapply(indirect, function(x) paste0('pf', paste0(x, collapse = ''))))
   modelTrue <- paste(model, '\n', 'ind := ', paste(ind, collapse = '*'))
   
-  # lav doesn't like constraining the indirect effect to zero, 
-  # so we constrain the smallest of the contained direct effects (though the choice does not matter anyway)
+  # lav doesn't like constraining the indirect effect to zero. 
+  # we instead constrain the smallest of the contained direct effects, so this
+  # actually gives power for a single slope. however, this seems to closely reflect
+  # power for the indirect effect (and indeed works much better than using ind=0 as 
+  # comparison model, which grossly overestimates the true effect)
   #modelAna <- paste(modelTrue, '\n', 'ind == 0')  
   mb <- paste0('pf', paste(which(B == min(B[B != 0]), arr.ind = TRUE)[1, ], collapse = ''))
   modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
