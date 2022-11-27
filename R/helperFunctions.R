@@ -233,7 +233,7 @@ semPower.genSigma <- function(Phi = NULL,
 #' Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
-#' @param lPsi matrix of residual correlations. Can be omitted. 
+#' @param lPsi matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (not covariances) off the diagonal. Can be omitted for no correlations beyond those implied by B. 
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
@@ -272,15 +272,19 @@ getPhi.B <- function(B, lPsi = NULL){
     idx <- i + sum(exog) - 1
     cb <- matrix(Be[i, 1:idx])
     cr <- Phi[1:idx, 1:idx]
-    Phi[(idx+1), 1:idx] <- t(cr %*% cb)
-    Phi[1:idx, (idx+1)] <- cr %*% cb
-  }
-
-  # add residual correlations
-  if(!is.null(lPsi)){
-    rootResidualVar <-  sqrt(diag(1 - diag(B %*% Phi %*% t(B)))) 
-    sPsi <- rootResidualVar %*% lPsi %*% t(rootResidualVar)
-    Phi <- Phi + sPsi
+    predR <- (cr %*% cb)
+    # add residual covariances
+    if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
+      cR <- rbind(cr, t(predR))
+      cR <- cbind(cR, t(t(c((predR),1))))
+      cB <- B[1:(idx + 1), 1:(idx + 1)]
+      rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
+      cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
+      corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
+      predR <- corR[(idx + 1), 1:idx]
+    }
+    Phi[(idx + 1), 1:idx] <- t(predR)
+    Phi[1:idx, (idx + 1)] <- predR
   }
 
   Phi
