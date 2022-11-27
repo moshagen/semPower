@@ -17,6 +17,8 @@ validateInput(
   p = NULL,
   SigmaHat = NULL,
   Sigma = NULL,
+  muHat = NULL,
+  mu = NULL,
   power.min = alpha,
   power.max = 0.999,
   effect.min = NULL,
@@ -49,6 +51,10 @@ validateInput(
 \item{SigmaHat}{model implied covariance matrix}
 
 \item{Sigma}{population covariance matrix}
+
+\item{muHat}{model implied mean vector}
+
+\item{mu}{observed (or population) mean vector}
 
 \item{power.min}{for plotting: minimum power}
 

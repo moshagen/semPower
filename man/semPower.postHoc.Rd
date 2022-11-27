@@ -12,11 +12,14 @@ semPower.postHoc(
   df,
   p = NULL,
   SigmaHat = NULL,
-  Sigma = NULL
+  Sigma = NULL,
+  muHat = NULL,
+  mu = NULL,
+  ...
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between H0 and H1 (a list for multiple group models)}
+\item{effect}{effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)}
 
 \item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
 
@@ -28,9 +31,13 @@ semPower.postHoc(
 
 \item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
 
-\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.}
 
-\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.}
+
+\item{muHat}{model implied mean vector}
+
+\item{mu}{observed (or population) mean vector}
 }
 \value{
 list

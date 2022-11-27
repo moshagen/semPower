@@ -13,5 +13,5 @@ checkPowerTypes(type)
 valid type
 }
 \description{
-checks whether type is one of 'a-priori', 'post-hoc', or 'compromise'.
+checks whether type is one of 'a-priori', 'post-hoc', or 'compromise' (or respective shortcuts)
 }
