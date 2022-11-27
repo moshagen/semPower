@@ -233,6 +233,7 @@ semPower.genSigma <- function(Phi = NULL,
 #' Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
+#' @param lPsi matrix of residual correlations. Can be omitted. 
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
@@ -243,12 +244,16 @@ semPower.genSigma <- function(Phi = NULL,
 #' ), byrow = TRUE, ncol = 3)
 #' Phi <- getPhi.B(B)
 #' }
-getPhi.B <- function(B){
+getPhi.B <- function(B, lPsi = NULL){
   
-  if(!is.matrix(B)) stop('B must be a square matrix.')
-  if(nrow(B) != ncol(B)) stop('B must be a square matrix.')
+  checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
-  if(any(rowSums(B^2) < 0)) stop('Beta implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  if(any(rowSums(B^2) < 0)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  if(!is.null(lPsi)){
+    checkSquare(lPsi)
+    if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
+    diag(lPsi) <- 0
+  }
   
   
   ## there must be a simpler way to do this, but the following
@@ -270,7 +275,14 @@ getPhi.B <- function(B){
     Phi[(idx+1), 1:idx] <- t(cr %*% cb)
     Phi[1:idx, (idx+1)] <- cr %*% cb
   }
-  
+
+  # add residual correlations
+  if(!is.null(lPsi)){
+    rootResidualVar <-  sqrt(diag(1 - diag(B %*% Phi %*% t(B)))) 
+    sPsi <- rootResidualVar %*% lPsi %*% t(rootResidualVar)
+    Phi <- Phi + sPsi
+  }
+
   Phi
 }
 
