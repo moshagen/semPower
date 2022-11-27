@@ -4,10 +4,12 @@
 \alias{getPhi.B}
 \title{getPhi.B}
 \usage{
-getPhi.B(B)
+getPhi.B(B, lPsi = NULL)
 }
 \arguments{
 \item{B}{matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros.}
+
+\item{lPsi}{matrix of residual correlations. Can be omitted.}
 }
 \value{
 the implied correlation matrix

@@ -250,7 +250,7 @@ getPhi.B <- function(B, lPsi = NULL){
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
   if(any(rowSums(B^2) < 0)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
   if(!is.null(lPsi)){
-    checkSquare(lPsi)
+    checkSymmetricSquare(lPsi)
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
     diag(lPsi) <- 0
   }

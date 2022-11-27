@@ -267,6 +267,10 @@ checkSquare <- function(x, message = NULL){
     stop(paste(message, " may not be NULL"))
   if(!is.numeric(x))
     stop(paste(message, " must contain numeric elements only"))
+  if(!is.matrix(x))
+    stop(paste(message, " must be a matrix"))
+  if(ncol(x) != nrow(x))
+    stop(paste(message, " must be a square matrix"))
 }
 
 
