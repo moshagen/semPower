@@ -239,15 +239,36 @@ checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
 #' @param message identifier for x
 checkPositiveDefinite <- function(x, message = NULL){
   if(is.null(message)) message <- deparse(substitute(message))
+  checkSymmetricSquare(x)
+  if(sum(eigen(x)$values < 0) > 0)
+    stop(paste(message, " must be positive definite"))
+}
+
+#' checkSymmetricSquare
+#'
+#' checks whether x is a symmetric square matrix
+#' @param x x
+#' @param message identifier for x
+checkSymmetricSquare <- function(x, message = NULL){
+  if(is.null(message)) message <- deparse(substitute(message))
+  checkSquare(x)
+  if(!isSymmetric(x))
+    stop(paste(message, " must be a symmetric square matrix"))
+}
+
+#' checkSquare
+#'
+#' checks whether x is a square matrix
+#' @param x x
+#' @param message identifier for x
+checkSquare <- function(x, message = NULL){
+  if(is.null(message)) message <- deparse(substitute(message))
   if(is.null(x))
     stop(paste(message, " may not be NULL"))
   if(!is.numeric(x))
     stop(paste(message, " must contain numeric elements only"))
-  if(!isSymmetric(x))
-    stop(paste(message, " must be a symmetric square matrix"))
-  if(sum(eigen(x)$values < 0) > 0)
-    stop(paste(message, " must be positive definite"))
 }
+
 
 #' checkPowerTypes
 #'
