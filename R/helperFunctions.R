@@ -237,24 +237,43 @@ semPower.genSigma <- function(Phi = NULL,
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
+#' # mediation model
 #' B <- matrix(c(
 #' c(.00, .00, .00),
 #' c(.10, .00, .00),
 #' c(.20, .30, .00)
 #' ), byrow = TRUE, ncol = 3)
 #' Phi <- getPhi.B(B)
+#' 
+#' # clpm type model with residual correlations at wave 2 + 3
+#' B <- matrix(c(
+#'   c(.0, .0, .0, .0, 0, 0),  # X1
+#'   c(.0, .0, .0, .0, 0, 0),  # Y1
+#'   c(.7, .1, .0, .0, 0, 0),  # X2
+#'   c(.2, .8, .0, .0, 0, 0),  # Y2
+#'   c(.0, .0, .7, .1, 0, 0),  # X3
+#'   c(.0, .0, .2, .8, 0, 0)   # Y3
+#' ), byrow = TRUE, ncol = 6)
+# 
+#' lPsi <- matrix(0, ncol = ncol(B), nrow = nrow(B))
+#' lPsi[3,4] <- lPsi[4,3] <- .2
+#' lPsi[5,6] <- lPsi[6,5] <- .3
+#' 
+#' Phi <- getPhi.B(B, lPsi)
+#' 
 #' }
 getPhi.B <- function(B, lPsi = NULL){
   
   checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
   if(any(rowSums(B^2) < 0)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  invisible(lapply(B, function(x) lapply(x, function(x) checkBounded(x, 'All elements in B', bound = c(-1, 1)))))
   if(!is.null(lPsi)){
     checkSymmetricSquare(lPsi)
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
+    invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1)))))
     diag(lPsi) <- 0
   }
-  
   
   ## there must be a simpler way to do this, but the following
   ## does not always work for models with > 3 factors 
@@ -263,6 +282,7 @@ getPhi.B <- function(B, lPsi = NULL){
   # Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB))) 
   # Phi <- invIB %*% Psi %*% t(invIB)
   
+  ## so we exploit the structure of B to build Phi recursively
   exog <- apply(B, 1, function(x) !any(x != 0))
   Be <- B[!exog, ]
   if(!is.matrix(Be)) Be <- t(matrix(Be))
