@@ -349,12 +349,12 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
     dummyS <- diag(params@Model@nvar)
     rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
     if(is.null(nGroups) || nGroups == 1){
-      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = F))
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = FALSE))
     }else{
       if(is.null(group.equal)){
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = F))
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = FALSE))
       }else{
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = F))
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE))
       }
     }
     dummyFit@test$standard$df
