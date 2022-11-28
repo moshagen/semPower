@@ -216,8 +216,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
-#' @param slope vector of standardized slopes (or a single number for a single predictor) predicting Y. 
-#' @param nullSlope single number indicating which of the slope(s) is hypothesized to equal zero, defaults to 1. 
+#' @param slope vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
+#' @param nullSlope single number indicating which slope is hypothesized to equal zero, defaults to 1 (= the first slope).
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y, and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
