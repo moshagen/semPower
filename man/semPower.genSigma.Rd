@@ -14,6 +14,7 @@ semPower.genSigma(
   loadM = NULL,
   loadSD = NULL,
   loadMinMax = NULL,
+  useReferenceIndicator = FALSE,
   ...
 )
 }
@@ -35,6 +36,8 @@ semPower.genSigma(
 \item{loadSD}{vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.}
 
 \item{loadMinMax}{list giving the minimum and maximum loading for each factor or vector to apply to all factors}
+
+\item{useReferenceIndicator}{whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). ()giving the minimum and maximum loading for each factor or vector to apply to all factors}
 }
 \value{
 a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue)

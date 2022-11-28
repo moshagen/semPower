@@ -26,7 +26,7 @@ semPower.powerMediation(
 
 \item{bYM}{the standardized slope for M -> Y}
 
-\item{Beta}{matrix of regression weights connecting the latent factors, akin to all-Y notation. Note that in case of > 3 factors power is only approximate.}
+\item{Beta}{matrix of regression weights connecting the latent factors, akin to all-Y notation.}
 
 \item{indirect}{a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).}
 
