@@ -14,6 +14,7 @@
 #' @param loadM vector giving mean loadings for each factor or single number to use for every loading
 #' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
 #' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). ()giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @return a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue) 
 #' @examples
 #' \dontrun{
@@ -89,6 +90,7 @@ semPower.genSigma <- function(Phi = NULL,
                               loadM = NULL, 
                               loadSD = NULL, 
                               loadMinMax = NULL,
+                              useReferenceIndicator = FALSE,
                               ...){
   
   # check whether lavaan is available
@@ -203,13 +205,19 @@ semPower.genSigma <- function(Phi = NULL,
   sidx <- 1
   for(f in 1:nfac){
     eidx <- sidx + (nIndicator[f] - 1)
-    tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+    if(useReferenceIndicator){
+      tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
+    }else{
+      tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+    }
     sidx <- eidx + 1
   }
-  modelTrue <- paste(c(
-    unlist(tok),
-    sapply(1:nfac, function(x) paste0('f', x, ' ~~ 1*f', x))), 
-    collapse = '\n')
+  modelTrue <- paste(c(unlist(tok)), collapse = '\n')
+  if(!useReferenceIndicator){
+    modelTrue <- paste(modelTrue,
+                       c(sapply(1:nfac, function(x) paste0('f', x, ' ~~ 1*f', x))),
+                       collapse = '\n')
+  }
   
   
   # get Sigma (and mu)
