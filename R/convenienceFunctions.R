@@ -418,7 +418,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     if(isSymmetric(Beta)) stop('Beta must be symmetric.')
     invisible(apply(Beta, c(1, 2), function(x) checkBounded(x, 'All elements in Beta', bound = c(-1, 1), inclusive = TRUE)))
     if(any(diag(Beta) != 0)) stop('All diagonal elements of Beta must be zero.')
-    # negative implied residual variances are checked later
+    # negative implied residual variances are checked in getPhi.B
     if(any(lapply(indirect, function(x) length(x)) != 2)) stop('Indirect must be a list containing vectors of size two each')
     if(any(unlist(lapply(indirect, function(x) any(x > ncol(B)))))) stop('At least one element in indirect is an out of bounds index concerning B')
     if(any(unlist(lapply(indirect, function(x) B[x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
