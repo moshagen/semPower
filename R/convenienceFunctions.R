@@ -274,7 +274,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if(nullSlope < 1 | nullSlope > nrow(slopes)) stop('nullSlope is invalid.')
   
   if(is.null(corXX)) corXX <- diag(nrow(slopes)) 
-  if(is.vector(corXX)) stop('corXX must be a single number or a matrix') 
+  if(is.vector(corXX) & length(corXX) > 1) stop('corXX must be a single number or a matrix') 
   if(!is.matrix(corXX)){
     corXX <- matrix(corXX, nrow = 2, ncol = 2) 
     diag(corXX) <- 1
