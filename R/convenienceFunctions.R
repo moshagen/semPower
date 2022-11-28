@@ -209,6 +209,100 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
   append(lavpower, generated)
 }
 
+#' semPower.powerRegression
+#'
+#' Convenience function for performing power analysis on slope(s) in a latent regression.
+#' This requires the lavaan package.
+#' 
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
+#' @param slope vector of standardized slopes (or a single number for a single predictor) predicting Y. 
+#' @param nullSlope single number indicating which of the slope(s) is hypothesized to equal zero, defaults to 1. 
+#' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
+#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @examples
+#' \dontrun{
+#'  # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
+#' # request power for the hypothesis that the slope of X1 ist zero. 
+#' # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
+#' regPower <- semPower.powerRegression(type = 'a-priori',
+#'                                      slopes = c(.2, .3), corXX = .4,
+#'                                      nIndicator = c(3, 5, 4),
+#'                                      loadM = c(.5, .6, .7),
+#'                                      alpha = .05, beta = .05)
+#' summary(regPower$power)
+#' 
+#' # same as above, but ask for power to detect the  slope of X2
+#' regPower <- semPower.powerRegression(type = 'a-priori',
+#'                                      slopes = c(.2, .3), nullSlope = 2, corXX = .4,
+#'                                      nIndicator = c(3, 5, 4),
+#'                                      loadM = c(.5, .6, .7),
+#'                                      alpha = .05, beta = .05)
+#' 
+#' # latent regression with three predictors, providing the predictor intercorrelation matrix
+#' corXX <- matrix(c(
+#'   c(1.00, 0.20, 0.30),
+#'   c(0.20, 1.00, 0.10),
+#'   c(0.30, 0.10, 1.00)
+#' ), ncol = 3,byrow = TRUE)
+#' regPower <- semPower.powerRegression(type = 'a-priori',
+#'                                      slopes = c(.2, .3, .4), corXX = corXX,
+#'                                      nIndicator = c(3, 5, 4),
+#'                                      loadM = c(.5, .6, .7),
+#'                                      alpha = .05, beta = .05)
+#'                                      
+#' }
+#' @seealso [semPower.genSigma()]
+#' @export
+semPower.powerRegression <- function(type, comparison = 'restricted',
+                                     slopes = NULL, nullSlope = 1, corXX = NULL, 
+                                     ...){
+  
+  comparison <- checkComparisonModel(comparison)
+  
+  # we override Phi and Sigma later, so let's make sure it is not set in ellipsis argument
+  if('Phi' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Phi, because the factor correlations depend on corXX and the slopes.')
+  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of corXX and the slopes.')
+  
+  # validate input
+  if(is.null(slopes)) stop('slopes cannot be NULL.')
+  if(!is.vector(slopes) & !is.matrix(slopes)) stop('slopes must be a single number of a vector')
+  invisible(lapply(slopes, function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
+  if(sum(slopes^2) > 1) stop('slopes imply a negative residual variance for Y, make sure that the sum of the squared slopes is < 1')
+  if(!is.matrix(slopes)) slopes <- matrix(slopes, nrow = length(slopes))
+  if(nullSlope < 1 | nullSlope > nrow(slopes)) stop('nullSlope is invalid.')
+  
+  if(is.null(corXX)) corXX <- diag(nrow(slopes)) 
+  if(is.vector(corXX)) stop('corXX must be a single number or a matrix') 
+  if(!is.matrix(corXX)){
+    corXX <- matrix(corXX, nrow = 2, ncol = 2) 
+    diag(corXX) <- 1
+  } 
+  checkPositiveDefinite(corXX)
+  if(ncol(corXX) != nrow(slopes)) stop('Dimension of corXX does not match number of predictors.')
+  
+  # calc implied sigma  
+  corXY <- (cr %*% cb)
+  Phi <- rbind(corXX, t(corXY))
+  Phi <- cbind(phi, c(corXY, 1))
+  generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
+  Sigma <- generated$Sigma
+  
+  ### create ana model string
+  # add regressions 
+  model <- paste(generated$modelTrue, 
+                 paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = '+')), 
+                 sep = '\n')
+  modelTrue <- model
+  modelAna <- paste(model, '\n', paste0('pf', (nullSlope + 1),' == 0'))  
+  
+  modelH1 <- NULL
+  if(comparison == 'restricted') modelH1 <- modelTrue
+  
+  semPower.powerLav(type, modelH0 = modelAna, modelH1 = modelH1, Sigma = Sigma, ...)
+}
+
 
 #' semPower.powerMediation
 #'
@@ -342,13 +436,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   ### get Sigma
   # transform to standard cfa model by converting B to implied phi
   Phi <- getPhi.B(B) 
-  generated <- semPower.genSigma(Phi = Phi, ...)
+  generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
   Sigma <- generated$Sigma
   
   ### create ana model string
-  # remove factor variance identification
-  tok <- strsplit(generated$modelTrue, '\n')[[1]]  
-  model <- paste(sub('NA\\*', '', unlist(tok[1:ncol(B)])), '\n', collapse = '') 
+  model <- generated$modelTrue
   # add mediation structure
   for(f in 1:ncol(B)){
     fidx <- which(B[f, ] != 0)
