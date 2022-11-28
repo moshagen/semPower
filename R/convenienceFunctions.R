@@ -110,7 +110,7 @@ semPower.powerLav <- function(type,
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
 #' @param nullCor vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor. Can be omitted for two-factor models.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
@@ -219,11 +219,11 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' @param slope vector of standardized slopes (or a single number for a single predictor) predicting Y. 
 #' @param nullSlope single number indicating which of the slope(s) is hypothesized to equal zero, defaults to 1. 
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y, and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
-#'  # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
+#' # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
 #' # request power for the hypothesis that the slope of X1 ist zero. 
 #' # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
 #' regPower <- semPower.powerRegression(type = 'a-priori',
@@ -283,9 +283,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if(ncol(corXX) != nrow(slopes)) stop('Dimension of corXX does not match number of predictors.')
   
   # calc implied sigma  
-  corXY <- (cr %*% cb)
-  Phi <- rbind(corXX, t(corXY))
-  Phi <- cbind(phi, c(corXY, 1))
+  corXY <- (corXX %*% slopes)
+  Phi <- t(c(1, corXY))
+  Phi <- rbind(Phi, cbind(corXY, corXX))
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
   Sigma <- generated$Sigma
   
@@ -316,7 +316,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' @param bYM the standardized slope for M -> Y
 #' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation.
 #' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
