@@ -220,7 +220,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' @param bYX the standardized slope (direct effect) for X -> Y 
 #' @param bMX the standardized slope for X -> M
 #' @param bYM the standardized slope for M -> Y
-#' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation. Note that in case of > 3 factors power is only approximate. 
+#' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation.
 #' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
