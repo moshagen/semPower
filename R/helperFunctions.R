@@ -160,10 +160,7 @@ semPower.genSigma <- function(Phi = NULL,
     if(max(unlist(metricInvariance)) > nfac | min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
   }
-  
 
-  
-  
   ### pop model
   # define factors
   tok <- list()
@@ -262,7 +259,8 @@ semPower.genSigma <- function(Phi = NULL,
 #' Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
-#' @param lPsi matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (not covariances) off the diagonal. Can be omitted for no correlations beyond those implied by B. 
+#' @param lPsi matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B. 
+#' @param standardized whether B and lPsi shall be interpreted as standardized coefficients (TRUE) or as unstandardized coefficients (FALSE). 
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
@@ -288,10 +286,10 @@ semPower.genSigma <- function(Phi = NULL,
 #' lPsi[3,4] <- lPsi[4,3] <- .2
 #' lPsi[5,6] <- lPsi[6,5] <- .3
 #' 
-#' Phi <- getPhi.B(B, lPsi)
+#' Phi <- getPhi.B(B, lPsi, standardized = FALSE)
 #' 
 #' }
-getPhi.B <- function(B, lPsi = NULL){
+getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
   
   checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
@@ -304,38 +302,46 @@ getPhi.B <- function(B, lPsi = NULL){
     diag(lPsi) <- 0
   }
   
-  ## there must be a simpler way to do this, but the following
-  ## does not always work for models with > 3 factors 
-  # invIB <- solve(diag(ncol(B)) - B)
-  # BB <- B %*% t(B)
-  # Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB))) 
-  # Phi <- invIB %*% Psi %*% t(invIB)
-  
-  ## so we exploit the structure of B to build Phi recursively
-  exog <- apply(B, 1, function(x) !any(x != 0))
-  Be <- B[!exog, ]
-  if(!is.matrix(Be)) Be <- t(matrix(Be))
-  
-  Phi <- diag(ncol(B)) 
-  for(i in 1:nrow(Be)){
-    idx <- i + sum(exog) - 1
-    cb <- matrix(Be[i, 1:idx])
-    cr <- Phi[1:idx, 1:idx]
-    predR <- (cr %*% cb)
-    # add residual covariances
-    if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
-      cR <- rbind(cr, t(predR))
-      cR <- cbind(cR, t(t(c((predR),1))))
-      cB <- B[1:(idx + 1), 1:(idx + 1)]
-      rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
-      cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
-      corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
-      predR <- corR[(idx + 1), 1:idx]
+  if(!standardized){
+    
+    ## this only works when B and lPsi are unstandardized
+    invIB <- solve(diag(ncol(B)) - B)
+    BB <- B %*% t(B)
+    Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB)))
+    Psi <- Psi + lPsi
+    Phi <- invIB %*% Psi %*% t(invIB)
+    
+  }else{
+    
+    ## for std, exploit the structure of B to build Phi recursively
+    exog <- apply(B, 1, function(x) !any(x != 0))
+    Be <- B[!exog, ]
+    if(!is.matrix(Be)) Be <- t(matrix(Be))
+    
+    Phi <- diag(ncol(B)) 
+    for(i in 1:nrow(Be)){
+      idx <- i + sum(exog) - 1
+      cb <- matrix(Be[i, 1:idx])
+      cr <- Phi[1:idx, 1:idx]
+      predR <- (cr %*% cb)
+      # add residual covariances
+      if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
+        cR <- rbind(cr, t(predR))
+        cR <- cbind(cR, t(t(c((predR),1))))
+        cB <- B[1:(idx + 1), 1:(idx + 1)]
+        rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
+        cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
+        corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
+        predR <- corR[(idx + 1), 1:idx]
+      }
+      Phi[(idx + 1), 1:idx] <- t(predR)
+      Phi[1:idx, (idx + 1)] <- predR
     }
-    Phi[(idx + 1), 1:idx] <- t(predR)
-    Phi[1:idx, (idx + 1)] <- predR
+    
   }
 
+  checkPositiveDefinite(Phi)
+  
   Phi
 }
 
