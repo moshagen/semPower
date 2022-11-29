@@ -118,7 +118,8 @@ semPower.genSigma <- function(Phi = NULL,
   } 
   checkPositiveDefinite(Phi)
   if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
-  invisible(apply(Phi, c(1, 2), function(x) checkBounded(x, 'All elements in Phi', bound = c(-1, 1), inclusive = TRUE)))
+  # we now also allow covariance matrices
+  #invisible(apply(Phi, c(1, 2), function(x) checkBounded(x, 'All elements in Phi', bound = c(-1, 1), inclusive = TRUE)))
   
   if(is.null(loadings)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
