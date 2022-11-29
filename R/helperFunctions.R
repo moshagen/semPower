@@ -15,6 +15,7 @@
 #' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
 #' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). ()giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param metricInvariance a list containing the factor indices for which the analysis model should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4. 
 #' @return a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue) 
 #' @examples
 #' \dontrun{
@@ -91,6 +92,7 @@ semPower.genSigma <- function(Phi = NULL,
                               loadSD = NULL, 
                               loadMinMax = NULL,
                               useReferenceIndicator = FALSE,
+                              metricInvariance = NULL,
                               ...){
   
   # check whether lavaan is available
@@ -152,6 +154,15 @@ semPower.genSigma <- function(Phi = NULL,
   if(!is.null(tau) & is.null(Alpha)) Alpha <- rep(0, nfac)
   if(!is.null(Alpha) & is.null(tau)) tau <- rep(0, sum(nIndicator))
   
+  if(!is.null(metricInvariance)){
+    if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
+    if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
+    if(max(unlist(metricInvariance)) > nfac | min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
+    metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
+  }
+  
+
+  
   
   ### pop model
   # define factors
@@ -205,10 +216,20 @@ semPower.genSigma <- function(Phi = NULL,
   sidx <- 1
   for(f in 1:nfac){
     eidx <- sidx + (nIndicator[f] - 1)
-    if(useReferenceIndicator){
-      tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
+    if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
+      labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
+      clabel <- metricInvarianceLabels[[labelIdx]]
+      if(useReferenceIndicator){
+        tok[f] <- paste0('f', f, ' =~ ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+      }else{
+        tok[f] <- paste0('f', f, ' =~ NA*x',sidx,' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+      }
     }else{
-      tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+      if(useReferenceIndicator){
+        tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
+      }else{
+        tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+      }
     }
     sidx <- eidx + 1
   }
@@ -274,7 +295,7 @@ getPhi.B <- function(B, lPsi = NULL){
   
   checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
-  if(any(rowSums(B^2) > 0)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  if(any(rowSums(B^2) > 1)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
   invisible(lapply(B, function(x) lapply(x, function(x) checkBounded(x, 'All elements in B', bound = c(-1, 1)))))
   if(!is.null(lPsi)){
     checkSymmetricSquare(lPsi)
