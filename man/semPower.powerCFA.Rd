@@ -13,7 +13,7 @@ semPower.powerCFA(type, comparison = "restricted", nullCor = NULL, ...)
 
 \item{nullCor}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor. Can be omitted for two-factor models.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses}
+\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
 \value{
 a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)

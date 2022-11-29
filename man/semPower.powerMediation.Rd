@@ -30,7 +30,7 @@ semPower.powerMediation(
 
 \item{indirect}{a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analyses}
+\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
 \value{
 a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)
