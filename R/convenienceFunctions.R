@@ -410,7 +410,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     invisible(lapply(c(bYX, bMX, bYM), function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
     if((bYX^2 + bYM^2) > 1) stop('bYX and bYM imply a negative residual variance for Y, make sure that the sum of the squared slopes on Y is < 1')
     if(bMX == 0 | bYM == 0) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
-    indirect <- list(c(2,1), c(3,2))
+    indirect <- list(c(2, 1), c(3, 2))
   }
   
   if(!is.null(Beta)){
