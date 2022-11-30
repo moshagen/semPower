@@ -259,7 +259,7 @@ semPower.genSigma <- function(Phi = NULL,
   if(!useReferenceIndicator){
     modelTrue <- paste(modelTrue,
                        # factor variances are always 1, regardless of phi
-                       c(sapply(1:nfac, function(f) paste0('f', x, ' ~~ 1*f', x))),
+                       c(sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))),
                        collapse = '\n')
   }
 
