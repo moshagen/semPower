@@ -7,7 +7,7 @@
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param modelPop lavaan model string defining the true model.
-#' @param modelH0 lavaan model string defining the (incorrect) analysis model
+#' @param modelH0 lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param Sigma population covariance matrix (if modelPop is not set).
 #' @param mu population means (if modelPop is not set).
