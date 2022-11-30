@@ -5,8 +5,8 @@
 #' Generate a covariance matrix and associated lavaan model strings based on defined model features.
 #' This requires the lavaan package.
 #' 
-#' @param Phi factor correlation matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
-#' @param Lambda factor loading matrix (standardized). 
+#' @param Phi factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
+#' @param Lambda factor loading matrix. 
 #' @param tau intercepts. If NULL and alpha is set, these are assumed to be zero. 
 #' @param Alpha factor means. If NUll and tau is set, these are assumed to be zero. 
 #' @param loadings a list providing the standardized factor loadings by factor. Must not contain secondary loadings.   
@@ -118,9 +118,7 @@ semPower.genSigma <- function(Phi = NULL,
   } 
   checkPositiveDefinite(Phi)
   if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
-  # we now also allow covariance matrices
-  #invisible(apply(Phi, c(1, 2), function(x) checkBounded(x, 'All elements in Phi', bound = c(-1, 1), inclusive = TRUE)))
-  
+
   if(is.null(loadings)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
     invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
@@ -162,35 +160,49 @@ semPower.genSigma <- function(Phi = NULL,
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
   }
 
-  ### pop model
-  # define factors
+
+  # define lambda 
+  if(is.null(Lambda)){
+    Lambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator)) # store loading matrix
+    sidx <- 1
+    for(f in 1:nfac){
+      eidx <- sidx + (nIndicator[f] - 1)
+      if(!is.null(loadM)){
+        cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
+        if(any(cload <= -1) | any(cload >= 1)) warning('Sampled loadings outside [-1, 1] were set to -.99 or .99.')
+        cload[cload <= -1] <- -.99
+        cload[cload >= 1] <- .99
+      }else if(!is.null(loadMinMax)){
+        cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
+      }else if(!is.null(loadings)){
+        cload <- loadings[[f]]  # loadings only contains primary loadings
+      }else{
+        stop('loading not found')  
+      }
+      Lambda[sidx:eidx, f] <- cload
+      sidx <- eidx + 1
+    }
+  }
+  
+  # define theta
+  dTheta <- diag(1 - Lambda %*% Phi %*% t(Lambda))
+  
+  ### we could now do Sigma  = Lambda %*% Phi %*% t(Lambda) + diag(Theta), 
+  ### but we let lav do this anyway, also because it's nice to have a 
+  ### population model string
   tok <- list()
-  iLambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator)) # store loading matrix
   sidx <- 1
   for(f in 1:nfac){
     eidx <- sidx + (nIndicator[f] - 1)
-    if(!is.null(loadM)){
-      cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
-      if(any(cload <= -1) | any(cload >= 1)) warning('Sampled loadings outside [-1, 1] were set to -.99 or .99.')
-      cload[cload <= -1] <- -.99
-      cload[cload >= 1] <- .99
-    }else if(!is.null(loadMinMax)){
-      cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
-    }else if(!is.null(loadings)){
-      cload <- loadings[[f]]  # loadings only contains primary loadings
-    }else{
-      cload <- Lambda[sidx:eidx, f]  # loadings only contains primary loadings
-    }
-    iLambda[sidx:eidx, f] <- cload
+    cload <- Lambda[sidx:eidx, f]
     tok[f] <- 
       paste(
         paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', sidx:eidx), collapse = ' + ')),
-        paste0('f', f, ' ~~ 1*', 'f', f),
-        paste0(paste0('x', sidx:eidx), ' ~~ ', 1 - cload^2, '*', paste0('x', sidx:eidx), collapse = '\n'),
+        paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f),
+        paste0(paste0('x', sidx:eidx), ' ~~ ', dTheta[sidx:eidx], '*', paste0('x', sidx:eidx), collapse = '\n'),
         sep='\n')
     sidx <- eidx + 1
   }
-  
   # define factor cor
   for(f in 1:(nfac - 1)){
     for(ff in (f + 1):nfac){
@@ -207,24 +219,36 @@ semPower.genSigma <- function(Phi = NULL,
   }
   
   modelPop <- paste(unlist(tok), collapse = '\n')
+
+  # get Sigma (and mu). 
+  Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
+  # checkPositiveDefinite(Sigma) # redundant, lav checks this
+  mu <- NULL
+  if(!is.null(tau)) mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
   
   
-  ### create true cfa analysis model string 
+  ### also not needed, but since we are at in anyway, we 
+  ### can also provide a (correct) cfa analysis model string 
   tok <- list()
   sidx <- 1
   for(f in 1:nfac){
     eidx <- sidx + (nIndicator[f] - 1)
+    # add invariance constrains
     if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
       labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
       clabel <- metricInvarianceLabels[[labelIdx]]
       if(useReferenceIndicator){
-        tok[f] <- paste0('f', f, ' =~ ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+        # scale by first loading instead of 1
+#       tok[f] <- paste0('f', f, ' =~ ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*x', sidx, ' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
       }else{
-        tok[f] <- paste0('f', f, ' =~ NA*x',sidx,' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ NA*x', sidx,' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
       }
     }else{
       if(useReferenceIndicator){
-        tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
+        # scale by first loading instead of 1
+#        tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*', paste0('x', sidx:eidx, collapse = ' + '))
       }else{
         tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
       }
@@ -234,19 +258,15 @@ semPower.genSigma <- function(Phi = NULL,
   modelTrue <- paste(c(unlist(tok)), collapse = '\n')
   if(!useReferenceIndicator){
     modelTrue <- paste(modelTrue,
-                       c(sapply(1:nfac, function(x) paste0('f', x, ' ~~ 1*f', x))),
+                       # factor variances are always 1, regardless of phi
+                       c(sapply(1:nfac, function(f) paste0('f', x, ' ~~ 1*f', x))),
                        collapse = '\n')
   }
-  
-  
-  # get Sigma (and mu)
-  Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
-  mu <- NULL
-  if(!is.null(tau)) mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
+
   
   list(Sigma = Sigma, 
        mu = mu,
-       Lambda = iLambda, 
+       Lambda = Lambda, 
        Phi = Phi,
        tau = tau,
        Alpha = Alpha,
@@ -294,7 +314,7 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
   
   checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
-  if(any(rowSums(B^2) > 1)) stop('B implies negative residual variances; only provide standardized slopes and make sure that the sum of squared slopes by row is < 1')
+  if(any(rowSums(B^2) > 1)) stop('B implies negative residual variances.')
   invisible(lapply(B, function(x) lapply(x, function(x) checkBounded(x, 'All elements in B', bound = c(-1, 1)))))
   if(!is.null(lPsi)){
     checkSymmetricSquare(lPsi)
@@ -305,16 +325,16 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
   
   if(!standardized){
     
-    ## this only works when B and lPsi are unstandardized
+    ## this treats B and lPsi as unstandardized parameters
+    ## and thus yields Phi as variance/covariance matrix
     invIB <- solve(diag(ncol(B)) - B)
-    BB <- B %*% t(B)
-    Psi <- diag(1 - (diag(BB) + 2*diag(B %*% BB)))
-    Psi <- Psi + lPsi
-    Phi <- invIB %*% Psi %*% t(invIB)
-    
+    Psi <- diag(ncol(B)) + lPsi 
+    Phi <- invIB %*% Psi %*% t(invIB) 
+
   }else{
     
     ## for std, exploit the structure of B to build Phi recursively
+    ## there must be a simpler way to do this...
     exog <- apply(B, 1, function(x) !any(x != 0))
     Be <- B[!exog, ]
     if(!is.matrix(Be)) Be <- t(matrix(Be))
