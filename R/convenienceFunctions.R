@@ -5,7 +5,7 @@
 #' Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'.
 #' @param modelPop lavaan model string defining the true model.
 #' @param modelH0 lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
