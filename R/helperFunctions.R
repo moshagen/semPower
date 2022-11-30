@@ -239,7 +239,6 @@ semPower.genSigma <- function(Phi = NULL,
       clabel <- metricInvarianceLabels[[labelIdx]]
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-#       tok[f] <- paste0('f', f, ' =~ ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
         tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*x', sidx, ' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
       }else{
         tok[f] <- paste0('f', f, ' =~ NA*x', sidx,' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
@@ -247,7 +246,6 @@ semPower.genSigma <- function(Phi = NULL,
     }else{
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-#        tok[f] <- paste0('f', f, ' =~ ', paste0('x', sidx:eidx, collapse = ' + '))
         tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*', paste0('x', sidx:eidx, collapse = ' + '))
       }else{
         tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
@@ -257,9 +255,9 @@ semPower.genSigma <- function(Phi = NULL,
   }
   modelTrue <- paste(c(unlist(tok)), collapse = '\n')
   if(!useReferenceIndicator){
-    modelTrue <- paste(modelTrue,
+    modelTrue <- paste(c(modelTrue,
                        # factor variances are always 1, regardless of phi
-                       c(sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))),
+                       sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))),
                        collapse = '\n')
   }
 
