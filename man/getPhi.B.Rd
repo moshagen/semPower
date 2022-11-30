@@ -4,12 +4,14 @@
 \alias{getPhi.B}
 \title{getPhi.B}
 \usage{
-getPhi.B(B, lPsi = NULL)
+getPhi.B(B, lPsi = NULL, standardized = TRUE)
 }
 \arguments{
 \item{B}{matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros.}
 
-\item{lPsi}{matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (not covariances) off the diagonal. Can be omitted for no correlations beyond those implied by B.}
+\item{lPsi}{matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B.}
+
+\item{standardized}{whether B and lPsi shall be interpreted as standardized coefficients (TRUE) or as unstandardized coefficients (FALSE).}
 }
 \value{
 the implied correlation matrix
@@ -40,7 +42,7 @@ lPsi <- matrix(0, ncol = ncol(B), nrow = nrow(B))
 lPsi[3,4] <- lPsi[4,3] <- .2
 lPsi[5,6] <- lPsi[6,5] <- .3
 
-Phi <- getPhi.B(B, lPsi)
+Phi <- getPhi.B(B, lPsi, standardized = FALSE)
 
 }
 }
