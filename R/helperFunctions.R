@@ -322,6 +322,8 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
     invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1)))))
     diag(lPsi) <- 0
+  }else{
+    lPsi <- diag(ncol(B))
   }
   
   if(!standardized){
