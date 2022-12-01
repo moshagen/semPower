@@ -103,7 +103,7 @@ semPower.genSigma <- function(Phi = NULL,
   if(!is.null(nIndicator) & !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
   if(!is.null(nIndicator) & !is.null(Lambda)) stop('Either provide Lambda or number of indicators, but not both.')
   if(!is.null(Lambda) & !is.null(loadings)) stop('Either provide Lambda or loadings, but not both.')
-  if(is.null(nIndicator) & !is.list(loadings)) stop('loadings must be a list')
+  if(is.null(Lambda) & is.null(nIndicator) & !is.list(loadings)) stop('loadings must be a list')
   
   if(!is.null(Lambda)){
     nfac <- ncol(Lambda)
@@ -119,7 +119,7 @@ semPower.genSigma <- function(Phi = NULL,
   checkPositiveDefinite(Phi)
   if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
 
-  if(is.null(loadings)){
+  if(is.null(loadings) && is.null(Lambda)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
     invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
     if(is.null(loadM) & is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
@@ -135,12 +135,12 @@ semPower.genSigma <- function(Phi = NULL,
     if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
   }else{
     if(is.null(Lambda)){
-      invisible(lapply(loadings, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1)))))
+      invisible(lapply(loadings, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE))))
       nIndicator <- unlist(lapply(loadings, length))  # crossloadings are disallowed
     }else{
-      invisible(apply(Lambda, c(1, 2), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1))))
+      invisible(apply(Lambda, c(1, 2), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
       if(any(apply(Lambda, 1, function(x) sum(x^2)) > 1)) stop('Loadings imply negative residual variance(s). Note that loadings must be standardized.')
-      nIndicator <- apply(Lambda, 2, function(x) length(x))
+      nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
     }
   }
   
@@ -157,6 +157,7 @@ semPower.genSigma <- function(Phi = NULL,
     if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
     if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
     if(max(unlist(metricInvariance)) > nfac | min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
+    if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metriInvariance must have the same number of indicators')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
   }
 
@@ -169,9 +170,9 @@ semPower.genSigma <- function(Phi = NULL,
       eidx <- sidx + (nIndicator[f] - 1)
       if(!is.null(loadM)){
         cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
-        if(any(cload <= -1) | any(cload >= 1)) warning('Sampled loadings outside [-1, 1] were set to -.99 or .99.')
-        cload[cload <= -1] <- -.99
-        cload[cload >= 1] <- .99
+        if(any(cload < -1) | any(cload > 1)) warning('Sampled loadings outside [-1, 1] were set to -1 or 1.')
+        cload[cload < -1] <- -1
+        cload[cload > 1] <- 1
       }else if(!is.null(loadMinMax)){
         cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
       }else if(!is.null(loadings)){
@@ -191,17 +192,18 @@ semPower.genSigma <- function(Phi = NULL,
   ### but we let lav do this anyway, also because it's nice to have a 
   ### population model string
   tok <- list()
-  sidx <- 1
-  for(f in 1:nfac){
-    eidx <- sidx + (nIndicator[f] - 1)
-    cload <- Lambda[sidx:eidx, f]
+  for(f in 1:ncol(Lambda)){
+    iIdx <- which(Lambda[, f] != 0)
+    cload <- Lambda[iIdx, f]
     tok[f] <- 
       paste(
-        paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', sidx:eidx), collapse = ' + ')),
+        paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')),
         paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f),
-        paste0(paste0('x', sidx:eidx), ' ~~ ', dTheta[sidx:eidx], '*', paste0('x', sidx:eidx), collapse = '\n'),
         sep='\n')
-    sidx <- eidx + 1
+  }
+  # residuals
+  for(i in 1:nrow(Lambda)){
+    tok <- append(tok, paste0(paste0('x', i), ' ~~ ', dTheta[i], '*', paste0('x', i), collapse = '\n'))
   }
   # define factor cor
   if(nfac > 1){
@@ -214,10 +216,10 @@ semPower.genSigma <- function(Phi = NULL,
   
   # add means
   if(!is.null(tau)){
-    tok <- append(tok, paste0(paste0('x', 1:sum(nIndicator)), ' ~ ', tau, '*1', collapse = '\n'))
+    tok <- append(tok, paste0(paste0('x', 1:nrow(Lambda)), ' ~ ', tau, '*1', collapse = '\n'))
   }
   if(!is.null(Alpha)){
-    tok <- append(tok, paste0(paste0('f', 1:nfac), ' ~ ', Alpha, '*1', collapse = '\n'))
+    tok <- append(tok, paste0(paste0('f', 1:ncol(Lambda)), ' ~ ', Alpha, '*1', collapse = '\n'))
   }
   
   modelPop <- paste(unlist(tok), collapse = '\n')
@@ -233,27 +235,26 @@ semPower.genSigma <- function(Phi = NULL,
   ### can also provide a (correct) cfa analysis model string 
   tok <- list()
   sidx <- 1
-  for(f in 1:nfac){
-    eidx <- sidx + (nIndicator[f] - 1)
+  for(f in 1:ncol(Lambda)){
+    iIdx <- which(Lambda[, f] != 0)
     # add invariance constrains
     if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
       labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
       clabel <- metricInvarianceLabels[[labelIdx]]
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-        tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*x', sidx, ' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + '))
       }else{
-        tok[f] <- paste0('f', f, ' =~ NA*x', sidx,' + ', paste0(clabel, 'x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + '))
       }
     }else{
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-        tok[f] <- paste0('f', f, ' =~ ', Lambda[sidx, f], '*', paste0('x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + '))
       }else{
-        tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', sidx:eidx, collapse = ' + '))
+        tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + '))
       }
     }
-    sidx <- eidx + 1
   }
   modelTrue <- paste(c(unlist(tok)), collapse = '\n')
   if(!useReferenceIndicator){
