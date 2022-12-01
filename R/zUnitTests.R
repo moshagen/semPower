@@ -2,7 +2,6 @@
 ## unittests
 ##
 ### TODO
-### multigroup
 ### cfaPower
 ### regressionPower
 ### mediationPower
@@ -67,7 +66,6 @@ test_powerEffectDifference <- function(){
                            "F0", alpha = .05, N = 200, df = df1 - df2)
   ph2 <- semPower.postHoc(effect = c(RMSEA1, RMSEA2), effect.measure = "RMSEA",
                           alpha = .05, N = 200, df = c(df1, df2))
-  
   
   valid <- round(ph$power - ph2$power, 3) == 0 
   
@@ -381,7 +379,6 @@ test_genPhi <- function(){
     round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - B[2, 1], 4) == 0 && 
     round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - lPsi[3, 4], 4) == 0 
   
-  
   # gen sigma and std phi + observed factors
   B <- matrix(c(
     c(.00, .00, .00),
@@ -395,7 +392,6 @@ test_genPhi <- function(){
   # same with Lambda as diag matrix
   generated6b <- semPower.genSigma(Phi = Phi, Lambda = diag(3))
   
-  
   valid6 <- valid5 &&
     round(sum((generated6$Sigma - Phi)^2), 4) == 0 &&
     round(sum((generated6b$Sigma - Phi)^2), 4) == 0
@@ -407,6 +403,66 @@ test_genPhi <- function(){
   }
 }
 
+test_multigroup <- function(){
+
+  # metric invariance model
+  generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)))
+  generated2 <- semPower.genSigma(loadings = list(c(.5, .5, .7)))
+  lavres <- helper_lav(generated$modelTrue, 
+                       list(generated$Sigma, generated2$Sigma),
+                       sample.nobs = list(500, 500),
+                       group.equal = c('loadings'))
+  sigmaHat1 <- lavaan::fitted(lavres$res)$`Group 1`$cov
+  sigmaHat2 <- lavaan::fitted(lavres$res)$`Group 2`$cov
+  
+  ph <- semPower.postHoc(SigmaHat = list(sigmaHat1, sigmaHat2),
+                         Sigma = list(generated$Sigma, generated2$Sigma),
+                         alpha = .05, N = list(500, 500), df = 3)
+
+  # f contrib by group
+  getFgroup <- function(S, SigmaHat){
+    sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
+  }
+  f1 <- getFgroup(generated$Sigma, sigmaHat1)
+  f2 <- getFgroup(generated2$Sigma, sigmaHat2)
+
+  # power given effects by subgroups (fmin)
+  ph2 <- semPower.postHoc(effect = list(f1, f2), effect.measure = 'F0', 
+                          alpha = .05, N = list(500, 500), df = 3)
+
+  valid <- round(ph$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
+    round(sum((c(f1, f2) - (lavres$summary$test$standard$stat.group / 500))^2), 4) == 0 &&
+    round(ph2$power - ph$power, 4) == 0  
+  
+  # scalar invariance model
+  generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)), tau = c(0, 0, 0))
+  generated2 <- semPower.genSigma(loadings = list(c(.5, .5, .7)), tau = c(0, .1, 0))
+  lavres <- helper_lav(generated$modelTrue, 
+                       list(generated$Sigma, generated2$Sigma),
+                       sample.nobs = list(500, 500),
+                       sample.mean = list(generated$mu, generated2$mu),
+                       group.equal = c('loadings', 'intercepts'))
+  sigmaHat1 <- lavaan::fitted(lavres$res)$`Group 1`$cov
+  sigmaHat2 <- lavaan::fitted(lavres$res)$`Group 2`$cov
+  muHat1 <- lavaan::fitted(lavres$res)$`Group 1`$mean
+  muHat2 <- lavaan::fitted(lavres$res)$`Group 2`$mean
+  
+  ph <- semPower.postHoc(SigmaHat = list(sigmaHat1, sigmaHat2),
+                         Sigma = list(generated$Sigma, generated2$Sigma),
+                         muHat = list(muHat1, muHat2),
+                         mu = list(generated$mu, generated2$mu),
+                         alpha = .05, N = list(500, 500), df = 3)
+  
+  valid2 <- valid & round(ph$fmin - 2*lavres$fit['fmin'], 4) == 0
+  
+  if(valid2){
+    print('test_multigroup: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
+
 test_all <- function(){
   test_powerConsistency()  
   test_effectSizeConsistency()
@@ -414,12 +470,7 @@ test_all <- function(){
   test_df()
   test_generateSigma()
   test_genPhi()
+  test_multigroup()
 }
 
 test_all()
-
-
-
-#####
-
-
