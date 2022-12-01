@@ -204,9 +204,11 @@ semPower.genSigma <- function(Phi = NULL,
     sidx <- eidx + 1
   }
   # define factor cor
-  for(f in 1:(nfac - 1)){
-    for(ff in (f + 1):nfac){
-      tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+  if(nfac > 1){
+    for(f in 1:(nfac - 1)){
+      for(ff in (f + 1):nfac){
+        tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+      }
     }
   }
   
