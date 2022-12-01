@@ -322,8 +322,9 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
     invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1)))))
     diag(lPsi) <- 0
+    Psi <- diag(ncol(B)) + lPsi 
   }else{
-    lPsi <- diag(ncol(B))
+    Psi <- diag(ncol(B))
   }
   
   if(!standardized){
@@ -331,7 +332,6 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
     ## this treats B and lPsi as unstandardized parameters
     ## and thus yields Phi as variance/covariance matrix
     invIB <- solve(diag(ncol(B)) - B)
-    Psi <- diag(ncol(B)) + lPsi 
     Phi <- invIB %*% Psi %*% t(invIB) 
 
   }else{
