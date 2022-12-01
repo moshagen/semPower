@@ -15,11 +15,11 @@ semPower.powerLav(
 )
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'.}
 
 \item{modelPop}{lavaan model string defining the true model.}
 
-\item{modelH0}{lavaan model string defining the (incorrect) analysis model}
+\item{modelH0}{lavaan model string defining the (incorrect) analysis model.}
 
 \item{modelH1}{lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
