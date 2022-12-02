@@ -12,13 +12,13 @@
 #' @param Sigma population covariance matrix (if modelPop is not set).
 #' @param mu population means (if modelPop is not set).
 #' @param ... other parameters related to the specific type of power analysis requested
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, and the H1 matrix SigmaH1, as well as various lavaan model strings
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, as well as various lavaan model strings
 #' @examples
 #' \dontrun{
 #' ## a priori power analysis for the null hypothesis that the correlation between 
 #' ## two cfa factors with a true correlation of .2 differs from zero
 #' # define population model 
-#' mPop = '
+#' mPop <- '
 #'   f1 =~ .5*x1 + .6*x2 + .4*x3
 #'   f2 =~ .7*x4 + .8*x5 + .3*x6
 #'   x1 ~~ .75*x1
@@ -32,7 +32,7 @@
 #'   f1 ~~ .2*f2
 #' '
 #' # define analysis model (restricting the factor correlation to zero) 
-#' mAna = '
+#' mAna <- '
 #'   f1 =~ x1 + x2 + x3
 #'   f2 =~ x4 + x5 + x6
 #'   f1 ~~ 0*f2
@@ -52,51 +52,56 @@ semPower.powerLav <- function(type,
 
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
-  # validate power type
-  type <- checkPowerTypes(type)
   # validate input
+  type <- checkPowerTypes(type)
   if(is.null(modelH0)) stop('Provide a lavaan model string defining the analysis (H0) model.')
   if(is.null(modelPop) & is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
+  if(!is.null(modelPop) & !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
   
-  
-  # determine population Sigma and mu
-  SigmaH1 <- Sigma
-  muH1 <- mu
+  # determine population Sigma / mu
   if(is.null(Sigma)){
-    SigmaH1 <- Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
-    muH1 <- mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
-  }
-  # override H1 sigma when comparison model differs from the saturated model 
-  if(!is.null(modelH1)){
-    h1.model <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-    if(!h1.model@optim$converged) stop('The H1 model did not converge.')
-    SigmaH1 <- lavaan::fitted(h1.model)$cov
-    if(!is.null(mu)) muH1 <- lavaan::fitted(h1.model)$mean
+    Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
+    mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
   }
   
-  # get H0 sigmaHat
-  h0.model <- lavaan::sem(modelH0, sample.cov = Sigma,  sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-  if(!h0.model@optim$converged) stop('The H0 model did not converge.')
-  SigmaHat <- lavaan::fitted(h0.model)$cov
-  muHat <- lavaan::fitted(h0.model)$mean
+  # get H0 sigmaHat / muHat
+  modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+  if(!modelH0Fit@optim$converged) stop('The H0 model did not converge.')
+  SigmaHat <- lavaan::fitted(modelH0Fit)$cov
+  muHat <- lavaan::fitted(modelH0Fit)$mean
+  dfH0 <- modelH0Fit@test$standard$df
+  
+  # get H1 comparison model and deltaF
+  if(!is.null(modelH1)){
+    modelH1Fit <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+    if(!modelH1Fit@optim$converged) stop('The H1 model did not converge.')
+    dfH1 <- modelH1Fit@test$standard$df
+    if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
+    # get delta F
+    fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)$cov, Sigma, lavaan::fitted(modelH1Fit)$mean, mu)
+    fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)$cov, Sigma, lavaan::fitted(modelH0Fit)$mean, mu)
+    deltaF <- fminH0 - fminH1
+    deltaDf <- (dfH0 - dfH1)
+  }
+  
+  # we use sigma for the comparison with saturated model (so we also get additional fitindices) 
+  # but delta f for the comparison with an explicit h1 model.
+  if(is.null(modelH1)){
+    power <- semPower(type = type, 
+                      SigmaHat = SigmaHat, Sigma = Sigma, 
+                      muHat = muHat, mu = mu, 
+                      df = dfH0, 
+                      ...)    
+  }else{
+    power <- semPower(type = type, 
+                      effect = deltaF, effect.measure = "F0", 
+                      df = deltaDf, 
+                      ...)    
+  }
 
-  # determine df
-  df.h0 <- df <- h0.model@test$standard$df
-  if(!is.null(modelH1)){
-    df.h1 <- h1.model@test$standard$df
-    df <- df.h0 - df.h1
-  }
-  
-  # do power analysis
-  power <- semPower(type = type, 
-                    SigmaHat = SigmaHat, Sigma = SigmaH1, 
-                    muHat = muHat, mu = muH1, 
-                    df = df, 
-                    ...)
-  
   list(power = power, 
-       SigmaHat = SigmaHat, SigmaHatH1 = SigmaH1, Sigma = Sigma,
-       muHat = muHat, muHatH1 = muH1, mu = mu,
+       SigmaHat = SigmaHat, Sigma = Sigma,
+       muHat = muHat, mu = mu,
        modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
 }
 
