@@ -226,7 +226,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
 #' @param slope vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
-#' @param nullSlope single number indicating which slope is hypothesized to equal zero, defaults to 1 (= the first slope).
+#' @param nullEffect defines the hypothesis of interest. Valid are 'slope = 0' (the default) and 'slopeX = slopeZ' to test for the equality of slopes. Define the slopes to set to equality in nullWhich 
+#' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
@@ -236,7 +237,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' # request power for the hypothesis that the slope of X1 ist zero. 
 #' # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
 #' regPower <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3), corXX = .4,
+#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
 #'                                      nIndicator = c(3, 5, 4),
 #'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
@@ -244,7 +245,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' 
 #' # same as above, but ask for power to detect the  slope of X2
 #' regPower <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3), nullSlope = 2, corXX = .4,
+#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
 #'                                      nIndicator = c(3, 5, 4),
 #'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
@@ -256,7 +257,26 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #'   c(0.30, 0.10, 1.00)
 #' ), ncol = 3,byrow = TRUE)
 #' regPower <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3, .4), corXX = corXX,
+#'                                      slopes = c(.2, .3, .4), corXX = corXX, 
+#'                                      nullWhich = 1
+#'                                      nIndicator = c(4, 3, 5, 4),
+#'                                      loadM = c(.5, .5, .6, .7),
+#'                                      alpha = .05, beta = .05)
+#'
+#' # same as above, but testing the equality of the first and second slope
+#' regPower <- semPower.powerRegression(type = 'a-priori',
+#'                                      slopes = c(.2, .3, .4), corXX = corXX, 
+#'                                      nullEffect = 'slopeX = slopeZ', 
+#'                                      nullWhich = c(1, 2),
+#'                                      nIndicator = c(4, 3, 5, 4),
+#'                                      loadM = c(.5, .5, .6, .7),
+#'                                      alpha = .05, beta = .05)
+#'                                      
+#' # same as above, but testing the equality of all three slopes
+#' regPower <- semPower.powerRegression(type = 'a-priori',
+#'                                      slopes = c(.2, .3, .4), corXX = corXX, 
+#'                                      nullEffect = 'slopeX = slopeZ', 
+#'                                      nullWhich = c(1, 2, 3),
 #'                                      nIndicator = c(4, 3, 5, 4),
 #'                                      loadM = c(.5, .5, .6, .7),
 #'                                      alpha = .05, beta = .05)
@@ -265,7 +285,10 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' @seealso [semPower.genSigma()]
 #' @export
 semPower.powerRegression <- function(type, comparison = 'restricted',
-                                     slopes = NULL, nullSlope = 1, corXX = NULL, 
+                                     slopes = NULL, 
+                                     corXX = NULL, 
+                                     nullEffect = 'slope = 0',
+                                     nullWhich = NULL,
                                      ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -280,7 +303,6 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   invisible(lapply(slopes, function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
   if(sum(slopes^2) > 1) stop('slopes imply a negative residual variance for Y, make sure that the sum of the squared slopes is < 1')
   if(!is.matrix(slopes)) slopes <- matrix(slopes, nrow = length(slopes))
-  if(nullSlope < 1 | nullSlope > nrow(slopes)) stop('nullSlope is invalid.')
   
   if(is.null(corXX)) corXX <- diag(nrow(slopes)) 
   if(is.vector(corXX) & length(corXX) > 1) stop('corXX must be a single number or a matrix') 
@@ -290,7 +312,22 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   } 
   checkPositiveDefinite(corXX)
   if(ncol(corXX) != nrow(slopes)) stop('Dimension of corXX does not match number of predictors.')
-  
+
+  if(is.null(nullEffect)) stop('nullEffect must be defined.')
+  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
+  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
+  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez'))))) stop('nullEffect must be either slope=0 or slopex=slopez')
+
+  if(is.null(nullWhich)) stop('nullWhich must be defined.')
+  if(any(nullWhich < 1) | any(nullWhich > nrow(slopes))) stop('nullWhich is invalid.')
+  if(nullEffect == 'slopex=slopez'){
+    if(length(nullWhich) < 2 | length(nullWhich) > nrow(slopes)) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
+  }else{
+    if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0')
+  }
+  nullWhich <- nullWhich + 1 # because first factor is criterion
+
   # calc implied sigma  
   corXY <- (corXX %*% slopes)
   Phi <- t(c(1, corXY))
@@ -304,9 +341,21 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                  paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = '+')), 
                  sep = '\n')
   modelTrue <- model
-  modelAna <- paste(model, '\n', paste0('pf', (nullSlope + 1),' == 0'))  
   
-  # set modelH1 just to determine delta df, but don't actually fit modelH1
+  if(nullEffect == 'slopex=slopez'){
+    tok <- ''
+    for(i in 1:(length(nullWhich) - 1)){
+      for(j in (i + 1):length(nullWhich)){
+        tok <- paste(tok, paste0('pf', nullWhich[i], ' == ', 'pf', nullWhich[j]), sep = '\n')
+      }
+    }
+    modelAna <- paste(model, '\n', tok)  
+  }else{
+    modelAna <- paste(model, '\n', paste0('pf', nullWhich,' == 0'))  
+  }
+  
+  # we need to fit modelH1 in case of length(nullWhich) > 1, 
+  # because resulting deltadf is  > 1
   modelH1 <- NULL
   if(comparison == 'restricted') modelH1 <- modelTrue
   
@@ -314,7 +363,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                     modelH0 = modelAna, 
                     modelH1 = modelH1, 
                     Sigma = Sigma, 
-                    fitH1model = is.null(modelH1),
+                    fitH1model = (is.null(modelH1) | (!is.null(modelH1) & length(nullWhich) > 1)),
                     ...)
 }
 

@@ -607,7 +607,7 @@ test_powerRegression <- function(){
   
   # restricted comparison model
   ph <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
-                                 slopes = c(.2, .3), corXX = .4,
+                                 slopes = c(.2, .3), corXX = .4, nullWhich = 1,
                                  nIndicator = c(3, 3, 3), loadM = .5,
                                  alpha = .05, N = 250)
   
@@ -619,7 +619,7 @@ test_powerRegression <- function(){
   
   # power for second slope
   ph2 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
-                                  slopes = c(.2, .3), corXX = .4, nullSlope = 2,
+                                  slopes = c(.2, .3), corXX = .4,  nullWhich = 2,
                                   nIndicator = c(3, 3, 3), loadM = .5,
                                   alpha = .05, N = 250)
 
@@ -632,20 +632,41 @@ test_powerRegression <- function(){
     c(0.30, 0.10, 1.00)
   ), ncol = 3,byrow = TRUE)
   ph3 <- semPower.powerRegression(type = 'post-hoc', comparison = 'saturated',
-                                  slopes = c(.2, .3, .4), corXX = corXX, nullSlope = 3,
+                                  slopes = c(.2, .3, .4), corXX = corXX, nullWhich = 3,
                                   nIndicator = c(4, 3, 5, 4),
                                   loadM = c(.5, .5, .6, .7),
                                   alpha = .05, N = 250)
   lavres4 <- helper_lav(ph3$modelH0, ph3$Sigma)
   # same with restricted
   ph4 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
-                                  slopes = c(.2, .3, .4), corXX = corXX, nullSlope = 3,
+                                  slopes = c(.2, .3, .4), corXX = corXX, nullWhich = 3,
                                   nIndicator = c(4, 3, 5, 4),
                                   loadM = c(.5, .5, .6, .7),
                                   alpha = .05, N = 250)
   lavres5 <- helper_lav(ph4$modelH1, ph4$Sigma)
   par4 <- lavres5$par
 
+  # slope equality
+  ph5 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                  slopes = c(.2, .3, .4), corXX = corXX, 
+                                  nullEffect = 'slopex=slopez', nullWhich = c(1, 2),
+                                  nIndicator = c(4, 3, 5, 4),
+                                  loadM = c(.5, .5, .6, .7),
+                                  alpha = .05, N = 250)
+  lavres6 <- helper_lav(ph5$modelH0, ph5$Sigma)
+  par5 <- lavres6$par
+  
+  # slope equality of all slopes
+  ph6 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                  slopes = c(.2, .3, .4), corXX = corXX, 
+                                  nullEffect = 'slopex=slopez', nullWhich = c(1, 2, 3),
+                                  nIndicator = c(4, 3, 5, 4),
+                                  loadM = c(.5, .5, .6, .7),
+                                  alpha = .05, N = 250)
+  
+  lavres7 <- helper_lav(ph6$modelH0, ph6$Sigma)
+  par6 <- lavres7$par
+  
   valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
     round(ph2$power$fmin - 2*lavres3$fit['fmin'], 4) == 0 &&
     round(ph3$power$fmin - 2*lavres4$fit['fmin'], 4) == 0 &&
@@ -654,8 +675,14 @@ test_powerRegression <- function(){
     round(par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'std.all'] - .4, 4) == 0 &&
     lavres4$fit['df'] - ph3$power$df == 0 && 
     round(sum(par4[par4$op == '~~' & par4$lhs != par4$rhs, 'std.all'] - corXX[lower.tri(corXX)])^2, 4) == 0  &&
-    round(sum(par4[par4$op == '~' & par4$lhs == 'f1', 'std.all'] - c(.2, .3, .4))^2, 4) == 0  
-  
+    round(sum(par4[par4$op == '~' & par4$lhs == 'f1', 'std.all'] - c(.2, .3, .4))^2, 4) == 0 && 
+    round(var(par5[par5$lhs == 'f1' & par5$rhs %in% c('f2', 'f3'), 'est']), 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
+    round(var(par6[par6$lhs == 'f1' & par6$rhs %in% c('f2', 'f3', 'f4'), 'est']), 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
+    ph5$power$df == 1 && ph6$power$df == 2
+    
+
   if(valid){
     print('test_powerRegression: OK')
   }else{
