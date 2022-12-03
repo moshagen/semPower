@@ -2,12 +2,9 @@
 ## unittests
 ##
 ### TODO
-### cfaPower
-### regressionPower
-### mediationPower
 ### clpmPower
 ###
-### + plug all test into testthat
+### + plug all test into testthat ?
 
 helper_lav <- function(model, sigma, sample.nobs = 1000, ...){
   lavres <- lavaan::sem(model, sample.cov = sigma, sample.nobs = sample.nobs, sample.cov.rescale = FALSE, ...)
@@ -30,7 +27,7 @@ test_powerConsistency <- function(){
     round(ap$chiCrit - cp$chiCrit) == 0
   
   if(valid){
-    print('powerConsistency: OK')
+    print('test_powerConsistency: OK')
   }else{
     warning('Invalid')
   }
@@ -49,7 +46,7 @@ test_effectSizeConsistency <- function(){
     round(ph4$power - ph5$power, 3) == 0 
   
   if(valid){
-    print('effectSizeConsistency: OK')
+    print('test_effectSizeConsistency: OK')
   }else{
     warning('Invalid')
   }
@@ -404,7 +401,7 @@ test_genPhi <- function(){
 }
 
 test_multigroup <- function(){
-
+  
   # metric invariance model
   generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)))
   generated2 <- semPower.genSigma(loadings = list(c(.5, .5, .7)))
@@ -418,18 +415,18 @@ test_multigroup <- function(){
   ph <- semPower.postHoc(SigmaHat = list(sigmaHat1, sigmaHat2),
                          Sigma = list(generated$Sigma, generated2$Sigma),
                          alpha = .05, N = list(500, 500), df = 3)
-
+  
   # f contrib by group
   getFgroup <- function(S, SigmaHat){
     sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
   }
   f1 <- getFgroup(generated$Sigma, sigmaHat1)
   f2 <- getFgroup(generated2$Sigma, sigmaHat2)
-
+  
   # power given effects by subgroups (fmin)
   ph2 <- semPower.postHoc(effect = list(f1, f2), effect.measure = 'F0', 
                           alpha = .05, N = list(500, 500), df = 3)
-
+  
   valid <- round(ph$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
     round(sum((c(f1, f2) - (lavres$summary$test$standard$stat.group / 500))^2), 4) == 0 &&
     round(ph2$power - ph$power, 4) == 0  
@@ -462,6 +459,281 @@ test_multigroup <- function(){
   }
 }
 
+test_powerLav <- function(){
+  mPop <- '
+    f1 =~ .5*x1 + .6*x2 + .4*x3
+    f2 =~ .7*x4 + .8*x5 + .3*x6
+    f3 =~ .7*x7 + .8*x8 + .3*x9
+    x1 ~~ .75*x1
+    x2 ~~ .64*x2
+    x3 ~~ .84*x3
+    x4 ~~ .51*x4
+    x5 ~~ .36*x5
+    x6 ~~ .91*x6
+    x7 ~~ .51*x7
+    x8 ~~ .36*x8
+    x9 ~~ .91*x9
+    f1 ~~ 1*f1
+    f2 ~~ 1*f2
+    f3 ~~ 1*f3
+    f1 ~~ .2*f2
+    f1 ~~ .3*f3
+    f2 ~~ .4*f3
+  '
+  mAna <- '
+    f1 =~ x1 + x2 + x3
+    f2 =~ x4 + x5 + x6
+    f3 =~ x7 + x8 + x9
+    f1 ~~ 0*f2
+  '
+  ph <- semPower.powerLav(type = 'post-hoc', comparison = 'saturated',
+                          modelPop = mPop, modelH0 = mAna,
+                          alpha = .05, N = 250)
+  
+  Sigma <- lavaan::fitted(lavaan::sem(mPop))$cov
+  lavres <- helper_lav(mAna, Sigma)
+  
+  valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0
+  
+  # use other comparison model
+  mAna2 <- '
+    f1 =~ x1 + x2 + x3
+    f2 =~ x4 + x5 + x6
+    f3 =~ x7 + x8 + x9
+    f1 ~~ 0*f2
+    f1 ~~ 0*f3
+  '
+  ph2 <- semPower.powerLav(type = 'post-hoc',
+                           modelPop = mPop, modelH0 = mAna2, modelH1 = mAna,
+                           alpha = .05, N = 250)
+  
+  lavres2 <- helper_lav(mAna2, Sigma)
+  
+  valid2 <- valid && 
+    round(2*(lavres2$fit['fmin'] - lavres$fit['fmin']) - ph2$power$fmin, 4) == 0
+  
+  # consistency with f difference
+  SigmaHat1 <- lavaan::fitted(lavres$res)$cov
+  SigmaHat2 <- lavaan::fitted(lavres2$res)$cov
+  f1 <- getF.Sigma(SigmaHat1, Sigma)
+  f2 <- getF.Sigma(SigmaHat2, Sigma)
+  deltaF <- f2 - f1
+  ph3 <- semPower.postHoc(effect = deltaF, effect.measure = "F0",
+                          alpha = .05, N = 250, df = 1)
+  ph4 <- semPower.postHoc(effect = c(f1, f2), effect.measure = "F0",
+                          alpha = .05, N = 250, 
+                          df = c(lavres$res@test$standard$df, lavres2$res@test$standard$df))
+  
+  valid3 <- valid2 && 
+    round(ph2$power$fmin - deltaF, 4) == 0 &&
+    round(ph2$power$power - ph3$power, 4) == 0 &&
+    round(ph3$power - ph4$power, 4) == 0
+  
+  if(valid3){
+    print('test_powerLav: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
+test_powerCFA <- function(){
+  
+  # simple model with restricted comparison model
+  ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                          Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                          alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph$modelH0, ph$Sigma)
+  lavres2 <- helper_lav(ph$modelH1, ph$Sigma)
+  
+  ph2 <- semPower.powerLav('post-hoc', 
+                           Sigma = ph$Sigma, modelH0 = ph$modelH0, 
+                           modelH1 = ph$modelH1, fitH1model = FALSE,
+                           alpha = .05, N = 250)
+  
+  ph3 <- semPower.postHoc(SigmaHat = ph$SigmaHat, Sigma = ph$Sigma,
+                          df = 1, alpha = .05, N = 250)
+  
+  # saturated comparison model
+  ph4 <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+                           Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                           alpha = .05, N = 250)
+  
+  valid <- round(lavres2$fit['fmin'], 4) == 0 &&
+    round(2*lavres$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    round(ph2$power$fmin - ph$power$fmin, 4) == 0 &&
+    round(ph3$fmin - ph$power$fmin, 4) == 0 &&
+    round(ph$power$power - ph2$power$power, 4) == 0 &&
+    ph$power$df == 1 &&
+    ph4$power$df == 44 &&
+    round(ph$power$power - ph4$power$power, 4) != 0
+  
+  # phi matrix
+  Phi <- matrix(c(
+    c(1, .1, .2),
+    c(.1, 1, .3),
+    c(.2, .3, 1)
+  ), byrow = T, ncol = 3)
+  
+  # nullCor = c(1, 2)
+  ph5 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', nullCor = c(1, 2), 
+                           Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  lavres3 <- helper_lav(ph5$modelH0, ph5$Sigma)
+  par <- lavres3$par
+  
+  # nullCor = c(2, 3)
+  ph6 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', nullCor = c(2, 3), 
+                           Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  lavres6 <- helper_lav(ph6$modelH0, ph6$Sigma)
+  par2 <- lavres6$par
+  
+  valid2 <- valid &&
+    par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] == 0 &&
+    par[par$lhs == 'f2' & par$rhs == 'f3', 'est'] != 0 &&
+    par2[par2$lhs == 'f1' & par2$rhs == 'f1', 'est'] != 0 &&
+    par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'est'] == 0 &&
+    round(ph6$power$power, 4) > round(ph5$power$power, 4)
+  
+  if(valid2){
+    print('test_powerCFA: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
+test_powerRegression <- function(){
+  
+  # restricted comparison model
+  ph <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                 slopes = c(.2, .3), corXX = .4,
+                                 nIndicator = c(3, 3, 3), loadM = .5,
+                                 alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph$modelH0, ph$Sigma)
+  par <- lavres$par
+
+  lavres2 <- helper_lav(ph$modelH1, ph$Sigma)
+  par2 <- lavres2$par
+  
+  # power for second slope
+  ph2 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                  slopes = c(.2, .3), corXX = .4, nullSlope = 2,
+                                  nIndicator = c(3, 3, 3), loadM = .5,
+                                  alpha = .05, N = 250)
+
+  lavres3 <- helper_lav(ph2$modelH0, ph2$Sigma)
+  
+  # regression with 3 predictors, power for third slope, saturated comparison model
+  corXX <- matrix(c(
+    c(1.00, 0.20, 0.30),
+    c(0.20, 1.00, 0.10),
+    c(0.30, 0.10, 1.00)
+  ), ncol = 3,byrow = TRUE)
+  ph3 <- semPower.powerRegression(type = 'post-hoc', comparison = 'saturated',
+                                  slopes = c(.2, .3, .4), corXX = corXX, nullSlope = 3,
+                                  nIndicator = c(4, 3, 5, 4),
+                                  loadM = c(.5, .5, .6, .7),
+                                  alpha = .05, N = 250)
+  lavres4 <- helper_lav(ph3$modelH0, ph3$Sigma)
+  # same with restricted
+  ph4 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                  slopes = c(.2, .3, .4), corXX = corXX, nullSlope = 3,
+                                  nIndicator = c(4, 3, 5, 4),
+                                  loadM = c(.5, .5, .6, .7),
+                                  alpha = .05, N = 250)
+  lavres5 <- helper_lav(ph4$modelH1, ph4$Sigma)
+  par4 <- lavres5$par
+
+  valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
+    round(ph2$power$fmin - 2*lavres3$fit['fmin'], 4) == 0 &&
+    round(ph3$power$fmin - 2*lavres4$fit['fmin'], 4) == 0 &&
+    round(par2[par2$lhs == 'f1' & par2$rhs == 'f2', 'std.all'] - .2, 4) == 0 &&
+    round(par2[par2$lhs == 'f1' & par2$rhs == 'f3', 'std.all'] - .3, 4) == 0 &&
+    round(par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'std.all'] - .4, 4) == 0 &&
+    lavres4$fit['df'] - ph3$power$df == 0 && 
+    round(sum(par4[par4$op == '~~' & par4$lhs != par4$rhs, 'std.all'] - corXX[lower.tri(corXX)])^2, 4) == 0  &&
+    round(sum(par4[par4$op == '~' & par4$lhs == 'f1', 'std.all'] - c(.2, .3, .4))^2, 4) == 0  
+  
+  if(valid){
+    print('test_powerRegression: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
+test_powerMediation <- function(){
+  
+  # simple mediation
+  ph <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                bYX = .25, bMX = .3, bYM = .4,
+                                nIndicator = c(3, 3, 3), loadM = .5,
+                                alpha = .05, N = 250)
+
+  lavres <- helper_lav(ph$modelH1, ph$Sigma)
+  par <- lavres$par
+  lavres2 <- helper_lav(ph$modelH0, ph$Sigma)
+  par2 <- lavres2$par
+  
+  # same with saturated
+  ph2 <- semPower.powerMediation(type = 'post-hoc', comparison = 'saturated',
+                                bYX = .25, bMX = .3, bYM = .4,
+                                nIndicator = c(3, 3, 3), loadM = .5,
+                                alpha = .05, N = 250)
+
+  # same with B
+  B <- matrix(c(
+                c(.00, .00, .00),
+                c(.30, .00, .00),
+                c(.25, .40, .00)
+                ), byrow = TRUE, ncol = 3)
+  ph3 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                Beta = B, indirect = list(c(2,1), c(3,2)),
+                                nIndicator = c(3, 3, 3), loadM = .5,
+                                alpha = .05, N = 250)
+  
+
+  valid <- round(par[par$lhs == 'f2' & par$rhs == 'f1', 'std.all'] - .3, 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f1', 'std.all'] - .25, 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f2', 'std.all'] - .4, 4) == 0 &&
+    round(par[par$lhs == 'ind', 'std.all'] - (.3*.4), 4) == 0  &&
+    round(par2[par2$lhs == 'ind', 'std.all'], 4) == 0 &&
+    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    round(ph2$power$fmin - ph$power$fmin, 4) == 0 &&
+    ph$power$df == 1 && ph2$power$df == lavres2$res@Fit@test$standard$df &&
+    round(ph3$power$fmin - ph$power$fmin, 4) == 0
+  
+  # more complex beta
+  B <- matrix(c(
+                c(.00, .00, .00, .00),
+                c(.20, .00, .00, .00),
+                c(.05, .30, .00, .00),
+                c(.20, .10, .40, .00)
+                ), byrow = TRUE, ncol = 4)
+  ph4 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                 Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+                                 nIndicator = c(3, 3, 3, 3), loadM = .5,
+                                 alpha = .05, N = 250)
+  
+  lavres3 <- helper_lav(ph4$modelH1, ph4$Sigma)
+  par3 <- lavres3$par
+  lavres4 <- helper_lav(ph4$modelH0, ph4$Sigma)
+  par4 <- lavres4$par
+  
+  valid2 <- valid &&
+    round(par3[par3$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
+    round(par4[par4$lhs == 'f2' & par4$rhs == 'f1', 'std.all'], 4) == 0
+  
+  
+  if(valid2){
+    print('test_powerMediation: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 
 test_all <- function(){
   test_powerConsistency()  
@@ -471,6 +743,10 @@ test_all <- function(){
   test_generateSigma()
   test_genPhi()
   test_multigroup()
+  test_powerLav()
+  test_powerCFA()
+  test_powerRegression()
+  test_powerMediation()
 }
 
 test_all()
