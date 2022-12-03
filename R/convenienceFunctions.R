@@ -435,8 +435,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     if(any(diag(Beta) != 0)) stop('All diagonal elements of Beta must be zero.')
     # negative implied residual variances are checked in getPhi.B
     if(any(lapply(indirect, function(x) length(x)) != 2)) stop('Indirect must be a list containing vectors of size two each')
-    if(any(unlist(lapply(indirect, function(x) any(x > ncol(B)))))) stop('At least one element in indirect is an out of bounds index concerning B')
-    if(any(unlist(lapply(indirect, function(x) B[x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
+    if(any(unlist(lapply(indirect, function(x) any(x > ncol(Beta)))))) stop('At least one element in indirect is an out of bounds index concerning B')
+    if(any(unlist(lapply(indirect, function(x) Beta[x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
   }
   
   B <- Beta
@@ -474,14 +474,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # power for the indirect effect (and indeed works much better than using ind=0 as 
   # comparison model, which grossly overestimates the true effect)
   #modelAna <- paste(modelTrue, '\n', 'ind == 0')  
-  BindBool <- matrix(FALSE, nrow=nrow(B), ncol=ncol(B))
-  idxInd <- do.call(cbind, indirect)
-  for(i in 1:nrow(idxInd)){
-    BindBool[idxInd[1, i], idxInd[2, i]] <- TRUE
-  }
-  idxIndMin <- which(B == min(B[BindBool]), arr.ind = TRUE)
-  cs <- idxIndMin[which(BindBool[idxIndMin]),]
-  if(!is.null(nrow(cs))) cs <-  cs[1, ]
+  cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[x[1], x[2]])))]]
   mb <- paste0('pf', paste(cs, collapse = ''))
   modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
 
@@ -504,15 +497,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' This requires the lavaan package.
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
+#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df are always 1.
 #' @param nWaves number of waves, must be >= 2.
 #' @param stabilities vector of the stabilities of X and Y (constant across waves), or a list of vectors of stabilities for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a stability of .7 for x1->x2 and .6 for x2->x3
 #' @param crossedEffects vector of crossed effects of x on y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of x on y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for x1->y2 = .2 and x2->y3 = .3.
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
-#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated). 
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect). 
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'stabX = 0', 'stabY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y stabilities or the crossed effects to zero, 'stabX = stabY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
 #' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'stabX = 0' with nullWhich = 2 would constrain the second stability coefficient for X to zero.    
-#' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the df, power might be affected.
+#' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
@@ -557,7 +550,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
 
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
-  # we do not allow stacking of hypothesis. there might be a use case for this,
+  # we do not allow stacking of hypotheses. there might be a use case for this,
   # but this would complicate defining the relevant parameter when these vary across waves. 
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
@@ -749,6 +742,9 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   } 
   
   # here we actually fit modelH1 in case of a restricted comparison
+  # because we cannot be sure that user input yields perfectly fitting h1 models 
+  # when there are additional constraints (waveequal or invariance)
+  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   semPower.powerLav(type, 
