@@ -228,7 +228,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' @param slope vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
 #' @param nullSlope single number indicating which slope is hypothesized to equal zero, defaults to 1 (= the first slope).
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y, and the type of power analysis 
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
@@ -257,8 +257,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
 #' ), ncol = 3,byrow = TRUE)
 #' regPower <- semPower.powerRegression(type = 'a-priori',
 #'                                      slopes = c(.2, .3, .4), corXX = corXX,
-#'                                      nIndicator = c(3, 5, 4),
-#'                                      loadM = c(.5, .6, .7),
+#'                                      nIndicator = c(4, 3, 5, 4),
+#'                                      loadM = c(.5, .5, .6, .7),
 #'                                      alpha = .05, beta = .05)
 #'                                      
 #' }
@@ -474,7 +474,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # power for the indirect effect (and indeed works much better than using ind=0 as 
   # comparison model, which grossly overestimates the true effect)
   #modelAna <- paste(modelTrue, '\n', 'ind == 0')  
-  mb <- paste0('pf', paste(which(B == min(B[B != 0]), arr.ind = TRUE)[1, ], collapse = ''))
+  BindBool <- matrix(FALSE, nrow=nrow(B), ncol=ncol(B))
+  idxInd <- do.call(cbind, indirect)
+  for(i in 1:nrow(idxInd)){
+    BindBool[idxInd[1, i], idxInd[2, i]] <- TRUE
+  }
+  idxIndMin <- which(B == min(B[BindBool]), arr.ind = TRUE)
+  cs <- idxIndMin[which(BindBool[idxIndMin]),]
+  if(!is.null(nrow(cs))) cs <-  cs[1, ]
+  mb <- paste0('pf', paste(cs, collapse = ''))
   modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
 
   # set modelH1 just to determine delta df, but don't actually fit modelH1
