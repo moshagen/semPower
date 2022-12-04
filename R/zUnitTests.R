@@ -1,10 +1,6 @@
 ##
 ## unittests
 ##
-### TODO
-### clpmPower
-###
-### + plug all test into testthat ?
 
 helper_lav <- function(model, sigma, sample.nobs = 1000, ...){
   lavres <- lavaan::sem(model, sample.cov = sigma, sample.nobs = sample.nobs, sample.cov.rescale = FALSE, ...)
@@ -666,7 +662,19 @@ test_powerRegression <- function(){
   
   lavres7 <- helper_lav(ph6$modelH0, ph6$Sigma)
   par6 <- lavres7$par
+
+  # observed variables
+  ph7 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                 slopes = c(.2, .3), corXX = .4, nullWhich = 1,
+                                 nIndicator = rep(1, 3), loadM = 1,
+                                 alpha = .05, N = 250)
   
+  
+  lavres9 <- helper_lav(ph7$modelH1, ph7$Sigma)
+  par7 <- lavres9$par
+  lavres8 <- helper_lav(ph7$modelH0, ph7$Sigma)
+  lavres10 <- helper_lav('x1 ~ p1*x2 + p2*x3 \n p1==0', ph7$Sigma)
+
   valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
     round(ph2$power$fmin - 2*lavres3$fit['fmin'], 4) == 0 &&
     round(ph3$power$fmin - 2*lavres4$fit['fmin'], 4) == 0 &&
@@ -680,8 +688,12 @@ test_powerRegression <- function(){
     round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
     round(var(par6[par6$lhs == 'f1' & par6$rhs %in% c('f2', 'f3', 'f4'), 'est']), 4) == 0 &&
     round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
-    ph5$power$df == 1 && ph6$power$df == 2
-    
+    ph5$power$df == 1 && ph6$power$df == 2 &&
+    round(ph7$power$fmin - 2*lavres8$fit['fmin'], 4) == 0 &&    
+    round(ph7$power$fmin - 2*lavres10$fit['fmin'], 4) == 0 &&    
+    round(par7[par7$lhs == 'f1' & par7$rhs == 'f2', 'std.all'] - .2, 4) == 0 &&
+    round(par7[par7$lhs == 'f1' & par7$rhs == 'f3', 'std.all'] - .3, 4) == 0 &&
+    round(par7[par7$lhs == 'f2' & par7$rhs == 'f3', 'std.all'] - .4, 4) == 0    
 
   if(valid){
     print('test_powerRegression: OK')
@@ -752,15 +764,337 @@ test_powerMediation <- function(){
     round(par3[par3$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 &&
     round(2*lavres4$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
     round(par4[par4$lhs == 'f2' & par4$rhs == 'f1', 'std.all'], 4) == 0
+
+  # observed variables
+  ph5 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                bYX = .25, bMX = .3, bYM = .4,
+                                nIndicator = rep(1, 3), loadM = 1,
+                                alpha = .05, N = 250)
   
-  
-  if(valid2){
+  lavres5 <- helper_lav(ph5$modelH0, ph5$Sigma)
+
+  valid3 <- valid2 && round(2*lavres5$fit['fmin'] - ph5$power$fmin, 4) == 0
+
+  if(valid3){
     print('test_powerMediation: OK')
   }else{
     warning('Invalid')
   }
 }
 
+test_powerCLPM <- function(){
+  
+  # 2 waves, crossedX=0
+  ph <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                           nWaves = 2,
+                           stabilities = c(.8, .7), 
+                           crossedEffects = c(.2, .1),
+                           rXY = NULL, # diagonal
+                           nullEffect = 'crossedx=0',
+                           nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                           metricInvariance = TRUE,
+                           waveEqual = NULL,
+                           alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph$modelH1, ph$Sigma)
+  par <- lavres$par
+  lavres2 <- helper_lav(ph$modelH0, ph$Sigma)
+  par2 <- lavres2$par
+
+  valid <- round(sum((par[par$op == '~', 'est'] - c(.8, .1, .2, .7))^2), 4) == 0 &&
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == 0 &&
+    round(par2[par2$lhs == 'f4' & par$rhs == 'f1', 'est'], 4) == 0 &&
+    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    !any(!(par2[par2$lhs == 'f1' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f3' & par2$op == '=~', 'label'])) &&
+    !any(!(par2[par2$lhs == 'f2' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f4' & par2$op == '=~', 'label']))  
+
+  # 2 waves, crossedY=0
+  ph2 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = NULL, # diagonal
+                            nullEffect = 'crossedy=0',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres3 <- helper_lav(ph2$modelH0, ph2$Sigma)
+  par3 <- lavres3$par
+  
+  # 2 waves, stabX=0
+  ph3 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = NULL, # diagonal
+                            nullEffect = 'stabX = 0',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres4 <- helper_lav(ph3$modelH0, ph3$Sigma)
+  par4 <- lavres4$par  
+
+  # 2 waves, stabY=0
+  ph4 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = NULL, # diagonal
+                            nullEffect = 'stabY = 0',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres5 <- helper_lav(ph4$modelH0, ph4$Sigma)
+  par5 <- lavres5$par    
+
+  # 2 waves, stabX=stabY
+  ph5 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = NULL, # diagonal
+                            nullEffect = 'stabX=stabY',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres6 <- helper_lav(ph5$modelH0, ph5$Sigma)
+  par6 <- lavres6$par    
+  
+  # 2 waves, crossedX=crossedY
+  ph6 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = NULL, # diagonal
+                            nullEffect = 'crossedX=crossedY',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres7 <- helper_lav(ph6$modelH0, ph6$Sigma)
+  par7 <- lavres7$par     
+  
+  valid2 <- valid && 
+    round(2*lavres3$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
+    round(par3[par3$lhs == 'f3' & par3$rhs == 'f2', 'est'], 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
+    round(par4[par4$lhs == 'f3' & par4$rhs == 'f1', 'est'], 4) == 0 &&
+    round(2*lavres5$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
+    round(par5[par5$lhs == 'f4' & par5$rhs == 'f2', 'est'], 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
+    round(par6[par6$lhs == 'f4' & par6$rhs == 'f2', 'est'] - par6[par6$lhs == 'f3' & par6$rhs == 'f1', 'est'], 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
+    round(par7[par7$lhs == 'f4' & par7$rhs == 'f1', 'est'] - par7[par7$lhs == 'f3' & par7$rhs == 'f2', 'est'], 4) == 0
+    
+  # 2 waves, crossedX=crossedY, cor XY
+  ph7 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = c(.3, .2), 
+                            nullEffect = 'crossedX=crossedY',
+                            nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                            metricInvariance = TRUE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres8 <- helper_lav(ph7$modelH1, ph7$Sigma)
+  par8 <- lavres8$par     
+
+  # 2 waves, crossedX=crossedY, cor XY, no invariance
+  ph8 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                            nWaves = 2,
+                            stabilities = c(.8, .7), 
+                            crossedEffects = c(.2, .1),
+                            rXY = c(.3, .2), 
+                            nullEffect = 'crossedX=crossedY',
+                            nIndicator = rep(3, 4), loadM = c(.4, .5, .6, .7),
+                            metricInvariance = FALSE,
+                            waveEqual = NULL,
+                            alpha = .05, N = 250)
+  
+  lavres9 <- helper_lav(ph8$modelH1, ph8$Sigma)
+  par9 <- lavres9$par     
+
+  valid3 <- valid2 &&
+    round(par8[par8$lhs == 'f1' & par8$rhs == 'f2', 'est'] - .3, 4) == 0 && 
+    round(par8[par8$lhs == 'f3' & par8$rhs == 'f4', 'est'] - .2, 4) == 0 &&
+    round(par9[par9$lhs == 'f1' & par9$rhs == 'f2', 'est'] - .3, 4) == 0 && 
+    round(par9[par9$lhs == 'f3' & par9$rhs == 'f4', 'est'] - .2, 4) == 0 &&
+    round(sum((par9[par9$op == '~', 'est'] - c(.8, .1, .2, .7))^2), 4) == 0 &&
+    !any(!(par9[par9$lhs == 'f1' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f3' & par9$op == '=~', 'est'])) &&
+    !any(!(par9[par9$lhs == 'f2' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f4' & par9$op == '=~', 'est']))
+    
+  # 3 waves, wave invariant stabilities/crossed effects, crossedX=0 for first effect, 
+  ph10 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                           nWaves = 3,
+                           stabilities = c(.8, .7), 
+                           crossedEffects = c(.2, .1),
+                           rXY = c(.3, .2, .1),
+                           nullEffect = 'crossedx=0',
+                           nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                           metricInvariance = TRUE,
+                           nullWhich = NULL,
+                           waveEqual = c('stabX','stabY','crossedX','crossedY'),
+                           alpha = .05, N = 250)
+  
+  lavres10 <- helper_lav(ph10$modelH1, ph10$Sigma)
+  par10 <- lavres10$par
+  lavres11 <- helper_lav(ph10$modelH0, ph10$Sigma)
+  par11 <- lavres11$par
+  
+  # 3 waves, no wave-equality constrains (=> less power)
+  ph11 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = c(.8, .7), 
+                             crossedEffects = c(.2, .1),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'crossedx=0',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = 1,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+
+  lavres12 <- helper_lav(ph11$modelH0, ph11$Sigma)
+  lavres12$res@Fit@test$standard$df
+
+  # 3 waves, no wave invariant stabilities/crossed effects, crossedX=0 for second effect, 
+  ph12 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'crossedx=0',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = 2,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres13 <- helper_lav(ph12$modelH1, ph12$Sigma)
+  par12 <- lavres13$par
+  lavres14 <- helper_lav(ph12$modelH0, ph12$Sigma)
+  par13 <- lavres14$par
+  
+  # 3 waves, no wave invariant stabilities/crossed effects, stabx equal, 
+  ph13 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'stabX',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = NULL,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres15 <- helper_lav(ph13$modelH0, ph13$Sigma)
+  par14 <- lavres15$par
+  
+  # 3 waves, no wave invariant stabilities/crossed effects, staby equal, 
+  ph14 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'stabY',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = NULL,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres16 <- helper_lav(ph14$modelH0, ph14$Sigma)
+  par15 <- lavres16$par  
+
+  # 3 waves, no wave invariant stabilities/crossed effects, crossedx equal, 
+  ph15 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'crossedX',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = NULL,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres17 <- helper_lav(ph15$modelH0, ph15$Sigma)
+  par16 <- lavres17$par
+
+  # 3 waves, no wave invariant stabilities/crossed effects, crossedy equal, 
+  ph16 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'crossedY',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = NULL,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres18 <- helper_lav(ph16$modelH0, ph16$Sigma)
+  par17 <- lavres18$par
+  
+  # 3 waves, wave-invariant stabilities/crossed effects, corxy equal, 
+  ph17 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             crossedEffects = list(c(.2, .1), c(.3, .1)),
+                             rXY = c(.3, .2, .1),
+                             nullEffect = 'corXY',
+                             nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             nullWhich = NULL,
+                             waveEqual = c('stabX','stabY','crossedX','crossedY'),
+                             alpha = .05, N = 250)
+  
+  lavres19 <- helper_lav(ph17$modelH0, ph17$Sigma)
+  par18 <- lavres19$par
+
+  valid4 <- valid3 && 
+    round(sum((par10[par10$lhs %in% c('f3', 'f4') & par10$op == '~', 'est'] - par10[par10$lhs %in% c('f5', 'f6') & par10$op == '~', 'est'])^2), 4) == 0 &&  round(2*lavres11$fit['fmin'] - ph10$power$fmin, 4) == 0 &&
+    round(par11[par11$lhs == 'f4' & par11$rhs == 'f1', 'est'], 4) ==  0 &&
+    round(par11[par11$lhs == 'f6' & par11$rhs == 'f3', 'est'], 4) ==  0 &&
+    ph10$power$fmin > ph11$power$fmin &&
+    lavres12$res@Fit@test$standard$df < lavres11$res@Fit@test$standard$df &&
+    round(sum((par12[par12$op == '~', 'est'] - c(.8, .3, .2, .7, .7, .1, .1, .6))^2), 4) == 0 && 
+    round(2*lavres14$fit['fmin'] - ph12$power$fmin, 4) == 0 &&
+    round(par13[par13$lhs == 'f4' & par13$rhs == 'f1', 'est'], 4) != 0 &&
+    round(par13[par13$lhs == 'f6' & par13$rhs == 'f3', 'est'], 4) == 0 &&
+    round(2*lavres15$fit['fmin'] - ph13$power$fmin, 4) == 0 &&
+    round(par14[par14$lhs == 'f3' & par14$rhs == 'f1', 'est'] - par14[par14$lhs == 'f5' & par14$rhs == 'f3', 'est'], 4) == 0 &&
+    round(par15[par15$lhs == 'f4' & par15$rhs == 'f2', 'est'] - par15[par15$lhs == 'f6' & par15$rhs == 'f4', 'est'], 4) == 0 &&
+    round(par16[par16$lhs == 'f4' & par16$rhs == 'f1', 'est'] - par16[par16$lhs == 'f6' & par16$rhs == 'f3', 'est'], 4) == 0 &&
+    round(2*lavres17$fit['fmin'] - ph15$power$fmin, 4) == 0 &&
+    round(par17[par17$lhs == 'f3' & par17$rhs == 'f2', 'est'] - par17[par17$lhs == 'f5' & par17$rhs == 'f4', 'est'], 4) == 0 &&
+    round(sum((ph16$Sigma - ph15$Sigma)^2), 4) == 0 &&   
+    round(sum((ph14$Sigma - ph13$Sigma)^2), 4) == 0 &&   
+    round(sum((ph13$Sigma - ph16$Sigma)^2), 4) == 0 &&
+    round(2*lavres19$fit['fmin'] - ph17$power$fmin) == 0 &&
+    round(sum((par18[par18$lhs == 'f3' & par18$rhs == 'f4', 'est'] - par18[par18$lhs == 'f5' & par18$rhs == 'f6', 'est'])^2), 4) == 0  
+  
+  if(valid4){
+    print('test_powerCLPM: OK')
+  }else{
+    warning('Invalid')
+  }
+}
 
 test_all <- function(){
   test_powerConsistency()  
@@ -774,6 +1108,7 @@ test_all <- function(){
   test_powerCFA()
   test_powerRegression()
   test_powerMediation()
+  test_powerCLPM()
 }
 
 test_all()
