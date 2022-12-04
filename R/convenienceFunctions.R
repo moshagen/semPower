@@ -573,6 +573,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                ...){
   
   # TODO: lagged effects would be nice
+  # TODO: do we need autocorrelated residuals?
   
   comparison <- checkComparisonModel(comparison)
   
@@ -609,7 +610,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                  'stabx=staby', 'crossedx=crossedy', 'corxy=0')
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect')
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual')
-  if(nWaves == 2 & nullEffect %in% c('crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, and only one X-Y residual correlation. Did you mean crossedX = 0?')
+  if(nWaves == 2 & nullEffect %in% c('stabx', 'staby','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one stability each, and only one X-Y residual correlation. Did you mean crossedX = 0 or stabX = 0?')
   
   if(is.null(nullWhich) & nWaves == 2) nullWhich <- 1
   if(is.null(nullWhich) & nWaves > 2){
