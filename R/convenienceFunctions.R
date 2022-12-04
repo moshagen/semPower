@@ -117,48 +117,36 @@ semPower.powerLav <- function(type,
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
-#' @param nullCor vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor. Can be omitted for two-factor models.
+#' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich 
+#' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
 #' @examples
 #' \dontrun{
 #' # a priori power analysis only providing the number of indicators to define 
 #' # two factors with correlation of phi and same loading for all indicators
-#' cfapower.ap <- semPower.powerCFA(type = 'a-priori', 
+#' cfapower.ap <- semPower.powerCFA(type = 'a-priori',
+#'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  alpha = .05, beta = .05)
 #'                                  summary(cfapower.ap$power)
 #'
-#' # sanity check: fit true model to population Sigma to evaluate everything was set up as intended
-#' summary(lavaan::sem(cfapower.ap$modelTrue, sample.cov = cfapower.ap$Sigma,
-#'                     sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE),
-#'         stand = TRUE)
-#'
-#' # peek into lavaan model strings:
-#' # population model
-#' cfapower.ap$modelPop
-#' # (incorrect) analysis model
-#' cfapower.ap$modelAna
-#' 
-#' # or plug the population Sigma and model-implied SigmaHat 
-#' # into a regular power analysis command 
-#' ph <- semPower.aPriori(SigmaHat = cfapower.ap$SigmaHat, Sigma = cfapower.ap$Sigma, 
-#'                        df = 1, alpha = .05, beta = .05)
-#'                        summary(ph)
-#'
 #' # same as above, but compare to the saturated model 
 #' # (rather than to the less restricted model)
 #' #' cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
+#'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  alpha = .05, beta = .05)
 #'
 #' # same as above, but request a compromise power analysis
 #' cfapower.cp <- semPower.powerCFA(type = 'compromise',
+#'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  abratio = 1, N = 200)
 #'
 #' # same as above, but request a post-hoc power analysis
 #' cfapower.ph <- semPower.powerCFA(type = 'post-hoc', 
+#'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  alpha = .05, N = 200)
 #'
@@ -177,34 +165,71 @@ semPower.powerLav <- function(type,
 #'                )
 #'
 #' cfapower <- semPower.powerCFA(type = 'post-hoc',
+#'                               nullWhich = c(1, 2), 
 #'                               Phi = phi, loadings = loadings,
 #'                               alpha = .05, N = 250)
 #' 
 #' }
 #' @seealso [semPower.genSigma()]
 #' @export
-semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, ...){
+semPower.powerCFA <- function(type, comparison = 'restricted', 
+                              nullEffect = 'cor = 0',
+                              nullWhich = NULL, ...){
 
   # validate input
   comparison <- checkComparisonModel(comparison)
+  if(is.null(nullEffect)) stop('nullEffect must be defined.')
+  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
+  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
+  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz'))))) stop('nullEffect must be either cor=0 or corx=corz')
   
   # generate sigma 
   generated <- semPower.genSigma(...)
 
-  ### now validate nullCor
-  if(is.null(nullCor) & ncol(generated$Phi) == 2) nullCor <- c(1, 2)
-  if(is.null(nullCor)) stop('nullCor must be defined')
-  if(length(nullCor) != 2) stop('nullCor must be a vector of size 2')
-  if(nullCor[1] == nullCor[2]) stop('nullCor may not refer to variances.')
-  
-  
+  ### now do validation of nullWhich, since we now know Phi
+  if(is.null(nullWhich) && ncol(generated$Phi) == 2) nullWhich <- c(1, 2)
+  if(is.null(nullWhich)) stop('nullWhich must be defined.')
+  if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
+  if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
+  if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
+  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated$Phi) | x[2] > ncol(generated$Phi)))))) stop('At least on element in nullWhich is an out of bounds index concerning Phi.')
+  if(length(nullWhich) > 1){
+    for(i in 1:(length(nullWhich) - 1)){
+      for(j in (i + 1):length(nullWhich)){
+        if(nullWhich[[i]][1] == nullWhich[[j]][1] & nullWhich[[i]][2] == nullWhich[[j]][2]) stop('elements in nullWhich may not refer to the same correlation')
+      }
+    }
+  }
+
   ### ana model 
-  modelAna <- paste(c(
-    generated$modelTrue,
-    paste0('f', nullCor, collapse = ' ~~ 0*')),
-    collapse = '\n')
+  if(nullEffect == 'cor=0'){
+    modelAna <- paste(c(
+      generated$modelTrue,
+      paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
+      collapse = '\n')
+  }else{
+    labs <- list()
+    tok <- ''
+    for(i in 1:length(nullWhich)){
+      cl <- paste0('pf',paste0(nullWhich[[i]], collapse = ''))
+      tok <- paste(tok, paste0('f', nullWhich[[i]][1], ' ~~ ', cl, '*f', nullWhich[[i]][2]), sep = '\n')
+      labs <- append(labs, cl)
+    }
+    labs <- unlist(labs)
+    for(i in 1:(length(labs) - 1)){
+      for(j in (i + 1):length(labs)){
+        tok <- paste(tok, paste(labs[i], ' == ', labs[j]), sep = '\n')
+      }
+    }
+    modelAna <- paste(c(
+      generated$modelTrue,
+      tok),
+      collapse = '\n')
+  }
   
-  # set modelH1 just to determine delta df, but don't actually fit modelH1
+  # we need to fit modelH1 in case of length(nullWhich) > 1, 
+  # because resulting deltadf is  > 1
   modelH1 <- NULL
   if(comparison == 'restricted') modelH1 <- generated$modelTrue
 
@@ -212,7 +237,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted', nullCor = NULL, .
                                 modelPop = generated$modelPop,
                                 modelH0 = modelAna,
                                 modelH1 = modelH1,
-                                fitH1model = is.null(modelH1),
+                                fitH1model = (is.null(modelH1) | (!is.null(modelH1) & length(nullWhich) > 1)),
                                 ...)
   
   append(lavpower, generated)

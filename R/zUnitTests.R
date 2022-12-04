@@ -536,6 +536,8 @@ test_powerCFA <- function(){
   
   # simple model with restricted comparison model
   ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                          nullEffect = 'cor=0',
+                          nullWhich = c(1, 2),
                           Phi = .2, nIndicator = c(5, 6), loadM = .5,
                           alpha = .05, N = 250)
   
@@ -552,6 +554,8 @@ test_powerCFA <- function(){
   
   # saturated comparison model
   ph4 <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+                           nullEffect = 'cor=0',
+                           nullWhich = c(1, 2),
                            Phi = .2, nIndicator = c(5, 6), loadM = .5,
                            alpha = .05, N = 250)
   
@@ -571,15 +575,19 @@ test_powerCFA <- function(){
     c(.2, .3, 1)
   ), byrow = T, ncol = 3)
   
-  # nullCor = c(1, 2)
-  ph5 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', nullCor = c(1, 2), 
+  # nullWhich = c(1, 2)
+  ph5 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'cor=0',
+                           nullWhich = c(1, 2),
                            Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
                            alpha = .05, N = 250)
   lavres3 <- helper_lav(ph5$modelH0, ph5$Sigma)
   par <- lavres3$par
   
-  # nullCor = c(2, 3)
-  ph6 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', nullCor = c(2, 3), 
+  # nullWhich = c(2, 3)
+  ph6 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'cor=0',
+                           nullWhich = c(2, 3),
                            Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
                            alpha = .05, N = 250)
   lavres6 <- helper_lav(ph6$modelH0, ph6$Sigma)
@@ -592,7 +600,34 @@ test_powerCFA <- function(){
     par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'est'] == 0 &&
     round(ph6$power$power, 4) > round(ph5$power$power, 4)
   
-  if(valid2){
+  # corx=cory, two equal
+  ph7 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'corx=corz',
+                           nullWhich = list(c(1,2), c(2, 3)),
+                           Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  lavres7 <- helper_lav(ph7$modelH0, ph7$Sigma)
+  par3 <- lavres7$par
+
+  # corx=cory, all equal
+  ph8 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'corx=corz',
+                           nullWhich = list(c(1,2), c(2, 3), c(1, 3)),
+                           Phi = Phi, nIndicator = rep(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  lavres8 <- helper_lav(ph8$modelH0, ph8$Sigma)
+  par4 <- lavres8$par
+
+  valid3 <- valid2 &&
+    round(2*lavres7$fit['fmin'] - ph7$power$fmin, 4) == 0 &&
+    round(par3[par3$lhs == 'f1' & par3$rhs == 'f2', 'std.all'] - par3[par3$lhs == 'f2' & par3$rhs == 'f3', 'std.all'], 4) == 0 &&
+    round(var(
+      c(par4[par4$lhs == 'f1' & par4$rhs == 'f2', 'std.all'], 
+        par4[par4$lhs == 'f2' & par4$rhs == 'f3', 'std.all'], 
+        par4[par4$lhs == 'f1' & par4$rhs == 'f3', 'std.all'])), 4) == 0 &&
+    ph8$power$df == 2
+  
+  if(valid3){
     print('test_powerCFA: OK')
   }else{
     warning('Invalid')
