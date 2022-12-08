@@ -2,22 +2,21 @@
 
 #' semPower.genSigma
 #'
-#' Generate a covariance matrix and associated lavaan model strings based on defined model features.
-#' This requires the lavaan package.
+#' Generate a covariance matrix (and mean vector) and associated lavaan model strings based on defined model features.
 #' 
 #' @param Phi factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
 #' @param Lambda factor loading matrix. 
-#' @param Beta regression slopes between latent variables, all-y notation. 
+#' @param Beta regression slopes between latent variables (all-y notation). 
 #' @param Psi variance-covariance matrix of latent residuals 
-#' @param Theta variance-covariance matrix of manifest residuals 
+#' @param Theta variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.      
 #' @param tau intercepts. If NULL and alpha is set, these are assumed to be zero. 
-#' @param Alpha factor means. If NUll and tau is set, these are assumed to be zero. 
-#' @param loadings a list providing the standardized factor loadings by factor. Must not contain secondary loadings.   
-#' @param nIndicator vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
-#' @param loadM vector giving mean loadings for each factor or single number to use for every loading
-#' @param loadSD vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
-#' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). ()giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param Alpha factor means. If NULL and tau is set, these are assumed to be zero. 
+#' @param loadings can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.   
+#' @param nIndicator can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM can be used instead of Lambda: vector giving mean loadings for each factor or single number to use for every loading
+#' @param loadSD can be used instead of Lambda: vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
+#' @param loadMinMax can be used instead of Lambda: list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. 
 #' @param metricInvariance a list containing the factor indices for which the analysis model should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4. 
 #' @return a list containing the implied covariance matrix (Sigma), the loading (Lambda) matrix, the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships
 #' @examples
@@ -97,7 +96,7 @@ semPower.genSigma <- function(Phi = NULL,
                               loadM = NULL, 
                               loadSD = NULL, 
                               loadMinMax = NULL,
-                              useReferenceIndicator = FALSE,
+                              useReferenceIndicator = !is.null(Beta),
                               metricInvariance = NULL,
                               ...){
   
@@ -139,6 +138,7 @@ semPower.genSigma <- function(Phi = NULL,
     }
   }
   
+  if(!is.null(Beta) && !is.null(Phi)) stop('Either provide Phi or Beta, but not both. Did you mean to set Beta and Psi?')
   if(is.null(Beta) && is.null(Phi)) Phi <- diag(nfac)
   if(is.null(Beta)){
     if(length(Phi) == 1){
@@ -196,19 +196,23 @@ semPower.genSigma <- function(Phi = NULL,
   
   # compute Sigma
   if(is.null(Beta)){
-    SigmaT <- Lambda %*% Phi %*% t(Lambda) 
+    SigmaND <- Lambda %*% Phi %*% t(Lambda) 
   }else{
     invIB <- solve(diag(ncol(Beta)) - Beta)    
-    SigmaT <- Lambda %*% invIB %*% Psi %*% t(invIB) %*% t(Lambda) 
+    SigmaND <- Lambda %*% invIB %*% Psi %*% t(invIB) %*% t(Lambda) 
   }
+  # compute theta
   if(is.null(Theta)){
-    Theta <- diag(1 - diag(SigmaT))
-  }else if(length(Theta) == 1){
-    Theta <- matrix(Theta, ncol = ncol(SigmaT), nrow = nrow(SigmaT))
+    # this should catch observed only models
+    if(ncol(Lambda) == nrow(Lambda)){
+      Theta <- matrix(0, ncol = ncol(SigmaND), nrow = nrow(SigmaND))
+    }else{
+      Theta <- diag(1 - diag(SigmaND))
+    }
   }  
-  Sigma <- SigmaT + Theta
-  colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma))
-  
+  Sigma <- SigmaND + Theta
+  colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
+
   # compute Mu
   mu <- NULL
   if(!is.null(tau)){
@@ -329,6 +333,7 @@ semPower.genSigma <- function(Phi = NULL,
        Phi = Phi,
        Beta = Beta, 
        Psi = Psi,
+       Theta = Theta,
        tau = tau,
        Alpha = Alpha,
        modelPop = modelPop, 

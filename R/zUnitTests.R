@@ -270,7 +270,7 @@ test_generateSigmaB <- function(){
     c(.10, .05, .50, .00)
   ), byrow = TRUE, ncol = 4)
 
-  generated <- semPower.genSigma(Beta = B, Theta = 0, Lambda = diag(ncol(B)))
+  generated <- semPower.genSigma(Beta = B, Lambda = diag(ncol(B)))
   
   colnames(generated$Sigma) <- rownames(generated$Sigma) <- paste0('f', 1:4)
   par <- helper_lav(m, generated$Sigma)$par
@@ -299,7 +299,7 @@ test_generateSigmaB <- function(){
     c(.00, .00, .30, 1)
   ), byrow = TRUE, ncol = 4)
   
-  generated <- semPower.genSigma(Beta = B, Psi = Psi, Theta = 0, Lambda = diag(ncol(B)))
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, Lambda = diag(ncol(B)))
   colnames(generated$Sigma) <- rownames(generated$Sigma)  <- paste0('f', 1:4)
   par <- helper_lav(m, generated$Sigma)$par
 
@@ -329,7 +329,7 @@ test_generateSigmaB <- function(){
   Psi[3,4] <- Psi[4,3] <- .2
   Psi[5,6] <- Psi[6,5] <- .3
   
-  generated <- semPower.genSigma(Beta = B, Psi = Psi, Theta = 0, Lambda = diag(ncol(B)), useReferenceIndicator = T)
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, Lambda = diag(ncol(B)), useReferenceIndicator = T)
   par <- helper_lav(m, generated$Sigma)$par
   # test modelPop
   lSigma <- lavaan::fitted(lavaan::sem(generated$modelPop))$cov
@@ -350,12 +350,6 @@ test_generateSigmaB <- function(){
     round(sum((par2[par2$lhs %in% c('f3', 'f5') & par2$rhs %in% c('f4', 'f6') & par2$op == '~~', 'est'] - par[par$lhs %in% c('x3', 'x5') & par$rhs %in% c('x4', 'x6') & par$op == '~~', 'est'])^2), 4) == 0
 
   # latent, unstd,  psi
-  m <- '
-  f4 ~ f1 + f2
-  f3 ~ f1 + f2
-  f2 ~~ f1
-  f4 ~~ f3
-  '
   B <- matrix(c(
     c(.00, .00, .00, .00),
     c(.00, .00, .00, .00),
