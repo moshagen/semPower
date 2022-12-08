@@ -7,6 +7,9 @@
 #' 
 #' @param Phi factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
 #' @param Lambda factor loading matrix. 
+#' @param Beta regression slopes between latent variables, all-y notation. 
+#' @param Psi variance-covariance matrix of latent residuals 
+#' @param Theta variance-covariance matrix of manifest residuals 
 #' @param tau intercepts. If NULL and alpha is set, these are assumed to be zero. 
 #' @param Alpha factor means. If NUll and tau is set, these are assumed to be zero. 
 #' @param loadings a list providing the standardized factor loadings by factor. Must not contain secondary loadings.   
@@ -16,7 +19,7 @@
 #' @param loadMinMax list giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). ()giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @param metricInvariance a list containing the factor indices for which the analysis model should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4. 
-#' @return a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue) 
+#' @return a list containing the implied covariance matrix (Sigma), the loading (Lambda) matrix, the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships
 #' @examples
 #' \dontrun{
 #' # Provide factor correlation for a two-factor model, the number of indicators by factor, 
@@ -84,8 +87,11 @@
 #' @export
 semPower.genSigma <- function(Phi = NULL, 
                               Lambda = NULL,
+                              Beta = NULL,  # capital Beta, to distinguish from beta error
+                              Psi = NULL,
+                              Theta = NULL,
                               tau = NULL,
-                              Alpha = NULL,  # capital Alpha, so to distinguish from alpha error
+                              Alpha = NULL,  # capital Alpha, to distinguish from alpha error
                               loadings = NULL, 
                               nIndicator = NULL, 
                               loadM = NULL, 
@@ -95,11 +101,8 @@ semPower.genSigma <- function(Phi = NULL,
                               metricInvariance = NULL,
                               ...){
   
-  # check whether lavaan is available
-  if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
-  
   # validate input
-  if(is.null(nIndicator) & is.null(loadings) & is.null(Lambda)) stop('Either provide Labmda, loadings, or number of indicators')
+  if(is.null(nIndicator) & is.null(loadings) & is.null(Lambda)) stop('Either provide Lambda, loadings, or number of indicators')
   if(!is.null(nIndicator) & !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
   if(!is.null(nIndicator) & !is.null(Lambda)) stop('Either provide Lambda or number of indicators, but not both.')
   if(!is.null(Lambda) & !is.null(loadings)) stop('Either provide Lambda or loadings, but not both.')
@@ -111,14 +114,6 @@ semPower.genSigma <- function(Phi = NULL,
     nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
   }
   
-  if(is.null(Phi)) Phi <- diag(nfac)
-  if(length(Phi) == 1){
-    Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
-    diag(Phi) <- 1
-  } 
-  checkPositiveDefinite(Phi)
-  if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
-
   if(is.null(loadings) && is.null(Lambda)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
     invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
@@ -144,6 +139,20 @@ semPower.genSigma <- function(Phi = NULL,
     }
   }
   
+  if(is.null(Beta) && is.null(Phi)) Phi <- diag(nfac)
+  if(is.null(Beta)){
+    if(length(Phi) == 1){
+      Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
+      diag(Phi) <- 1
+    } 
+    checkPositiveDefinite(Phi)
+    if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
+  }else{
+    if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
+    if(!is.null(Psi) && ncol(Psi) != nfac) stop('Psi must have the same number of rows/columns as the number of factors.')
+    if(is.null(Psi)) Psi <- diag(ncol(Beta))
+  }
+  
   if(!is.null(tau)){
     if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators')
   }
@@ -162,7 +171,7 @@ semPower.genSigma <- function(Phi = NULL,
   }
 
 
-  # define lambda 
+  # define Lambda if not provided
   if(is.null(Lambda)){
     Lambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator)) # store loading matrix
     sidx <- 1
@@ -185,35 +194,75 @@ semPower.genSigma <- function(Phi = NULL,
     }
   }
   
-  # define theta
-  dTheta <- diag(1 - Lambda %*% Phi %*% t(Lambda))
+  # compute Sigma
+  if(is.null(Beta)){
+    SigmaT <- Lambda %*% Phi %*% t(Lambda) 
+  }else{
+    invIB <- solve(diag(ncol(Beta)) - Beta)    
+    SigmaT <- Lambda %*% invIB %*% Psi %*% t(invIB) %*% t(Lambda) 
+  }
+  if(is.null(Theta)){
+    Theta <- diag(1 - diag(SigmaT))
+  }else if(length(Theta) == 1){
+    Theta <- matrix(Theta, ncol = ncol(SigmaT), nrow = nrow(SigmaT))
+  }  
+  Sigma <- SigmaT + Theta
+  colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma))
   
-  ### we could now do Sigma  = Lambda %*% Phi %*% t(Lambda) + diag(Theta), 
-  ### but we let lav do this anyway, also because it's nice to have a 
-  ### population model string
+  # compute Mu
+  mu <- NULL
+  if(!is.null(tau)){
+    if(is.null(Beta)){
+      mu <- tau + Lambda %*% Alpha
+    }else{
+      mu <- tau + Lambda %*% invIB %*% Alpha
+    }
+    names(mu) <- paste0('x', 1:length(mu))
+  }
+  
+  ### here we are actually done, but we also create several lav model strings
+  
+  # create lav population model string
+  # not really needed, but maybe nice to have
   tok <- list()
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
     cload <- Lambda[iIdx, f]
-    tok[f] <- 
-      paste(
-        paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')),
-        paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f),
-        sep='\n')
+    tok <- append(tok, paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')))
+    if(!is.null(Phi)){
+      tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f))
+    }else{
+      tok <- append(tok, paste0('f', f, ' ~~ ', Psi[f, f],'*', 'f', f))
+    }
   }
-  # residuals
+  # manifest residuals
   for(i in 1:nrow(Lambda)){
-    tok <- append(tok, paste0(paste0('x', i), ' ~~ ', dTheta[i], '*', paste0('x', i), collapse = '\n'))
+    tok <- append(tok, paste0(paste0('x', i), ' ~~ ', Theta[i, i], '*', paste0('x', i), collapse = '\n'))
   }
-  # define factor cor
+  # define factor cor / residual cor / regressions
   if(nfac > 1){
-    for(f in 1:(nfac - 1)){
-      for(ff in (f + 1):nfac){
-        tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+    if(!is.null(Phi)){
+      for(f in 1:(nfac - 1)){
+        for(ff in (f + 1):nfac){
+          tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+        }
+      }
+    }else{
+      # regressions
+      for(f in 1:nfac){
+        idx <- which(Beta[f, ] != 0)
+        if(!identical(idx, integer(0)))
+          tok <- append(tok, paste0('f', f, ' ~ ', paste0(Beta[f, idx], '*f', idx, collapse = '+'))) 
+      }
+      # (residual) correlations
+      for(f in 1:(nfac - 1)){
+        for(ff in (f + 1):nfac){
+          if(Psi[f, ff] != 0)
+            tok <- append(tok, paste0('f', f, ' ~~ ', Psi[f, ff], '*f', ff))
+        }
       }
     }
   }
-  
   # add means
   if(!is.null(tau)){
     tok <- append(tok, paste0(paste0('x', 1:nrow(Lambda)), ' ~ ', tau, '*1', collapse = '\n'))
@@ -224,15 +273,8 @@ semPower.genSigma <- function(Phi = NULL,
   
   modelPop <- paste(unlist(tok), collapse = '\n')
 
-  # get Sigma (and mu). 
-  Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
-  # checkPositiveDefinite(Sigma) # redundant, lav checks this
-  mu <- NULL
-  if(!is.null(tau)) mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
-  
-  
-  ### also not needed, but since we are at in anyway, we 
-  ### can also provide a (correct) cfa analysis model string 
+  # also not needed, but since we are at it anyway, we 
+  # can also provide analysis models strings, one pure cfa based, and one including regression relationships 
   tok <- list()
   sidx <- 1
   for(f in 1:ncol(Lambda)){
@@ -243,25 +285,41 @@ semPower.genSigma <- function(Phi = NULL,
       clabel <- metricInvarianceLabels[[labelIdx]]
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-        tok[f] <- paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + '))
+        tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
       }else{
-        tok[f] <- paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + '))
+        tok <- append(tok, paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
       }
     }else{
       if(useReferenceIndicator){
         # scale by first loading instead of 1
-        tok[f] <- paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + '))
+        tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + ')))
       }else{
-        tok[f] <- paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + '))
+        tok <- append(tok, paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + ')))
+      }
+    }
+  }
+  modelTrueCFA <- paste(c(unlist(tok)), collapse = '\n')
+  if(!is.null(Beta)){
+    # regressions
+    for(f in 1:nfac){
+      idx <- which(Beta[f, ] != 0)
+      if(!identical(idx, integer(0)))
+        tok <- append(tok, paste0('f', f, ' ~ ', paste0('f', idx, collapse = '+'))) 
+    }
+    # (residual) correlations
+    for(f in 1:(nfac - 1)){
+      for(ff in (f + 1):nfac){
+        if(Psi[f, ff] != 0)
+          tok <- append(tok, paste0('f', f, ' ~~ f', ff))
       }
     }
   }
   modelTrue <- paste(c(unlist(tok)), collapse = '\n')
   if(!useReferenceIndicator){
-    modelTrue <- paste(c(modelTrue,
-                       # factor variances are always 1, regardless of phi
-                       sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))),
-                       collapse = '\n')
+    fvars <- sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))
+    # factor variances are always 1, regardless of phi
+    modelTrue <- paste(c(modelTrue, fvars), collapse = '\n')
+    modelTrueCFA <- paste(c(modelTrueCFA, fvars), collapse = '\n')
   }
 
   
@@ -269,20 +327,22 @@ semPower.genSigma <- function(Phi = NULL,
        mu = mu,
        Lambda = Lambda, 
        Phi = Phi,
+       Beta = Beta, 
+       Psi = Psi,
        tau = tau,
        Alpha = Alpha,
        modelPop = modelPop, 
-       modelTrue = modelTrue)
+       modelTrue = modelTrue,
+       modelTrueCFA = modelTrueCFA)
 }
 
 
 #' getPhi.B
 #'
-#' Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
+#' Computes implied correlations (completely standardized) from Beta matrix, disallowing recursive paths.
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
 #' @param lPsi matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B. 
-#' @param standardized whether B and lPsi shall be interpreted as standardized coefficients (TRUE) or as unstandardized coefficients (FALSE). 
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
@@ -293,25 +353,8 @@ semPower.genSigma <- function(Phi = NULL,
 #' c(.20, .30, .00)
 #' ), byrow = TRUE, ncol = 3)
 #' Phi <- getPhi.B(B)
-#' 
-#' # clpm type model with residual correlations at wave 2 + 3
-#' B <- matrix(c(
-#'   c(.0, .0, .0, .0, 0, 0),  # X1
-#'   c(.0, .0, .0, .0, 0, 0),  # Y1
-#'   c(.7, .1, .0, .0, 0, 0),  # X2
-#'   c(.2, .8, .0, .0, 0, 0),  # Y2
-#'   c(.0, .0, .7, .1, 0, 0),  # X3
-#'   c(.0, .0, .2, .8, 0, 0)   # Y3
-#' ), byrow = TRUE, ncol = 6)
-# 
-#' lPsi <- matrix(0, ncol = ncol(B), nrow = nrow(B))
-#' lPsi[3,4] <- lPsi[4,3] <- .2
-#' lPsi[5,6] <- lPsi[6,5] <- .3
-#' 
-#' Phi <- getPhi.B(B, lPsi, standardized = FALSE)
-#' 
 #' }
-getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
+getPhi.B <- function(B, lPsi = NULL){
   
   checkSquare(B)
   if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
@@ -322,48 +365,34 @@ getPhi.B <- function(B, lPsi = NULL, standardized = TRUE){
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
     invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1)))))
     diag(lPsi) <- 0
-    Psi <- diag(ncol(B)) + lPsi 
-  }else{
-    Psi <- diag(ncol(B))
+  }
+
+  ## to obtain phi in std metrc, exploit the structure of B to build Phi recursively
+  ## there must be a simpler way to do this...
+  exog <- apply(B, 1, function(x) !any(x != 0))
+  Be <- B[!exog, ]
+  if(!is.matrix(Be)) Be <- t(matrix(Be))
+  
+  Phi <- diag(ncol(B)) 
+  for(i in 1:nrow(Be)){
+    idx <- i + sum(exog) - 1
+    cb <- matrix(Be[i, 1:idx])
+    cr <- Phi[1:idx, 1:idx]
+    predR <- (cr %*% cb)
+    # add residual covariances
+    if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
+      cR <- rbind(cr, t(predR))
+      cR <- cbind(cR, t(t(c((predR),1))))
+      cB <- B[1:(idx + 1), 1:(idx + 1)]
+      rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
+      cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
+      corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
+      predR <- corR[(idx + 1), 1:idx]
+    }
+    Phi[(idx + 1), 1:idx] <- t(predR)
+    Phi[1:idx, (idx + 1)] <- predR
   }
   
-  if(!standardized){
-    
-    ## this treats B and lPsi as unstandardized parameters
-    ## and thus yields Phi as variance/covariance matrix
-    invIB <- solve(diag(ncol(B)) - B)
-    Phi <- invIB %*% Psi %*% t(invIB) 
-
-  }else{
-    
-    ## for std, exploit the structure of B to build Phi recursively
-    ## there must be a simpler way to do this...
-    exog <- apply(B, 1, function(x) !any(x != 0))
-    Be <- B[!exog, ]
-    if(!is.matrix(Be)) Be <- t(matrix(Be))
-    
-    Phi <- diag(ncol(B)) 
-    for(i in 1:nrow(Be)){
-      idx <- i + sum(exog) - 1
-      cb <- matrix(Be[i, 1:idx])
-      cr <- Phi[1:idx, 1:idx]
-      predR <- (cr %*% cb)
-      # add residual covariances
-      if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
-        cR <- rbind(cr, t(predR))
-        cR <- cbind(cR, t(t(c((predR),1))))
-        cB <- B[1:(idx + 1), 1:(idx + 1)]
-        rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
-        cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
-        corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
-        predR <- corR[(idx + 1), 1:idx]
-      }
-      Phi[(idx + 1), 1:idx] <- t(predR)
-      Phi[1:idx, (idx + 1)] <- predR
-    }
-    
-  }
-
   checkPositiveDefinite(Phi)
   
   Phi

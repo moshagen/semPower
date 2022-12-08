@@ -21,7 +21,7 @@ semPower.powerCLPM(
 \arguments{
 \item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
 
-\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
+\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df are always 1.}
 
 \item{nWaves}{number of waves, must be >= 2.}
 
@@ -31,13 +31,13 @@ semPower.powerCLPM(
 
 \item{rXY}{vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero.}
 
-\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated).}
+\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect).}
 
 \item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'stabX = 0', 'stabY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y stabilities or the crossed effects to zero, 'stabX = stabY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.}
 
 \item{nullWhich}{used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'stabX = 0' with nullWhich = 2 would constrain the second stability coefficient for X to zero.}
 
-\item{metricInvariance}{whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the df, power might be affected.}
+\item{metricInvariance}{whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.}
 
 \item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }

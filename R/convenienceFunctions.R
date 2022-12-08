@@ -86,7 +86,7 @@ semPower.powerLav <- function(type,
   }else if (!is.null(modelH1) && !fitH1model){
     df <- 1 # overwrite df
   }
-  
+
   # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
   # but delta f for the comparison with an explicit h1 model.
   if(is.null(modelH1) | !fitH1model){
@@ -205,7 +205,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   ### ana model 
   if(nullEffect == 'cor=0'){
     modelAna <- paste(c(
-      generated$modelTrue,
+      generated$modelTrueCFA,
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
       collapse = '\n')
   }else{
@@ -223,7 +223,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
       }
     }
     modelAna <- paste(c(
-      generated$modelTrue,
+      generated$modelTrueCFA,
       tok),
       collapse = '\n')
   }
@@ -231,7 +231,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   # we need to fit modelH1 in case of length(nullWhich) > 1, 
   # because resulting deltadf is  > 1
   modelH1 <- NULL
-  if(comparison == 'restricted') modelH1 <- generated$modelTrue
+  if(comparison == 'restricted') modelH1 <- generated$modelTrueCFA
 
   lavpower <- semPower.powerLav(type = type,
                                 modelPop = generated$modelPop,
@@ -353,7 +353,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
 
-  # calc implied sigma  
+  # calc implied sigma. we do this here, because this is a special case and simpler than defining B and calling getPhi.B  
   corXY <- (corXX %*% slopes)
   Phi <- t(c(1, corXY))
   Phi <- rbind(Phi, cbind(corXY, corXX))
@@ -362,7 +362,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   
   ### create ana model string
   # add regressions 
-  model <- paste(generated$modelTrue, 
+  model <- paste(generated$modelTrueCFA, 
                  paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = '+')), 
                  sep = '\n')
   modelTrue <- model
@@ -523,13 +523,13 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   }
   
   ### get Sigma
-  # transform to standard cfa model by converting B to implied phi
+  # we want the completely standardized slopes, so transform to standard cfa model by converting B to implied phi
   Phi <- getPhi.B(B) 
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
   Sigma <- generated$Sigma
   
   ### create ana model string
-  model <- generated$modelTrue
+  model <- generated$modelTrueCFA
   # add mediation structure
   for(f in 1:ncol(B)){
     fidx <- which(B[f, ] != 0)
@@ -602,9 +602,9 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   comparison <- checkComparisonModel(comparison)
   
-  # we override Phi and Sigma later, so let's make sure it is not set in ellipsis argument
-  if('Phi' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Phi, because the factor correlations depend on Beta (or the slopes).')
-  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of Beta (or the slopes).')
+  # we override Beta and Sigma later, so let's make sure it is not set in ellipsis argument
+  if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
+  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
   #validate input
   if(is.null(stabilities) ||  is.null(crossedEffects)) stop('Stabilities and crossedEffects may not be NULL.')
@@ -617,8 +617,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   invisible(lapply(stabilities, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
   if(length(stabilities) != length(crossedEffects) | (length(crossedEffects) != 2 & length(crossedEffects) != (nWaves - 1))) stop('stabilities and crossedEffects must be of length nWaves - 1 or be of length 2.')
-  # negative implied residual variances are checked in getPhi.B
-  
+
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
     if(any(unlist(lapply(waveEqual, function(x) !x %in% c('stabx', 'staby', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain stabX, stabY, crossedX, crossedY, corXY')
@@ -655,8 +654,6 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### create B
   B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
-  # add exog cor
-  B[2, 1] <- rXY[1]
   # add stabilities and crossed-effects
   for(i in 1:(nWaves - 1)){
     xidx <- 2 + 2*(i - 1) + 1
@@ -669,17 +666,15 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
   }
   
-  ### populate lPsi
-  lPsi <- matrix(0, ncol = ncol(B), nrow = nrow(B))
+  ### create Psi
+  Psi <- diag(ncol(B))
   if(any(rXY != 0)){
-    for(i in 2:nWaves){
-      lPsi[2*i, (2*i - 1)] <- lPsi[(2*i - 1), 2*i] <- rXY[i]
+    for(i in 1:nWaves){
+      Psi[2*i, (2*i - 1)] <- Psi[(2*i - 1), 2*i] <- rXY[i]
     }
   }
   
-  ### get Sigma
-  Phi <- getPhi.B(B, lPsi, standardized = FALSE)
-  # add metric invariance constrains
+  # add metric invariance constrains to analysis model
   metricInvarianceList <- NULL
   if(metricInvariance){
     metricInvarianceList <- list(
@@ -687,11 +682,16 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
       seq(2, 2*nWaves, 2)  
     )
   }
-  generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, metricInvariance = metricInvarianceList, ...)
+  
+  ### get Sigma
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, 
+                                 useReferenceIndicator = TRUE, 
+                                 metricInvariance = metricInvarianceList, 
+                                 ...)
   Sigma <- generated$Sigma
   
   ### create ana model string
-  model <- generated$modelTrue
+  model <- generated$modelTrueCFA
    
   # add CLPM structure 
   for(f in 3:ncol(B)){     # omit rows 1:2

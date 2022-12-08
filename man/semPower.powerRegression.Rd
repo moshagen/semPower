@@ -8,8 +8,9 @@ semPower.powerRegression(
   type,
   comparison = "restricted",
   slopes = NULL,
-  nullSlope = 1,
   corXX = NULL,
+  nullEffect = "slope = 0",
+  nullWhich = NULL,
   ...
 )
 }
@@ -18,11 +19,13 @@ semPower.powerRegression(
 
 \item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
 
-\item{nullSlope}{single number indicating which slope is hypothesized to equal zero, defaults to 1 (= the first slope).}
-
 \item{corXX}{correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y, and the type of power analysis}
+\item{nullEffect}{defines the hypothesis of interest. Valid are 'slope = 0' (the default) and 'slopeX = slopeZ' to test for the equality of slopes. Define the slopes to set to equality in nullWhich}
+
+\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.}
+
+\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis}
 
 \item{slope}{vector of standardized slopes (or a single number for a single slope) of the k predictors for Y.}
 }
@@ -39,7 +42,7 @@ This requires the lavaan package.
 # request power for the hypothesis that the slope of X1 ist zero. 
 # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
 regPower <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), corXX = .4,
+                                     slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
                                      nIndicator = c(3, 5, 4),
                                      loadM = c(.5, .6, .7),
                                      alpha = .05, beta = .05)
@@ -47,7 +50,7 @@ summary(regPower$power)
 
 # same as above, but ask for power to detect the  slope of X2
 regPower <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), nullSlope = 2, corXX = .4,
+                                     slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
                                      nIndicator = c(3, 5, 4),
                                      loadM = c(.5, .6, .7),
                                      alpha = .05, beta = .05)
@@ -59,9 +62,28 @@ corXX <- matrix(c(
   c(0.30, 0.10, 1.00)
 ), ncol = 3,byrow = TRUE)
 regPower <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3, .4), corXX = corXX,
-                                     nIndicator = c(3, 5, 4),
-                                     loadM = c(.5, .6, .7),
+                                     slopes = c(.2, .3, .4), corXX = corXX, 
+                                     nullWhich = 1
+                                     nIndicator = c(4, 3, 5, 4),
+                                     loadM = c(.5, .5, .6, .7),
+                                     alpha = .05, beta = .05)
+
+# same as above, but testing the equality of the first and second slope
+regPower <- semPower.powerRegression(type = 'a-priori',
+                                     slopes = c(.2, .3, .4), corXX = corXX, 
+                                     nullEffect = 'slopeX = slopeZ', 
+                                     nullWhich = c(1, 2),
+                                     nIndicator = c(4, 3, 5, 4),
+                                     loadM = c(.5, .5, .6, .7),
+                                     alpha = .05, beta = .05)
+                                     
+# same as above, but testing the equality of all three slopes
+regPower <- semPower.powerRegression(type = 'a-priori',
+                                     slopes = c(.2, .3, .4), corXX = corXX, 
+                                     nullEffect = 'slopeX = slopeZ', 
+                                     nullWhich = c(1, 2, 3),
+                                     nIndicator = c(4, 3, 5, 4),
+                                     loadM = c(.5, .5, .6, .7),
                                      alpha = .05, beta = .05)
                                      
 }

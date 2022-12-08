@@ -9,6 +9,7 @@ semPower.powerLav(
   modelPop = NULL,
   modelH0 = NULL,
   modelH1 = NULL,
+  fitH1model = TRUE,
   Sigma = NULL,
   mu = NULL,
   ...
@@ -23,6 +24,8 @@ semPower.powerLav(
 
 \item{modelH1}{lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
+\item{fitH1model}{whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and the delta df are set to 1.}
+
 \item{Sigma}{population covariance matrix (if modelPop is not set).}
 
 \item{mu}{population means (if modelPop is not set).}
@@ -30,7 +33,7 @@ semPower.powerLav(
 \item{...}{other parameters related to the specific type of power analysis requested}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, and the H1 matrix SigmaH1, as well as various lavaan model strings
+a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, as well as various lavaan model strings
 }
 \description{
 Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
@@ -41,7 +44,7 @@ This requires the lavaan package.
 ## a priori power analysis for the null hypothesis that the correlation between 
 ## two cfa factors with a true correlation of .2 differs from zero
 # define population model 
-mPop = '
+mPop <- '
   f1 =~ .5*x1 + .6*x2 + .4*x3
   f2 =~ .7*x4 + .8*x5 + .3*x6
   x1 ~~ .75*x1
@@ -55,7 +58,7 @@ mPop = '
   f1 ~~ .2*f2
 '
 # define analysis model (restricting the factor correlation to zero) 
-mAna = '
+mAna <- '
   f1 =~ x1 + x2 + x3
   f2 =~ x4 + x5 + x6
   f1 ~~ 0*f2

@@ -7,6 +7,9 @@
 semPower.genSigma(
   Phi = NULL,
   Lambda = NULL,
+  Beta = NULL,
+  Psi = NULL,
+  Theta = NULL,
   tau = NULL,
   Alpha = NULL,
   loadings = NULL,
@@ -23,6 +26,12 @@ semPower.genSigma(
 \item{Phi}{factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for a uncorrelated factors.}
 
 \item{Lambda}{factor loading matrix.}
+
+\item{Beta}{regression slopes between latent variables, all-y notation.}
+
+\item{Psi}{variance-covariance matrix of latent residuals}
+
+\item{Theta}{variance-covariance matrix of manifest residuals}
 
 \item{tau}{intercepts. If NULL and alpha is set, these are assumed to be zero.}
 
@@ -43,7 +52,7 @@ semPower.genSigma(
 \item{metricInvariance}{a list containing the factor indices for which the analysis model should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.}
 }
 \value{
-a list containing the implied covariance matrix (Sigma),  the implied loading (Lambda) and factor-covariance matrix (Phi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and a lavaan model string defining a corresponding true cfa analysis model (modelTrue)
+a list containing the implied covariance matrix (Sigma), the loading (Lambda) matrix, the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships
 }
 \description{
 Generate a covariance matrix and associated lavaan model strings based on defined model features.

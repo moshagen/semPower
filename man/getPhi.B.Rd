@@ -4,20 +4,18 @@
 \alias{getPhi.B}
 \title{getPhi.B}
 \usage{
-getPhi.B(B, lPsi = NULL, standardized = TRUE)
+getPhi.B(B, lPsi = NULL)
 }
 \arguments{
 \item{B}{matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros.}
 
 \item{lPsi}{matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B.}
-
-\item{standardized}{whether B and lPsi shall be interpreted as standardized coefficients (TRUE) or as unstandardized coefficients (FALSE).}
 }
 \value{
 the implied correlation matrix
 }
 \description{
-Computes implied correlations from Beta matrix (using all-y notation), disallowing recursive paths.
+Computes implied correlations (completely standardized) from Beta matrix, disallowing recursive paths.
 }
 \examples{
 \dontrun{
@@ -28,21 +26,5 @@ c(.10, .00, .00),
 c(.20, .30, .00)
 ), byrow = TRUE, ncol = 3)
 Phi <- getPhi.B(B)
-
-# clpm type model with residual correlations at wave 2 + 3
-B <- matrix(c(
-  c(.0, .0, .0, .0, 0, 0),  # X1
-  c(.0, .0, .0, .0, 0, 0),  # Y1
-  c(.7, .1, .0, .0, 0, 0),  # X2
-  c(.2, .8, .0, .0, 0, 0),  # Y2
-  c(.0, .0, .7, .1, 0, 0),  # X3
-  c(.0, .0, .2, .8, 0, 0)   # Y3
-), byrow = TRUE, ncol = 6)
-lPsi <- matrix(0, ncol = ncol(B), nrow = nrow(B))
-lPsi[3,4] <- lPsi[4,3] <- .2
-lPsi[5,6] <- lPsi[6,5] <- .3
-
-Phi <- getPhi.B(B, lPsi, standardized = FALSE)
-
 }
 }

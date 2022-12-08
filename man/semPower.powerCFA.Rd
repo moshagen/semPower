@@ -4,14 +4,22 @@
 \alias{semPower.powerCFA}
 \title{semPower.powerCFA}
 \usage{
-semPower.powerCFA(type, comparison = "restricted", nullCor = NULL, ...)
+semPower.powerCFA(
+  type,
+  comparison = "restricted",
+  nullEffect = "cor = 0",
+  nullWhich = NULL,
+  ...
+)
 }
 \arguments{
 \item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
 
 \item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.}
 
-\item{nullCor}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero, e.g. c(1, 2) to refer to the correlation between first and second factor. Can be omitted for two-factor models.}
+\item{nullEffect}{defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich}
+
+\item{nullWhich}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]}
 
 \item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
@@ -26,41 +34,28 @@ This requires the lavaan package.
 \dontrun{
 # a priori power analysis only providing the number of indicators to define 
 # two factors with correlation of phi and same loading for all indicators
-cfapower.ap <- semPower.powerCFA(type = 'a-priori', 
+cfapower.ap <- semPower.powerCFA(type = 'a-priori',
+                                 nullWhich = c(1, 2), 
                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                  alpha = .05, beta = .05)
                                  summary(cfapower.ap$power)
 
-# sanity check: fit true model to population Sigma to evaluate everything was set up as intended
-summary(lavaan::sem(cfapower.ap$modelTrue, sample.cov = cfapower.ap$Sigma,
-                    sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE),
-        stand = TRUE)
-
-# peek into lavaan model strings:
-# population model
-cfapower.ap$modelPop
-# (incorrect) analysis model
-cfapower.ap$modelAna
-
-# or plug the population Sigma and model-implied SigmaHat 
-# into a regular power analysis command 
-ph <- semPower.aPriori(SigmaHat = cfapower.ap$SigmaHat, Sigma = cfapower.ap$Sigma, 
-                       df = 1, alpha = .05, beta = .05)
-                       summary(ph)
-
 # same as above, but compare to the saturated model 
 # (rather than to the less restricted model)
 #' cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
+                                 nullWhich = c(1, 2), 
                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                  alpha = .05, beta = .05)
 
 # same as above, but request a compromise power analysis
 cfapower.cp <- semPower.powerCFA(type = 'compromise',
+                                 nullWhich = c(1, 2), 
                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                  abratio = 1, N = 200)
 
 # same as above, but request a post-hoc power analysis
 cfapower.ph <- semPower.powerCFA(type = 'post-hoc', 
+                                 nullWhich = c(1, 2), 
                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                  alpha = .05, N = 200)
 
@@ -79,6 +74,7 @@ loadings <- list(
                )
 
 cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              nullWhich = c(1, 2), 
                               Phi = phi, loadings = loadings,
                               alpha = .05, N = 250)
 

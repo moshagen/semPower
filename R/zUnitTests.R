@@ -257,6 +257,144 @@ test_generateSigma <- function(){
   }
 }
 
+test_generateSigmaB <- function(){
+  # manifest, unstd, no psi
+  m <- '
+  f4 ~ f1 + f2 + f3
+  f3 ~ f1 + f2
+  f2 ~ f1'
+  B <- matrix(c(
+    c(.00, .00, .00, .00),
+    c(.30, .00, .00, .00),
+    c(.20, .40, .00, .00),
+    c(.10, .05, .50, .00)
+  ), byrow = TRUE, ncol = 4)
+
+  generated <- semPower.genSigma(Beta = B, Theta = 0, Lambda = diag(ncol(B)))
+  
+  colnames(generated$Sigma) <- rownames(generated$Sigma) <- paste0('f', 1:4)
+  par <- helper_lav(m, generated$Sigma)$par
+  
+  valid <- round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:3])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f2' & par$op == '~', 'est'] - B[2, 1])^2), 4) == 0
+
+  # manifest, unstd,  psi
+  m <- '
+  f4 ~ f1 + f2
+  f3 ~ f1 + f2
+  f2 ~~ f1
+  f4 ~~ f3
+  '
+  B <- matrix(c(
+    c(.00, .00, .00, .00),
+    c(.00, .00, .00, .00),
+    c(.40, .20, .00, .00),
+    c(.10, .50, .00, .00)
+  ), byrow = TRUE, ncol = 4)
+  Psi <- matrix(c(
+    c(1, .30, .00, .00),
+    c(.30, 1, .00, .00),
+    c(.00, .00, 1, .30),
+    c(.00, .00, .30, 1)
+  ), byrow = TRUE, ncol = 4)
+  
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, Theta = 0, Lambda = diag(ncol(B)))
+  colnames(generated$Sigma) <- rownames(generated$Sigma)  <- paste0('f', 1:4)
+  par <- helper_lav(m, generated$Sigma)$par
+
+  valid2 <- valid &&
+    round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
+    round((par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - .3), 4) == 0 &&
+    round((par[par$lhs == 'f4' & par$rhs == 'f3', 'est'] - .3), 4) == 0 
+  
+  # manifest, clpm type model with residual correlations at wave 2 + 3
+  m <- '
+  x3 + x4 ~ x1 + x2
+  x5 + x6 ~ x3 + x4
+  x1 ~~ x2
+  x3 ~~ x4
+  x5 ~~ x6
+  '
+  B <- matrix(c(
+    c(.0, .0, .0, .0, 0, 0),  # X1
+    c(.0, .0, .0, .0, 0, 0),  # Y1
+    c(.7, .1, .0, .0, 0, 0),  # X2
+    c(.2, .8, .0, .0, 0, 0),  # Y2
+    c(.0, .0, .7, .1, 0, 0),  # X3
+    c(.0, .0, .2, .8, 0, 0)   # Y3
+  ), byrow = TRUE, ncol = 6)
+  Psi <- diag(ncol(B))
+  Psi[3,4] <- Psi[4,3] <- .2
+  Psi[5,6] <- Psi[6,5] <- .3
+  
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, Theta = 0, Lambda = diag(ncol(B)), useReferenceIndicator = T)
+  par <- helper_lav(m, generated$Sigma)$par
+  # test modelPop
+  lSigma <- lavaan::fitted(lavaan::sem(generated$modelPop))$cov
+  # test modelTrue and modelPop
+  lavres <- helper_lav(generated$modelTrue, generated$Sigma)
+  par2 <- lavres$par
+
+  valid3 <- valid2 &&
+    round(sum((par[par$lhs == 'x3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'x4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'x5' & par$op == '~', 'est'] - B[5, 3:4])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'x6' & par$op == '~', 'est'] - B[6, 3:4])^2), 4) == 0 &&
+    round(par[par$lhs == 'x3' & par$rhs == 'x4', 'est'] - Psi[3, 4], 4) == 0 &&
+    round(par[par$lhs == 'x5' & par$rhs == 'x6', 'est'] - Psi[5, 6], 4) == 0 &&
+    round(sum((lSigma - generated$Sigma)^2), 4) == 0 &&
+    round(lavres$fit['fmin'], 4) == 0 &&
+    round(sum((par2[par2$lhs %in% paste0('f', 1:6) & par2$rhs %in% paste0('f', 1:6) & par2$op == '~', 'est'] - par[par$lhs %in% paste0('x', 1:6) & par$op == '~', 'est'])^2), 4) == 0 && 
+    round(sum((par2[par2$lhs %in% c('f3', 'f5') & par2$rhs %in% c('f4', 'f6') & par2$op == '~~', 'est'] - par[par$lhs %in% c('x3', 'x5') & par$rhs %in% c('x4', 'x6') & par$op == '~~', 'est'])^2), 4) == 0
+
+  # latent, unstd,  psi
+  m <- '
+  f4 ~ f1 + f2
+  f3 ~ f1 + f2
+  f2 ~~ f1
+  f4 ~~ f3
+  '
+  B <- matrix(c(
+    c(.00, .00, .00, .00),
+    c(.00, .00, .00, .00),
+    c(.40, .20, .00, .00),
+    c(.10, .50, .00, .00)
+  ), byrow = TRUE, ncol = 4)
+  Psi <- matrix(c(
+    c(1, .30, .00, .00),
+    c(.30, 1, .00, .00),
+    c(.00, .00, 1, .30),
+    c(.00, .00, .30, 1)
+  ), byrow = TRUE, ncol = 4)
+  
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, 
+                                 loadM = c(.5, .6, .5, .6), nIndicator = rep(3, 4))
+  par <- helper_lav(generated$modelTrue, generated$Sigma)$par
+  
+  # same with referent ind
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, 
+                                 loadM = c(.5, .6, .5, .6), nIndicator = rep(3, 4),
+                                 useReferenceIndicator = TRUE)
+  par2 <- helper_lav(generated$modelTrue, generated$Sigma)$par
+
+  valid4 <- valid3 &&
+    round(sum((par[par$lhs %in% c('f1', 'f3') & par$op == '=~', 'est'] - .5)^2), 4) == 0 &&
+    round(sum((par[par$lhs %in% c('f2', 'f4') & par$op == '=~', 'est'] - .6)^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - Psi[1, 2], 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - Psi[3, 4], 4) == 0 &&
+    round(sum((par2[par2$lhs != par2$rhs, 'est']  - par[par$lhs != par$rhs, 'est'])^2), 4) == 0
+    
+  if(valid4){
+    print('test_generateSigmaB: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 test_genPhi <- function(){
   # std, no psi
   m <- '
@@ -269,25 +407,16 @@ test_genPhi <- function(){
     c(.20, .40, .00, .00),
     c(.10, .05, .50, .00)
   ), byrow = TRUE, ncol = 4)
-  
+
   Phi <- getPhi.B(B)
   colnames(Phi) <- paste0('f', 1:4)
+  par <- helper_lav(m, Phi)$par  
   par <- helper_lav(m, Phi)$par
-  
+
   valid <- round(sum((par[par$lhs == 'f4' & par$op == '~', 'std.all'] - B[4, 1:3])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f3' & par$op == '~', 'std.all'] - B[3, 1:2])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f2' & par$op == '~', 'std.all'] - B[2, 1])^2), 4) == 0
-  
-  # unstd, no psi
-  Phi <- getPhi.B(B, standardized = FALSE)
-  colnames(Phi) <- paste0('f', 1:4)
-  par <- helper_lav(m, Phi)$par
-  
-  valid2 <- valid && 
-    round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:3])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f2' & par$op == '~', 'est'] - B[2, 1])^2), 4) == 0
-  
+
   # std, psi
   m2 <- '
   f3 + f4 ~ f1 + f2
@@ -306,33 +435,22 @@ test_genPhi <- function(){
     c(.00, .00, .00, .30),
     c(.00, .00, .30, .00)
   ), byrow = TRUE, ncol = 4)
-  
+
   Phi <- getPhi.B(B, lPsi)
   colnames(Phi) <- paste0('f', 1:4)
   par <- helper_lav(m2, Phi)$par
-  
-  valid3 <- valid2 && 
+
+  valid2 <- valid &&
     round(sum((par[par$lhs == 'f4' & par$op == '~', 'std.all'] - B[4, 1:2])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f3' & par$op == '~', 'std.all'] - B[3, 1:2])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f2' & par$op == '~', 'std.all'] - B[2, 1])^2), 4) == 0 &&
     round((par[par$lhs == 'f3' & par$rhs == 'f4', 'std.all'] - lPsi[3, 4])^2, 4) == 0
-  
-  # unstd, psi
-  Phi <- getPhi.B(B, lPsi, standardized = FALSE)
-  colnames(Phi) <- paste0('f', 1:4)
-  par <- helper_lav(m2, Phi)$par
-  
-  valid4 <- valid3 && 
-    round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f2' & par$op == '~', 'est'] - B[2, 1])^2), 4) == 0 &&
-    round((par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - lPsi[3, 4])^2, 4) == 0    
-  
-  # gen sigma and unstd phi + different loadings for each factor
+
+  # gen sigma and phi + different loadings for each factor
   B <- matrix(c(
     c(.00, .00, .00, .00),
     c(.30, .00, .00, .00),
-    c(.70, .10, .00, .00), 
+    c(.70, .10, .00, .00),
     c(.20, .60, .00, .00)
   ), byrow = TRUE, ncol = 4)
   lPsi <- matrix(c(
@@ -347,31 +465,31 @@ test_genPhi <- function(){
     c(0.4, 0.5, 0.8),
     c(0.6, 0.6, 0.5)
   )
-  Phi <- getPhi.B(B, lPsi, standardized = FALSE)
+  Phi <- getPhi.B(B, lPsi)
   generated6 <- semPower.genSigma(Phi = Phi, loadings = loadings, useReferenceIndicator = TRUE)
-  m <- paste(generated6$modelTrue, 
+  m <- paste(generated6$modelTrue,
              'f3 + f4 ~ f1 + f2
              f1 ~~ f2
              f3 ~~ f4'
              , sep = '\n')
   lavres6 <- helper_lav(m, generated6$Sigma)
   par <- lavres6$par
-  
-  valid5 <- valid4 &&
+
+  valid3 <- valid2 &&
     round(lavres6$fit['fmin'], 4) == 0 &&
     sum(par$lhs == 'f1' & par$op == '=~') == length(loadings[[1]]) &&
     sum(par$lhs == 'f2' & par$op == '=~') == length(loadings[[2]]) &&
     sum(par$lhs == 'f3' & par$op == '=~') == length(loadings[[3]]) &&
-    round(sum((par[par$lhs == 'f1' & par$op == '=~', 'est'] - loadings[[1]])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f2' & par$op == '=~', 'est'] - loadings[[2]])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f3' & par$op == '=~', 'est'] - loadings[[3]])^2), 4) == 0 &&
-    round(par[par$lhs == 'f3' & par$rhs == 'f1', 'est'] - B[3, 1], 4) == 0 && 
-    round(par[par$lhs == 'f3' & par$rhs == 'f2', 'est'] - B[3, 2], 4) == 0 && 
-    round(par[par$lhs == 'f4' & par$rhs == 'f1', 'est'] - B[4, 1], 4) == 0 && 
-    round(par[par$lhs == 'f4' & par$rhs == 'f2', 'est'] - B[4, 2], 4) == 0 && 
-    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - B[2, 1], 4) == 0 && 
-    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - lPsi[3, 4], 4) == 0 
-  
+    round(sum((par[par$lhs == 'f1' & par$op == '=~', 'std.all'] - loadings[[1]])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f2' & par$op == '=~', 'std.all'] - loadings[[2]])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '=~', 'std.all'] - loadings[[3]])^2), 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f1', 'std.all'] - B[3, 1], 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f2', 'std.all'] - B[3, 2], 4) == 0 &&
+    round(par[par$lhs == 'f4' & par$rhs == 'f1', 'std.all'] - B[4, 1], 4) == 0 &&
+    round(par[par$lhs == 'f4' & par$rhs == 'f2', 'std.all'] - B[4, 2], 4) == 0 &&
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'std.all'] - B[2, 1], 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'std.all'] - lPsi[3, 4], 4) == 0
+
   # gen sigma and std phi + observed factors
   B <- matrix(c(
     c(.00, .00, .00),
@@ -380,16 +498,15 @@ test_genPhi <- function(){
   ), byrow = TRUE, ncol = 3)
   Phi <- getPhi.B(B)
   generated6 <- semPower.genSigma(Phi = Phi, nIndicator = rep(1, 3), loadM = 1)
-  round(sum((generated6$Sigma - Phi)^2), 4) == 0
-  
+
   # same with Lambda as diag matrix
   generated6b <- semPower.genSigma(Phi = Phi, Lambda = diag(3))
-  
-  valid6 <- valid5 &&
+
+  valid4 <- valid3 &&
     round(sum((generated6$Sigma - Phi)^2), 4) == 0 &&
     round(sum((generated6b$Sigma - Phi)^2), 4) == 0
-  
-  if(valid5){
+
+  if(valid4){
     print('test_genPhi: OK')
   }else{
     warning('Invalid')
@@ -641,7 +758,6 @@ test_powerRegression <- function(){
                                  slopes = c(.2, .3), corXX = .4, nullWhich = 1,
                                  nIndicator = c(3, 3, 3), loadM = .5,
                                  alpha = .05, N = 250)
-  
   lavres <- helper_lav(ph$modelH0, ph$Sigma)
   par <- lavres$par
 
@@ -959,7 +1075,7 @@ test_powerCLPM <- function(){
                             alpha = .05, N = 250)
   
   lavres9 <- helper_lav(ph8$modelH1, ph8$Sigma)
-  par9 <- lavres9$par     
+  par9 <- lavres9$par   
 
   valid3 <- valid2 &&
     round(par8[par8$lhs == 'f1' & par8$rhs == 'f2', 'est'] - .3, 4) == 0 && 
@@ -1002,7 +1118,6 @@ test_powerCLPM <- function(){
                              alpha = .05, N = 250)
 
   lavres12 <- helper_lav(ph11$modelH0, ph11$Sigma)
-  lavres12$res@Fit@test$standard$df
 
   # 3 waves, no wave invariant stabilities/crossed effects, crossedX=0 for second effect, 
   ph12 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
@@ -1137,6 +1252,7 @@ test_all <- function(){
   test_powerEffectDifference()
   test_df()
   test_generateSigma()
+  test_generateSigmaB()
   test_genPhi()
   test_multigroup()
   test_powerLav()
