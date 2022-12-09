@@ -117,6 +117,7 @@ semPower.powerLav <- function(type,
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
+#' @param Phi either a single number defining the correlation between exactly two factors or the factor correlation matrix.
 #' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich 
 #' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
@@ -173,11 +174,13 @@ semPower.powerLav <- function(type,
 #' @seealso [semPower.genSigma()]
 #' @export
 semPower.powerCFA <- function(type, comparison = 'restricted', 
+                              Phi = NULL,
                               nullEffect = 'cor = 0',
                               nullWhich = NULL, ...){
 
   # validate input
   comparison <- checkComparisonModel(comparison)
+  if(is.null(Phi)) stop('Phi must be defined')
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
@@ -185,7 +188,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz'))))) stop('nullEffect must be either cor=0 or corx=corz')
   
   # generate sigma 
-  generated <- semPower.genSigma(...)
+  generated <- semPower.genSigma(Phi = Phi, ...)
 
   ### now do validation of nullWhich, since we now know Phi
   if(is.null(nullWhich) && ncol(generated$Phi) == 2) nullWhich <- c(1, 2)
