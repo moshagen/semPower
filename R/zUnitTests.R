@@ -381,8 +381,22 @@ test_generateSigmaB <- function(){
     round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - Psi[1, 2], 4) == 0 &&
     round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - Psi[3, 4], 4) == 0 &&
     round(sum((par2[par2$lhs != par2$rhs, 'est']  - par[par$lhs != par$rhs, 'est'])^2), 4) == 0
-    
-  if(valid4){
+
+  # mixed observed and latent, unstd,  psi
+  generated <- semPower.genSigma(Beta = B, Psi = Psi, 
+                                 loadM = c(.5, .6, .5, .6), 
+                                 nIndicator = c(3, 1, 1, 4))
+  par <- helper_lav(generated$modelTrue, generated$Sigma)$par
+  
+  valid5 <- valid4 &&
+    round(sum((par[par$lhs %in% c('f1', 'f3') & par$op == '=~', 'est'] - .5)^2), 4) == 0 &&
+    round(sum((par[par$lhs %in% c('f2', 'f4') & par$op == '=~', 'est'] - .6)^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '~', 'est'] - B[3, 1:2])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - Psi[1, 2], 4) == 0 &&
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - Psi[3, 4], 4) == 0 
+  
+  if(valid5){
     print('test_generateSigmaB: OK')
   }else{
     warning('Invalid')
@@ -917,8 +931,28 @@ test_powerMediation <- function(){
                                 alpha = .05, N = 250)
   
   lavres5 <- helper_lav(ph5$modelH0, ph5$Sigma)
+  lavres5a <- helper_lav(ph5$modelH1, ph5$Sigma)
+  par5 <- lavres5a$par  
+  
+  # mixed observed and latent, more complex beta
+  B <- matrix(c(
+    c(.00, .00, .00, .00),
+    c(.20, .00, .00, .00),
+    c(.05, .30, .00, .00),
+    c(.20, .10, .40, .00)
+  ), byrow = TRUE, ncol = 4)
+  ph6 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                 Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+                                 nIndicator = c(3, 1, 3, 1), loadM = .5,
+                                 alpha = .05, N = 250)
+  
+  lavres6 <- helper_lav(ph6$modelH1, ph6$Sigma)
+  par6 <- lavres6$par  
 
-  valid3 <- valid2 && round(2*lavres5$fit['fmin'] - ph5$power$fmin, 4) == 0
+  valid3 <- valid2 &&
+    round(2*lavres5$fit['fmin'] - ph5$power$fmin, 4) == 0 && 
+    round(par5[par5$lhs == 'ind', 'std.all'] - .3*.4, 4) == 0 && 
+    round(par6[par6$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 
 
   if(valid3){
     print('test_powerMediation: OK')
