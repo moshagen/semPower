@@ -9,7 +9,7 @@ getPhi.B(B, lPsi = NULL)
 \arguments{
 \item{B}{matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros.}
 
-\item{lPsi}{matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B.}
+\item{lPsi}{(lesser) matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations off the diagonal. Can be omitted for no correlations beyond those implied by B.}
 }
 \value{
 the implied correlation matrix
@@ -21,10 +21,25 @@ Computes implied correlations (completely standardized) from Beta matrix, disall
 \dontrun{
 # mediation model
 B <- matrix(c(
-c(.00, .00, .00),
-c(.10, .00, .00),
-c(.20, .30, .00)
+  c(.00, .00, .00),
+  c(.10, .00, .00),
+  c(.20, .30, .00)
 ), byrow = TRUE, ncol = 3)
 Phi <- getPhi.B(B)
+
+# CLPM with residual correlations 
+B <- matrix(c(
+  c(.00, .00, .00, .00),
+  c(.30, .00, .00, .00),
+  c(.70, .10, .00, .00),
+  c(.20, .70, .00, .00)
+), byrow = TRUE, ncol = 4)
+lPsi <- matrix(c(
+  c(.00, .00, .00, .00),
+  c(.00, .00, .00, .00),
+  c(.00, .00, .00, .30),
+  c(.00, .00, .30, .00)
+), byrow = TRUE, ncol = 4)
+Phi <- getPhi.B(B, lPsi)
 }
 }

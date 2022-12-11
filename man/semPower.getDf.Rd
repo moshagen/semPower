@@ -11,13 +11,13 @@ semPower.getDf(lavModel, nGroups = NULL, group.equal = NULL)
 
 \item{nGroups}{for multigroup models: the number of groups}
 
-\item{group.equal}{for multigroup models: type of group equality constraints (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)}
+\item{group.equal}{for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the lavaan conventions (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)}
 }
 \value{
-df
+the df of the model
 }
 \description{
-Convenience function to determine the degrees of freedom of a given model provided as lavaan model string. 
+Determines the degrees of freedom of a given model provided as lavaan model string. 
 This requires the lavaan package.
 }
 \examples{

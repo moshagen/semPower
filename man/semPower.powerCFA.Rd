@@ -7,6 +7,7 @@
 semPower.powerCFA(
   type,
   comparison = "restricted",
+  Phi = NULL,
   nullEffect = "cor = 0",
   nullWhich = NULL,
   ...
@@ -16,6 +17,8 @@ semPower.powerCFA(
 \item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
 
 \item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.}
+
+\item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix.}
 
 \item{nullEffect}{defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich}
 
