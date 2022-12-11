@@ -4,26 +4,71 @@
 #'
 #' Generate a covariance matrix (and mean vector) and associated lavaan model strings based on defined model features.
 #' 
-#' @param Phi factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for a uncorrelated factors. 
-#' @param Lambda factor loading matrix. 
-#' @param Beta regression slopes between latent variables (all-y notation). 
-#' @param Psi variance-covariance matrix of latent residuals 
-#' @param Theta variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.      
-#' @param tau intercepts. If NULL and alpha is set, these are assumed to be zero. 
-#' @param Alpha factor means. If NULL and tau is set, these are assumed to be zero. 
-#' @param loadings can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.   
-#' @param nIndicator can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
-#' @param loadM can be used instead of Lambda: vector giving mean loadings for each factor or single number to use for every loading
-#' @param loadSD can be used instead of Lambda: vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax can be used instead of Lambda: list giving the minimum and maximum loading for each factor or vector to apply to all factors 
-#' @param useReferenceIndicator whether to identify factors in accompanying true model string by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. 
-#' @param metricInvariance a list containing the factor indices for which the analysis model should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4. 
-#' @return a list containing the implied covariance matrix (Sigma), the loading (Lambda) matrix, the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the implied indicator means (mu), intercepts (tau), and latent means (alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships
+#' @param Phi Factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors. 
+#' @param Lambda Factor loading matrix. 
+#' @param Beta Regression slopes between latent variables (all-y notation). 
+#' @param Psi Variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed. 
+#' @param Theta Variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.      
+#' @param tau Intercepts. If NULL and Alpha is set, these are assumed to be zero. 
+#' @param Alpha Factor means. If NULL and tau is set, these are assumed to be zero. 
+#' @param loadings Can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.   
+#' @param nIndicator Can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM Can be used instead of Lambda (see details): vector giving mean loadings for each factor or single number to use for every loading
+#' @param loadSD Can be used instead of Lambda (see details): vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
+#' @param loadMinMax Can be used instead of Lambda (see details): list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. Irrelevant for computed Sigma and mu.
+#' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4. Irrelevant for computed Sigma and mu. 
+#' @return A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+#' @details
+#' This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model. 
+#' 
+#' In the CFA model, 
+#' \deqn{\Sigma = \Lambda \Phi \Lambda' + \Theta}
+#' where \eqn{\Lambda} is the \eqn{p \cdot m} loading matrix, \eqn{\Phi} is the variance-covariance matrix of the \eqn{m} factors, and \eqn{\Theta} is the residual variance-covariance matrix of the observed variables. The means are
+#' \deqn{\mu = \tau + \Lambda \alpha}
+#' with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\alpha}.
+#' 
+#' In the structural equation model, 
+#' \deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta } 
+#' where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
+#' \deqn{\mu = \tau + \Lambda (I - \Beta)^{-1} \alpha}
+#' 
+#' In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts. 
+#' 
+#' When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.  
+#' 
+#' If `Phi` is defined, a CFA model is used, if `Beta` is defined, a structural equation model. 
+#' When both `Phi` and `Beta` are NULL, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
+#' When `Phi` is a single number, all factor correlations are equal to this number.
+#' 
+#' When `Beta` is defined and `Psi` is NULL, \eqn{\Psi = I}.
+#' 
+#' When `Theta` is NULL, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
+#'
+#' Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts:
+#' \itemize{
+#' \item `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
+#' \item `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
+#' \item `loadM`: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
+#' \item `loadSd`: used in conjunction with `loadM`, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor. 
+#' \item `loadMinMax`: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform. For example, `loadMinMax = list(c(.4, .6), c(.4, .8))` defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8. 
+#' }      
+#'  
 #' @examples
 #' \dontrun{
-#' # Provide factor correlation for a two-factor model, the number of indicators by factor, 
+#' # Provide the factor correlation for a two-factor model, the number of indicators by factor, 
 #' # and a single loading which is equal for all indicators
-#' genSigma <- semPower.genSigma(phi = .2, nIndicator = c(5, 6), loadM = .5)
+#' genSigma <- semPower.genSigma(Phi = .2, nIndicator = c(5, 6), loadM = .5)
+#' genSigma$Sigma # implied covariance matrix
+#' 
+#' # Provide Beta for a three factor model 
+#' # with 3, 4, and 5 indicators loading by .6, 5, and .4, respectively. 
+#' Beta <- matrix(c(
+#'                 c(0.0, 0.0, 0.0),
+#'                 c(0.3, 0.0, 0.0),  # f2 = .3*f1
+#'                 c(0.2, 0.4, 0.0)   # f3 = .2*f1 + .4*f2
+#'                ), byrow = TRUE, ncol = 3)
+#' genSigma <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), loadM = c=(.6, .5, .4)
 #' 
 #' # Provide factor correlation matrix and loading matrix
 #' Phi <- matrix(c(
@@ -45,8 +90,8 @@
 #'                
 #' genSigma <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
 #' 
-#' # same as above, but providing reduced loading matrix, i.e..
-#' # only defining primary loadings; all secondary loadings are zero.
+#' # same as above, but providing a reduced loading matrix, i.e.
+#' # only define the primary loadings for each factor
 #' loadings <- list(
 #'                c(0.4, 0.5, 0.8),
 #'                c(0.7, 0.6, 0.5, 0.4, 0.5),
@@ -57,11 +102,12 @@
 #'   
 #' # same as above, but providing
 #' # the number of indicators by factor 
-#' # and min-max loading for all factors (sampling from a uniform)
+#' # and min-max loading for all factors (sampling from a uniform distribution)
 #' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
 #'                               loadMinMax = c(.3, .8))
 #'
-#' # same as above, but providing mean and sd loading for all factors
+#' # same as above, but providing
+#' # mean and SD loading for all factors (sampling from a normal distribution)
 #' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
 #'                               loadM = .5, loadSD = .1)
 #'
@@ -76,7 +122,6 @@
 #'                    c(.5, .8),
 #'                    c(.3, .7)
 #'                    )
-#'
 #' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
 #'                               loadMinMax = loadMinMax)
 #'                               
@@ -119,21 +164,16 @@ semPower.genSigma <- function(Phi = NULL,
     if(is.null(loadM) & is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
     if(is.null(loadMinMax) & length(loadM) == 1) loadM <- rep(loadM, nfac)
     if(is.null(loadMinMax) & length(loadM) != nfac) stop('Nindicator and mean loading must of same size')
-    if(is.null(loadMinMax)) invisible(sapply(loadM, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
-    
+
     if(!is.null(loadMinMax) && (!is.null(loadM) || !is.null(loadSD))) stop('Either specify mean and SD of loadings or specify min-max loading, both not both.')
-    if(!is.null(loadMinMax)) invisible(sapply(unlist(loadMinMax), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
     if(length(loadMinMax) == 2) loadMinMax <- lapply(1:nfac, function(x) loadMinMax)
     if(is.null(loadMinMax) && is.null(loadSD)) loadSD <- rep(0, nfac)
     if(is.null(loadMinMax) && length(loadSD) == 1) loadSD <- rep(loadSD,nfac)
     if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
   }else{
     if(is.null(Lambda)){
-      invisible(lapply(loadings, function(x) lapply(x, function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE))))
       nIndicator <- unlist(lapply(loadings, length))  # crossloadings are disallowed
     }else{
-      invisible(apply(Lambda, c(1, 2), function(x) checkBounded(x, 'All loadings', bound = c(-1, 1), inclusive = TRUE)))
-      if(any(apply(Lambda, 1, function(x) sum(x^2)) > 1)) stop('Loadings imply negative residual variance(s). Note that loadings must be standardized.')
       nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
     }
   }
@@ -145,8 +185,11 @@ semPower.genSigma <- function(Phi = NULL,
       Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
       diag(Phi) <- 1
     } 
-    checkPositiveDefinite(Phi)
     if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
+    checkPositiveDefinite(Phi)
+    if(!any(diag(Phi) != 1)){
+      if(any(Phi > 1) | any(Phi > 1)) stop('Phi implies correlations outside [-1 - 1].')
+    }
   }else{
     if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
     if(!is.null(Psi) && ncol(Psi) != nfac) stop('Psi must have the same number of rows/columns as the number of factors.')
@@ -193,7 +236,7 @@ semPower.genSigma <- function(Phi = NULL,
       sidx <- eidx + 1
     }
   }
-  
+
   # compute Sigma
   if(is.null(Beta)){
     SigmaND <- Lambda %*% Phi %*% t(Lambda) 
@@ -216,7 +259,10 @@ semPower.genSigma <- function(Phi = NULL,
     }else{
       Theta <- diag(1 - diag(SigmaND))
     }
-  }  
+  }
+  # check whether variances are negative
+  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta)')
+  
   Sigma <- SigmaND + Theta
   colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
 
@@ -232,14 +278,26 @@ semPower.genSigma <- function(Phi = NULL,
   }
   
   ### here we are actually done, but we also create several lav model strings
+
+  # remove names if set. we currently don't support labels anyway
+  # and this causes issues later in building the model strings
+  rownames(Lambda) <- colnames(Lambda) <- NULL  
+  rownames(Theta) <- colnames(Theta) <- NULL  
+  rownames(Phi) <- colnames(Phi) <- NULL  
+  rownames(Beta) <- colnames(Beta) <- NULL  
+  rownames(Psi) <- colnames(Psi) <- NULL  
+  names(tau) <- NULL
+  names(Alpha) <- NULL
   
   # create lav population model string
   # not really needed, but maybe nice to have
   tok <- list()
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
-    cload <- Lambda[iIdx, f]
-    tok <- append(tok, paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')))
+    if(!identical(iIdx, integer(0))){
+      cload <- Lambda[iIdx, f]
+      tok <- append(tok, paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')))
+    }
     if(!is.null(Phi)){
       tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f))
     }else{
@@ -260,7 +318,7 @@ semPower.genSigma <- function(Phi = NULL,
       }
     }else{
       # regressions
-      for(f in 1:nfac){
+      for(f in 1:ncol(Beta)){
         idx <- which(Beta[f, ] != 0)
         if(!identical(idx, integer(0)))
           tok <- append(tok, paste0('f', f, ' ~ ', paste0(Beta[f, idx], '*f', idx, collapse = '+'))) 
@@ -290,29 +348,31 @@ semPower.genSigma <- function(Phi = NULL,
   sidx <- 1
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
-    # add invariance constrains
-    if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
-      labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
-      clabel <- metricInvarianceLabels[[labelIdx]]
-      if(useReferenceIndicator){
-        # scale by first loading instead of 1
-        tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
+    if(!identical(iIdx, integer(0))){
+      # add invariance constrains
+      if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
+        labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
+        clabel <- metricInvarianceLabels[[labelIdx]]
+        if(useReferenceIndicator){
+          # scale by first loading instead of 1
+          tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
+        }else{
+          tok <- append(tok, paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
+        }
       }else{
-        tok <- append(tok, paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
-      }
-    }else{
-      if(useReferenceIndicator){
-        # scale by first loading instead of 1
-        tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + ')))
-      }else{
-        tok <- append(tok, paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + ')))
+        if(useReferenceIndicator){
+          # scale by first loading instead of 1
+          tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + ')))
+        }else{
+          tok <- append(tok, paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + ')))
+        }
       }
     }
   }
   modelTrueCFA <- paste(c(unlist(tok)), collapse = '\n')
   if(!is.null(Beta)){
     # regressions
-    for(f in 1:nfac){
+    for(f in 1:ncol(Beta)){
       idx <- which(Beta[f, ] != 0)
       if(!identical(idx, integer(0)))
         tok <- append(tok, paste0('f', f, ' ~ ', paste0('f', idx, collapse = '+'))) 
@@ -354,17 +414,32 @@ semPower.genSigma <- function(Phi = NULL,
 #' Computes implied correlations (completely standardized) from Beta matrix, disallowing recursive paths.
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
-#' @param lPsi matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations (when standardized = TRUE) off the diagonal. Can be omitted for no correlations beyond those implied by B. 
+#' @param lPsi (lesser) matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations off the diagonal. Can be omitted for no correlations beyond those implied by B. 
 #' @return the implied correlation matrix
 #' @examples
 #' \dontrun{
 #' # mediation model
 #' B <- matrix(c(
-#' c(.00, .00, .00),
-#' c(.10, .00, .00),
-#' c(.20, .30, .00)
+#'   c(.00, .00, .00),
+#'   c(.10, .00, .00),
+#'   c(.20, .30, .00)
 #' ), byrow = TRUE, ncol = 3)
 #' Phi <- getPhi.B(B)
+#' 
+#' # CLPM with residual correlations 
+#' B <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.30, .00, .00, .00),
+#'   c(.70, .10, .00, .00),
+#'   c(.20, .70, .00, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' lPsi <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.00, .00, .00, .00),
+#'   c(.00, .00, .00, .30),
+#'   c(.00, .00, .30, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' Phi <- getPhi.B(B, lPsi)
 #' }
 getPhi.B <- function(B, lPsi = NULL){
   
@@ -413,13 +488,13 @@ getPhi.B <- function(B, lPsi = NULL){
 
 #' semPower.getDf
 #'
-#' Convenience function to determine the degrees of freedom of a given model provided as lavaan model string. 
+#' Determines the degrees of freedom of a given model provided as lavaan model string. 
 #' This requires the lavaan package.
 #' 
 #' @param lavModel the lavaan model string 
 #' @param nGroups for multigroup models: the number of groups 
-#' @param group.equal for multigroup models: type of group equality constraints (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)
-#' @return df
+#' @param group.equal for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the lavaan conventions (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)
+#' @return the df of the model
 #' @examples
 #' \dontrun{
 #' lavModel <- '
