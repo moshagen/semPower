@@ -395,8 +395,21 @@ test_generateSigmaB <- function(){
     round(sum((par[par$lhs == 'f4' & par$op == '~', 'est'] - B[4, 1:2])^2), 4) == 0 &&
     round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'] - Psi[1, 2], 4) == 0 &&
     round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'] - Psi[3, 4], 4) == 0 
+
+  # test genLambda
+  loadings <- list(
+    c(0.4, 0.5, 0.8),
+    c(0.7, 0.6, 0.5, 0.6),
+    c(0.8, 0.8, 0.5)
+  )
+  Lambda <- genLambda(loadings)
+  generated <- semPower.genSigma(Lambda = Lambda, Phi = .3)
+  generated2 <- semPower.genSigma(loadings = loadings, Phi = .3)
   
-  if(valid5){
+  valid6 <- valid5 && 
+    round(sum((generated$Sigma - generated2$Sigma)^2), 4) == 0
+  
+  if(valid6){
     print('test_generateSigmaB: OK')
   }else{
     warning('Invalid')
