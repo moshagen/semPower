@@ -227,8 +227,8 @@ checkPositive <- function(x, message = NULL){
 checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
   if(is.null(message)) message <- deparse(substitute(message))
   inv <- is.null(x) || is.na(x)
-  if(!inv & !inclusive & (x <= bound[1] || x >= bound[2])) inv <- TRUE
-  if(!inv & inclusive & (x < bound[1] || x > bound[2])) inv <- TRUE
+  if(!inv && !inclusive && (x <= bound[1] || x >= bound[2])) inv <- TRUE
+  if(!inv && inclusive && (x < bound[1] || x > bound[2])) inv <- TRUE
   if(inv) stop(paste(message, "must must lie within", bound[1], 'and', bound[2]))
 }
 
@@ -280,11 +280,11 @@ checkSquare <- function(x, message = NULL){
 #' @param type type
 #' @return  valid type
 checkPowerTypes <- function(type){
-  if(is.null(type) | length(type) != 1 | typeof(type) != 'character') stop('Type must be one of a-priori, post-hoc, or compromise.')
+  if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Type must be one of a-priori, post-hoc, or compromise.')
   type <- tolower(trimws(type))
-  if(type == 'a priori' | type == 'apriori' | type == 'a_priori' | type == 'ap') type = 'a-priori'
-  if(type == 'post hoc' | type == 'posthoc' | type == 'post_hoc' | type == 'ph') type = 'post-hoc'
-  if(type == 'co' | type == 'comp') type = 'compromise'
+  if(type == 'a priori' || type == 'apriori' || type == 'a_priori' || type == 'ap') type <- 'a-priori'
+  if(type == 'post hoc' || type == 'posthoc' || type == 'post_hoc' || type == 'ph') type <- 'post-hoc'
+  if(type == 'co' || type == 'comp') type <- 'compromise'
   if(!type %in% c('a-priori', 'post-hoc', 'compromise')) stop('Type must be one of a-priori, post-hoc, or compromise.')
   type
 }
@@ -295,10 +295,10 @@ checkPowerTypes <- function(type){
 #' @param comparison comparison
 #' @return  valid type
 checkComparisonModel <- function(comparison){
-  if(is.null(comparison) | length(comparison) != 1 | typeof(comparison) != 'character') stop('Comparison model must be one of a-priori, post-hoc, or compromise.')
+  if(is.null(comparison) || length(comparison) != 1 || typeof(comparison) != 'character') stop('Comparison model must be one of a-priori, post-hoc, or compromise.')
   comparison <- tolower(trimws(comparison))
-  if(comparison == 'saturated' | comparison == 'sat') comparison = 'saturated'
-  if(comparison == 'restricted' | comparison == 'restr') comparison = 'restricted'
+  if(comparison == 'saturated' || comparison == 'sat') comparison <- 'saturated'
+  if(comparison == 'restricted' || comparison == 'restr') comparison <- 'restricted'
   if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
   comparison
 }

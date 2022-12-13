@@ -780,8 +780,7 @@ test_powerRegression <- function(){
                                  nIndicator = c(3, 3, 3), loadM = .5,
                                  alpha = .05, N = 250)
   lavres <- helper_lav(ph$modelH0, ph$Sigma)
-  par <- lavres$par
-
+  #par <- lavres$par
   lavres2 <- helper_lav(ph$modelH1, ph$Sigma)
   par2 <- lavres2$par
   

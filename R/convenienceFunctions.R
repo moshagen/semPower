@@ -56,8 +56,8 @@ semPower.powerLav <- function(type,
   # validate input
   type <- checkPowerTypes(type)
   if(is.null(modelH0)) stop('Provide a lavaan model string defining the analysis (H0) model.')
-  if(is.null(modelPop) & is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
-  if(!is.null(modelPop) & !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
+  if(is.null(modelPop) && is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
+  if(!is.null(modelPop) && !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
   
   # determine population Sigma / mu
   if(is.null(Sigma)){
@@ -89,7 +89,7 @@ semPower.powerLav <- function(type,
 
   # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
   # but delta f for the comparison with an explicit h1 model.
-  if(is.null(modelH1) | !fitH1model){
+  if(is.null(modelH1) || !fitH1model){
     power <- semPower(type = type, 
                       SigmaHat = SigmaHat, Sigma = Sigma, 
                       muHat = muHat, mu = mu, 
@@ -200,7 +200,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   if(length(nullWhich) > 1){
     for(i in 1:(length(nullWhich) - 1)){
       for(j in (i + 1):length(nullWhich)){
-        if(nullWhich[[i]][1] == nullWhich[[j]][1] & nullWhich[[i]][2] == nullWhich[[j]][2]) stop('elements in nullWhich may not refer to the same correlation')
+        if(nullWhich[[i]][1] == nullWhich[[j]][1] && nullWhich[[i]][2] == nullWhich[[j]][2]) stop('elements in nullWhich may not refer to the same correlation')
       }
     }
   }
@@ -253,7 +253,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
-#' @param slope vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
+#' @param slopes vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
 #' @param nullEffect defines the hypothesis of interest. Valid are 'slope = 0' (the default) and 'slopeX = slopeZ' to test for the equality of slopes. Define the slopes to set to equality in nullWhich 
 #' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
@@ -327,13 +327,13 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   
   # validate input
   if(is.null(slopes)) stop('slopes cannot be NULL.')
-  if(!is.vector(slopes) & !is.matrix(slopes)) stop('slopes must be a single number of a vector')
+  if(!is.vector(slopes) && !is.matrix(slopes)) stop('slopes must be a single number of a vector')
   invisible(lapply(slopes, function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
   if(sum(slopes^2) > 1) stop('slopes imply a negative residual variance for Y, make sure that the sum of the squared slopes is < 1')
   if(!is.matrix(slopes)) slopes <- matrix(slopes, nrow = length(slopes))
   
   if(is.null(corXX)) corXX <- diag(nrow(slopes)) 
-  if(is.vector(corXX) & length(corXX) > 1) stop('corXX must be a single number or a matrix') 
+  if(is.vector(corXX) && length(corXX) > 1) stop('corXX must be a single number or a matrix') 
   if(!is.matrix(corXX)){
     corXX <- matrix(corXX, nrow = 2, ncol = 2) 
     diag(corXX) <- 1
@@ -348,9 +348,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez'))))) stop('nullEffect must be either slope=0 or slopex=slopez')
 
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
-  if(any(nullWhich < 1) | any(nullWhich > nrow(slopes))) stop('nullWhich is invalid.')
+  if(any(nullWhich < 1) || any(nullWhich > nrow(slopes))) stop('nullWhich is invalid.')
   if(nullEffect == 'slopex=slopez'){
-    if(length(nullWhich) < 2 | length(nullWhich) > nrow(slopes)) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
+    if(length(nullWhich) < 2 || length(nullWhich) > nrow(slopes)) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
   }else{
     if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0')
   }
@@ -493,15 +493,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of Beta (or the slopes).')
   
   # validate input
-  if(!is.null(Beta) & (!is.null(bYX) | !is.null(bMX) | !is.null(bYM))) stop('Either provide bYX, bMX, and bYM or provide Beta, but not both.')
+  if(!is.null(Beta) && (!is.null(bYX) || !is.null(bMX) || !is.null(bYM))) stop('Either provide bYX, bMX, and bYM or provide Beta, but not both.')
   if(is.null(Beta)){
-    if(is.null(bYX) | is.null(bMX) | is.null(bYM)) stop('Provide bYX, bYM, and bYM or provide Beta')
+    if(is.null(bYX) || is.null(bMX) || is.null(bYM)) stop('Provide bYX, bYM, and bYM or provide Beta')
     if(length(bYX) != 1) stop('bYX must be a single slope (X -> Y)')
     if(length(bMX) != 1) stop('bMX must be a single slope (X -> M)')
     if(length(bYM) != 1) stop('bYM must be a single slope (M -> Y)')
     invisible(lapply(c(bYX, bMX, bYM), function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
     if((bYX^2 + bYM^2) > 1) stop('bYX and bYM imply a negative residual variance for Y, make sure that the sum of the squared slopes on Y is < 1')
-    if(bMX == 0 | bYM == 0) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
+    if(bMX == 0 || bYM == 0) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
     indirect <- list(c(2, 1), c(3, 2))
   }
   
@@ -611,7 +611,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   #validate input
   if(is.null(stabilities) ||  is.null(crossedEffects)) stop('Stabilities and crossedEffects may not be NULL.')
-  if(is.null(nWaves) | is.na(nWaves) | nWaves < 2) stop('nWaves must be >= 2.')
+  if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.')
   if(is.null(rXY)) rXY <- rep(0, nWaves)
   if(length(rXY) != nWaves) stop('rXY must be of length nWaves')
   invisible(lapply(rXY, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE)))
@@ -619,7 +619,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
   invisible(lapply(stabilities, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
-  if(length(stabilities) != length(crossedEffects) | (length(crossedEffects) != 2 & length(crossedEffects) != (nWaves - 1))) stop('stabilities and crossedEffects must be of length nWaves - 1 or be of length 2.')
+  if(length(stabilities) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('stabilities and crossedEffects must be of length nWaves - 1 or be of length 2.')
 
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
@@ -637,22 +637,22 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                  'stabx=staby', 'crossedx=crossedy', 'corxy=0')
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect')
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual')
-  if(nWaves == 2 & nullEffect %in% c('stabx', 'staby','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one stability each, and only one X-Y residual correlation. Did you mean crossedX = 0 or stabX = 0?')
+  if(nWaves == 2 && nullEffect %in% c('stabx', 'staby','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one stability each, and only one X-Y residual correlation. Did you mean crossedX = 0 or stabX = 0?')
   
-  if(is.null(nullWhich) & nWaves == 2) nullWhich <- 1
-  if(is.null(nullWhich) & nWaves > 2){
+  if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
+  if(is.null(nullWhich) && nWaves > 2){
     msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
-    if(is.null(waveEqual) & !nullEffect %in% c('stabx', 'staby', 'crossedx', 'crossedy')) stop(msg) 
-    if(!'stabx' %in% waveEqual & nullEffect %in% c('stabx=0', 'stabx=staby')) stop(msg) 
-    if(!'staby' %in% waveEqual & nullEffect %in% c('staby=0', 'stabx=staby')) stop(msg) 
-    if(!'crossedx' %in% waveEqual & nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
-    if(!'crossedy' %in% waveEqual & nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
-    if(!'corxy' %in% waveEqual & nullEffect %in% c('corxy=0')) stop(msg) 
+    if(is.null(waveEqual) && !nullEffect %in% c('stabx', 'staby', 'crossedx', 'crossedy')) stop(msg) 
+    if(!'stabx' %in% waveEqual && nullEffect %in% c('stabx=0', 'stabx=staby')) stop(msg) 
+    if(!'staby' %in% waveEqual && nullEffect %in% c('staby=0', 'stabx=staby')) stop(msg) 
+    if(!'crossedx' %in% waveEqual && nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'crossedy' %in% waveEqual && nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'corxy' %in% waveEqual && nullEffect %in% c('corxy=0')) stop(msg) 
     nullWhich <- 1 # this should be the proper default for all remaining cases
   }
   if(!is.null(nullWhich)){
-    if(!is.numeric(nullWhich) | length(nullWhich) > 1) stop('nullWhich must be a single number.')
-    if(nullWhich < 1 | (nullEffect != 'corxy=0' & nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
+    if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
+    if(nullWhich < 1 || (nullEffect != 'corxy=0' && nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
   }
   
   ### create B
@@ -710,13 +710,12 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(2*i, (2*i - 1)), '*'), 'f', 2*i)
     model <- paste(model, tok, sep='\n')
   }
-  modelTrue <- model
-  
+
   ### define H1 and ana model
   # first get constraints that may be part of either model
   tok.stabx <- tok.staby <- tok.crossedx <- tok.crossedy <- tok.corxy <- ''
   # we also do this for stabx=0 and stabx=staby, because we need p.stabx later; tok.stabx is only used for stabx 
-  if('stabx' %in% waveEqual | nullEffect %in% c('stabx', 'stabx=0', 'stabx=staby')){
+  if('stabx' %in% waveEqual || nullEffect %in% c('stabx', 'stabx=0', 'stabx=staby')){
     xw <- seq(2*nWaves - 1, 2, -2)
     p.stabx <- paste0('pf', xw, (xw - 2))
     for(i in 1:(length(p.stabx) - 1)){
@@ -726,7 +725,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     p.stabx <- p.stabx[order(p.stabx)]
   }
-  if('staby' %in% waveEqual | nullEffect %in% c('staby', 'staby=0', 'stabx=staby')){
+  if('staby' %in% waveEqual || nullEffect %in% c('staby', 'staby=0', 'stabx=staby')){
     yw <- seq(2*nWaves, 3, -2)
     p.staby <- paste0('pf', yw, (yw - 2))
     for(i in 1:(length(p.staby) - 1)){
@@ -737,7 +736,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     p.staby <- p.staby[order(p.staby)]
   }
   # we also do this for crossedx=0 and crossedx=crossedy, because we need p.crossedx later; tok.crossedX is only used for crossedx 
-  if('crossedx' %in% waveEqual | nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
+  if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
     xw <- seq(2*nWaves - 3, 0, -2)
     yw <- seq(2*nWaves, 3, -2)
     p.crossedx <- paste0('pf', yw, xw)
@@ -748,7 +747,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     p.crossedx <- p.crossedx[order(p.crossedx)]
   }
-  if('crossedy' %in% waveEqual | nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
+  if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves - 2, 1, -2)
     p.crossedy <- paste0('pf', xw, yw)
@@ -759,7 +758,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     p.crossedy <- p.crossedy[order(p.crossedy)]
   }
-  if('corxy' %in% waveEqual | nullEffect %in% c('corxy', 'corxy=0')){
+  if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves, 3, -2)
     p.corxy <- paste0('pf', yw, xw)

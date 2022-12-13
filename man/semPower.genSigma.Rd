@@ -5,51 +5,30 @@
 \title{semPower.genSigma}
 \usage{
 semPower.genSigma(
-  Phi = NULL,
   Lambda = NULL,
+  Phi = NULL,
   Beta = NULL,
   Psi = NULL,
   Theta = NULL,
   tau = NULL,
   Alpha = NULL,
-  loadings = NULL,
-  nIndicator = NULL,
-  loadM = NULL,
-  loadSD = NULL,
-  loadMinMax = NULL,
-  useReferenceIndicator = !is.null(Beta),
-  metricInvariance = NULL,
   ...
 )
 }
 \arguments{
-\item{Phi}{factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors.}
+\item{Lambda}{Factor loading matrix.}
 
-\item{Lambda}{factor loading matrix.}
+\item{Phi}{Factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors.}
 
-\item{Beta}{regression slopes between latent variables (all-y notation).}
+\item{Beta}{Regression slopes between latent variables (all-y notation).}
 
-\item{Psi}{variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed.}
+\item{Psi}{Variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed.}
 
-\item{Theta}{variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.}
+\item{Theta}{Variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.}
 
-\item{tau}{intercepts. If NULL and Alpha is set, these are assumed to be zero.}
+\item{tau}{Intercepts. If NULL and Alpha is set, these are assumed to be zero.}
 
-\item{Alpha}{factor means. If NULL and tau is set, these are assumed to be zero.}
-
-\item{loadings}{can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.}
-
-\item{nIndicator}{can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively}
-
-\item{loadM}{can be used instead of Lambda (see details): vector giving mean loadings for each factor or single number to use for every loading}
-
-\item{loadSD}{can be used instead of Lambda (see details): vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.}
-
-\item{loadMinMax}{can be used instead of Lambda (see details): list giving the minimum and maximum loading for each factor or vector to apply to all factors}
-
-\item{useReferenceIndicator}{whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach.}
-
-\item{metricInvariance}{a list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.}
+\item{Alpha}{Factor means. If NULL and tau is set, these are assumed to be zero.}
 }
 \value{
 A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
@@ -63,13 +42,13 @@ This function generates the variance-covariance matrix of the \eqn{p} observed v
 In the CFA model, 
 \deqn{\Sigma = \Lambda \Phi \Lambda' + \Theta}
 where \eqn{\Lambda} is the \eqn{p \cdot m} loading matrix, \eqn{\Phi} is the variance-covariance matrix of the \eqn{m} factors, and \eqn{\Theta} is the residual variance-covariance matrix of the observed variables. The means are
-\deqn{\mu = \tau + \Lambda \Alpha}
-with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\Alpha}.
+\deqn{\mu = \tau + \Lambda \alpha}
+with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\alpha}.
 
 In the structural equation model, 
 \deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta } 
 where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
-\deqn{\mu = \tau + \Lambda (I - \Beta)^{-1} \Alpha}
+\deqn{\mu = \tau + \Lambda (I - \Beta)^{-1} \alpha}
 
 In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts. 
 
@@ -84,11 +63,13 @@ When `Beta` is defined and `Psi` is NULL, \eqn{\Psi = I}.
 When `Theta` is NULL, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
 
 Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts:
-* `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
-* `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
-* `loadM`: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
-* `loadSd`: used in conjunction with `loadM`, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor. 
-* `loadMinMax`: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform. For example, `loadMinMax = list(c(.4, .6), c(.4, .8))` defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8.
+\itemize{
+\item `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
+\item `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
+\item `loadM`: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
+\item `loadSd`: used in conjunction with `loadM`, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor. 
+\item `loadMinMax`: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform. For example, `loadMinMax = list(c(.4, .6), c(.4, .8))` defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8. 
+}
 }
 \examples{
 \dontrun{

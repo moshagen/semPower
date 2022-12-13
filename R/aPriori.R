@@ -7,10 +7,10 @@
 #' @param alpha alpha error
 #' @param beta beta error; set either beta or power
 #' @param power power (1-beta); set either beta or power
-#' @param N a list of sample weights for multiple group power analyses, e.g. list(1,2) to make the second group twice as large as the first one 
+#' @param N a list of sample weights for multiple group power analyses, e.g. list(1,2) to make the second group twice as large as the first one
 #' @param df the model degrees of freedom
 #' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure. 
+#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector

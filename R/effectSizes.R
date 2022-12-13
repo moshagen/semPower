@@ -147,6 +147,8 @@ getF.AGFI <- function(AGFI, df, p){
 #' @param p number of observed variables
 #' @param SigmaHat model implied covariance matrix
 #' @param Sigma population covariance matrix
+#' @param muHat model implied means
+#' @param mu population means
 #' @param N list of sample weights
 #' @return list of indices
 getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL, N = NULL){

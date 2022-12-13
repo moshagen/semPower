@@ -150,7 +150,7 @@ semPower.genSigma <- function(Lambda = NULL,
     if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
     checkPositiveDefinite(Phi)
     if(!any(diag(Phi) != 1)){
-      if(any(Phi > 1) | any(Phi > 1)) stop('Phi implies correlations outside [-1 - 1].')
+      if(any(Phi > 1) || any(Phi > 1)) stop('Phi implies correlations outside [-1 - 1].')
     }
   }else{
     if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
@@ -164,8 +164,8 @@ semPower.genSigma <- function(Lambda = NULL,
   if(!is.null(Alpha)){
     if(length(Alpha) != nfac) stop('Latent means (Alpha) must be of same length as the number of factors')
   }
-  if(!is.null(tau) & is.null(Alpha)) Alpha <- rep(0, nfac)
-  if(!is.null(Alpha) & is.null(tau)) tau <- rep(0, sum(nIndicator))
+  if(!is.null(tau) && is.null(Alpha)) Alpha <- rep(0, nfac)
+  if(!is.null(Alpha) && is.null(tau)) tau <- rep(0, sum(nIndicator))
 
   ### compute Sigma
   if(is.null(Beta)){
@@ -249,15 +249,15 @@ genLambda <- function(loadings = NULL,
                       loadMinMax = NULL){
 
   # validate input  
-  if(!is.null(nIndicator) & !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
-  if(is.null(nIndicator) & !is.list(loadings)) stop('loadings must be a list')
+  if(!is.null(nIndicator) && !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
+  if(is.null(nIndicator) && !is.list(loadings)) stop('loadings must be a list')
   nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
   if(is.null(loadings)){
     if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
     invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
-    if(is.null(loadM) & is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
-    if(is.null(loadMinMax) & length(loadM) == 1) loadM <- rep(loadM, nfac)
-    if(is.null(loadMinMax) & length(loadM) != nfac) stop('Nindicator and mean loading must of same size')
+    if(is.null(loadM) && is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
+    if(is.null(loadMinMax) && length(loadM) == 1) loadM <- rep(loadM, nfac)
+    if(is.null(loadMinMax) && length(loadM) != nfac) stop('Nindicator and mean loading must of same size')
     
     if(!is.null(loadMinMax) && (!is.null(loadM) || !is.null(loadSD))) stop('Either specify mean and SD of loadings or specify min-max loading, both not both.')
     if(length(loadMinMax) == 2) loadMinMax <- lapply(1:nfac, function(x) loadMinMax)
@@ -274,7 +274,7 @@ genLambda <- function(loadings = NULL,
     eidx <- sidx + (nIndicator[f] - 1)
     if(!is.null(loadM)){
       cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
-      if(any(cload < -1) | any(cload > 1)) warning('Sampled loadings outside [-1, 1] were set to -1 or 1.')
+      if(any(cload < -1) || any(cload > 1)) warning('Sampled loadings outside [-1, 1] were set to -1 or 1.')
       cload[cload < -1] <- -1
       cload[cload > 1] <- 1
     }else if(!is.null(loadMinMax)){
@@ -304,6 +304,7 @@ genLambda <- function(loadings = NULL,
 #' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. 
 #' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.  
 #' @return A list containing the lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+#' @importFrom stats var
 genModelString <- function(Lambda = NULL,
                            Phi = NULL,
                            Beta = NULL,  # capital Beta, to distinguish from beta error
@@ -321,7 +322,7 @@ genModelString <- function(Lambda = NULL,
   if(!is.null(metricInvariance)){
     if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
     if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
-    if(max(unlist(metricInvariance)) > nfac | min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
+    if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
     if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metriInvariance must have the same number of indicators')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
   }
@@ -390,7 +391,6 @@ genModelString <- function(Lambda = NULL,
   
   # build  analysis models strings, one pure cfa based, and one including regression relationships 
   tok <- list()
-  sidx <- 1
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
     if(!identical(iIdx, integer(0))){
@@ -500,7 +500,7 @@ getPhi.B <- function(B, lPsi = NULL){
     cr <- Phi[1:idx, 1:idx]
     predR <- (cr %*% cb)
     # add residual covariances
-    if(!is.null(lPsi) & any(lPsi[idx, 1:(idx + 1)] != 0)){
+    if(!is.null(lPsi) && any(lPsi[idx, 1:(idx + 1)] != 0)){
       cR <- rbind(cr, t(predR))
       cR <- cbind(cR, t(t(c((predR),1))))
       cB <- B[1:(idx + 1), 1:(idx + 1)]
