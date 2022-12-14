@@ -700,14 +700,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   for(f in 3:ncol(B)){     # omit rows 1:2
     fidx <- which(B[f, ] != 0)
     if(length(fidx) != 0){
-      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(f, fidx), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
+      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
     }
   }
   # add (residual) correlations 
-  model <- paste(model, 'f1 ~~ pf21*f2', sep='\n')
+  model <- paste(model, 'f1 ~~ pf0201*f2', sep='\n')
   for(i in 2:nWaves){
-    tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(2*i, (2*i - 1)), '*'), 'f', 2*i)
+    tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(formatC(2*i, width = 2, flag = 0), formatC(2*i - 1, width = 2, flag = 0)), '*'), 'f', 2*i)
     model <- paste(model, tok, sep='\n')
   }
 
@@ -717,7 +717,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # we also do this for stabx=0 and stabx=staby, because we need p.stabx later; tok.stabx is only used for stabx 
   if('stabx' %in% waveEqual || nullEffect %in% c('stabx', 'stabx=0', 'stabx=staby')){
     xw <- seq(2*nWaves - 1, 2, -2)
-    p.stabx <- paste0('pf', xw, (xw - 2))
+    p.stabx <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
     for(i in 1:(length(p.stabx) - 1)){
       for(j in (i + 1):length(p.stabx)){
         tok.stabx <- paste(tok.stabx, paste0(p.stabx[i], '==', p.stabx[j]), sep = '\n')
@@ -727,7 +727,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   if('staby' %in% waveEqual || nullEffect %in% c('staby', 'staby=0', 'stabx=staby')){
     yw <- seq(2*nWaves, 3, -2)
-    p.staby <- paste0('pf', yw, (yw - 2))
+    p.staby <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
     for(i in 1:(length(p.staby) - 1)){
       for(j in (i + 1):length(p.staby)){
         tok.staby <- paste(tok.staby, paste0(p.staby[i], '==', p.staby[j]), sep = '\n')
@@ -739,7 +739,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
     xw <- seq(2*nWaves - 3, 0, -2)
     yw <- seq(2*nWaves, 3, -2)
-    p.crossedx <- paste0('pf', yw, xw)
+    p.crossedx <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
     for(i in 1:(length(p.crossedx) - 1)){
       for(j in (i + 1):length(p.crossedx)){
         tok.crossedx <- paste(tok.crossedx, paste0(p.crossedx[i], '==', p.crossedx[j]), sep = '\n')
@@ -750,7 +750,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves - 2, 1, -2)
-    p.crossedy <- paste0('pf', xw, yw)
+    p.crossedy <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
     for(i in 1:(length(p.crossedy) - 1)){
       for(j in (i + 1):length(p.crossedy)){
         tok.crossedy <- paste(tok.crossedy, paste0(p.crossedy[i], '==', p.crossedy[j]), sep = '\n')
@@ -761,7 +761,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves, 3, -2)
-    p.corxy <- paste0('pf', yw, xw)
+    p.corxy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
     for(i in 1:(length(p.corxy) - 1)){
       for(j in (i + 1):length(p.corxy)){
         tok.corxy <- paste(tok.corxy, paste0(p.corxy[i], '==', p.corxy[j]), sep = '\n')
@@ -813,7 +813,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     modelAna <- paste(modelAna, tok, sep = '\n')
   } 
   if('corxy=0' %in% nullEffect){
-    p.corxy <- c('pf21', p.corxy)   # add exog cor
+    p.corxy <- c('pf0201', p.corxy)   # add exog cor
     tok <- paste0(p.corxy[nullWhich], ' == 0')
     modelAna <- paste(modelAna, tok, sep = '\n')
   } 
