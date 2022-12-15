@@ -140,6 +140,7 @@ semPower.genSigma <- function(Lambda = NULL,
   nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
   
   ### validate input
+  if(ncol(Lambda) > 99) stop("Models with >= 100 factors are not supported.")
   if(!is.null(Beta) && !is.null(Phi)) stop('Either provide Phi or Beta, but not both. Did you mean to set Beta and Psi?')
   if(is.null(Beta) && is.null(Phi)) Phi <- diag(nfac)
   if(is.null(Beta)){
@@ -324,7 +325,7 @@ genModelString <- function(Lambda = NULL,
     if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
     if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
     if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metriInvariance must have the same number of indicators')
-    metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', x, 1:nIndicator[metricInvariance[[x]][1]], '*')) 
+    metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', formatC(x, width = 2, flag = 0), formatC(1:nIndicator[metricInvariance[[x]][1]], width = 2, flag = 0), '*')) 
   }
   
   # remove names if set. we currently don't support labels anyway
@@ -394,7 +395,7 @@ genModelString <- function(Lambda = NULL,
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
     if(!identical(iIdx, integer(0))){
-      # add invariance constrains
+      # add invariance constraints
       if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
         labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
         clabel <- metricInvarianceLabels[[labelIdx]]
