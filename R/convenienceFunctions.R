@@ -50,7 +50,7 @@
 semPower.powerLav <- function(type, 
                               modelPop = NULL, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
                               Sigma = NULL, mu = NULL, ...){
-
+  
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
   # validate input
@@ -86,7 +86,7 @@ semPower.powerLav <- function(type,
   }else if (!is.null(modelH1) && !fitH1model){
     df <- 1 # overwrite df
   }
-
+  
   # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
   # but delta f for the comparison with an explicit h1 model.
   if(is.null(modelH1) || !fitH1model){
@@ -101,7 +101,7 @@ semPower.powerLav <- function(type,
                       df = df, 
                       ...)    
   }
-
+  
   list(power = power, 
        SigmaHat = SigmaHat, Sigma = Sigma,
        muHat = muHat, mu = mu,
@@ -134,7 +134,7 @@ semPower.powerLav <- function(type,
 #'
 #' # same as above, but compare to the saturated model 
 #' # (rather than to the less restricted model)
-#' #' cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
+#' cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
 #'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  alpha = .05, beta = .05)
@@ -167,7 +167,7 @@ semPower.powerLav <- function(type,
 #'
 #' cfapower <- semPower.powerCFA(type = 'post-hoc',
 #'                               nullWhich = c(1, 2), 
-#'                               Phi = phi, loadings = loadings,
+#'                               Phi = Phi, loadings = loadings,
 #'                               alpha = .05, N = 250)
 #' 
 #' }
@@ -177,7 +177,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
                               Phi = NULL,
                               nullEffect = 'cor = 0',
                               nullWhich = NULL, ...){
-
+  
   # validate input
   comparison <- checkComparisonModel(comparison)
   if(is.null(Phi)) stop('Phi must be defined')
@@ -189,14 +189,14 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   
   # generate sigma 
   generated <- semPower.genSigma(Phi = Phi, ...)
-
+  
   ### now do validation of nullWhich, since we now know Phi
   if(is.null(nullWhich) && ncol(generated$Phi) == 2) nullWhich <- c(1, 2)
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
   if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
   if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
-  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated$Phi) | x[2] > ncol(generated$Phi)))))) stop('At least on element in nullWhich is an out of bounds index concerning Phi.')
+  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated$Phi) | x[2] > ncol(generated$Phi)))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
   if(length(nullWhich) > 1){
     for(i in 1:(length(nullWhich) - 1)){
       for(j in (i + 1):length(nullWhich)){
@@ -204,7 +204,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
       }
     }
   }
-
+  
   ### ana model 
   if(nullEffect == 'cor=0'){
     modelAna <- paste(c(
@@ -215,7 +215,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     labs <- list()
     tok <- ''
     for(i in 1:length(nullWhich)){
-      cl <- paste0('pf',paste0(nullWhich[[i]], collapse = ''))
+      cl <- paste0('pf',paste0(formatC(nullWhich[[i]], width = 2, flag = 0), collapse = ''))
       tok <- paste(tok, paste0('f', nullWhich[[i]][1], ' ~~ ', cl, '*f', nullWhich[[i]][2]), sep = '\n')
       labs <- append(labs, cl)
     }
@@ -235,7 +235,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   # because resulting deltadf is  > 1
   modelH1 <- NULL
   if(comparison == 'restricted') modelH1 <- generated$modelTrueCFA
-
+  
   lavpower <- semPower.powerLav(type = type,
                                 modelPop = generated$modelPop,
                                 modelH0 = modelAna,
@@ -262,7 +262,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' @examples
 #' \dontrun{
 #' # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
-#' # request power for the hypothesis that the slope of X1 ist zero. 
+#' # request power for the hypothesis that the slope of X1 is zero. 
 #' # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
 #' regPower <- semPower.powerRegression(type = 'a-priori',
 #'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
@@ -286,7 +286,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' ), ncol = 3,byrow = TRUE)
 #' regPower <- semPower.powerRegression(type = 'a-priori',
 #'                                      slopes = c(.2, .3, .4), corXX = corXX, 
-#'                                      nullWhich = 1
+#'                                      nullWhich = 1,
 #'                                      nIndicator = c(4, 3, 5, 4),
 #'                                      loadM = c(.5, .5, .6, .7),
 #'                                      alpha = .05, beta = .05)
@@ -340,13 +340,13 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   } 
   checkPositiveDefinite(corXX)
   if(ncol(corXX) != nrow(slopes)) stop('Dimension of corXX does not match number of predictors.')
-
+  
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
   if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez'))))) stop('nullEffect must be either slope=0 or slopex=slopez')
-
+  
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
   if(any(nullWhich < 1) || any(nullWhich > nrow(slopes))) stop('nullWhich is invalid.')
   if(nullEffect == 'slopex=slopez'){
@@ -355,7 +355,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
     if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0')
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
-
+  
   # calc implied sigma. we do this here, because this is a special case and simpler than defining B and calling getPhi.B  
   corXY <- (corXX %*% slopes)
   Phi <- t(c(1, corXY))
@@ -366,7 +366,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   ### create ana model string
   # add regressions 
   model <- paste(generated$modelTrueCFA, 
-                 paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = '+')), 
+                 paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = ' + ')), 
                  sep = '\n')
   modelTrue <- model
   
@@ -439,7 +439,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                 c(0.0, 0.5, 0.0),
 #'                 c(0.0, 0.0, 0.5),
 #'                 c(0.0, 0.0, 0.4),
-#'                 c(0.0, 0.0, 0.6),
+#'                 c(0.0, 0.0, 0.6)
 #'                ), byrow = TRUE, ncol = 3)
 #' medPower <- semPower.powerMediation(type = 'a-priori', 
 #'                                     bYX = .25, bMX = .3, bYM = .4,
@@ -537,12 +537,12 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   for(f in 1:ncol(B)){
     fidx <- which(B[f, ] != 0)
     if(length(fidx) != 0){
-      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(f, fidx), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
+      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
     }
   }
   # add indirect effects
-  ind <- unlist(lapply(indirect, function(x) paste0('pf', paste0(x, collapse = ''))))
+  ind <- unlist(lapply(indirect, function(x) paste0('pf', paste0(formatC(x, width = 2, flag = 0), collapse = ''))))
   modelTrue <- paste(model, '\n', 'ind := ', paste(ind, collapse = '*'))
   
   # lav doesn't like constraining the indirect effect to zero. 
@@ -550,11 +550,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # actually gives power for a single slope. however, this seems to closely reflect
   # power for the indirect effect (and indeed works much better than using ind=0 as 
   # comparison model, which grossly overestimates the true effect)
-  #modelAna <- paste(modelTrue, '\n', 'ind == 0')  
+  # modelAna <- paste(modelTrue, '\n', 'ind == 0')  
   cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[x[1], x[2]])))]]
-  mb <- paste0('pf', paste(cs, collapse = ''))
+  mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
   modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
-
+  
   # set modelH1 just to determine delta df, but don't actually fit modelH1
   modelH1 <- NULL
   if(comparison == 'restricted') modelH1 <- modelTrue
@@ -620,12 +620,12 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   invisible(lapply(stabilities, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
   if(length(stabilities) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('stabilities and crossedEffects must be of length nWaves - 1 or be of length 2.')
-
+  
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
     if(any(unlist(lapply(waveEqual, function(x) !x %in% c('stabx', 'staby', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain stabX, stabY, crossedX, crossedY, corXY')
   }
-
+  
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
   # we do not allow stacking of hypotheses. there might be a use case for this,
   # but this would complicate defining the relevant parameter when these vary across waves. 
@@ -695,7 +695,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### create ana model string
   model <- generated$modelTrueCFA
-   
+  
   # add CLPM structure 
   for(f in 3:ncol(B)){     # omit rows 1:2
     fidx <- which(B[f, ] != 0)
@@ -710,7 +710,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(formatC(2*i, width = 2, flag = 0), formatC(2*i - 1, width = 2, flag = 0)), '*'), 'f', 2*i)
     model <- paste(model, tok, sep='\n')
   }
-
+  
   ### define H1 and ana model
   # first get constraints that may be part of either model
   tok.stabx <- tok.staby <- tok.crossedx <- tok.crossedy <- tok.corxy <- ''
