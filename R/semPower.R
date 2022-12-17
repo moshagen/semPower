@@ -38,5 +38,4 @@ semPower  <- function(type, ...){
            semPower.compromise(...)
          }
          )
-
 }
