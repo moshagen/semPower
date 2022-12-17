@@ -83,7 +83,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
   # determine max/min chi for valid alpha/beta prob
   max <- min <- NA
-  # central chi always gives reusult up to 1e-320
+  # central chi always gives result up to 1e-320
   max <- qchisq(log(1e-320), df, lower.tail = FALSE, log.p = TRUE)
 
   # non-central chi accuracy is usually lower, depending on df and ncp
@@ -96,7 +96,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     pmin <- pchisq(min, df, ncp, log.p = TRUE) # beta
   }
 
-  # cannot determine critchi when implied errors are too small
+  # cannot determine critChi when implied errors are too small
   bPrecisionWarning <- (min > max)
 
   if(!bPrecisionWarning){
@@ -156,7 +156,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
 #' getErrorDiff
 #'
-#' determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
+#' Determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
 #'
 #' @param critChiSquare evaluated chi-squared value
 #' @param df the model degrees of freedom
@@ -171,7 +171,7 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 
   if(is.infinite(beta) || is.infinite(alpha)){
 
-    warning('alpha or beta is too small')
+    warning('Alpha or beta are too small.')
     diff <- 0
 
   }else{
