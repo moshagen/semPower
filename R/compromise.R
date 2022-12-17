@@ -26,55 +26,18 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  N, df, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                                  ...){
+  
+  # validate input and do some preparations
+  pp <- powerPrepare('compromise', effect = effect, effect.measure = effect.measure,
+                     alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
+                     N = N, df = df, p = p,
+                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
 
-  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+  df <- pp$df
   
-  # convert vectors to lists
-  if(!is.list(N) && length(N) > 1) N <- as.list(N) 
+  fit <- getIndices.F(pp$fmin, df, pp$p, SigmaHat, Sigma, muHat, mu, pp$N)
   
-  validateInput('compromise', effect = effect, effect.measure = effect.measure,
-                alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
-                N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
-
-
-  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
-    effect.measure <- 'F0'
-    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
-  }
-
-  # make sure N/effects have the same length
-  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
-    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
-  }
-  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
-    effect <- as.list(rep(effect, length(N)))
-  }
-  
-  if(!is.null(effect)){
-    if(is.list(effect) || length(effect) == 1){
-      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
-    }else{
-      # power for effect differences
-      f1 <- getF(effect[1], effect.measure, df[1], p)
-      f2 <- getF(effect[2], effect.measure, df[2], p)
-      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
-      fmin.g <- rep(fdiff, length(N)) 
-      df <- abs(df[2] - df[1]) # let's make order arbitrary  
-    }
-  }
-  if(!is.null(SigmaHat)){
-    if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
-    }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
-    }
-  }
-  
-  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, N)
-  
-  ncp <- getNCP(fmin.g, N)
+  ncp <- getNCP(pp$fmin.g, pp$N)
   log.abratio <- log(abratio)
 
   if(ncp >= 1e5)
@@ -131,12 +94,12 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     impliedAbratio = impliedAbratio,
     impliedPower = impliedPower,
     ncp = ncp,
-    fmin = fmin,
-    effect = effect,
-    effect.measure = effect.measure,
-    N = N,
+    fmin = pp$fmin,
+    effect = pp$effect,
+    effect.measure = pp$effect.measure,
+    N = pp$N,
     df = df,
-    p = p,
+    p = pp$p,
     rmsea = fit$rmsea,
     mc = fit$mc,
     gfi = fit$gfi,

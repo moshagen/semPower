@@ -1,10 +1,96 @@
-
-##########################  do input validation  #####################
+#' powerPrepare
+#'
+#' do some preparations common to all types of power analyses
+#'
+#' @param type type of power analysis
+#' @param effect effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)
+#' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
+#' @param alpha alpha error
+#' @param beta beta error; set either beta or power
+#' @param power power (1-beta); set either beta or power
+#' @param abratio the ratio of alpha to beta
+#' @param N the number of observations (a list for multiple group models)
+#' @param df the model degrees of freedom 
+#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
+#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure. 
+#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
+#' @param muHat model implied mean vector
+#' @param mu observed (or population) mean vector
+#' @return list
+powerPrepare <- function(type = NULL, 
+                         effect = NULL, effect.measure = NULL,
+                         alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
+                         N = NULL, df = NULL, p = NULL,
+                         SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+  
+  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+  
+  # convert vectors to lists
+  if(!is.list(N) && length(N) > 1) N <- as.list(N)
+  
+  validateInput(type, effect = effect, effect.measure = effect.measure,
+                alpha = alpha, beta = beta, power = power, abratio = abratio,
+                N = N, df = df, p = p,
+                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+  
+  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
+    effect.measure <- 'F0'
+    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
+  }
+  
+  # make sure N/effects have the same length
+  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
+    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  }
+  if(type == 'a-priori'){
+    if(!is.null(SigmaHat) && !is.list(SigmaHat)){
+      N <- 1 # single weight for single group model
+    }else if(length(effect) == 1 || (length(effect) == 2 && is.null(N))){
+      N <- 1 # single weight for single group model
+    }
+  }
+  
+  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
+    effect <- as.list(rep(effect, length(N)))
+  }
+  
+  if(!is.null(effect)){
+    if(is.list(effect) || length(effect) == 1){
+      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
+    }else{
+      # power for effect differences
+      f1 <- getF(effect[1], effect.measure, df[1], p)
+      f2 <- getF(effect[2], effect.measure, df[2], p)
+      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
+      fmin.g <- rep(fdiff, length(N)) 
+      df <- abs(df[2] - df[1]) # let's make order arbitrary  
+    }
+  }
+  
+  if(!is.null(SigmaHat)){
+    if(is.list(Sigma)){
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
+    }else{
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
+    }
+  }
+  
+  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
+  
+  list(
+    effect.measure = effect.measure,
+    N = N,
+    p = p,
+    effect = effect,
+    fmin = fmin,
+    fmin.g = fmin.g,
+    df = df
+  )
+}
 
 #' validateInput
 #'
-#' Validates input for power calcuation function
-#'
+#' Validates input for power functions
 #'
 #' @param power.type type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"
 #' @param effect effect size specifying the discrepancy between H0 and H1

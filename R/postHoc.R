@@ -31,55 +31,18 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                              ...){
 
-  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+  # validate input and do some preparations
+  pp <- powerPrepare(type = 'post-hoc', 
+                     effect = effect, effect.measure = effect.measure,
+                     alpha = alpha, beta = NULL, power = NULL, abratio = NULL,
+                     N = N, df = df, p = p,
+                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
   
-  # convert vectors to lists
-  if(!is.list(N) && length(N) > 1) N <- as.list(N)
-  
-  validateInput('post-hoc', effect = effect, effect.measure = effect.measure,
-                alpha = alpha, beta = NULL, power = NULL, abratio = NULL,
-                N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+  fit <- getIndices.F(pp$fmin, pp$df, pp$p, SigmaHat, Sigma, muHat, mu, pp$N)
+  ncp <- getNCP(pp$fmin.g, pp$N)
 
-  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
-    effect.measure <- 'F0'
-    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
-  }
-  
-  # make sure N/effects have the same length
-  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
-    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
-  }
-  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
-    effect <- as.list(rep(effect, length(N)))
-  }
-
-  if(!is.null(effect)){
-    if(is.list(effect) || length(effect) == 1){
-      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
-    }else{
-      # power for effect differences
-      f1 <- getF(effect[1], effect.measure, df[1], p)
-      f2 <- getF(effect[2], effect.measure, df[2], p)
-      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
-      fmin.g <- rep(fdiff, length(N)) 
-      df <- abs(df[2] - df[1]) # let's make order arbitrary  
-    }
-  }
-  if(!is.null(SigmaHat)){
-    if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
-    }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
-    }
-  }
-
-  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, N)
-  ncp <- getNCP(fmin.g, N)
-
-  beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
-  power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp, lower.tail = FALSE)
+  beta <- pchisq(qchisq(alpha, pp$df, lower.tail = FALSE), pp$df, ncp = ncp)
+  power <- pchisq(qchisq(alpha, pp$df, lower.tail = FALSE), pp$df, ncp = ncp, lower.tail = FALSE)
   impliedAbratio <- alpha / beta
 
 
@@ -90,12 +53,12 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     power = power,
     impliedAbratio = impliedAbratio,
     ncp = ncp,
-    fmin = fmin,
-    effect = effect,
-    effect.measure = effect.measure,
-    N = N,
-    df = df,
-    p = p,
+    fmin = pp$fmin,
+    effect = pp$effect,
+    effect.measure = pp$effect.measure,
+    N = pp$N,
+    df = pp$df,
+    p = pp$p,
     chiCrit = qchisq(alpha, df, ncp = 0, lower.tail = FALSE),
     rmsea = fit$rmsea,
     mc = fit$mc,

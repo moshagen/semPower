@@ -36,55 +36,17 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                              ...){
 
-  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+  # validate input and do some preparations
+  pp <- powerPrepare('a-priori', effect = effect, effect.measure = effect.measure,
+                     alpha = alpha, beta = beta, power = power, abratio = NULL,
+                     N = N, df = df, p = p,
+                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
 
-  # convert vectors to lists
-  if(!is.list(N) && length(N) > 1) N <- as.list(N)  # sample weights
-  
-  validateInput('a-priori', effect = effect, effect.measure = effect.measure,
-                alpha = alpha, beta = beta, power = power, abratio = NULL,
-                N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+  N <- pp$N
+  fmin <- pp$fmin
+  fmin.g <- pp$fmin.g
+  df <- pp$df
 
-  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
-    effect.measure <- 'F0'
-    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
-  }
-  
-  # make sure N/effects have the same length
-  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
-    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
-  }else if(!is.null(SigmaHat) && !is.list(SigmaHat)){
-    N <- 1 # single weight for single group model
-  }else if(length(effect) == 1 || (length(effect) == 2 && is.null(N))){
-    N <- 1 # single weight for single group model
-  }
-  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
-    effect <- as.list(rep(effect, length(N)))
-  }
-
-  if(!is.null(effect)){
-    if(is.list(effect) || length(effect) == 1){
-      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
-    }else{
-      # power for effect differences
-      f1 <- getF(effect[1], effect.measure, df[1], p)
-      f2 <- getF(effect[2], effect.measure, df[2], p)
-      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
-      fmin.g <- rep(fdiff, length(N)) 
-      df <- abs(df[2] - df[1]) # let's make order arbitrary  
-    }
-  }
-  if(!is.null(SigmaHat)){
-    if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]]) })
-    }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
-    }
-  }
-  
-  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
-  
   if(!is.null(beta)){
     desiredBeta <- beta
     desiredPower <- 1 - desiredBeta
@@ -146,12 +108,12 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     impliedAbratio = impliedAbratio,
     impliedNCP = impliedNCP,
     fmin = fmin,
-    effect = effect,
-    effect.measure = effect.measure,
+    effect = pp$effect,
+    effect.measure = pp$effect.measure,
     requiredN = requiredN,
     requiredN.g = requiredN.g,
     df = df,
-    p = p,
+    p = pp$p,
     chiCrit = critChi,
     rmsea = fit$rmsea,
     mc = fit$mc,
