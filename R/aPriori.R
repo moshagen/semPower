@@ -96,7 +96,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
 
   # make a reasonable guess about required sample size
-  exponent <- -floor(log10(fmin))+1
+  exponent <- -floor(log10(fmin)) + 1
   startN <- 5*10^(exponent)
 
   bPrecisionWarning <- (startN < 5)  # skip estm for N < 5, but take N = 10 as effective minimum 
