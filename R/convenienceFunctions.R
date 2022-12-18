@@ -9,7 +9,7 @@
 #' @param modelPop lavaan model string defining the true model.
 #' @param modelH0 lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param fitH1model whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and the delta df are set to 1.
+#' @param fitH1model whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param Sigma population covariance matrix (if modelPop is not set).
 #' @param mu population means (if modelPop is not set).
 #' @param ... other parameters related to the specific type of power analysis requested
@@ -84,7 +84,7 @@ semPower.powerLav <- function(type,
     deltaF <- fminH0 - fminH1
     df <- (dfH0 - dfH1)
   }else if (!is.null(modelH1) && !fitH1model){
-    df <- 1 # overwrite df
+    df <- df - semPower.getDf(modelH1)
   }
   
   # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
@@ -207,7 +207,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   
   ### ana model 
   if(nullEffect == 'cor=0'){
-    modelAna <- paste(c(
+    modelH0 <- paste(c(
       generated$modelTrueCFA,
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
       collapse = '\n')
@@ -225,22 +225,24 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
         tok <- paste(tok, paste(labs[i], ' == ', labs[j]), sep = '\n')
       }
     }
-    modelAna <- paste(c(
+    modelH0 <- paste(c(
       generated$modelTrueCFA,
       tok),
       collapse = '\n')
   }
   
-  # we need to fit modelH1 in case of length(nullWhich) > 1, 
-  # because resulting deltadf is  > 1
   modelH1 <- NULL
-  if(comparison == 'restricted') modelH1 <- generated$modelTrueCFA
+  if(comparison == 'restricted'){
+    # h1 model always fits perfectly, only needed for delta df
+    modelH1 <- generated$modelTrueCFA
+    fitH1model <- FALSE 
+  } 
   
   lavpower <- semPower.powerLav(type = type,
                                 modelPop = generated$modelPop,
-                                modelH0 = modelAna,
+                                modelH0 = modelH0,
                                 modelH1 = modelH1,
-                                fitH1model = (is.null(modelH1) | (!is.null(modelH1) & length(nullWhich) > 1)),
+                                fitH1model = fitH1model,
                                 ...)
   
   append(lavpower, generated)
@@ -377,21 +379,23 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
         tok <- paste(tok, paste0('pf', nullWhich[i], ' == ', 'pf', nullWhich[j]), sep = '\n')
       }
     }
-    modelAna <- paste(model, '\n', tok)  
+    modelH0 <- paste(model, '\n', tok)  
   }else{
-    modelAna <- paste(model, '\n', paste0('pf', nullWhich,' == 0'))  
+    modelH0 <- paste(model, '\n', paste0('pf', nullWhich,' == 0'))  
   }
   
-  # we need to fit modelH1 in case of length(nullWhich) > 1, 
-  # because resulting deltadf is  > 1
   modelH1 <- NULL
-  if(comparison == 'restricted') modelH1 <- modelTrue
+  if(comparison == 'restricted'){
+    # h1 model always fits perfectly, only needed for delta df
+    modelH1 <- modelTrue
+    fitH1model <- FALSE 
+  } 
   
   semPower.powerLav(type, 
-                    modelH0 = modelAna, 
+                    modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     Sigma = Sigma, 
-                    fitH1model = (is.null(modelH1) | (!is.null(modelH1) & length(nullWhich) > 1)),
+                    fitH1model = fitH1model,
                     ...)
 }
 
@@ -553,17 +557,20 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # modelAna <- paste(modelTrue, '\n', 'ind == 0')  
   cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[x[1], x[2]])))]]
   mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
-  modelAna <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
+  modelH0 <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
   
-  # set modelH1 just to determine delta df, but don't actually fit modelH1
   modelH1 <- NULL
-  if(comparison == 'restricted') modelH1 <- modelTrue
+  if(comparison == 'restricted'){
+    # h1 model always fits perfectly, only needed for delta df
+    modelH1 <- modelTrue
+    fitH1model <- FALSE 
+  } 
   
   semPower.powerLav(type, 
-                    modelH0 = modelAna, 
+                    modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     Sigma = Sigma, 
-                    fitH1model = is.null(modelH1),
+                    fitH1model = fitH1model,
                     ...)
 }
 
