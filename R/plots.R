@@ -36,7 +36,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   lines(x, xncchi, lty = 2, lwd = linewidth, col = 'blue')
   
   # add critical value
-  abline(v=chiCrit,col = 1, lty = 3, lwd = 1)
+  abline(v = chiCrit, col = 1, lty = 3, lwd = 1)
 
   # shade alpha error
   color <- rgb(255, 0, 0, alpha = 70, maxColorValue = 255)
@@ -52,6 +52,12 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   i <- x >= lb & x <= ub
   polygon(c(lb, x[i], ub), c(0, xncchi[i], 0), col = color, border = NA)
   
+  # add labels
+  text(expression(paste("Central ", chi^2)), x = df, y = max(xchi), pos = 4, cex = .8, col = 'red')
+  text(expression(paste("Non-Central ", chi^2)), x = (df + ncp), y = .9*max(xncchi), pos = 4, cex = .8, col = 'blue')
+  text(expression(paste("Critical ", chi^2)), x = chiCrit, y = .8*max(xchi), pos = 4, cex = .8)
+  text(expression(paste(alpha, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 4, cex = .8, col = 'red')
+  text(expression(paste(beta, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 2, cex = .8, col = 'blue')
 }
 
 
