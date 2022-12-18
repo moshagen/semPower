@@ -13,6 +13,7 @@
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis. Not supported for compromise power analysis.
 #' @return list
 #' @examples
 #' \dontrun{
@@ -23,15 +24,18 @@
 #' @export
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
-                                 N, df, p = NULL,
+                                 N, df = NULL, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
-                                 ...){
-  
+                                 simulatedPower = FALSE, ...){
+
+  if(simulatedPower) stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
+
   # validate input and do some preparations
   pp <- powerPrepare('compromise', effect = effect, effect.measure = effect.measure,
                      alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                      N = N, df = df, p = p,
-                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu, 
+                     simulatedPower = simulatedPower)
 
   df <- pp$df
   

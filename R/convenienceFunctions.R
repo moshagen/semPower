@@ -12,6 +12,7 @@
 #' @param fitH1model whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param Sigma population covariance matrix (if modelPop is not set).
 #' @param mu population means (if modelPop is not set).
+#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param ... other parameters related to the specific type of power analysis requested
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, as well as various lavaan model strings
 #' @examples
@@ -49,7 +50,8 @@
 #' @export
 semPower.powerLav <- function(type, 
                               modelPop = NULL, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
-                              Sigma = NULL, mu = NULL, ...){
+                              Sigma = NULL, mu = NULL, 
+                              simulatedPower = FALSE, ...){
   
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
@@ -58,50 +60,63 @@ semPower.powerLav <- function(type,
   if(is.null(modelH0)) stop('Provide a lavaan model string defining the analysis (H0) model.')
   if(is.null(modelPop) && is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
   if(!is.null(modelPop) && !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
-  
+  if(simulatedPower && type == 'compromise') stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
+
   # determine population Sigma / mu
   if(is.null(Sigma)){
     Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
     mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
   }
   
-  # get H0 sigmaHat / muHat
-  modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-  if(!modelH0Fit@optim$converged) stop('The H0 model did not converge.')
-  SigmaHat <- lavaan::fitted(modelH0Fit)$cov
-  muHat <- lavaan::fitted(modelH0Fit)$mean
-  df <- dfH0 <- modelH0Fit@test$standard$df
-  
-  # get H1 comparison model and deltaF
-  if(!is.null(modelH1) && fitH1model){
-    modelH1Fit <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-    if(!modelH1Fit@optim$converged) stop('The H1 model did not converge.')
-    dfH1 <- modelH1Fit@test$standard$df
-    if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
-    # get delta F
-    fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)$cov, Sigma, lavaan::fitted(modelH1Fit)$mean, mu)
-    fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)$cov, Sigma, lavaan::fitted(modelH0Fit)$mean, mu)
-    deltaF <- fminH0 - fminH1
-    df <- (dfH0 - dfH1)
-  }else if (!is.null(modelH1) && !fitH1model){
-    df <- df - semPower.getDf(modelH1)
-  }
-  
-  # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
-  # but delta f for the comparison with an explicit h1 model.
-  if(is.null(modelH1) || !fitH1model){
-    power <- semPower(type = type, 
-                      SigmaHat = SigmaHat, Sigma = Sigma, 
-                      muHat = muHat, mu = mu, 
-                      df = df, 
-                      ...)    
+  # analytical power
+  if(!simulatedPower){
+    
+    # get H0 sigmaHat / muHat
+    modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+    if(!modelH0Fit@optim$converged) stop('The H0 model did not converge.')
+    SigmaHat <- lavaan::fitted(modelH0Fit)$cov
+    muHat <- lavaan::fitted(modelH0Fit)$mean
+    df <- dfH0 <- modelH0Fit@test$standard$df
+    
+    # get H1 comparison model and deltaF
+    if(!is.null(modelH1) && fitH1model){
+      modelH1Fit <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+      if(!modelH1Fit@optim$converged) stop('The H1 model did not converge.')
+      dfH1 <- modelH1Fit@test$standard$df
+      if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
+      # get delta F
+      fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)$cov, Sigma, lavaan::fitted(modelH1Fit)$mean, mu)
+      fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)$cov, Sigma, lavaan::fitted(modelH0Fit)$mean, mu)
+      deltaF <- fminH0 - fminH1
+      df <- (dfH0 - dfH1)
+    }else if (!is.null(modelH1) && !fitH1model){
+      df <- df - semPower.getDf(modelH1)
+    }
+
+    # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
+    # but delta f for the comparison with an explicit h1 model.
+    if(is.null(modelH1) || !fitH1model){
+      power <- semPower(type = type, 
+                        SigmaHat = SigmaHat, Sigma = Sigma, 
+                        muHat = muHat, mu = mu, 
+                        df = df, 
+                        ...)    
+    }else{
+      power <- semPower(type = type, 
+                        effect = deltaF, effect.measure = "F0", 
+                        df = df, 
+                        ...)    
+    }    
+        
+  # simulated power
   }else{
     power <- semPower(type = type, 
-                      effect = deltaF, effect.measure = "F0", 
-                      df = df, 
-                      ...)    
+                      Sigma = Sigma, mu = mu, 
+                      modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+                      simulatedPower = simulatedPower, ...)
+    SigmaHat <- muHat <- NULL
   }
-  
+
   list(power = power, 
        SigmaHat = SigmaHat, Sigma = Sigma,
        muHat = muHat, mu = mu,

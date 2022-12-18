@@ -1285,6 +1285,72 @@ test_powerCLPM <- function(){
   }
 }
 
+test_simulatePower <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_simulatePower: NOT TESTED')
+    return()
+  }
+
+  # TODO snippets
+  # ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+  #                         nullEffect = 'cor=0',
+  #                         nullWhich = c(1, 2),
+  #                         Phi = .3, nIndicator = c(3, 3), loadM = .5,
+  #                         alpha = .05, N = 100)
+  # 
+  # 
+  # ph2 <- semPower.powerLav('post-hoc', alpha = .05, N = 500,
+  #                          modelH0 = modelH0, Sigma = Sigma,
+  #                          nReplications = 50, minConvergenceRate = 1,
+  #                          simulatedPower = T)
+  # summary(ph2$power)
+  # ph <- semPower.postHoc(alpha = .05, N = 500,
+  #                        modelH0 = modelH0, Sigma = Sigma,
+  #                        nReplications = 10,
+  #                        simulatedPower = T)
+  # summary(ph)
+  # 
+  # ph2 <- semPower.powerLav('post-hoc', comparison = 'saturated',
+  #                          alpha = .05, N = 500,
+  #                          modelH0 = modelH0, Sigma = Sigma,
+  #                          simulatedPower = F)
+  # 
+  # modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.nobs = 500, likelihood = 'wishart', sample.cov.rescale = FALSE)
+  # SigmaHat <- lavaan::fitted(modelH0Fit)$cov
+  # ph3 <- semPower.postHoc(alpha = .05, N = 500, df = ph$df,
+  #                         SigmaHat = SigmaHat, Sigma = Sigma,
+  #                         simulatedPower = F)
+  # 
+  # ph3$power
+  # ph3$fmin
+  # 
+  # ph2$power$fmin 
+  # ph2$power$power
+  # 
+  # ph$fmin
+  # ph$power
+  # 
+
+  # ap <- semPower.powerLav('ap', alpha = .05, power = .8, 
+  #                         Sigma = Sigma, modelH0 = modelH0)
+  # 
+  # ap$power$df
+  # ap$power$requiredN
+  # 
+  # sap <- semPower.aPriori(alpha = .05, power = .85, df = df,
+  #                         Sigma = Sigma, modelH0 = modelH0,
+  #                         nReplications = 100, simulatedPower = T)
+  # summary(sap)
+  # sap$requiredN
+  
+    
+  if(valid){
+    print('test_simulatePower: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 test_all <- function(){
   test_powerConsistency()  
   test_effectSizeConsistency()
@@ -1299,6 +1365,7 @@ test_all <- function(){
   test_powerRegression()
   test_powerMediation()
   test_powerCLPM()
+  test_simulatePower(doTest = FALSE)
 }
 
 test_all()

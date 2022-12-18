@@ -16,12 +16,19 @@
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
+#' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
+#' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param fitH1model for simulated power: whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @return list
 powerPrepare <- function(type = NULL, 
                          effect = NULL, effect.measure = NULL,
                          alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                          N = NULL, df = NULL, p = NULL,
-                         SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+                         SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                         simulatedPower = FALSE, 
+                         modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
+                         nReplications = NULL, minConvergenceRate = NULL, lavOptions = NULL){
   
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
@@ -31,26 +38,28 @@ powerPrepare <- function(type = NULL,
   validateInput(type, effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = beta, power = power, abratio = abratio,
                 N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
+                simulatedPower = simulatedPower, 
+                modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model)
   
-  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
+  if(!is.null(Sigma)){
     effect.measure <- 'F0'
-    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
+    p <- ifelse(is.list(Sigma), ncol(Sigma[[1]]), ncol(Sigma))
   }
   
   # make sure N/effects have the same length
-  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
-    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
+  if((is.list(effect) || is.list(Sigma)) && length(N) == 1){
+    N <- as.list(rep(N, ifelse(is.null(Sigma), length(effect), length(Sigma))))
   }
   if(type == 'a-priori'){
-    if(!is.null(SigmaHat) && !is.list(SigmaHat)){
+    if(!is.null(Sigma) && !is.list(Sigma)){
       N <- 1 # single weight for single group model
     }else if(length(effect) == 1 || (length(effect) == 2 && is.null(N))){
       N <- 1 # single weight for single group model
     }
   }
   
-  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
+  if(is.null(Sigma) && is.list(N) && length(effect) == 1){
     effect <- as.list(rep(effect, length(N)))
   }
   
@@ -75,7 +84,29 @@ powerPrepare <- function(type = NULL,
     }
   }
   
-  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
+  if(!simulatedPower){
+    fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
+  }else{
+    fmin <- fmin.g <- NULL
+  }
+  
+  if(simulatedPower){
+    if(nReplications < 100) warning("Empirical power estimate with < 100 replications will be unreliable.")
+    if(minConvergenceRate < .25) warning("Empirical power estimate allowing a low convergence rate might be unreliable.")
+    
+    # TODO make this more meaningful
+    # warn in case of long computation times
+    lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
+    projectedLong <- ncol(Sigma) > 100 || nReplications > 1000 || (!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% lavEstimators)
+    if(projectedLong){
+      mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want this?")
+      if(mResp == 2){
+        stop("Simulated power aborted")
+      }else{
+        cat("You have been warned.\n")
+      }
+    }
+  }
   
   list(
     effect.measure = effect.measure,
@@ -106,6 +137,10 @@ powerPrepare <- function(type = NULL,
 #' @param Sigma population covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
+#' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
+#' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param fitH1model for simulated power: whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param power.min for plotting: minimum power
 #' @param power.max for plotting: maximum power
 #' @param effect.min for plotting: minimum effect
@@ -116,6 +151,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
                           SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                          simulatedPower = FALSE, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
@@ -130,124 +166,158 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if(is.list(muHat) && length(muHat) == 1) muHat <- unlist(muHat)
   if(is.list(mu) && length(mu) == 1) mu <- unlist(mu)
   
-  # do input validation
-  if(is.null(SigmaHat) && is.null(Sigma)){
-
-    if(!effect.measure %in% known.effects.measures){
-      stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
-    }
+  if(!simulatedPower){
     
-    # for effect-size differences, check matching length
-    if(!is.null(effect) && !is.list(effect)){
-      if(length(effect) > 2){
-        stop("Power analyses with multiple groups requires specification of the effect size in each group provided as a list.")
-      }else{
-        if(length(effect) == 2 && length(df) != 2){
-          stop("Power analyses for effect size differences requires specification of the df of the model pairs.")
+    if(is.null(df)) stop("df must be defined")
+    lapply(df, checkPositive, message = 'df')
+    
+    # generic power analyses
+    if(is.null(SigmaHat) && is.null(Sigma)){
+  
+      if(!effect.measure %in% known.effects.measures){
+        stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
+      }
+      
+      # for effect-size differences, check matching length
+      if(!is.null(effect) && !is.list(effect)){
+        if(length(effect) > 2){
+          stop("Power analyses with multiple groups requires specification of the effect size in each group provided as a list.")
+        }else{
+          if(length(effect) == 2 && length(df) != 2){
+            stop("Power analyses for effect size differences requires specification of the df of the model pairs.")
+          }
         }
       }
+  
+      # for multiple group analyses, check matching length
+      if(is.list(N)){
+        if(is.list(effect) && length(effect) == 1){
+          warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
+        }else if(is.list(effect) && length(N) != length(effect)){
+          stop("Power analyses with multiple groups requires specification of the effect size in each group.")
+        }
+      }
+      if(is.list(effect) && power.type == "a-priori"){   # special messages for a priori, given weights need to be provided 
+        if(is.null(N) || length(N) == 1){
+          warning("No or only a single sample weight provided in multiple group power analyses, assuming equal weights.")        
+        }else if(!is.null(N) && length(N) != length(effect)){
+          stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")      
+        } 
+      }
+      if(is.list(effect) && (power.type == "post-hoc" || power.type == "compromise")){
+        if(!is.null(N) && length(N) == 1){
+          warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group.")
+        }else if(!is.null(N) && length(N) != length(effect)){
+          stop("Power analyses with multiple groups requires specification of sample sizes for each group")        
+        }
+      }
+      
+      if(power.type != 'powerplot.byEffect'){
+        if(is.null(effect)) stop('Effect is not defined.')
+        lapply(effect, checkPositive, message = effect.measure)
+      }
+  
+      if(effect.measure == "GFI" || effect.measure == "AGFI"){
+        if(is.null(p)){
+          stop("effect.measure GFI and AGFI require specification of p")
+        }
+        checkPositive(p)
+      }
     }
 
-    # for multiple group analyses, check matching length
-    if(is.list(N)){
-      if(is.list(effect) && length(effect) == 1){
-        warning("Only single effect size provided in multiple group power analyses, assuming equal effects in each group.")
-      }else if(is.list(effect) && length(N) != length(effect)){
-        stop("Power analyses with multiple groups requires specification of the effect size in each group.")
-      }
+    # power analyses based on covariance matrices  
+    if((!is.null(SigmaHat) && is.null(Sigma)) || (!is.null(Sigma) && is.null(SigmaHat))){
+      stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
     }
-    if(is.list(effect) && power.type == "a-priori"){   # special messages for a priori, given weights need to be provided 
-      if(is.null(N) || length(N) == 1){
-        warning("No or only a single sample weight provided in multiple group power analyses, assuming equal weights.")        
-      }else if(!is.null(N) && length(N) != length(effect)){
-        stop("A priori power analyses with multiple groups requires specification of sample size weights for each group via the N argument")      
-      } 
+    if((!is.null(muHat) && is.null(mu)) || (!is.null(mu) && is.null(muHat))){
+      stop("Both muHat and mu must be defined when effect is determined from covariance matrices and meanstructures.")
     }
-    if(is.list(effect) && (power.type == "post-hoc" || power.type == "compromise")){
-      if(!is.null(N) && length(N) == 1){
-        warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes for each group.")
-      }else if(!is.null(N) && length(N) != length(effect)){
-        stop("Power analyses with multiple groups requires specification of sample sizes for each group")        
-      }
+    if((!is.null(muHat) || !is.null(mu)) && (is.null(Sigma) || is.null(SigmaHat))){
+      stop("When effect is to be determined from covariance matrices and meanstructures, Sigma, SigmaHat, mu, and muHat must be provided.")
     }
     
-    if(power.type != 'powerplot.byEffect'){
-      if(is.null(effect)) stop('Effect is not defined.')
-      sapply(effect, checkPositive, message = effect.measure)
-    }
-
-    if(effect.measure == "GFI" || effect.measure == "AGFI"){
-      if(is.null(p)){
-        stop("effect.measure GFI and AGFI require specification of p")
+    if(!is.null(SigmaHat) && !is.null(Sigma)){
+      if(!is.null(modelH0)) warning("model is ignored when sigmaHat is defined.")
+      
+      if(!is.null(effect) || !is.null(effect.measure))
+        warning("Ignoring effect and effect.measure when Sigma and SigmaHat are set")
+      
+      if(is.list(SigmaHat) || is.list(Sigma)){
+        if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+        if(!is.null(muHat) && !is.null(mu)){
+          if(length(muHat) != length(mu) || length(mu) != length(Sigma))
+            stop("Multiple group power analyses require specification of mu and muHat for each group.")
+        }
+        if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
+        if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
+        if(length(N) == 1){
+          warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
+        }else if(length(SigmaHat) != length(N)){
+          stop("Multiple group power analyses require specification of N for each group.")
+        } 
       }
-      checkPositive(p)
-    }
-  }
-
-  if((!is.null(SigmaHat) && is.null(Sigma)) || (is.null(Sigma) && !is.null(SigmaHat))){
-    stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
-  }
-  if((!is.null(muHat) && is.null(mu)) || (is.null(mu) && !is.null(muHat))){
-    stop("Both muHat and mu must be defined when effect is determined from covariance matrices and meanstructures.")
-  }
-  if((!is.null(muHat) || !is.null(mu)) && (is.null(Sigma) || is.null(SigmaHat))){
-    stop("When effect is to be determined from covariance matrices and meanstructures, Sigma, SigmaHat, mu, and muHat must be provided.")
-  }
-  if(!is.null(SigmaHat) && !is.null(Sigma)){
-    if(!is.null(effect) || !is.null(effect.measure))
-      warning("Ignoring effect and effect.measure when Sigma and SigmaHat are set")
-
-    if(is.list(SigmaHat) || is.list(Sigma)){
-      if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+      
+      if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
+      if(!is.list(Sigma)) Sigma <- list(Sigma)
+      
+      if(any(sapply(Sigma, ncol) != sapply(SigmaHat, ncol)) || any(sapply(Sigma, nrow) != sapply(SigmaHat, nrow)))
+        stop("Sigma and SigmaHat must be of equal size")
+      if(any(!sapply(c(Sigma, SigmaHat), isSymmetric)))
+        stop("Sigma and SigmaHat must be symmetric square matrices")
+      if(any(sapply(c(Sigma, SigmaHat), ncol) < 2))
+        stop("Sigma and SigmaHat must be at least of dimension 2*2")
+      if(any(sapply(c(Sigma, SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
+        stop("Sigma and SigmaHat must be positive definite")
+      
       if(!is.null(muHat) && !is.null(mu)){
-        if(length(muHat) != length(mu) || length(mu) != length(Sigma))
-          stop("Multiple group power analyses require specification of mu and muHat for each group.")
+        if(!is.list(muHat)) muHat <- list(muHat)
+        if(!is.list(mu)) mu <- list(mu)
+        
+        if(any(sapply(c(mu, muHat), is.na)))
+          stop("mu and muHat must not contain NA values.")
+        if(any(sapply(mu, length) != sapply(muHat, length)))
+          stop("mu and muHat must be of same size.")
+        if(any(sapply(mu, length) != sapply(Sigma, ncol)))
+          stop("mu and muHat must be of same length as Sigma and SigmaHat.")
       }
+    }
+
+  ### TODO remove code duplication by merging the following with the preceding block
+  # simulated power specifics  
+  }else{
+    if(is.null(Sigma) || is.null(modelH0)) stop("Simulated power requires specification of Sigma and modelH0.")
+    if(!is.null(effect) || !is.null(effect.measure))
+      warning("Ignoring effect and effect.measure in simulated power.")
+    
+    if(is.list(Sigma)){
+      if(length(mu) != length(Sigma))
+        stop("Multiple group power analyses require specification of mu for each group.")
       if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
       if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
       if(length(N) == 1){
         warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
-      }else if(length(SigmaHat) != length(N)){
+      }else if(length(Sigma) != length(N)){
         stop("Multiple group power analyses require specification of N for each group.")
       } 
+    }else{
+      if(!is.null(mu) && length(mu) != ncol(Sigma)) stop("Mu must have the same length as ncol(Sigma).")
     }
     
-    if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
     if(!is.list(Sigma)) Sigma <- list(Sigma)
-    
-    if(any(sapply(Sigma, ncol) != sapply(SigmaHat, ncol)) || any(sapply(Sigma, nrow) != sapply(SigmaHat, nrow)))
-      stop("Sigma and SigmaHat must be of equal size")
-    if(any(!sapply(c(Sigma, SigmaHat), isSymmetric)))
-      stop("Sigma and SigmaHat must be symmetric square matrices")
-    if(any(sapply(c(Sigma, SigmaHat), ncol) < 2))
-      stop("Sigma and SigmaHat must be at least of dimension 2*2")
-    if(any(sapply(c(Sigma, SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
-      stop("Sigma and SigmaHat must be positive definite")
-    
-    if(!is.null(muHat) && !is.null(mu)){
-      
-      if(!is.list(muHat)) muHat <- list(muHat)
-      if(!is.list(mu)) mu <- list(mu)
 
-      if(any(sapply(c(mu, muHat), is.na)))
-        stop("mu and muHat must not contain NA values.")
-      if(any(sapply(mu, length) != sapply(muHat, length)))
-        stop("mu and muHat must be of same size.")
-      if(any(sapply(mu, length) != sapply(Sigma, ncol)))
-        stop("mu and muHat must be of same length as Sigma and SigmaHat.")
-    }
-    
+    if(any(!sapply(Sigma, isSymmetric)))
+      stop("Sigma must be symmetric square matrices")
+    if(any(sapply(Sigma, ncol) < 2))
+      stop("Sigma must be at least of dimension 2*2")
+    if(any(sapply(Sigma, function(x){sum(eigen(x)$values < 0) > 0})))
+      stop("Sigma must be positive definite")
+
   }
 
-  
-  sapply(df, checkPositive, message = 'df')
-
-  
   # specifics depending on type of power analyses
-
   if(power.type == "post-hoc" || power.type == "compromise" || (power.type == "a-priori" && is.list(effect))){
     if(is.null(N)) stop('N is not defined.')
-    sapply(N, checkPositive, message = 'N')
+    lapply(N, checkPositive, message = 'N')
   }
 
   if(power.type == "a-priori" || power.type == "post-hoc"){
@@ -297,7 +367,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
 #' @param x x
 #' @param message identifier for x
 checkPositive <- function(x, message = NULL){
-  if(is.null(message)) message <- deparse(substitute(message))
+  if(is.null(message)) message <- deparse(substitute(x))
   if(is.null(x) || is.na(x) || x <= 0){
     stop(paste(message, " must be larger than zero"))
   }
@@ -311,7 +381,7 @@ checkPositive <- function(x, message = NULL){
 #' @param bound the boundaries, array of size two
 #' @param inclusive whether x might lie on boundary
 checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
-  if(is.null(message)) message <- deparse(substitute(message))
+  if(is.null(message)) message <- deparse(substitute(x))
   inv <- is.null(x) || is.na(x)
   if(!inv && !inclusive && (x <= bound[1] || x >= bound[2])) inv <- TRUE
   if(!inv && inclusive && (x < bound[1] || x > bound[2])) inv <- TRUE
@@ -324,7 +394,7 @@ checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
 #' @param x x
 #' @param message identifier for x
 checkPositiveDefinite <- function(x, message = NULL){
-  if(is.null(message)) message <- deparse(substitute(message))
+  if(is.null(message)) message <- deparse(substitute(x))
   checkSymmetricSquare(x)
   if(sum(eigen(x)$values < 0) > 0)
     stop(paste(message, " must be positive definite"))
@@ -336,7 +406,7 @@ checkPositiveDefinite <- function(x, message = NULL){
 #' @param x x
 #' @param message identifier for x
 checkSymmetricSquare <- function(x, message = NULL){
-  if(is.null(message)) message <- deparse(substitute(message))
+  if(is.null(message)) message <- deparse(substitute(x))
   checkSquare(x)
   if(!isSymmetric(x))
     stop(paste(message, " must be a symmetric square matrix"))
@@ -348,7 +418,7 @@ checkSymmetricSquare <- function(x, message = NULL){
 #' @param x x
 #' @param message identifier for x
 checkSquare <- function(x, message = NULL){
-  if(is.null(message)) message <- deparse(substitute(message))
+  if(is.null(message)) message <- deparse(substitute(x))
   if(is.null(x))
     stop(paste(message, " may not be NULL"))
   if(!is.numeric(x))
