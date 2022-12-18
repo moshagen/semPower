@@ -36,7 +36,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   lines(x, xncchi, lty = 2, lwd = linewidth, col = 'blue')
   
   # add critical value
-  abline(v=chiCrit,col = 1, lty = 1, lwd = 1)
+  abline(v=chiCrit,col = 1, lty = 3, lwd = 1)
 
   # shade alpha error
   color <- rgb(255, 0, 0, alpha = 70, maxColorValue = 255)
@@ -44,8 +44,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   ub <- maxvalue
   i <- x >= lb & x <= ub
   polygon(c(lb, x[i], ub), c(0, xchi[i], 0), col = color, border = NA)
-  
-  
+
   # shade beta error
   color <- rgb(0, 0, 255, alpha = 70, maxColorValue = 255)
   lb <- minvalue
