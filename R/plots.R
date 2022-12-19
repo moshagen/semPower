@@ -112,8 +112,8 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
   N <- power.act <- array()
   for(i in 1:length(power)){
     ap <- semPower.aPriori(effect, effect.measure, alpha = alpha, power = power[[i]], df = df, p = p)
-    N[[i]] <- ap$requiredN
-    power.act[[i]] <- ap$impliedPower
+    N[[i]] <- ap[['requiredN']]
+    power.act[[i]] <- ap[['impliedPower']]
   }
   
   plot(
@@ -174,7 +174,7 @@ semPower.powerPlot.byEffect <- function(effect.measure = NULL,
   power <- array()
   for(i in 1:length(effect)){
     ph <- semPower.postHoc(effect[[i]], effect.measure, alpha = alpha, N = N, df = df, p = p)
-    power[[i]] <- ph$power
+    power[[i]] <- ph[['power']]
   }
   
   plot(smooth.spline(effect, power), 
