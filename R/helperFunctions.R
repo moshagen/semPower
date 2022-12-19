@@ -1,5 +1,3 @@
-##########################  helper functions  #####################
-
 #' semPower.genSigma
 #'
 #' Generate a covariance matrix (and mean vector) and associated lavaan model strings based on defined model features.
@@ -212,8 +210,8 @@ semPower.genSigma <- function(Lambda = NULL,
   modelStrings <- genModelString(Lambda = Lambda,
                                  Phi = Phi, Beta = Beta, Psi = Psi, Theta = Theta,
                                  tau = tau, Alpha = Alpha,
-                                 useReferenceIndicator = ifelse(is.null(args$useReferenceIndicator), !is.null(Beta), args$useReferenceIndicator), 
-                                 metricInvariance = args$metricInvariance)
+                                 useReferenceIndicator = ifelse(is.null(args[['useReferenceIndicator']]), !is.null(Beta), args[['useReferenceIndicator']]), 
+                                 metricInvariance = args[['metricInvariance']])
 
   append(
     list(Sigma = Sigma, 
