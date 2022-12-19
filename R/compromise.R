@@ -37,11 +37,11 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu, 
                      simulatedPower = simulatedPower)
 
-  df <- pp$df
+  df <- pp[['df']]
   
-  fit <- getIndices.F(pp$fmin, df, pp$p, SigmaHat, Sigma, muHat, mu, pp$N)
+  fit <- getIndices.F(pp[['fmin']], df, pp[['p']], SigmaHat, Sigma, muHat, mu, pp[['N']])
   
-  ncp <- getNCP(pp$fmin.g, pp$N)
+  ncp <- getNCP(pp[['fmin.g']], pp[['N']])
   log.abratio <- log(abratio)
 
   if(ncp >= 1e5)
@@ -98,18 +98,18 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     impliedAbratio = impliedAbratio,
     impliedPower = impliedPower,
     ncp = ncp,
-    fmin = pp$fmin,
-    effect = pp$effect,
-    effect.measure = pp$effect.measure,
-    N = pp$N,
+    fmin = pp[['fmin']],
+    effect = pp[['effect']],
+    effect.measure = pp[['effect.measure']],
+    N = pp[['N']],
     df = df,
-    p = pp$p,
-    rmsea = fit$rmsea,
-    mc = fit$mc,
-    gfi = fit$gfi,
-    agfi = fit$agfi,
-    srmr = fit$srmr,
-    cfi = fit$cfi,
+    p = pp[['p']],
+    rmsea = fit[['rmsea']],
+    mc = fit[['mc']],
+    gfi = fit[['gfi']],
+    agfi = fit[['agfi']],
+    srmr = fit[['srmr']],
+    cfi = fit[['cfi']],
     max = max,
     min = min,
     bPrecisionWarning = bPrecisionWarning
@@ -163,13 +163,13 @@ summary.semPower.compromise <- function(object, ...){
 
   cat("\n semPower: Compromise power analysis\n")
 
-  if(object$bPrecisionWarning)
+  if(object[['bPrecisionWarning']])
     cat("\n\n WARNING: Alpha and/or Beta are smaller than 1e-240. Cannot determine critical Chi-Square exactly due to machine precision.")
 
   print(out.table, row.names = FALSE, right = FALSE)
 
-  if(!object$bPrecisionWarning)
-    semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+  if(!object[['bPrecisionWarning']])
+    semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']])
   
 }
 
