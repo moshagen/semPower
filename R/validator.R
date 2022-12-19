@@ -97,7 +97,7 @@ powerPrepare <- function(type = NULL,
     
     # warn in case of long computation times
     lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
-    costlyEstm <- (!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% lavEstimators)
+    costlyEstm <- (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% lavEstimators)
     projectedLong <- (costlyEstm && ncol(Sigma) > 50 && nReplications > 100) || (ncol(Sigma) > 100 && nReplications > 500) || nReplications > 10000
     if(projectedLong){
       mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to go on?")
