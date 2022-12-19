@@ -564,7 +564,7 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
         dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE))
       }
     }
-    dummyFit@test$standard$df
+    dummyFit@test[['standard']][['df']]
   }, 
   warning = function(w){
     warning(w)
