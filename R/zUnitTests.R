@@ -1291,60 +1291,107 @@ test_simulatePower <- function(doTest = TRUE){
     return()
   }
 
-  # TODO snippets
-  # ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
-  #                         nullEffect = 'cor=0',
-  #                         nullWhich = c(1, 2),
-  #                         Phi = .3, nIndicator = c(3, 3), loadM = .5,
-  #                         alpha = .05, N = 100)
-  # 
-  # 
-  # ph2 <- semPower.powerLav('post-hoc', alpha = .05, N = 500,
-  #                          modelH0 = modelH0, Sigma = Sigma,
-  #                          nReplications = 50, minConvergenceRate = 1,
-  #                          simulatedPower = T)
-  # summary(ph2$power)
-  # ph <- semPower.postHoc(alpha = .05, N = 500,
-  #                        modelH0 = modelH0, Sigma = Sigma,
-  #                        nReplications = 10,
-  #                        simulatedPower = T)
-  # summary(ph)
-  # 
-  # ph2 <- semPower.powerLav('post-hoc', comparison = 'saturated',
-  #                          alpha = .05, N = 500,
-  #                          modelH0 = modelH0, Sigma = Sigma,
-  #                          simulatedPower = F)
-  # 
-  # modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.nobs = 500, likelihood = 'wishart', sample.cov.rescale = FALSE)
-  # SigmaHat <- lavaan::fitted(modelH0Fit)$cov
-  # ph3 <- semPower.postHoc(alpha = .05, N = 500, df = ph$df,
-  #                         SigmaHat = SigmaHat, Sigma = Sigma,
-  #                         simulatedPower = F)
-  # 
-  # ph3$power
-  # ph3$fmin
-  # 
-  # ph2$power$fmin 
-  # ph2$power$power
-  # 
-  # ph$fmin
-  # ph$power
-  # 
+  # gen some data
+  pha <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+                           nullEffect = 'cor=0',
+                           nullWhich = c(1, 2),
+                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  Sigma <- pha$Sigma
+  modelH0 <- pha$modelH0
 
-  # ap <- semPower.powerLav('ap', alpha = .05, power = .8, 
-  #                         Sigma = Sigma, modelH0 = modelH0)
-  # 
-  # ap$power$df
-  # ap$power$requiredN
-  # 
-  # sap <- semPower.aPriori(alpha = .05, power = .85, df = df,
-  #                         Sigma = Sigma, modelH0 = modelH0,
-  #                         nReplications = 100, simulatedPower = T)
-  # summary(sap)
-  # sap$requiredN
+  # compare powerLav and postHoc
+  phs <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           nReplications = 200, simulatedPower = TRUE, 
+                           seed = 30012021)
+
+  phs2 <- semPower.postHoc(alpha = .05, N = 250,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           nReplications = 200, simulatedPower = TRUE,
+                           seed = 30012021)
+
+  lavres <- helper_lav(modelH0, Sigma, 250) 
+  SigmaHat <- lavaan::fitted(lavres$res)$cov
+  pha2 <- semPower.postHoc(alpha = .05, N = 250, df = pha$power$df,
+                           SigmaHat = SigmaHat, Sigma = Sigma)
   
-    
-  if(valid){
+  valid <- (phs$power$power - pha$power$power)^2 < .05^2 &&
+    phs$power$df == pha$power$df &&
+    round(phs$power$power - phs2$power, 4) == 0 &&
+    round(pha2$power - pha$power$power, 4) == 0 &&
+    round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
+    abs(phs2$fmin - pha2$fmin) < .05 * pha2$fmin # 5% margin should be ok
+
+  # restricted comparison model
+  pha3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                           nullEffect = 'cor=0',
+                           nullWhich = c(1, 2),
+                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                           alpha = .05, N = 250)
+  modelH0 <- pha3$modelH0
+  modelH1 <- pha3$modelH1
+  
+  phs3 <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
+                            modelH0 = modelH0, modelH1 = modelH1, Sigma = Sigma,
+                            nReplications = 200, simulatedPower = TRUE, 
+                            seed = 30012021)
+  
+  valid2 <- valid &&
+    phs3$power$df - pha3$power$df == 0 &&
+    (phs3$power$power - pha3$power$power)^2 < .05^2
+  
+  
+  # a priori
+  apa <- semPower.powerLav('ap', alpha = .05, power = .80,
+                           Sigma = Sigma, modelH0 = modelH0)
+  aps <- semPower.aPriori(alpha = .05, power = .80,
+                          Sigma = Sigma, modelH0 = modelH0,
+                          nReplications = 200, simulatedPower = TRUE, 
+                          seed = 30012021)
+  aps2 <- semPower.powerLav('ap', alpha = .05,power = .80,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           nReplications = 200, simulatedPower = TRUE, 
+                           seed = 30012021)
+
+  valid3 <- valid2 &&
+    apa$power$df == aps$df &&
+    aps$requiredN - aps2$power$requiredN == 0 &&
+    abs(aps$desiredPower - aps$impliedPower) < .05  &&              # 5% margin should be ok
+    abs(apa$power$requiredN - aps$requiredN) < .05 * apa$power$requiredN  # 5% margin should be ok
+  
+  # a priori + restricted
+  apa2 <- semPower.powerLav('ap', alpha = .05, power = .80,
+                            Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1)
+  aps3 <- semPower.aPriori(alpha = .05, power = .80,
+                           Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1,
+                           nReplications = 200, simulatedPower = TRUE, 
+                           seed = 30012021)
+
+  valid4 <- valid3 &&
+    apa2$power$df == aps3$df &&
+    abs(aps3$desiredPower - aps3$impliedPower) < .07  &&                     # 7% margin should be still ok
+    abs(apa2$power$requiredN - aps3$requiredN) < .05 * apa2$power$requiredN  # 5% margin should be ok
+   
+  
+  # try different estimator
+  phs4 <- semPower.postHoc(alpha = .05, N = 350,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           nReplications = 200, simulatedPower = TRUE,
+                           lavOptions = list(estimator = 'mlm'),
+                           seed = 30202199)  
+
+  phs2a <- semPower.postHoc(alpha = .05, N = 350,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           nReplications = 200, simulatedPower = TRUE,
+                           seed = 30202199)
+
+  valid5 <- valid4 &&
+    phs2a$power != phs4$power &&
+    round((phs2a$fmin - phs4$fmin)^2, 4) == 0
+  
+
+  if(valid5){
     print('test_simulatePower: OK')
   }else{
     warning('Invalid')

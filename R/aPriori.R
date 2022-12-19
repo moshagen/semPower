@@ -17,11 +17,10 @@
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param fitH1model for simulated power: whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param nReplications for simulated power: number of random samples drawn.
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required
 #' @param lavOptions for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
-#' @param seed for simulated power: seed, by default 30012021 
+#' @param seed for simulated power
 #' @return list
 #' @examples
 #' \dontrun{
@@ -43,9 +42,9 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              N = NULL, df = NULL, p = NULL,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                              simulatedPower = FALSE, 
-                             modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
-                             nReplications = 100, minConvergenceRate = .5, lavOptions = NULL, 
-                             seed = 30012021,
+                             modelH0 = NULL, modelH1 = NULL,
+                             nReplications = 250, minConvergenceRate = .5, lavOptions = NULL, 
+                             seed = NULL,
                              ...){
 
   # validate input and do some preparations
@@ -54,7 +53,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                      simulatedPower = simulatedPower, 
-                     modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+                     modelH0 = modelH0, modelH1 = modelH1,
                      nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                      lavOptions = lavOptions)
 
@@ -115,17 +114,17 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
   # simulated power  
   }else{
+    if(!is.null(seed)) set.seed(seed)
     iterationCounter <<- 1
 
     # determine starting N using analytical power
     ap <- semPower.powerLav(type = 'a-priori', 
                             alpha = alpha, beta = beta, power = power,
-                            modelH0 = modelH0, modelH1 = modelH1, fitH1model = TRUE,
+                            modelH0 = modelH0, modelH1 = modelH1,
                             Sigma = Sigma, mu = mu)
     startN <- ceiling(.95 * ap$power$requiredN) # lets start a bit lower
 
     
-    # TODO check whether this makes sense
     # for simulated power, we refuse to do anything
     bPrecisionWarning <- (ap$power$requiredN < ncol(Sigma))  
     if(bPrecisionWarning) stop("Required N is smaller than the number of variables. Simulated power will not work well in this case because of very high nonconvergence rates.")
@@ -138,7 +137,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     tolerance <- logBetaTarget^2 * 2 / nReplications
     chiCritOptim <- optim(par = c(N = startN), fn = getBetadiff,
                           logBetaTarget = logBetaTarget,
-                          modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+                          modelH0 = modelH0, modelH1 = modelH1,
                           Sigma = Sigma, mu = mu,  
                           alpha = alpha,
                           nReplications = nReplications, minConvergenceRate = minConvergenceRate,
@@ -157,7 +156,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # requiredN.g <- ceiling(weights * requiredN)
     
     # now call simulate with final N again to get all relevant parameters
-    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
                     Sigma = Sigma, mu = mu,
                     alpha = alpha, N = requiredN,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,

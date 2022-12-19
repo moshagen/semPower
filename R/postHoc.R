@@ -15,11 +15,10 @@
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param fitH1model for simulated power: whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param nReplications for simulated power: number of random samples drawn.
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required
 #' @param lavOptions for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
-#' @param seed for simulated power: seed, by default 30012021 
+#' @param seed for simulated power 
 #' @return list
 #' @examples
 #' \dontrun{
@@ -38,9 +37,9 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df = NULL, p = NULL,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                              simulatedPower = FALSE, 
-                             modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
-                             nReplications = 100, minConvergenceRate = .5, lavOptions = NULL, 
-                             seed = 30012021,
+                             modelH0 = NULL, modelH1 = NULL,
+                             nReplications = 250, minConvergenceRate = .5, lavOptions = NULL, 
+                             seed = NULL,
                              ...){
 
   # validate input and do some preparations
@@ -50,7 +49,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                      simulatedPower = simulatedPower, 
-                     modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+                     modelH0 = modelH0, modelH1 = modelH1,
                      nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                      lavOptions = lavOptions)
 
@@ -69,8 +68,8 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     
   }else{
     
-    set.seed(seed)
-    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+    if(!is.null(seed)) set.seed(seed)
+    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
                     Sigma = Sigma, mu = mu, N = N, alpha = alpha,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                     lavOptions = lavOptions)

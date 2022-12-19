@@ -1,14 +1,9 @@
-###
-### TODO this needs to be integrated into a priori power fnc
-###
-
 #' simulate
 #'
 #' estimate empirical power using a simulation approach
 #' 
 #' @param modelH0 lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param fitH1model whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and is only used to determine the delta df.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
 #' @param N sample size
@@ -22,11 +17,11 @@
 #' \dontrun{
 #' }
 #' @importFrom utils txtProgressBar 
-simulate <- function(modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
+simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      Sigma = NULL, mu = NULL, 
                      N = NULL,
                      alpha = NULL,
-                     nReplications = 100, minConvergenceRate = .5,
+                     nReplications = 250, minConvergenceRate = .5,
                      lavOptions = NULL,
                      returnFmin = TRUE){
 
@@ -37,8 +32,12 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
   # we need to call lavaan() directly with defaults as defined in sem()
   lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
                              auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
-                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE,
-                             likelihood = 'Wishart') # we also want N - 1
+                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE) 
+
+  # we also want N - 1 for ml based estm
+  if(is.null(lavOptions$estimator) || (!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
+    lavOptionsDefaults <- append(list(likelihood = 'Wishart'), lavOptionsDefaults)
+  
   lavOptions <- append(lavOptions, lavOptionsDefaults)
   
   ef <- list()
@@ -52,20 +51,23 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE,
       cdata <- genData(N, Sigma, mu)
       lavresH0 <- do.call(lavaan::lavaan, 
                           append(list(model = modelH0, data = cdata), lavOptions))
-      p <- lavaan::fitMeasures(lavresH0, 'pvalue')
       ef <- append(ef, 2 * lavaan::fitMeasures(lavresH0, 'fmin')) # lav reports .5*fmin
+      p <- lavaan::fitMeasures(lavresH0, 'pvalue')
       df <- lavaan::fitMeasures(lavresH0, 'df')
-      
-      # handle restricted comparison model
-      if(!is.null(modelH1) && fitH1model){
+      if(!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
+        p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
+        df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
+      }
+
+      # handle restricted comparison model 
+      # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with differen df)
+      if(!is.null(modelH1)){
         lavresH1 <- do.call(lavaan::lavaan, 
                             append(list(model = modelH1, data = cdata), lavOptions))
-        p <- lavaan::anova(lavresH0, lavresH1)$`Pr(>Chisq)`[2]
-        ef <- ef - 2 * lavaan::fitMeasures(lavresH1, 'fmin')
-      }else if(!is.null(modelH1) && !fitH1model){
-        ### TODO this is only valid when estimators use regular (unadjusted) df 
-        df <- lavaan::fitMeasures(lavresH0, 'df') - semPower.getDf(modelH1)
-        p <- pchisq(lavaan::fitMeasures(lavresH0, 'chisq'), df, lower.tail = FALSE)
+        mcomp <- lavaan::anova(lavresH0, lavresH1) 
+        p <- mcomp$`Pr(>Chisq)`[2]
+        df <- mcomp$`Df diff`[2]
+        ef <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
       }
       
       if(p < alpha)
