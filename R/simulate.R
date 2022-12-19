@@ -35,7 +35,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                              auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE) 
 
   # we also want N - 1 for ml based estm
-  if(is.null(lavOptions$estimator) || (!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
+  if(is.null(lavOptions[['estimator']]) || (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]r) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
     lavOptionsDefaults <- append(list(likelihood = 'Wishart'), lavOptionsDefaults)
   
   lavOptions <- append(lavOptions, lavOptionsDefaults)
@@ -54,7 +54,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       ef <- append(ef, 2 * lavaan::fitMeasures(lavresH0, 'fmin')) # lav reports .5*fmin
       p <- lavaan::fitMeasures(lavresH0, 'pvalue')
       df <- lavaan::fitMeasures(lavresH0, 'df')
-      if(!is.null(lavOptions$estimator) && toupper(lavOptions$estimator) %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
+      if(!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
         p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
         df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
       }
