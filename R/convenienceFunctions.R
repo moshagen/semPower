@@ -1,5 +1,3 @@
-##########################  convenience functions  #####################
-
 #' semPower.powerLav
 #'
 #' Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
@@ -64,8 +62,8 @@ semPower.powerLav <- function(type,
 
   # determine population Sigma / mu
   if(is.null(Sigma)){
-    Sigma <- lavaan::fitted(lavaan::sem(modelPop))$cov
-    mu <- lavaan::fitted(lavaan::sem(modelPop))$mean
+    Sigma <- lavaan::fitted(lavaan::sem(modelPop))[['cov']]
+    mu <- lavaan::fitted(lavaan::sem(modelPop))[['mean']]
   }
   
   # analytical power
@@ -73,20 +71,20 @@ semPower.powerLav <- function(type,
     
     # get H0 sigmaHat / muHat
     modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-    if(!modelH0Fit@optim$converged) stop('The H0 model did not converge.')
-    SigmaHat <- lavaan::fitted(modelH0Fit)$cov
-    muHat <- lavaan::fitted(modelH0Fit)$mean
-    df <- dfH0 <- modelH0Fit@test$standard$df
+    if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
+    SigmaHat <- lavaan::fitted(modelH0Fit)[['cov']]
+    muHat <- lavaan::fitted(modelH0Fit)[['mean']]
+    df <- dfH0 <- modelH0Fit@test[['standard']][['df']]
     
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
       modelH1Fit <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
-      if(!modelH1Fit@optim$converged) stop('The H1 model did not converge.')
-      dfH1 <- modelH1Fit@test$standard$df
+      if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
+      dfH1 <- modelH1Fit@test[['standard']][['df']]
       if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
       # get delta F
-      fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)$cov, Sigma, lavaan::fitted(modelH1Fit)$mean, mu)
-      fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)$cov, Sigma, lavaan::fitted(modelH0Fit)$mean, mu)
+      fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)[['cov']], Sigma, lavaan::fitted(modelH1Fit)[['mean']], mu)
+      fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)[['cov']], Sigma, lavaan::fitted(modelH0Fit)[['mean']], mu)
       deltaF <- fminH0 - fminH1
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
@@ -206,12 +204,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   generated <- semPower.genSigma(Phi = Phi, ...)
   
   ### now do validation of nullWhich, since we now know Phi
-  if(is.null(nullWhich) && ncol(generated$Phi) == 2) nullWhich <- c(1, 2)
+  if(is.null(nullWhich) && ncol(generated[['Phi']]) == 2) nullWhich <- c(1, 2)
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
   if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
   if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
-  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated$Phi) | x[2] > ncol(generated$Phi)))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
+  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated[['Phi']]) | x[2] > ncol(generated[['Phi']])))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
   if(length(nullWhich) > 1){
     for(i in 1:(length(nullWhich) - 1)){
       for(j in (i + 1):length(nullWhich)){
@@ -223,7 +221,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   ### ana model 
   if(nullEffect == 'cor=0'){
     modelH0 <- paste(c(
-      generated$modelTrueCFA,
+      generated[['modelTrueCFA']],
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
       collapse = '\n')
   }else{
@@ -241,7 +239,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
       }
     }
     modelH0 <- paste(c(
-      generated$modelTrueCFA,
+      generated[['modelTrueCFA']],
       tok),
       collapse = '\n')
   }
@@ -249,12 +247,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   modelH1 <- NULL
   if(comparison == 'restricted'){
     # h1 model always fits perfectly, only needed for delta df
-    modelH1 <- generated$modelTrueCFA
+    modelH1 <- generated[['modelTrueCFA']]
     fitH1model <- FALSE 
   } 
   
   lavpower <- semPower.powerLav(type = type,
-                                modelPop = generated$modelPop,
+                                modelPop = generated[['modelPop']],
                                 modelH0 = modelH0,
                                 modelH1 = modelH1,
                                 fitH1model = fitH1model,
@@ -378,11 +376,11 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   Phi <- t(c(1, corXY))
   Phi <- rbind(Phi, cbind(corXY, corXX))
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-  Sigma <- generated$Sigma
+  Sigma <- generated[['Sigma']]
   
   ### create ana model string
   # add regressions 
-  model <- paste(generated$modelTrueCFA, 
+  model <- paste(generated[['modelTrueCFA']], 
                  paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = ' + ')), 
                  sep = '\n')
   modelTrue <- model
@@ -548,10 +546,10 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # we want the completely standardized slopes, so transform to standard cfa model by converting B to implied phi
   Phi <- getPhi.B(B) 
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-  Sigma <- generated$Sigma
+  Sigma <- generated[['Sigma']]
   
   ### create ana model string
-  model <- generated$modelTrueCFA
+  model <- generated[['modelTrueCFA']]
   # add mediation structure
   for(f in 1:ncol(B)){
     fidx <- which(B[f, ] != 0)
@@ -713,10 +711,10 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                  useReferenceIndicator = TRUE, 
                                  metricInvariance = metricInvarianceList, 
                                  ...)
-  Sigma <- generated$Sigma
+  Sigma <- generated[['Sigma']]
   
   ### create ana model string
-  model <- generated$modelTrueCFA
+  model <- generated[['modelTrueCFA']]
   
   # add CLPM structure 
   for(f in 3:ncol(B)){     # omit rows 1:2
