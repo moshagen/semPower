@@ -159,16 +159,16 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHa
     agfi = NULL
   )
   if(!is.null(p)){
-    fit$gfi <- getGFI.F(fmin, p)
-    fit$agfi <- getAGFI.F(fmin, df, p)
+    fit[['gfi']] <- getGFI.F(fmin, p)
+    fit[['agfi']] <- getAGFI.F(fmin, df, p)
   }
   if(!is.null(SigmaHat)){
     if(length(N) > 1){
-      fit$srmr <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
-      fit$cfi <- getCFI.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
+      fit[['srmr']] <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
+      fit[['cfi']] <- getCFI.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
     }else{
-      fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma, muHat, mu)
-      fit$cfi <- getCFI.Sigma(SigmaHat, Sigma, muHat, mu)
+      fit[['srmr']] <- getSRMR.Sigma(SigmaHat, Sigma, muHat, mu)
+      fit[['cfi']] <- getCFI.Sigma(SigmaHat, Sigma, muHat, mu)
     }
   }
   fit
