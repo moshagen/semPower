@@ -972,7 +972,11 @@ test_powerMediation <- function(){
   }
 }
 
-test_powerCLPM <- function(){
+test_powerCLPM <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_powerCLPM: NOT TESTED')
+    return()
+  }
   
   # 2 waves, crossedX=0
   ph <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
@@ -1399,6 +1403,7 @@ test_simulatePower <- function(doTest = TRUE){
 }
 
 test_all <- function(){
+  options("warnPartialMatchDollar" = TRUE)  # tmp, to see whether there are other errors lurking somewhere 
   test_powerConsistency()  
   test_effectSizeConsistency()
   test_powerEffectDifference()
@@ -1411,7 +1416,7 @@ test_all <- function(){
   test_powerCFA()
   test_powerRegression()
   test_powerMediation()
-  test_powerCLPM()
+  test_powerCLPM(doTest = FALSE)
   test_simulatePower(doTest = FALSE)
 }
 
