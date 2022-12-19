@@ -67,16 +67,17 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   logBetaTarget <- log(desiredBeta)
 
   weights <- 1
-  if(!is.null(pp$N) && length(pp$N) > 1){
-    weights <- unlist(pp$N) / sum(unlist(pp$N))
+  if(!is.null(pp[['N']]) && length(pp[['N']]) > 1){
+    weights <- unlist(pp[['N']]) / sum(unlist(pp[['N']]))
   }
   
   # analytical approach
   if(!simulatedPower){
+    
+    df <- pp[['df']]
+    fmin <- pp[['fmin']]
+    fmin.g <- pp[['fmin.g']]
     nrep <- NULL
-    fmin <- pp$fmin
-    fmin.g <- pp$fmin.g
-    df <- pp$df
     
     critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
     
@@ -122,11 +123,11 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                             alpha = alpha, beta = beta, power = power,
                             modelH0 = modelH0, modelH1 = modelH1,
                             Sigma = Sigma, mu = mu)
-    startN <- ceiling(.95 * ap$power$requiredN) # lets start a bit lower
+    startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
 
     
     # for simulated power, we refuse to do anything
-    bPrecisionWarning <- (ap$power$requiredN < ncol(Sigma))  
+    bPrecisionWarning <- (ap[['power']][['requiredN']] < ncol(Sigma))  
     if(bPrecisionWarning) stop("Required N is smaller than the number of variables. Simulated power will not work well in this case because of very high nonconvergence rates.")
 
     # we need a pretty high tolerance because of sampling error: it doesn't make sense 
@@ -162,16 +163,16 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                     lavOptions = lavOptions)
     
-    nrep <- sim$nrep
-    df <- sim$df
-    fmin <- sim$medianF
-    fmin.g <- sim$medianF   ## TODO add multigroup support
+    nrep <- sim[['nrep']]
+    df <- sim[['df']]
+    fmin <- sim[['medianF']]
+    fmin.g <- sim[['medianF']]   ## TODO add multigroup support
     
     critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
     
     impliedNCP <- getNCP(fmin.g, requiredN.g)
-    impliedBeta <- 1 - sim$ePower
-    impliedPower <- sim$ePower
+    impliedBeta <- 1 - sim[['ePower']]
+    impliedPower <- sim[['ePower']]
 
   }
   
@@ -190,19 +191,19 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     impliedAbratio = impliedAbratio,
     impliedNCP = impliedNCP,
     fmin = fmin,
-    effect = pp$effect,
-    effect.measure = pp$effect.measure,
+    effect = pp[['effect']],
+    effect.measure = pp[['effect.measure']],
     requiredN = requiredN,
     requiredN.g = requiredN.g,
     df = df,
-    p = pp$p,
+    p = pp[['p']],
     chiCrit = critChi,
-    rmsea = fit$rmsea,
-    mc = fit$mc,
-    gfi = fit$gfi,
-    agfi = fit$agfi,
-    srmr = fit$srmr,
-    cfi = fit$cfi,
+    rmsea = fit[['rmsea']],
+    mc = fit[['mc']],
+    gfi = fit[['gfi']],
+    agfi = fit[['agfi']],
+    srmr = fit[['srmr']],
+    cfi = fit[['cfi']],
     bPrecisionWarning = bPrecisionWarning,
     simulated = simulatedPower,
     nrep = nrep
@@ -268,17 +269,17 @@ summary.semPower.aPriori <- function(object, ...){
 
   cat("\n semPower: A-priori power analysis\n")
 
-  if(object$simulated){
-    cat(paste("\n Simulated power based on", object$nrep, "successful replications.\n Note that simulated a-priori power analyses are only approximate,\n unless the number of replications is large.\n"))
+  if(object[['simulated']]){
+    cat(paste("\n Simulated power based on", object[['nrep']], "successful replications.\n Note that simulated a-priori power analyses are only approximate,\n unless the number of replications is large.\n"))
   }
   
-  if(object$bPrecisionWarning)
+  if(object[['bPrecisionWarning']])
     cat("\n\n NOTE: Power is higher than requested even for a sample size < 10.\n\n")
 
   print(out.table, row.names = FALSE, right = FALSE)
   
-  semPower.showPlot(chiCrit = object$chiCrit, ncp = object$impliedNCP, df = object$df)
-
+  semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']])
+  
 }
 
 

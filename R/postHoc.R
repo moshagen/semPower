@@ -55,13 +55,13 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
 
   if(!simulatedPower){
     
-    df <- pp$df
-    fmin <- pp$fmin
-    fmin.g <- pp$fmin.g
+    df <- pp[['df']]
+    fmin <- pp[['fmin']]
+    fmin.g <- pp[['fmin.g']]
     nrep <- NULL
     
-    fit <- getIndices.F(fmin, df, pp$p, SigmaHat, Sigma, muHat, mu, pp$N)
-    ncp <- getNCP(fmin.g, pp$N)
+    fit <- getIndices.F(fmin, df, pp[['p']], SigmaHat, Sigma, muHat, mu, pp[['N']])
+    ncp <- getNCP(fmin.g, pp[['N']])
     
     beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
     power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp, lower.tail = FALSE)
@@ -73,16 +73,16 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                     Sigma = Sigma, mu = mu, N = N, alpha = alpha,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                     lavOptions = lavOptions)
-    nrep <- sim$nrep
-    df <- sim$df
-    fmin <- sim$medianF
-    fmin.g <- sim$medianF   ## TODO add multigroup support
+    nrep <- sim[['nrep']]
+    df <- sim[['df']]
+    fmin <- sim[['medianF']]
+    fmin.g <- sim[['medianF']]   ## TODO add multigroup support
     
-    fit <- getIndices.F(fmin = fmin, df = df, p = pp$p, N = pp$N)
-    ncp <- getNCP(fmin.g, pp$N)
+    fit <- getIndices.F(fmin = fmin, df = df, p = pp[['p']], N = pp[['N']])
+    ncp <- getNCP(fmin.g, pp[['N']])
     
-    beta <- 1 - sim$ePower
-    power <- sim$ePower
+    beta <- 1 - sim[['ePower']]
+    power <- sim[['ePower']]
     
   }
   
@@ -96,18 +96,18 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     impliedAbratio = impliedAbratio,
     ncp = ncp,
     fmin = fmin,
-    effect = pp$effect,
-    effect.measure = pp$effect.measure,
-    N = pp$N,
+    effect = pp[['effect']],
+    effect.measure = pp[['effect.measure']],
+    N = pp[['N']],
     df = df,
-    p = pp$p,
+    p = pp[['p']],
     chiCrit = qchisq(alpha, df, ncp = 0, lower.tail = FALSE),
-    rmsea = fit$rmsea,
-    mc = fit$mc,
-    gfi = fit$gfi,
-    agfi = fit$agfi,
-    srmr = fit$srmr,
-    cfi = fit$cfi,
+    rmsea = fit[['rmsea']],
+    mc = fit[['mc']],
+    gfi = fit[['gfi']],
+    agfi = fit[['agfi']],
+    srmr = fit[['srmr']],
+    cfi = fit[['cfi']],
     simulated = simulatedPower,
     nrep = nrep
   )
@@ -130,13 +130,13 @@ summary.semPower.postHoc <- function(object, ...){
   out.table <- getFormattedResults('post-hoc', object)
 
   cat("\n semPower: Post-hoc power analysis\n")
-  if(object$simulated){
-    cat(paste("\n Simulated power based on", object$nrep, "successful replications.\n"))
+  if(object[['simulated']]){
+    cat(paste("\n Simulated power based on", object[['nrep']], "successful replications.\n"))
   }
 
   print(out.table, row.names = FALSE, right = FALSE)
 
-  semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+  semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']])
   
 }
 
