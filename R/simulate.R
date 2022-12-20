@@ -60,7 +60,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       }
 
       # handle restricted comparison model 
-      # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with differen df)
+      # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
       if(!is.null(modelH1)){
         lavresH1 <- do.call(lavaan::lavaan, 
                             append(list(model = modelH1, data = cdata), lavOptions))
@@ -89,8 +89,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   close(progress)
   
   ePower <- ePower / nReplications
-  if((rr - 1) > (nReplications / minConvergenceRate)){
-    warning(paste("Actual convergence rate of", round((r - 1) / (rr - 1), 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", nReplications,"replications."))
+  if(round((r - 1) / (rr - 1), 2) < minConvergenceRate){ 
+    warning(paste("Actual convergence rate of", round((r - 1) / (rr - 1), 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", (r - 1),"replications."))
   }
   
   if(returnFmin){
