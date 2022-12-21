@@ -176,7 +176,7 @@ semPower.genSigma <- function(Lambda = NULL,
   # compute theta
   if(is.null(Theta)){
     # catch observed only models
-    if(ncol(Lambda) == nrow(Lambda)){
+    if(!any(nIndicator > 1)){
       Theta <- matrix(0, ncol = ncol(SigmaND), nrow = nrow(SigmaND))
     # catch latent+observed mixed models
     }else if(any(nIndicator <= 1)){
