@@ -12,7 +12,7 @@
 #' @param mu population means (if modelPop is not set).
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param ... other parameters related to the specific type of power analysis requested
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, as well as various lavaan model strings
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
 #' @examples
 #' \dontrun{
 #' ## a priori power analysis for the null hypothesis that the correlation between 
@@ -134,7 +134,7 @@ semPower.powerLav <- function(type,
 #' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich 
 #' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
 #' \dontrun{
 #' # a priori power analysis only providing the number of indicators to define 
@@ -218,10 +218,10 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     }
   }
   
-  ### ana model 
+  ### H0 model 
+  modelH0 <- generated[['modelTrueCFA']]
   if(nullEffect == 'cor=0'){
-    modelH0 <- paste(c(
-      generated[['modelTrueCFA']],
+    modelH0 <- paste(c(modelH0,
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
       collapse = '\n')
   }else{
@@ -238,10 +238,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
         tok <- paste(tok, paste(labs[i], ' == ', labs[j]), sep = '\n')
       }
     }
-    modelH0 <- paste(c(
-      generated[['modelTrueCFA']],
-      tok),
-      collapse = '\n')
+    modelH0 <- paste(c(modelH0, tok), collapse = '\n')
   }
   
   modelH1 <- NULL
@@ -251,14 +248,13 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     fitH1model <- FALSE 
   } 
   
-  lavpower <- semPower.powerLav(type = type,
-                                modelPop = generated[['modelPop']],
-                                modelH0 = modelH0,
-                                modelH1 = modelH1,
-                                fitH1model = fitH1model,
-                                ...)
+  semPower.powerLav(type = type,
+                    Sigma = generated[['Sigma']],
+                    modelH0 = modelH0,
+                    modelH1 = modelH1,
+                    fitH1model = fitH1model,
+                    ...)
   
-  append(lavpower, generated)
 }
 
 #' semPower.powerRegression
@@ -273,7 +269,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.
 #' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
 #' \dontrun{
 #' # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
@@ -376,8 +372,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   Phi <- t(c(1, corXY))
   Phi <- rbind(Phi, cbind(corXY, corXX))
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-  Sigma <- generated[['Sigma']]
-  
+
   ### create ana model string
   # add regressions 
   model <- paste(generated[['modelTrueCFA']], 
@@ -405,9 +400,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   } 
   
   semPower.powerLav(type, 
+                    Sigma = generated[['Sigma']], 
                     modelH0 = modelH0, 
                     modelH1 = modelH1, 
-                    Sigma = Sigma, 
                     fitH1model = fitH1model,
                     ...)
 }
@@ -426,7 +421,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation.
 #' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
 #' \dontrun{
 #' # simple case of X -> M -> Y mediation
@@ -546,9 +541,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # we want the completely standardized slopes, so transform to standard cfa model by converting B to implied phi
   Phi <- getPhi.B(B) 
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-  Sigma <- generated[['Sigma']]
-  
-  ### create ana model string
+
+  ### create model strings
   model <- generated[['modelTrueCFA']]
   # add mediation structure
   for(f in 1:ncol(B)){
@@ -567,7 +561,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   # actually gives power for a single slope. however, this seems to closely reflect
   # power for the indirect effect (and indeed works much better than using ind=0 as 
   # comparison model, which grossly overestimates the true effect)
-  # modelAna <- paste(modelTrue, '\n', 'ind == 0')  
+  # modelH0 <- paste(modelTrue, '\n', 'ind == 0')  
   cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[x[1], x[2]])))]]
   mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
   modelH0 <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
@@ -580,9 +574,9 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   } 
   
   semPower.powerLav(type, 
+                    Sigma = generated[['Sigma']], 
                     modelH0 = modelH0, 
                     modelH1 = modelH1, 
-                    Sigma = Sigma, 
                     fitH1model = fitH1model,
                     ...)
 }
@@ -604,7 +598,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'stabX = 0' with nullWhich = 2 would constrain the second stability coefficient for X to zero.    
 #' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna) 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
 #' \dontrun{
 #'  
@@ -711,9 +705,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                  useReferenceIndicator = TRUE, 
                                  metricInvariance = metricInvarianceList, 
                                  ...)
-  Sigma <- generated[['Sigma']]
-  
-  ### create ana model string
+
+  ### create model strings
   model <- generated[['modelTrueCFA']]
   
   # add CLPM structure 
@@ -731,123 +724,123 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     model <- paste(model, tok, sep='\n')
   }
   
-  ### define H1 and ana model
+  ### define H1 and H0 model
   # first get constraints that may be part of either model
-  tok.stabx <- tok.staby <- tok.crossedx <- tok.crossedy <- tok.corxy <- ''
-  # we also do this for stabx=0 and stabx=staby, because we need p.stabx later; tok.stabx is only used for stabx 
+  tokStabX <- tokStabY <- tokCrossedX <- tokCrossedY <- tokCorXY <- ''
+  # we also do this for stabx=0 and stabx=staby, because we need pStabX later; tokStabX is only used for stabx 
   if('stabx' %in% waveEqual || nullEffect %in% c('stabx', 'stabx=0', 'stabx=staby')){
     xw <- seq(2*nWaves - 1, 2, -2)
-    p.stabx <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
-    for(i in 1:(length(p.stabx) - 1)){
-      for(j in (i + 1):length(p.stabx)){
-        tok.stabx <- paste(tok.stabx, paste0(p.stabx[i], '==', p.stabx[j]), sep = '\n')
+    pStabX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
+    for(i in 1:(length(pStabX) - 1)){
+      for(j in (i + 1):length(pStabX)){
+        tokStabX <- paste(tokStabX, paste0(pStabX[i], '==', pStabX[j]), sep = '\n')
       }  
     }
-    p.stabx <- p.stabx[order(p.stabx)]
+    pStabX <- pStabX[order(pStabX)]
   }
   if('staby' %in% waveEqual || nullEffect %in% c('staby', 'staby=0', 'stabx=staby')){
     yw <- seq(2*nWaves, 3, -2)
-    p.staby <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
-    for(i in 1:(length(p.staby) - 1)){
-      for(j in (i + 1):length(p.staby)){
-        tok.staby <- paste(tok.staby, paste0(p.staby[i], '==', p.staby[j]), sep = '\n')
+    pStabY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
+    for(i in 1:(length(pStabY) - 1)){
+      for(j in (i + 1):length(pStabY)){
+        tokStabY <- paste(tokStabY, paste0(pStabY[i], '==', pStabY[j]), sep = '\n')
       }  
     }
-    p.staby <- p.staby[order(p.staby)]
+    pStabY <- pStabY[order(pStabY)]
   }
-  # we also do this for crossedx=0 and crossedx=crossedy, because we need p.crossedx later; tok.crossedX is only used for crossedx 
+  # we also do this for crossedx=0 and crossedx=crossedy, because we need pCrossedX later; tokCrossedX is only used for crossedx 
   if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
     xw <- seq(2*nWaves - 3, 0, -2)
     yw <- seq(2*nWaves, 3, -2)
-    p.crossedx <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    for(i in 1:(length(p.crossedx) - 1)){
-      for(j in (i + 1):length(p.crossedx)){
-        tok.crossedx <- paste(tok.crossedx, paste0(p.crossedx[i], '==', p.crossedx[j]), sep = '\n')
+    pCrossedX <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+    for(i in 1:(length(pCrossedX) - 1)){
+      for(j in (i + 1):length(pCrossedX)){
+        tokCrossedX <- paste(tokCrossedX, paste0(pCrossedX[i], '==', pCrossedX[j]), sep = '\n')
       }  
     }
-    p.crossedx <- p.crossedx[order(p.crossedx)]
+    pCrossedX <- pCrossedX[order(pCrossedX)]
   }
   if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves - 2, 1, -2)
-    p.crossedy <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
-    for(i in 1:(length(p.crossedy) - 1)){
-      for(j in (i + 1):length(p.crossedy)){
-        tok.crossedy <- paste(tok.crossedy, paste0(p.crossedy[i], '==', p.crossedy[j]), sep = '\n')
+    pCrossedY <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
+    for(i in 1:(length(pCrossedY) - 1)){
+      for(j in (i + 1):length(pCrossedY)){
+        tokCrossedY <- paste(tokCrossedY, paste0(pCrossedY[i], '==', pCrossedY[j]), sep = '\n')
       }  
     }
-    p.crossedy <- p.crossedy[order(p.crossedy)]
+    pCrossedY <- pCrossedY[order(pCrossedY)]
   }
   if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves, 3, -2)
-    p.corxy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    for(i in 1:(length(p.corxy) - 1)){
-      for(j in (i + 1):length(p.corxy)){
-        tok.corxy <- paste(tok.corxy, paste0(p.corxy[i], '==', p.corxy[j]), sep = '\n')
+    pCorXY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+    for(i in 1:(length(pCorXY) - 1)){
+      for(j in (i + 1):length(pCorXY)){
+        tokCorXY <- paste(tokCorXY, paste0(pCorXY[i], '==', pCorXY[j]), sep = '\n')
       }  
     }
-    p.corxy <- p.corxy[order(p.corxy)]
+    pCorXY <- pCorXY[order(pCorXY)]
   }
   
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
-    if('stabx' %in% waveEqual) modelH1 <- paste(modelH1, tok.stabx, sep = '\n')
-    if('staby' %in% waveEqual) modelH1 <- paste(modelH1, tok.staby, sep = '\n')
-    if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tok.crossedx, sep = '\n')
-    if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tok.crossedy, sep = '\n')
-    if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tok.corxy, sep = '\n')
+    if('stabx' %in% waveEqual) modelH1 <- paste(modelH1, tokStabX, sep = '\n')
+    if('staby' %in% waveEqual) modelH1 <- paste(modelH1, tokStabY, sep = '\n')
+    if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedX, sep = '\n')
+    if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedY, sep = '\n')
+    if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tokCorXY, sep = '\n')
   }
   
-  ## add constraints to ana model
-  modelAna <- modelH1  
+  ## add constraints to H0 model
+  modelH0 <- modelH1  
   # modelH1 constraints are not in nullEffect, so ask again for each type: 
-  if('stabx' %in% nullEffect) modelAna <- paste(modelAna, tok.stabx, sep = '\n')
-  if('staby' %in% nullEffect) modelAna <- paste(modelAna, tok.staby, sep = '\n')
-  if('crossedx' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedx, sep = '\n')
-  if('crossedy' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedy, sep = '\n')
-  if('corxy' %in% nullEffect) modelAna <- paste(modelAna, tok.corxy, sep = '\n')
+  if('stabx' %in% nullEffect) modelH0 <- paste(modelH0, tokStabX, sep = '\n')
+  if('staby' %in% nullEffect) modelH0 <- paste(modelH0, tokStabY, sep = '\n')
+  if('crossedx' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedX, sep = '\n')
+  if('crossedy' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedY, sep = '\n')
+  if('corxy' %in% nullEffect) modelH0 <- paste(modelH0, tokCorXY, sep = '\n')
   if('stabx=0' %in% nullEffect){
-    tok <- paste0(p.stabx[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pStabX[nullWhich], ' == 0')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('staby=0' %in% nullEffect){
-    tok <- paste0(p.staby[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pStabY[nullWhich], ' == 0')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=0' %in% nullEffect){
-    tok <- paste0(p.crossedx[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pCrossedX[nullWhich], ' == 0')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedy=0' %in% nullEffect){
-    tok <- paste0(p.crossedy[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pCrossedY[nullWhich], ' == 0')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('stabx=staby' %in% nullEffect){
-    tok <- paste0(p.stabx[nullWhich], ' == ', p.staby[nullWhich])
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pStabX[nullWhich], ' == ', pStabY[nullWhich])
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=crossedy' %in% nullEffect){
-    tok <- paste0(p.crossedx[nullWhich], ' == ', p.crossedy[nullWhich])
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    tok <- paste0(pCrossedX[nullWhich], ' == ', pCrossedY[nullWhich])
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('corxy=0' %in% nullEffect){
-    p.corxy <- c('pf0201', p.corxy)   # add exog cor
-    tok <- paste0(p.corxy[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    pCorXY <- c('pf0201', pCorXY)   # add exog cor
+    tok <- paste0(pCorXY[nullWhich], ' == 0')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   
   # here we actually fit modelH1 in case of a restricted comparison
-  # because we cannot be sure that user input yields perfectly fitting h1 models 
+  # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
   # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   semPower.powerLav(type, 
-                    modelH0 = modelAna, 
+                    Sigma = generated[['Sigma']],
+                    modelH0 = modelH0, 
                     modelH1 = modelH1, 
-                    Sigma = Sigma,
                     ...)
 }
 
