@@ -11,6 +11,7 @@
 #' @param Sigma population covariance matrix (if modelPop is not set).
 #' @param mu population means (if modelPop is not set).
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
+#' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower. 
 #' @param ... other parameters related to the specific type of power analysis requested
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
 #' @examples
@@ -49,7 +50,8 @@
 semPower.powerLav <- function(type, 
                               modelPop = NULL, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
                               Sigma = NULL, mu = NULL, 
-                              simulatedPower = FALSE, ...){
+                              simulatedPower = FALSE, 
+                              lavOptions = NULL, ...){
   
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
@@ -69,8 +71,16 @@ semPower.powerLav <- function(type,
   # analytical power
   if(!simulatedPower){
     
+    # we need to call lavaan() directly with defaults as defined in sem()
+    lavOptions <- getLavOptions(lavOptions)
+    if(!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) != "ML") stop('Analytical power is only available with ML estimation. Note that power based on ML derivatives (mlm etc) is asymptotically identical.')
+
     # get H0 sigmaHat / muHat
-    modelH0Fit <- lavaan::sem(modelH0, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+    modelH0Fit <- do.call(lavaan::lavaan,
+                          append(list(model = modelH0,
+                                      sample.cov = Sigma,
+                                      sample.mean = mu),
+                                 lavOptions))
     if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
     SigmaHat <- lavaan::fitted(modelH0Fit)[['cov']]
     muHat <- lavaan::fitted(modelH0Fit)[['mean']]
@@ -78,7 +88,11 @@ semPower.powerLav <- function(type,
     
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
-      modelH1Fit <- lavaan::sem(modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = 1000, likelihood = 'wishart', sample.cov.rescale = FALSE)
+      modelH1Fit <- do.call(lavaan::lavaan, 
+                            append(list(model = modelH1, 
+                                        sample.cov = Sigma,
+                                        sample.mean = mu),
+                                   lavOptions))
       if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
       dfH1 <- modelH1Fit@test[['standard']][['df']]
       if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
@@ -111,7 +125,9 @@ semPower.powerLav <- function(type,
     power <- semPower(type = type, 
                       Sigma = Sigma, mu = mu, 
                       modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
-                      simulatedPower = simulatedPower, ...)
+                      simulatedPower = simulatedPower, 
+                      lavOptions = lavOptions,   # simulate() takes care of proper lavOptions
+                      ...)
     SigmaHat <- muHat <- NULL
   }
 

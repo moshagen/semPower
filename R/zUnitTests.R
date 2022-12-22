@@ -662,7 +662,7 @@ test_powerLav <- function(){
     round(ph2$power$fmin - deltaF, 4) == 0 &&
     round(ph2$power$power - ph3$power, 4) == 0 &&
     round(ph3$power - ph4$power, 4) == 0
-  
+
   if(valid3){
     print('test_powerLav: OK')
   }else{

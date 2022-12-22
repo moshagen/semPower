@@ -30,15 +30,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # remaining checks are done in corresponding power fnc
   
   # we need to call lavaan() directly with defaults as defined in sem()
-  lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
-                             auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
-                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE) 
-
-  # we also want N - 1 for ml based estm
-  if(is.null(lavOptions[['estimator']]) || (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
-    lavOptionsDefaults <- append(list(likelihood = 'Wishart'), lavOptionsDefaults)
-  
-  lavOptions <- append(lavOptions, lavOptionsDefaults)
+  lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE)
   
   ef <- list()
   ePower <- 0
