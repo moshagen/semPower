@@ -590,12 +590,12 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df are always 1.
 #' @param nWaves number of waves, must be >= 2.
-#' @param stabilities vector of the stabilities of X and Y (constant across waves), or a list of vectors of stabilities for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a stability of .7 for x1->x2 and .6 for x2->x3
+#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a autoregressive effect of .7 for x1->x2 and .6 for x2->x3
 #' @param crossedEffects vector of crossed effects of x on y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of x on y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for x1->y2 = .2 and x2->y3 = .3.
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
-#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'stabX = 0', 'stabY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y stabilities or the crossed effects to zero, 'stabX = stabY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
-#' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'stabX = 0' with nullWhich = 2 would constrain the second stability coefficient for X to zero.    
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'autoregX' and 'autoregY' for autoregressive effects, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect). 
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'autoregX = 0', 'autoregY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y autoregressive effects or the crossed effects to zero, 'autoregX = autoregY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
+#' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'autoregX = 0' with nullWhich = 2 would constrain the second autoregressive effect for X to zero.    
 #' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
@@ -607,7 +607,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @export
 semPower.powerCLPM <- function(type, comparison = 'restricted',
                                nWaves = NULL, 
-                               stabilities = NULL, crossedEffects = NULL, 
+                               autoregEffects = NULL, crossedEffects = NULL, 
                                rXY = NULL,
                                waveEqual = NULL, 
                                nullEffect = NULL, nullWhich = NULL,
@@ -624,20 +624,20 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
   #validate input
-  if(is.null(stabilities) ||  is.null(crossedEffects)) stop('Stabilities and crossedEffects may not be NULL.')
+  if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.')
   if(is.null(rXY)) rXY <- rep(0, nWaves)
   if(length(rXY) != nWaves) stop('rXY must be of length nWaves')
   invisible(lapply(rXY, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE)))
-  if(!is.list(stabilities)) stabilities <- list(rep(stabilities[1], (nWaves - 1)), rep(stabilities[2], (nWaves - 1)))
+  if(!is.list(autoregEffects)) autoregEffects <- list(rep(autoregEffects[1], (nWaves - 1)), rep(autoregEffects[2], (nWaves - 1)))
   if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
-  invisible(lapply(stabilities, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
-  invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All stabilities ', bound = c(-1, 1), inclusive = FALSE))))
-  if(length(stabilities) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('stabilities and crossedEffects must be of length nWaves - 1 or be of length 2.')
+  invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
+  invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
+  if(length(autoregEffects) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
   
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
-    if(any(unlist(lapply(waveEqual, function(x) !x %in% c('stabx', 'staby', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain stabX, stabY, crossedX, crossedY, corXY')
+    if(any(unlist(lapply(waveEqual, function(x) !x %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain autoregX, autoregY, crossedX, crossedY, corXY')
   }
   
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
@@ -646,19 +646,19 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  nullValid <- c('stabx', 'staby', 'crossedx', 'crossedy', 'corxy',
-                 'stabx=0', 'staby=0', 'crossedx=0', 'crossedy=0',
-                 'stabx=staby', 'crossedx=crossedy', 'corxy=0')
+  nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
+                 'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
+                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0')
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect')
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual')
-  if(nWaves == 2 && nullEffect %in% c('stabx', 'staby','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one stability each, and only one X-Y residual correlation. Did you mean crossedX = 0 or stabX = 0?')
+  if(nWaves == 2 && nullEffect %in% c('autoregx', 'autoregy','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one autoregressive effect each, and only one X-Y residual correlation. Did you mean crossedX = 0 or autoregX = 0?')
   
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
   if(is.null(nullWhich) && nWaves > 2){
     msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
-    if(is.null(waveEqual) && !nullEffect %in% c('stabx', 'staby', 'crossedx', 'crossedy')) stop(msg) 
-    if(!'stabx' %in% waveEqual && nullEffect %in% c('stabx=0', 'stabx=staby')) stop(msg) 
-    if(!'staby' %in% waveEqual && nullEffect %in% c('staby=0', 'stabx=staby')) stop(msg) 
+    if(is.null(waveEqual) && !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
+    if(!'autoregx' %in% waveEqual && nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
+    if(!'autoregy' %in% waveEqual && nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
     if(!'crossedx' %in% waveEqual && nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
     if(!'crossedy' %in% waveEqual && nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
     if(!'corxy' %in% waveEqual && nullEffect %in% c('corxy=0')) stop(msg) 
@@ -671,13 +671,13 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### create B
   B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
-  # add stabilities and crossed-effects
+  # add autoregEffects and crossed-effects
   for(i in 1:(nWaves - 1)){
     xidx <- 2 + 2*(i - 1) + 1
     yidx <- xidx + 1
-    # stabilities
-    B[xidx, (xidx - 2)] <- stabilities[[1]][i]
-    B[yidx, (yidx - 2)] <- stabilities[[2]][i]
+    # autoregEffects
+    B[xidx, (xidx - 2)] <- autoregEffects[[1]][i]
+    B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
     # crossed effects
     B[yidx, (xidx - 2)] <- crossedEffects[[1]][i]
     B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
@@ -727,8 +727,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   ### define H1 and H0 model
   # first get constraints that may be part of either model
   tokStabX <- tokStabY <- tokCrossedX <- tokCrossedY <- tokCorXY <- ''
-  # we also do this for stabx=0 and stabx=staby, because we need pStabX later; tokStabX is only used for stabx 
-  if('stabx' %in% waveEqual || nullEffect %in% c('stabx', 'stabx=0', 'stabx=staby')){
+  # we also do this for autoregx=0 and autoregx=autoregy, because we need pStabX later; tokStabX is only used for autoregx 
+  if('autoregx' %in% waveEqual || nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     pStabX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
     for(i in 1:(length(pStabX) - 1)){
@@ -738,7 +738,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     pStabX <- pStabX[order(pStabX)]
   }
-  if('staby' %in% waveEqual || nullEffect %in% c('staby', 'staby=0', 'stabx=staby')){
+  if('autoregy' %in% waveEqual || nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
     yw <- seq(2*nWaves, 3, -2)
     pStabY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
     for(i in 1:(length(pStabY) - 1)){
@@ -786,8 +786,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
-    if('stabx' %in% waveEqual) modelH1 <- paste(modelH1, tokStabX, sep = '\n')
-    if('staby' %in% waveEqual) modelH1 <- paste(modelH1, tokStabY, sep = '\n')
+    if('autoregx' %in% waveEqual) modelH1 <- paste(modelH1, tokStabX, sep = '\n')
+    if('autoregy' %in% waveEqual) modelH1 <- paste(modelH1, tokStabY, sep = '\n')
     if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedX, sep = '\n')
     if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedY, sep = '\n')
     if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tokCorXY, sep = '\n')
@@ -796,16 +796,16 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   ## add constraints to H0 model
   modelH0 <- modelH1  
   # modelH1 constraints are not in nullEffect, so ask again for each type: 
-  if('stabx' %in% nullEffect) modelH0 <- paste(modelH0, tokStabX, sep = '\n')
-  if('staby' %in% nullEffect) modelH0 <- paste(modelH0, tokStabY, sep = '\n')
+  if('autoregx' %in% nullEffect) modelH0 <- paste(modelH0, tokStabX, sep = '\n')
+  if('autoregy' %in% nullEffect) modelH0 <- paste(modelH0, tokStabY, sep = '\n')
   if('crossedx' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedX, sep = '\n')
   if('crossedy' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedY, sep = '\n')
   if('corxy' %in% nullEffect) modelH0 <- paste(modelH0, tokCorXY, sep = '\n')
-  if('stabx=0' %in% nullEffect){
+  if('autoregx=0' %in% nullEffect){
     tok <- paste0(pStabX[nullWhich], ' == 0')
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
-  if('staby=0' %in% nullEffect){
+  if('autoregy=0' %in% nullEffect){
     tok <- paste0(pStabY[nullWhich], ' == 0')
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
@@ -817,7 +817,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     tok <- paste0(pCrossedY[nullWhich], ' == 0')
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
-  if('stabx=staby' %in% nullEffect){
+  if('autoregx=autoregy' %in% nullEffect){
     tok <- paste0(pStabX[nullWhich], ' == ', pStabY[nullWhich])
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 

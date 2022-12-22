@@ -981,7 +981,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 2 waves, crossedX=0
   ph <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                            nWaves = 2,
-                           stabilities = c(.8, .7), 
+                           autoregEffects = c(.8, .7), 
                            crossedEffects = c(.2, .1),
                            rXY = NULL, # diagonal
                            nullEffect = 'crossedx=0',
@@ -1006,7 +1006,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 2 waves, crossedY=0
   ph2 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = NULL, # diagonal
                             nullEffect = 'crossedy=0',
@@ -1018,13 +1018,13 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres3 <- helper_lav(ph2$modelH0, ph2$Sigma)
   par3 <- lavres3$par
   
-  # 2 waves, stabX=0
+  # 2 waves, autoregX=0
   ph3 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = NULL, # diagonal
-                            nullEffect = 'stabX = 0',
+                            nullEffect = 'autoregX = 0',
                             nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
                             metricInvariance = TRUE,
                             waveEqual = NULL,
@@ -1033,13 +1033,13 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres4 <- helper_lav(ph3$modelH0, ph3$Sigma)
   par4 <- lavres4$par  
 
-  # 2 waves, stabY=0
+  # 2 waves, autoregY=0
   ph4 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = NULL, # diagonal
-                            nullEffect = 'stabY = 0',
+                            nullEffect = 'autoregY = 0',
                             nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
                             metricInvariance = TRUE,
                             waveEqual = NULL,
@@ -1048,13 +1048,13 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres5 <- helper_lav(ph4$modelH0, ph4$Sigma)
   par5 <- lavres5$par    
 
-  # 2 waves, stabX=stabY
+  # 2 waves, autoregX=autoregY
   ph5 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = NULL, # diagonal
-                            nullEffect = 'stabX=stabY',
+                            nullEffect = 'autoregX=autoregY',
                             nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
                             metricInvariance = TRUE,
                             waveEqual = NULL,
@@ -1066,7 +1066,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 2 waves, crossedX=crossedY
   ph6 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = NULL, # diagonal
                             nullEffect = 'crossedX=crossedY',
@@ -1093,7 +1093,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 2 waves, crossedX=crossedY, cor XY
   ph7 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = c(.3, .2), 
                             nullEffect = 'crossedX=crossedY',
@@ -1108,7 +1108,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 2 waves, crossedX=crossedY, cor XY, no invariance
   ph8 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                             nWaves = 2,
-                            stabilities = c(.8, .7), 
+                            autoregEffects = c(.8, .7), 
                             crossedEffects = c(.2, .1),
                             rXY = c(.3, .2), 
                             nullEffect = 'crossedX=crossedY',
@@ -1129,17 +1129,17 @@ test_powerCLPM <- function(doTest = TRUE){
     !any(!(par9[par9$lhs == 'f1' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f3' & par9$op == '=~', 'est'])) &&
     !any(!(par9[par9$lhs == 'f2' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f4' & par9$op == '=~', 'est']))
     
-  # 3 waves, wave invariant stabilities/crossed effects, crossedX=0 for first effect, 
+  # 3 waves, wave invariant autoregEffects/crossed effects, crossedX=0 for first effect, 
   ph10 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                            nWaves = 3,
-                           stabilities = c(.8, .7), 
+                           autoregEffects = c(.8, .7), 
                            crossedEffects = c(.2, .1),
                            rXY = c(.3, .2, .1),
                            nullEffect = 'crossedx=0',
                            nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
                            metricInvariance = TRUE,
                            nullWhich = NULL,
-                           waveEqual = c('stabX','stabY','crossedX','crossedY'),
+                           waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
                            alpha = .05, N = 250)
   
   lavres10 <- helper_lav(ph10$modelH1, ph10$Sigma)
@@ -1150,7 +1150,7 @@ test_powerCLPM <- function(doTest = TRUE){
   # 3 waves, no wave-equality constrains (=> less power)
   ph11 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = c(.8, .7), 
+                             autoregEffects = c(.8, .7), 
                              crossedEffects = c(.2, .1),
                              rXY = c(.3, .2, .1),
                              nullEffect = 'crossedx=0',
@@ -1162,10 +1162,10 @@ test_powerCLPM <- function(doTest = TRUE){
 
   lavres12 <- helper_lav(ph11$modelH0, ph11$Sigma)
 
-  # 3 waves, no wave invariant stabilities/crossed effects, crossedX=0 for second effect, 
+  # 3 waves, no wave invariant autoregEffects/crossed effects, crossedX=0 for second effect, 
   ph12 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
                              nullEffect = 'crossedx=0',
@@ -1180,13 +1180,13 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres14 <- helper_lav(ph12$modelH0, ph12$Sigma)
   par13 <- lavres14$par
   
-  # 3 waves, no wave invariant stabilities/crossed effects, stabx equal, 
+  # 3 waves, no wave invariant autoregEffects/crossed effects, autoregx equal, 
   ph13 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
-                             nullEffect = 'stabX',
+                             nullEffect = 'autoregX',
                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
                              metricInvariance = TRUE,
                              nullWhich = NULL,
@@ -1196,13 +1196,13 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres15 <- helper_lav(ph13$modelH0, ph13$Sigma)
   par14 <- lavres15$par
   
-  # 3 waves, no wave invariant stabilities/crossed effects, staby equal, 
+  # 3 waves, no wave invariant autoregEffects/crossed effects, autoregy equal, 
   ph14 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
-                             nullEffect = 'stabY',
+                             nullEffect = 'autoregY',
                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
                              metricInvariance = TRUE,
                              nullWhich = NULL,
@@ -1212,10 +1212,10 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres16 <- helper_lav(ph14$modelH0, ph14$Sigma)
   par15 <- lavres16$par  
 
-  # 3 waves, no wave invariant stabilities/crossed effects, crossedx equal, 
+  # 3 waves, no wave invariant autoregEffects/crossed effects, crossedx equal, 
   ph15 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
                              nullEffect = 'crossedX',
@@ -1228,10 +1228,10 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres17 <- helper_lav(ph15$modelH0, ph15$Sigma)
   par16 <- lavres17$par
 
-  # 3 waves, no wave invariant stabilities/crossed effects, crossedy equal, 
+  # 3 waves, no wave invariant autoregEffects/crossed effects, crossedy equal, 
   ph16 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
                              nullEffect = 'crossedY',
@@ -1244,17 +1244,17 @@ test_powerCLPM <- function(doTest = TRUE){
   lavres18 <- helper_lav(ph16$modelH0, ph16$Sigma)
   par17 <- lavres18$par
   
-  # 3 waves, wave-invariant stabilities/crossed effects, corxy equal, 
+  # 3 waves, wave-invariant autoregEffects/crossed effects, corxy equal, 
   ph17 <- semPower.powerCLPM(type = 'post-hoc', comparison = 'restricted',
                              nWaves = 3,
-                             stabilities = list(c(.8, .7), c(.7, .6)), 
+                             autoregEffects = list(c(.8, .7), c(.7, .6)), 
                              crossedEffects = list(c(.2, .1), c(.3, .1)),
                              rXY = c(.3, .2, .1),
                              nullEffect = 'corXY',
                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
                              metricInvariance = TRUE,
                              nullWhich = NULL,
-                             waveEqual = c('stabX','stabY','crossedX','crossedY'),
+                             waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
                              alpha = .05, N = 250)
   
   lavres19 <- helper_lav(ph17$modelH0, ph17$Sigma)
