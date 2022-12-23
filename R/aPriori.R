@@ -57,6 +57,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                      nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                      lavOptions = lavOptions)
 
+  Sigma <- pp[['Sigma']]
+  
   if(!is.null(beta)){
     desiredBeta <- beta
     desiredPower <- 1 - desiredBeta
@@ -177,7 +179,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   }
   
   # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, requiredN.g)
+  fit <- getIndices.F(fmin, df, p, pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], requiredN.g)
   
   impliedAbratio <- alpha / impliedBeta
 
@@ -278,7 +280,7 @@ summary.semPower.aPriori <- function(object, ...){
 
   print(out.table, row.names = FALSE, right = FALSE)
   
-  semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']])
+  semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['impliedNCP']], df = object[['df']])
   
 }
 

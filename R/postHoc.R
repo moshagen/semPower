@@ -60,7 +60,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     fmin.g <- pp[['fmin.g']]
     nrep <- NULL
     
-    fit <- getIndices.F(fmin, df, pp[['p']], SigmaHat, Sigma, muHat, mu, pp[['N']])
+    fit <- getIndices.F(fmin, df, pp[['p']], pp[['SigmaHat']], pp[['Sigma']], pp[['muHat']], pp[['mu']], pp[['N']])
     ncp <- getNCP(fmin.g, pp[['N']])
     
     beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
@@ -70,7 +70,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     
     if(!is.null(seed)) set.seed(seed)
     sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
-                    Sigma = Sigma, mu = mu, N = N, alpha = alpha,
+                    Sigma = pp[['Sigma']], mu = pp[['mu']], N = pp[['N']], alpha = alpha,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                     lavOptions = lavOptions)
     nrep <- sim[['nrep']]

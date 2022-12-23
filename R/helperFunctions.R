@@ -581,11 +581,12 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
 #' 
 #' @param lavOptions additional options to be added to (or overwriting) the defaults  
 #' @param isCovarianceMatrix if TRUE, also adds sample.nobs = 1000 and sample.cov.rescale = FALSE to lavoptions 
+#' @param nGroupes the number of groups, 1 by default
 #' @return a list of lav defaults
 #' @examples
 #' \dontrun{
 #' }
-getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE){
+getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1){
   # defaults as defined in lavaan::sem()
   lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
                              auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
@@ -596,9 +597,12 @@ getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE){
      (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
     lavOptionsDefaults <- append(list(likelihood = 'Wishart'), lavOptionsDefaults)
   
-  if(isCovarianceMatrix)
-    lavOptionsDefaults <- append(list(sample.nobs = 1000, sample.cov.rescale = FALSE), 
+  if(isCovarianceMatrix){
+    ns <- 1000
+    if(nGroups > 1) ns <- as.list(rep(1000, nGroups))
+    lavOptionsDefaults <- append(list(sample.nobs = ns, sample.cov.rescale = FALSE), 
                                  lavOptionsDefaults)
+  }
 
   # append lavoptions to defaults, overwriting any duplicate key
   lavOptions <- append(lavOptions, lavOptionsDefaults)[!duplicated(c(names(lavOptions), names(lavOptionsDefaults)))]

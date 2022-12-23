@@ -32,15 +32,23 @@ powerPrepare <- function(type = NULL,
   
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
   
-  # convert vectors to lists
   if(!is.list(N) && length(N) > 1) N <- as.list(N)
-  
+
   validateInput(type, effect = effect, effect.measure = effect.measure,
                 alpha = alpha, beta = beta, power = power, abratio = abratio,
                 N = N, df = df, p = p,
                 SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                 simulatedPower = simulatedPower, 
                 modelH0 = modelH0, modelH1 = modelH1)
+
+  # convert vectors to lists and vice versa
+  if(is.list(N) && length(N) == 1) N <- N[[1]]
+  if(is.list(effect) && length(effect) == 1) effect <- effect[[1]]
+  if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- SigmaHat[[1]]
+  if(is.list(Sigma) && length(Sigma) == 1) Sigma <- Sigma[[1]]
+  if(is.list(muHat) && length(muHat) == 1) muHat <- muHat[[1]]
+  if(is.list(mu) && length(mu) == 1) mu <- mu[[1]]
+  
   
   if(!is.null(Sigma)){
     effect.measure <- 'F0'
@@ -111,6 +119,10 @@ powerPrepare <- function(type = NULL,
   
   list(
     effect.measure = effect.measure,
+    SigmaHat = SigmaHat, 
+    Sigma = Sigma, 
+    muHat = muHat, 
+    mu = mu,    
     N = N,
     p = p,
     effect = effect,
@@ -157,14 +169,6 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           steps = 50, linewidth = 1){
 
   known.effects.measures <- c("F0", "RMSEA", "MC", "GFI", "AGFI")
-
-  # remove list structure if length == 1
-  if(is.list(effect) && length(effect) == 1) effect <- unlist(effect)
-  if(is.list(N) && length(N) == 1) N <- unlist(N)
-  if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- unlist(SigmaHat)
-  if(is.list(Sigma) && length(Sigma) == 1) Sigma <- unlist(Sigma)
-  if(is.list(muHat) && length(muHat) == 1) muHat <- unlist(muHat)
-  if(is.list(mu) && length(mu) == 1) mu <- unlist(mu)
   
   if(!simulatedPower){
     
@@ -229,37 +233,23 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     if((!is.null(SigmaHat) && is.null(Sigma)) || (!is.null(Sigma) && is.null(SigmaHat))){
       stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
     }
-    if((!is.null(muHat) && is.null(mu)) || (!is.null(mu) && is.null(muHat))){
+    if((!is.null(unlist(muHat)) && is.null(unlist(mu))) || (!is.null(unlist(mu)) && is.null(unlist(muHat)))){
       stop("Both muHat and mu must be defined when effect is determined from covariance matrices and meanstructures.")
     }
-    if((!is.null(muHat) || !is.null(mu)) && (is.null(Sigma) || is.null(SigmaHat))){
+    if((!is.null(unlist(muHat)) || !is.null(unlist(mu))) && (is.null(Sigma) || is.null(SigmaHat))){
       stop("When effect is to be determined from covariance matrices and meanstructures, Sigma, SigmaHat, mu, and muHat must be provided.")
     }
     
     if(!is.null(SigmaHat) && !is.null(Sigma)){
-      if(!is.null(modelH0)) warning("model is ignored when sigmaHat is defined.")
       
+      if(!is.null(modelH0)) warning("ModelH0 is ignored when SigmaHat is defined.")
       if(!is.null(effect) || !is.null(effect.measure))
-        warning("Ignoring effect and effect.measure when Sigma and SigmaHat are set")
+        warning("Ignoring effect and effect.measure when Sigma and SigmaHat are defined.")
       
-      if(is.list(SigmaHat) || is.list(Sigma)){
-        if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
-        if(!is.null(muHat) && !is.null(mu)){
-          if(length(muHat) != length(mu) || length(mu) != length(Sigma))
-            stop("Multiple group power analyses require specification of mu and muHat for each group.")
-        }
-        if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
-        if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
-        if(length(N) == 1){
-          warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
-        }else if(length(SigmaHat) != length(N)){
-          stop("Multiple group power analyses require specification of N for each group.")
-        } 
-      }
-      
-      if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
+      # convert to list in any case so validiation below always applies 
       if(!is.list(Sigma)) Sigma <- list(Sigma)
-      
+      if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
+
       if(any(sapply(Sigma, ncol) != sapply(SigmaHat, ncol)) || any(sapply(Sigma, nrow) != sapply(SigmaHat, nrow)))
         stop("Sigma and SigmaHat must be of equal size")
       if(any(!sapply(c(Sigma, SigmaHat), isSymmetric)))
@@ -268,18 +258,36 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         stop("Sigma and SigmaHat must be at least of dimension 2*2")
       if(any(sapply(c(Sigma, SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
         stop("Sigma and SigmaHat must be positive definite")
+
+      # now remove list structure for length = 1
+      if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- SigmaHat[[1]]
+      if(is.list(Sigma) && length(Sigma) == 1) Sigma <- Sigma[[1]]
       
-      if(!is.null(muHat) && !is.null(mu)){
-        if(!is.list(muHat)) muHat <- list(muHat)
-        if(!is.list(mu)) mu <- list(mu)
-        
-        if(any(sapply(c(mu, muHat), is.na)))
-          stop("mu and muHat must not contain NA values.")
-        if(any(sapply(mu, length) != sapply(muHat, length)))
-          stop("mu and muHat must be of same size.")
-        if(any(sapply(mu, length) != sapply(Sigma, ncol)))
-          stop("mu and muHat must be of same length as Sigma and SigmaHat.")
+      # multigroup case
+      if(is.list(SigmaHat) || is.list(Sigma)){
+        if(length(SigmaHat) != length(Sigma)) stop("Multiple group power analyses require specification of SigmaHat and Sigma for each group.")
+        if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
+        if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
+        if(length(N) == 1){
+          warning("Only single sample size provided in multiple group power analyses, assuming equal sample sizes (weights in a priori power analyses) for each group.")
+        }else if(length(SigmaHat) != length(N)){
+          stop("Multiple group power analyses require specification of N for each group.")
+        } 
+
+        if(!is.null(unlist(muHat)) && !is.null(unlist(mu))){
+          if(!is.list(muHat)) muHat <- list(muHat)
+          if(!is.list(mu)) mu <- list(mu)
+          if(length(muHat) != length(mu)) stop("Multiple group power analyses require specification of mu and muHat for each group.")
+          if(length(mu) != length(Sigma)) stop("Multiple group power analyses require specification of mu and muHat for each group.")
+          if(any(sapply(c(mu, muHat), is.na)))
+            stop("mu and muHat must not contain NA values.")
+          if(any(sapply(mu, length) != sapply(muHat, length)))
+            stop("mu and muHat must be of same size.")
+          if(is.list(Sigma) && any(sapply(mu, length) != sapply(Sigma, ncol)))
+            stop("mu and muHat must be of same length as the columns/rows of Sigma and SigmaHat.")
+        }
       }
+      
     }
 
   ### TODO remove code duplication by merging the following with the preceding block

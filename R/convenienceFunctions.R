@@ -61,45 +61,68 @@ semPower.powerLav <- function(type,
   if(is.null(modelPop) && is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
   if(!is.null(modelPop) && !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
   if(simulatedPower && type == 'compromise') stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
+  if(!is.null(modelPop) && !is.list(modelPop)) modelPop <- list(modelPop)
+  if(!is.null(Sigma) && !is.list(Sigma)) Sigma <- list(Sigma)
 
   # determine population Sigma / mu
   if(is.null(Sigma)){
-    Sigma <- lavaan::fitted(lavaan::sem(modelPop))[['cov']]
-    mu <- lavaan::fitted(lavaan::sem(modelPop))[['mean']]
+    Sigma <- lapply(modelPop, function(x) lavaan::fitted(lavaan::sem(x))[['cov']])
+    mu <- lapply(modelPop, function(x) lavaan::fitted(lavaan::sem(x))[['mean']])
   }
   
   # analytical power
   if(!simulatedPower){
     
     # we need to call lavaan() directly with defaults as defined in sem()
-    lavOptions <- getLavOptions(lavOptions)
+    lavOptions <- getLavOptions(lavOptions, nGroups = length(Sigma))
     if(!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) != "ML") stop('Analytical power is only available with ML estimation. Note that power based on ML derivatives (mlm etc) is asymptotically identical.')
 
     # get H0 sigmaHat / muHat
     modelH0Fit <- do.call(lavaan::lavaan,
                           append(list(model = modelH0,
-                                      sample.cov = Sigma,
-                                      sample.mean = mu),
+                                      sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
+                                      sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
                                  lavOptions))
     if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
-    SigmaHat <- lavaan::fitted(modelH0Fit)[['cov']]
-    muHat <- lavaan::fitted(modelH0Fit)[['mean']]
-    df <- dfH0 <- modelH0Fit@test[['standard']][['df']]
+    if(length(Sigma) > 1){
+      # multigroup case
+      SigmaHat <- lapply(1:length(Sigma), function(x) lavaan::fitted(modelH0Fit)[[x]][['cov']])
+      muHat <- lapply(1:length(Sigma), function(x) lavaan::fitted(modelH0Fit)[[x]][['mean']])
+    }else{
+      # single group case
+      SigmaHat <- list(lavaan::fitted(modelH0Fit)[['cov']])
+      muHat <- list(lavaan::fitted(modelH0Fit)[['mean']])
+    }
+    df <- dfH0 <- modelH0Fit@test[['standard']][['df']]  # this is probably invalid for estm with adjusted df
     
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
-      modelH1Fit <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH1, 
-                                        sample.cov = Sigma,
-                                        sample.mean = mu),
+      modelH1Fit <- do.call(lavaan::lavaan,
+                            append(list(model = modelH1,
+                                        sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
+                                        sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
                                    lavOptions))
       if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
       dfH1 <- modelH1Fit@test[['standard']][['df']]
-      if(dfH1 >= dfH0) stop('The df of the H1 model are not larger than the df of the H0 model, as they should be.')
+      if(dfH1 >= dfH0) stop('The df of the H0 model are not larger than the df of the H1 model, as they should be.')
       # get delta F
-      fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)[['cov']], Sigma, lavaan::fitted(modelH1Fit)[['mean']], mu)
-      fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)[['cov']], Sigma, lavaan::fitted(modelH0Fit)[['mean']], mu)
-      deltaF <- fminH0 - fminH1
+      if(length(Sigma) > 1){
+        # multigroup case
+        fminH0 <- lapply(1:length(Sigma), 
+                         function(x) getF.Sigma(lavaan::fitted(modelH0Fit)[[x]][['cov']], Sigma[[x]], 
+                                                lavaan::fitted(modelH0Fit)[[x]][['mean']], mu[[x]]))
+        fminH1 <- lapply(1:length(Sigma), 
+                         function(x) getF.Sigma(lavaan::fitted(modelH1Fit)[[x]][['cov']], Sigma[[x]], 
+                                                lavaan::fitted(modelH1Fit)[[x]][['mean']], mu[[x]]))
+        deltaF <- lapply(1:length(Sigma), function(x) fminH0[[x]] - fminH1[[x]]) # result must be a list
+      }else{
+        # single group case
+        fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)[['cov']], Sigma[[1]], 
+                             lavaan::fitted(modelH0Fit)[['mean']], mu[[1]])
+        fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)[['cov']], Sigma[[1]], 
+                             lavaan::fitted(modelH1Fit)[['mean']], mu[[1]])
+        deltaF <- fminH0 - fminH1
+      }
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
       df <- df - semPower.getDf(modelH1)
@@ -122,6 +145,7 @@ semPower.powerLav <- function(type,
         
   # simulated power
   }else{
+    ## TODO add multigroup support
     power <- semPower(type = type, 
                       Sigma = Sigma, mu = mu, 
                       modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
@@ -131,7 +155,15 @@ semPower.powerLav <- function(type,
     SigmaHat <- muHat <- NULL
   }
 
-  list(power = power, 
+  # remove list structure for single group models
+  if(length(Sigma) == 1){
+    Sigma <- Sigma[[1]]
+    SigmaHat <- SigmaHat[[1]]
+    mu <- mu[[1]]
+    muHat <- muHat[[1]]
+  }
+
+  list(power = power,
        SigmaHat = SigmaHat, Sigma = Sigma,
        muHat = muHat, mu = mu,
        modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
