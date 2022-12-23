@@ -774,27 +774,27 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### define H1 and H0 model
   # first get constraints that may be part of either model
-  tokStabX <- tokStabY <- tokCrossedX <- tokCrossedY <- tokCorXY <- ''
-  # we also do this for autoregx=0 and autoregx=autoregy, because we need pStabX later; tokStabX is only used for autoregx 
+  tokAutoregX <- tokAutoregY <- tokCrossedX <- tokCrossedY <- tokCorXY <- ''
+  # we also do this for autoregx=0 and autoregx=autoregy, because we need pAutoregX later; tokAutoregX is only used for autoregx 
   if('autoregx' %in% waveEqual || nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
     xw <- seq(2*nWaves - 1, 2, -2)
-    pStabX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
-    for(i in 1:(length(pStabX) - 1)){
-      for(j in (i + 1):length(pStabX)){
-        tokStabX <- paste(tokStabX, paste0(pStabX[i], '==', pStabX[j]), sep = '\n')
+    pAutoregX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
+    for(i in 1:(length(pAutoregX) - 1)){
+      for(j in (i + 1):length(pAutoregX)){
+        tokAutoregX <- paste(tokAutoregX, paste0(pAutoregX[i], '==', pAutoregX[j]), sep = '\n')
       }  
     }
-    pStabX <- pStabX[order(pStabX)]
+    pAutoregX <- pAutoregX[order(pAutoregX)]
   }
   if('autoregy' %in% waveEqual || nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
     yw <- seq(2*nWaves, 3, -2)
-    pStabY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
-    for(i in 1:(length(pStabY) - 1)){
-      for(j in (i + 1):length(pStabY)){
-        tokStabY <- paste(tokStabY, paste0(pStabY[i], '==', pStabY[j]), sep = '\n')
+    pAutoregY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
+    for(i in 1:(length(pAutoregY) - 1)){
+      for(j in (i + 1):length(pAutoregY)){
+        tokAutoregY <- paste(tokAutoregY, paste0(pAutoregY[i], '==', pAutoregY[j]), sep = '\n')
       }  
     }
-    pStabY <- pStabY[order(pStabY)]
+    pAutoregY <- pAutoregY[order(pAutoregY)]
   }
   # we also do this for crossedx=0 and crossedx=crossedy, because we need pCrossedX later; tokCrossedX is only used for crossedx 
   if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
@@ -834,8 +834,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
-    if('autoregx' %in% waveEqual) modelH1 <- paste(modelH1, tokStabX, sep = '\n')
-    if('autoregy' %in% waveEqual) modelH1 <- paste(modelH1, tokStabY, sep = '\n')
+    if('autoregx' %in% waveEqual) modelH1 <- paste(modelH1, tokAutoregX, sep = '\n')
+    if('autoregy' %in% waveEqual) modelH1 <- paste(modelH1, tokAutoregY, sep = '\n')
     if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedX, sep = '\n')
     if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedY, sep = '\n')
     if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tokCorXY, sep = '\n')
@@ -844,17 +844,17 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   ## add constraints to H0 model
   modelH0 <- modelH1  
   # modelH1 constraints are not in nullEffect, so ask again for each type: 
-  if('autoregx' %in% nullEffect) modelH0 <- paste(modelH0, tokStabX, sep = '\n')
-  if('autoregy' %in% nullEffect) modelH0 <- paste(modelH0, tokStabY, sep = '\n')
+  if('autoregx' %in% nullEffect) modelH0 <- paste(modelH0, tokAutoregX, sep = '\n')
+  if('autoregy' %in% nullEffect) modelH0 <- paste(modelH0, tokAutoregY, sep = '\n')
   if('crossedx' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedX, sep = '\n')
   if('crossedy' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedY, sep = '\n')
   if('corxy' %in% nullEffect) modelH0 <- paste(modelH0, tokCorXY, sep = '\n')
   if('autoregx=0' %in% nullEffect){
-    tok <- paste0(pStabX[nullWhich], ' == 0')
+    tok <- paste0(pAutoregX[nullWhich], ' == 0')
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('autoregy=0' %in% nullEffect){
-    tok <- paste0(pStabY[nullWhich], ' == 0')
+    tok <- paste0(pAutoregY[nullWhich], ' == 0')
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=0' %in% nullEffect){
@@ -866,7 +866,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('autoregx=autoregy' %in% nullEffect){
-    tok <- paste0(pStabX[nullWhich], ' == ', pStabY[nullWhich])
+    tok <- paste0(pAutoregX[nullWhich], ' == ', pAutoregY[nullWhich])
     modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=crossedy' %in% nullEffect){
