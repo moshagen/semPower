@@ -682,6 +682,11 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
   if(length(autoregEffects) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(autoregEffects[[2]])) stop('autoregEffects for X and Y must be of equal length.')
+  if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != length(crossedEffects[[2]])) stop('CrossedEffects for X and Y must be of equal length.')
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(crossedEffects[[2]])) stop('autoregEffects and crossedEffects must be of equal length.')  
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != (nWaves - 1)) stop('autoregEffects must be of length nWaves - 1.')  
+  if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != (nWaves - 1)) stop('crossedEffects must be of length nWaves - 1.')   
   
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
