@@ -76,7 +76,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     nrep <- sim[['nrep']]
     df <- sim[['df']]
     fmin <- sim[['medianF']]
-    fmin.g <- sim[['medianF']]   ## TODO add multigroup support
+    fmin.g <- sim[['medianF']]
     
     fit <- getIndices.F(fmin = fmin, df = df, p = pp[['p']], N = pp[['N']])
     ncp <- getNCP(fmin.g, pp[['N']])

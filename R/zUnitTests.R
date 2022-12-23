@@ -1477,6 +1477,24 @@ test_simulatePower <- function(doTest = TRUE){
     phs2a$power != phs4$power &&
     round((phs2a$fmin - phs4$fmin)^2, 4) == 0
   
+  # multigroup
+  generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)))
+  generated2 <- semPower.genSigma(loadings = list(c(.5, .5, .7)))
+  lavres <- helper_lav(generated$modelTrue, 
+                       list(generated$Sigma, generated2$Sigma),
+                       sample.nobs = list(500, 500),
+                       group.equal = c('loadings'))
+  
+  ph <- semPower.postHoc(modelH0 = generated$modelTrue,
+                         Sigma = list(generated$Sigma, generated2$Sigma),
+                         lavOptions = list(group.equal = c('loadings')),
+                         alpha = .05, N = list(500, 500), df = 3, 
+                         simulatedPower = TRUE, nReplications = 250, 
+                         seed = 30012021)  
+  summary(ph)
+  ## TODO add meaningful tests for multigroup
+  
+  ## TODO consider weights in simulated apriori multigroup power 
 
   if(valid5){
     print('test_simulatePower: OK')

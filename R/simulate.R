@@ -30,7 +30,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # remaining checks are done in corresponding power fnc
   
   # we need to call lavaan() directly with defaults as defined in sem()
-  lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE)
+  lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
   
   ef <- list()
   ePower <- 0
@@ -39,10 +39,18 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   while(r <= nReplications && rr <= nReplications / minConvergenceRate){
     setTxtProgressBar(progress, r)
     tryCatch({
-      
-      cdata <- genData(N, Sigma, mu)
-      lavresH0 <- do.call(lavaan::lavaan, 
-                          append(list(model = modelH0, data = cdata), lavOptions))
+      if(!is.list(Sigma)){
+        # single group case
+        cdata <- genData(N, Sigma, mu)
+        lavresH0 <- do.call(lavaan::lavaan, 
+                            append(list(model = modelH0, data = cdata), lavOptions))
+      }else{
+        # multigroup group case
+        gdata <- lapply(1:length(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x))
+        cdata <- unlist(do.call(rbind, gdata))
+        lavresH0 <- do.call(lavaan::lavaan, 
+                            append(list(model = modelH0, data = cdata), append(list(group = 'gIdx'), lavOptions)))
+      }
       ef <- append(ef, 2 * lavaan::fitMeasures(lavresH0, 'fmin')) # lav reports .5*fmin
       p <- lavaan::fitMeasures(lavresH0, 'pvalue')
       df <- lavaan::fitMeasures(lavresH0, 'df')
@@ -54,8 +62,15 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # handle restricted comparison model 
       # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
       if(!is.null(modelH1)){
-        lavresH1 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH1, data = cdata), lavOptions))
+        if(!is.list(Sigma)){
+          # single group case
+          lavresH1 <- do.call(lavaan::lavaan, 
+                              append(list(model = modelH1, data = cdata), lavOptions))
+        }else{
+          # multigroup group case
+          lavresH1 <- do.call(lavaan::lavaan, 
+                              append(list(model = modelH1, data = cdata), append(list(group = 'gIdx'), lavOptions)))
+        }
         mcomp <- lavaan::anova(lavresH0, lavresH1) 
         p <- mcomp$`Pr(>Chisq)`[2]
         df <- mcomp$`Df diff`[2]
@@ -86,8 +101,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   }
   
   if(returnFmin){
-    # sample fmin is biased, we report need unbiased pop fmin
-    ubFmedian <- median(unlist(ef) - df / N)
+    # sample fmin is biased, we need unbiased pop fmin
+    ubFmedian <- median(unlist(ef) - df / sum(unlist(N)))
     list(
       ePower = ePower,
       medianF = ubFmedian,
@@ -107,15 +122,17 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
+#' @param gIdx if not NULL, add gIdx as numeric group index as additional variable to generated data
 #' @return data
 #' @examples
 #' \dontrun{
 #' }
 #' @importFrom stats rnorm 
-genData <- function(N = NULL, Sigma = NULL, mu = NULL){
+genData <- function(N = NULL, Sigma = NULL, mu = NULL, gIdx = NULL){
   randomData <- matrix(rnorm(N * ncol(Sigma)), N, ncol(Sigma)) 
   rdat <- t(t(chol(Sigma)) %*% t(randomData))
   if(!is.null(mu)) rdat <- rdat + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE)
+  if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL,c('gIdx')))) 
   rdat
 }
 

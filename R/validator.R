@@ -167,7 +167,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
-
+  
   known.effects.measures <- c("F0", "RMSEA", "MC", "GFI", "AGFI")
   
   if(!simulatedPower){
@@ -177,7 +177,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     
     # generic power analyses
     if(is.null(SigmaHat) && is.null(Sigma)){
-  
+      
       if(!effect.measure %in% known.effects.measures){
         stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
       }
@@ -192,7 +192,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
           }
         }
       }
-  
+      
       # for multiple group analyses, check matching length
       if(is.list(N)){
         if(is.list(effect) && length(effect) == 1){
@@ -220,7 +220,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         if(is.null(effect)) stop('Effect is not defined.')
         lapply(effect, checkPositive, message = effect.measure)
       }
-  
+      
       if(effect.measure == "GFI" || effect.measure == "AGFI"){
         if(is.null(p)){
           stop("effect.measure GFI and AGFI require specification of p")
@@ -228,7 +228,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         checkPositive(p)
       }
     }
-
+    
     # power analyses based on covariance matrices  
     if((!is.null(SigmaHat) && is.null(Sigma)) || (!is.null(Sigma) && is.null(SigmaHat))){
       stop("Both SigmaHat and Sigma must be defined when effect is determined from covariance matrices")
@@ -249,7 +249,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       # convert to list in any case so validiation below always applies 
       if(!is.list(Sigma)) Sigma <- list(Sigma)
       if(!is.list(SigmaHat)) SigmaHat <- list(SigmaHat)
-
+      
       if(any(sapply(Sigma, ncol) != sapply(SigmaHat, ncol)) || any(sapply(Sigma, nrow) != sapply(SigmaHat, nrow)))
         stop("Sigma and SigmaHat must be of equal size")
       if(any(!sapply(c(Sigma, SigmaHat), isSymmetric)))
@@ -258,7 +258,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         stop("Sigma and SigmaHat must be at least of dimension 2*2")
       if(any(sapply(c(Sigma, SigmaHat), function(x){sum(eigen(x)$values < 0) > 0})))
         stop("Sigma and SigmaHat must be positive definite")
-
+      
       # now remove list structure for length = 1
       if(is.list(SigmaHat) && length(SigmaHat) == 1) SigmaHat <- SigmaHat[[1]]
       if(is.list(Sigma) && length(Sigma) == 1) Sigma <- Sigma[[1]]
@@ -273,7 +273,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
         }else if(length(SigmaHat) != length(N)){
           stop("Multiple group power analyses require specification of N for each group.")
         } 
-
+        
         if(!is.null(unlist(muHat)) && !is.null(unlist(mu))){
           if(!is.list(muHat)) muHat <- list(muHat)
           if(!is.list(mu)) mu <- list(mu)
@@ -289,16 +289,25 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       }
       
     }
-
-  ### TODO remove code duplication by merging the following with the preceding block
-  # simulated power specifics  
+    
+    ### TODO remove code duplication by merging the following with the preceding block
+    # simulated power specifics  
   }else{
     if(is.null(Sigma) || is.null(modelH0)) stop("Simulated power requires specification of Sigma and modelH0.")
     if(!is.null(effect) || !is.null(effect.measure))
       warning("Ignoring effect and effect.measure in simulated power.")
     
+    if(!is.list(Sigma)) Sigma <- list(Sigma)
+    if(any(!sapply(Sigma, isSymmetric)))
+      stop("Sigma must be symmetric square matrices")
+    if(any(sapply(Sigma, ncol) < 2))
+      stop("Sigma must be at least of dimension 2*2")
+    if(any(sapply(Sigma, function(x){sum(eigen(x)$values < 0) > 0})))
+      stop("Sigma must be positive definite")
+    
+    if(length(Sigma) == 1) Sigma <- Sigma[[1]]
     if(is.list(Sigma)){
-      if(length(mu) != length(Sigma))
+      if(!is.null(mu) && length(mu) != length(Sigma))
         stop("Multiple group power analyses require specification of mu for each group.")
       if(is.null(N) && power.type != "a-priori") stop("Multiple group power analyses require specification of N for each group (representing weights in a priori power analysis).")
       if(is.null(N) && power.type == "a-priori") warning("No sample weights provided, assuming equal sample sizes in each group.")
@@ -311,27 +320,20 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       if(!is.null(mu) && length(mu) != ncol(Sigma)) stop("Mu must have the same length as ncol(Sigma).")
     }
     
-    if(!is.list(Sigma)) Sigma <- list(Sigma)
-
-    if(any(!sapply(Sigma, isSymmetric)))
-      stop("Sigma must be symmetric square matrices")
-    if(any(sapply(Sigma, ncol) < 2))
-      stop("Sigma must be at least of dimension 2*2")
-    if(any(sapply(Sigma, function(x){sum(eigen(x)$values < 0) > 0})))
-      stop("Sigma must be positive definite")
-
+    
+    
   }
-
+  
   # specifics depending on type of power analyses
   if(power.type == "post-hoc" || power.type == "compromise" || (power.type == "a-priori" && is.list(effect))){
     if(is.null(N)) stop('N is not defined.')
     lapply(N, checkPositive, message = 'N')
   }
-
+  
   if(power.type == "a-priori" || power.type == "post-hoc"){
     checkBounded(alpha)
   }
-
+  
   if(power.type == "a-priori"){
     if(is.null(beta) && is.null(power))
       stop("Need to define either beta or power in a-priori power analyis")
@@ -342,11 +344,11 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     if(!is.null(power))
       checkBounded(power)
   }
-
+  
   if(power.type == "compromise"){
     checkPositive(abratio)
   }
-
+  
   # specifics for power plots
   if(power.type == "powerplot.byN"){
     checkBounded(alpha)
