@@ -1372,6 +1372,747 @@ test_powerCLPM <- function(doTest = TRUE){
   }
 }
 
+test_powerRICLPM <- function(doTest = TRUE){
+  if(!doTest){
+      print('test_powerRICLPM: NOT TESTED')
+      return()
+  }
+  
+  # 3 waves, crossedX = 0 
+  
+  ph <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                             nWaves = 3,
+                             autoregEffects = c(.5, .4), 
+                             crossedEffects = c(.2, .1),
+                             rXY = NULL, # diagonal
+                             rBXBY = NULL, # diagonal 
+                             nullEffect = 'crossedx=0',
+                             nullWhich = 1,
+                             nIndicator = rep(3, 6), 
+                             loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             waveEqual = NULL,
+                             alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph$modelH1, ph$Sigma)
+  par <- lavres$par
+  lavres2 <- helper_lav(ph$modelH0, ph$Sigma)
+  par2 <- lavres2$par
+  
+  valid <- round(sum((par[par$op == '~', 'est'] - c(.5, .1, .2, .4, .5, .1, .2, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == 0 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == 0 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 3
+    round(par2[par2$lhs == 'f6' & par2$rhs == 'f3', 'est'], 4) == 0 && # nullEffect
+    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    !any(!(par2[par2$lhs == 'f9' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f11' & par2$op == '=~', 'label'])) && # metricInvariance labels
+    !any(!(par2[par2$lhs == 'f9' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f13' & par2$op == '=~', 'label'])) && 
+    !any(!(par2[par2$lhs == 'f10' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f12' & par2$op == '=~', 'label'])) && 
+    !any(!(par2[par2$lhs == 'f10' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f14' & par2$op == '=~', 'label'])) 
+  
+  
+  
+  # 3 waves, crossedY = 0 
+  
+  ph2 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.5, .4), 
+                              crossedEffects = c(.2, .1),
+                              rXY = NULL, # diagonal
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'crossedy=0',
+                              nullWhich = 2,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  lavres3 <- helper_lav(ph2$modelH0, ph2$Sigma)
+  par3 <- lavres3$par
+  
+  
+  # 3 waves, autoregX = 0 
+  
+  ph3 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.5, .4), 
+                              crossedEffects = c(.2, .1),
+                              rXY = NULL, # diagonal
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'autoregx=0',
+                              nullWhich = 1,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  lavres4 <- helper_lav(ph3$modelH0, ph3$Sigma)
+  par4 <- lavres4$par
+  
+  
+  # 3 waves, autoregY = 0 
+  
+  ph4 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.5, .4), 
+                              crossedEffects = c(.2, .1),
+                              rXY = NULL, # diagonal
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'autoregy=0',
+                              nullWhich = 2,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  lavres5 <- helper_lav(ph4$modelH0, ph4$Sigma)
+  par5 <- lavres5$par
+  
+  
+  # 3 waves, autoregX = autoregY 
+  
+  ph5 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.5, .4), 
+                              crossedEffects = c(.2, .1),
+                              rXY = NULL, # diagonal
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'autoregx=autoregy',
+                              nullWhich = 1,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  lavres6 <- helper_lav(ph5$modelH0, ph5$Sigma)
+  par6 <- lavres6$par
+  
+  
+  # 3 waves, crossedX = crossedY 
+  
+  ph6 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.5, .4), 
+                              crossedEffects = c(.2, .1),
+                              rXY = NULL, # diagonal
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'crossedx=crossedy',
+                              nullWhich = 2,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  lavres7 <- helper_lav(ph6$modelH0, ph6$Sigma)
+  par7 <- lavres7$par
+  
+  ## check parameters
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.5, .1, .2, .4, .5, .1, .2, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == 0 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == 0 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 3
+    round(par3[par3$lhs == 'f7' & par3$rhs == 'f6', 'est'], 4) == 0 && # nullEffect ph2
+    round(par4[par4$lhs == 'f5' & par4$rhs == 'f3', 'est'], 4) == 0 && # nullEffect ph3
+    round(par5[par5$lhs == 'f8' & par5$rhs == 'f6', 'est'], 4) == 0 && # nullEffect ph4
+    round(par6[par6$lhs == 'f5' & par6$rhs == 'f3', 'est'], 4) == round(par6[par6$lhs == 'f6' & par6$rhs == 'f4', 'est'], 4) && # nullEffect ph5
+    round(par7[par7$lhs == 'f7' & par7$rhs == 'f6', 'est'], 4) == round(par7[par7$lhs == 'f8' & par7$rhs == 'f5', 'est'], 4) && # nullEffect ph6
+    !any(!(par3[par3$lhs == 'f9' & par3$op == '=~', 'label'] == par3[par3$lhs == 'f11' & par3$op == '=~', 'label'])) && # metricInvariance labels
+    !any(!(par3[par3$lhs == 'f9' & par3$op == '=~', 'label'] == par3[par3$lhs == 'f13' & par3$op == '=~', 'label'])) && 
+    !any(!(par3[par3$lhs == 'f10' & par3$op == '=~', 'label'] == par3[par3$lhs == 'f12' & par3$op == '=~', 'label'])) && 
+    !any(!(par3[par3$lhs == 'f10' & par3$op == '=~', 'label'] == par3[par3$lhs == 'f14' & par3$op == '=~', 'label'])) 
+  
+  # check fmin
+  valid <- valid && 
+    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    round(2*lavres3$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
+    round(2*lavres5$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 
+  
+  
+  
+  # 3 waves, corXY, crossedX = crossedY 
+  
+  ph7 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.2, .3), 
+                              crossedEffects = c(.4, .5),
+                              rXY = c(.1, .05, .05),
+                              rBXBY = NULL, # diagonal 
+                              nullEffect = 'crossedx=crossedy',
+                              nullWhich = 2,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph7$modelH1, ph7$Sigma)
+  par <- lavres$par
+  lavres8 <- helper_lav(ph7$modelH0, ph7$Sigma)
+  par8 <- lavres8$par
+  
+  
+  # 3 waves, corXY, corBXBY, crossedX = crossedY 
+  
+  ph8 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.2, .3), 
+                              crossedEffects = c(.4, .5),
+                              rXY = c(.1, .05, .05), 
+                              rBXBY = .2, 
+                              nullEffect = 'crossedx=crossedy',
+                              nullWhich = 2,
+                              nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                              metricInvariance = TRUE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph8$modelH1, ph8$Sigma)
+  par <- lavres$par
+  lavres9 <- helper_lav(ph8$modelH0, ph8$Sigma)
+  par9 <- lavres9$par
+  
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    round(par9[par9$lhs == 'f8' & par9$rhs == 'f5', 'est'], 4) == round(par9[par9$lhs == 'f7' & par9$rhs == 'f6', 'est'], 4) && # nullEffect
+    !any(!(par9[par9$lhs == 'f9' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f11' & par9$op == '=~', 'label'])) && # metricInvariance labels
+    !any(!(par9[par9$lhs == 'f9' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f13' & par9$op == '=~', 'label'])) && 
+    !any(!(par9[par9$lhs == 'f10' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f12' & par9$op == '=~', 'label'])) && 
+    !any(!(par9[par9$lhs == 'f10' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f14' & par9$op == '=~', 'label'])) &&
+    round(2*lavres9$fit['fmin'] - ph8$power$fmin, 4) == 0
+  
+  
+  
+  # 3 waves, corXY, corBXBY, autoregX = autoregY, no invariance 
+  
+  ph9 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                              nWaves = 3,
+                              autoregEffects = c(.2, .3), 
+                              crossedEffects = c(.4, .5),
+                              rXY = c(.1, .05, .05), 
+                              rBXBY = .2, 
+                              nullEffect = 'autoregx=autoregy',
+                              nullWhich = 1,
+                              nIndicator = rep(3, 6), loadM = c(.2, .5, .4, .3, .6, .1),
+                              metricInvariance = FALSE,
+                              waveEqual = NULL,
+                              alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph9$modelH1, ph9$Sigma)
+  par <- lavres$par
+  lavres10 <- helper_lav(ph9$modelH0, ph9$Sigma)
+  par10 <- lavres10$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    round(par10[par10$lhs == 'f5' & par10$rhs == 'f3', 'est'], 4) == round(par10[par10$lhs == 'f6' & par10$rhs == 'f4', 'est'], 4) && # nullEffect
+    !any(!(par10[par10$lhs == 'f9' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f11' & par10$op == '=~', 'est'])) && # no metricInvariance
+    !any(!(par10[par10$lhs == 'f9' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f13' & par10$op == '=~', 'est'])) && 
+    !any(!(par10[par10$lhs == 'f11' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f13' & par10$op == '=~', 'est'])) &&
+    !any(!(par10[par10$lhs == 'f10' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f12' & par10$op == '=~', 'est'])) && 
+    !any(!(par10[par10$lhs == 'f10' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f14' & par10$op == '=~', 'est'])) &&
+    !any(!(par10[par10$lhs == 'f12' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f14' & par10$op == '=~', 'est'])) &&
+    round(2*lavres10$fit['fmin'] - ph9$power$fmin, 4) == 0
+  
+  
+  
+  # 3 waves, corXY, corBY, autoregX=autoregY, no invariance, Lambda 
+  
+  lambda <- matrix(0, nrow = 18, ncol = 6)
+  lambda[1:3, 1] <- rep(.2, 3)
+  lambda[4:6, 2] <- rep(.5, 3)
+  lambda[7:9, 3] <- rep(.4, 3)
+  lambda[10:12, 4] <- rep(.3, 3)
+  lambda[13:15, 5] <- rep(.6, 3)
+  lambda[16:18, 6] <- rep(.1, 3)
+  
+  ph10 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 3,
+                               autoregEffects = c(.2, .3), 
+                               crossedEffects = c(.4, .5),
+                               rXY = c(.1, .05, .05), 
+                               rBXBY = .2, 
+                               nullEffect = 'autoregx=autoregy',
+                               nullWhich = 1,
+                               Lambda = lambda,
+                               metricInvariance = FALSE,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph10$modelH1, ph10$Sigma)
+  par <- lavres$par
+  lavres11 <- helper_lav(ph10$modelH0, ph10$Sigma)
+  par11 <- lavres11$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    sum(round(par[par$lhs == 'f9' & par$op == '=~', 'est'], 4) - rep(.2, 3)) == 0 && # factor loadings
+    sum(round(par[par$lhs == 'f10' & par$op == '=~', 'est'], 4) - rep(.5, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f11' & par$op == '=~', 'est'], 4) - rep(.4, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f12' & par$op == '=~', 'est'], 4) - rep(.3, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f13' & par$op == '=~', 'est'], 4) - rep(.6, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f14' & par$op == '=~', 'est'], 4) - rep(.1, 3)) == 0 &&
+    round(par11[par11$lhs == 'f5' & par11$rhs == 'f3', 'est'], 4) == round(par11[par11$lhs == 'f6' & par11$rhs == 'f4', 'est'], 4) && # nullEffect
+    !any(!(par11[par11$lhs == 'f9' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f11' & par11$op == '=~', 'est'])) && # no metricInvariance
+    !any(!(par11[par11$lhs == 'f9' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f13' & par11$op == '=~', 'est'])) && 
+    !any(!(par11[par11$lhs == 'f11' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f13' & par11$op == '=~', 'est'])) &&
+    !any(!(par11[par11$lhs == 'f10' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f12' & par11$op == '=~', 'est'])) && 
+    !any(!(par11[par11$lhs == 'f10' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f14' & par11$op == '=~', 'est'])) &&
+    !any(!(par11[par11$lhs == 'f12' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f14' & par11$op == '=~', 'est'])) &&
+    round(2*lavres11$fit['fmin'] - ph10$power$fmin, 4) == 0
+  
+  
+  
+  # 3 waves, corXY, corBXBY, autoregX = autoregY, manifest 
+  
+  ph11 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 3,
+                               autoregEffects = c(.2, .3), 
+                               crossedEffects = c(.4, .5),
+                               rXY = c(.1, .05, .05), 
+                               rBXBY = .2, 
+                               nullEffect = 'autoregx=autoregy',
+                               nullWhich = 1,
+                               nIndicator = rep(1,6),
+                               loadM = 1,
+                               waveEqual = NULL,
+                               metricInvariance = TRUE,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph11$modelH1, ph11$Sigma)
+  par <- lavres$par
+  lavres12 <- helper_lav(ph11$modelH0, ph11$Sigma)
+  par12 <- lavres12$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    sum(round(par[par$lhs == 'f9' & par$op == '=~', 'est'], 4) - 1) == 0 && # factor loadings
+    sum(round(par[par$lhs == 'f10' & par$op == '=~', 'est'], 4) - 1) == 0 &&
+    sum(round(par[par$lhs == 'f11' & par$op == '=~', 'est'], 4) - 1) == 0 &&
+    sum(round(par[par$lhs == 'f12' & par$op == '=~', 'est'], 4) - 1) == 0 &&
+    sum(round(par[par$lhs == 'f13' & par$op == '=~', 'est'], 4) - 1) == 0 &&
+    sum(round(par[par$lhs == 'f14' & par$op == '=~', 'est'], 4) - 1) == 0 &&
+    round(par12[par12$lhs == 'f5' & par12$rhs == 'f3', 'est'], 4) == round(par12[par12$lhs == 'f6' & par12$rhs == 'f4', 'est'], 4) && # nullEffect
+    round(2*lavres12$fit['fmin'] - ph11$power$fmin, 4) == 0
+  
+  
+  # 3 waves, corXY, corBXBY, crossedX = crossedY 
+  
+  ph12 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 3,
+                               autoregEffects = c(.2, .3), 
+                               crossedEffects = c(.4, .5),
+                               rXY = c(.1, .05, .05), 
+                               rBXBY = .2, 
+                               nullEffect = 'corBXBY = 0',
+                               nullWhich = 1,
+                               nIndicator = rep(3, 6), loadM = c(.5, .6, .5, .6, .5, .6),
+                               metricInvariance = TRUE,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph12$modelH1, ph12$Sigma)
+  par <- lavres$par
+  lavres9 <- helper_lav(ph12$modelH0, ph12$Sigma)
+  par13 <- lavres9$par
+  
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    round(par13[par13$lhs == 'f1' & par13$rhs == 'f2', 'est'], 4) == 0 && # nullEffect
+    !any(!(par13[par13$lhs == 'f9' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f11' & par13$op == '=~', 'label'])) && # metricInvariance labels
+    !any(!(par13[par13$lhs == 'f9' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f13' & par13$op == '=~', 'label'])) && 
+    !any(!(par13[par13$lhs == 'f10' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f12' & par13$op == '=~', 'label'])) && 
+    !any(!(par13[par13$lhs == 'f10' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f14' & par13$op == '=~', 'label'])) &&
+    round(2*lavres9$fit['fmin'] - ph12$power$fmin, 4) == 0
+  
+  
+  
+  # 3 waves, corXY, corBY, autoregX=autoregY, no invariance, Lambda 
+  
+  ph13 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 3,
+                               autoregEffects = c(.2, .3), 
+                               crossedEffects = c(.4, .5),
+                               rXY = c(.1, .05, .05), 
+                               rBXBY = .2, 
+                               nullEffect = 'autoregx=autoregy',
+                               nullWhich = 1,
+                               loadings = list(rep(.2, 3),
+                                               rep(.5, 3),
+                                               rep(.4, 3),
+                                               rep(.3, 3),
+                                               rep(.6, 3),
+                                               rep(.1, 3)),
+                               metricInvariance = FALSE,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph13$modelH1, ph13$Sigma)
+  par <- lavres$par
+  lavres14 <- helper_lav(ph13$modelH0, ph13$Sigma)
+  par14 <- lavres14$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.2, .5, .4, .3, .2, .5, .4, .3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .2 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .1 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .05 && # correlation btw. residuals of factors at wave 3
+    sum(round(par[par$lhs == 'f9' & par$op == '=~', 'est'], 4) - rep(.2, 3)) == 0 && # factor loadings
+    sum(round(par[par$lhs == 'f10' & par$op == '=~', 'est'], 4) - rep(.5, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f11' & par$op == '=~', 'est'], 4) - rep(.4, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f12' & par$op == '=~', 'est'], 4) - rep(.3, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f13' & par$op == '=~', 'est'], 4) - rep(.6, 3)) == 0 &&
+    sum(round(par[par$lhs == 'f14' & par$op == '=~', 'est'], 4) - rep(.1, 3)) == 0 &&
+    round(par14[par14$lhs == 'f5' & par14$rhs == 'f3', 'est'], 4) == round(par14[par14$lhs == 'f6' & par14$rhs == 'f4', 'est'], 4) && # nullEffect
+    !any(!(par14[par14$lhs == 'f9' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f11' & par14$op == '=~', 'est'])) && # no metricInvariance
+    !any(!(par14[par14$lhs == 'f9' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f13' & par14$op == '=~', 'est'])) && 
+    !any(!(par14[par14$lhs == 'f11' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f13' & par14$op == '=~', 'est'])) &&
+    !any(!(par14[par14$lhs == 'f10' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f12' & par14$op == '=~', 'est'])) && 
+    !any(!(par14[par14$lhs == 'f10' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f14' & par14$op == '=~', 'est'])) &&
+    !any(!(par14[par14$lhs == 'f12' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f14' & par14$op == '=~', 'est'])) &&
+    round(2*lavres14$fit['fmin'] - ph13$power$fmin, 4) == 0
+  
+  
+  
+  # 4 waves, wave-invariant autoregEffects/crossed effects, crossedX=0  
+  
+  ph14 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedx=0',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = NULL,
+                               waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
+                               alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph14$modelH1, ph14$Sigma)
+  par <- lavres$par
+  lavres15 <- helper_lav(ph14$modelH0, ph14$Sigma)
+  par15 <- lavres15$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - rep(c(.6, .05, .2, .4), 3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par15[par15$lhs == 'f5' & par15$rhs == 'f3', 'est'] - par15[par15$lhs == 'f7' & par15$rhs == 'f5', 'est'], 4) == 0 && # wave-invariant autoregX
+    round(par15[par15$lhs == 'f5' & par15$rhs == 'f3', 'est'] - par15[par15$lhs == 'f9' & par15$rhs == 'f7', 'est'], 4) == 0 &&
+    round(par15[par15$lhs == 'f6' & par15$rhs == 'f4', 'est'] - par15[par15$lhs == 'f8' & par15$rhs == 'f6', 'est'], 4) == 0 && # wave-invariant autoregY
+    round(par15[par15$lhs == 'f6' & par15$rhs == 'f4', 'est'] - par15[par15$lhs == 'f10' & par15$rhs == 'f8', 'est'], 4) == 0 &&
+    round(par15[par15$lhs == 'f6' & par15$rhs == 'f3', 'est'] - par15[par15$lhs == 'f8' & par15$rhs == 'f5', 'est'], 4) == 0 && # wave-invariant crossedX
+    round(par15[par15$lhs == 'f6' & par15$rhs == 'f3', 'est'] - par15[par15$lhs == 'f10' & par15$rhs == 'f7', 'est'], 4) == 0 &&
+    round(par15[par15$lhs == 'f5' & par15$rhs == 'f4', 'est'] - par15[par15$lhs == 'f7' & par15$rhs == 'f6', 'est'], 4) == 0 && # wave-invariant crossedY
+    round(par15[par15$lhs == 'f5' & par15$rhs == 'f4', 'est'] - par15[par15$lhs == 'f9' & par15$rhs == 'f8', 'est'], 4) == 0 &&
+    round(par15[par15$lhs == 'f6' & par15$rhs == 'f3', 'est'], 4) == 0 && # nullEffect
+    round(par15[par15$lhs == 'f8' & par15$rhs == 'f5', 'est'], 4) == 0 && 
+    round(par15[par15$lhs == 'f10' & par15$rhs == 'f7', 'est'], 4) == 0 &&
+    round(2*lavres15$fit['fmin'] - ph14$power$fmin, 4) == 0
+  
+  
+  
+  # 4 waves wave-invariant autoregEffects/crossed effects, crossedX = 0 for wave 1
+  
+  ph15 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedx=0',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 1,
+                               waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
+                               alpha = .05, N = 250)
+  
+  lavres <- helper_lav(ph15$modelH1, ph15$Sigma)
+  par <- lavres$par
+  lavres16 <- helper_lav(ph15$modelH0, ph15$Sigma)
+  par16 <- lavres16$par
+  
+  
+  
+  
+  
+  # 4 waves, no wave-invariant constraints, crossedX=0 for wave 1 
+  
+  ph16 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedx=0',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 1,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  valid <- valid &&    
+    ph15$power$fmin > ph16$power$fmin # no wave-invariant constraints should lead to less power
+  
+  
+  
+  
+  # 4 waves, no wave-invariant constraints, crossedX = 0 for wave 2 
+  
+  ph17 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedx=0',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph17$modelH1, ph17$Sigma)
+  par <- lavres$par
+  lavres18 <- helper_lav(ph17$modelH0, ph17$Sigma)
+  par18 <- lavres18$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - rep(c(.6, .05, .2, .4), 3))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par18[par18$lhs == 'f6' & par18$rhs == 'f3', 'est'], 4) != 0 && # nullEffect 
+    round(par18[par18$lhs == 'f8' & par18$rhs == 'f5', 'est'], 4) == 0 && # nullWhich = 2
+    round(par18[par18$lhs == 'f10' & par18$rhs == 'f7', 'est'], 4) != 0 &&
+    round(2*lavres18$fit['fmin'] - ph17$power$fmin, 4) == 0
+  
+  
+  
+  # 4 waves, no wave-invariant constraints, autoregX equal 
+  
+  ph18 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .5, .4), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'autoregX',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph18$modelH1, ph18$Sigma)
+  par <- lavres$par
+  lavres19 <- helper_lav(ph18$modelH0, ph18$Sigma)
+  par19 <- lavres19$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .5, .05, .2, .4, .4, .05, .2, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par19[par19$lhs == 'f5' & par19$rhs == 'f3', 'est'], 4) == round(par19[par19$lhs == 'f7' & par19$rhs == 'f5', 'est'], 4) && # nullEffect
+    round(par19[par19$lhs == 'f5' & par19$rhs == 'f3', 'est'], 4) == round(par19[par19$lhs == 'f9' & par19$rhs == 'f7', 'est'], 4) && 
+    round(2*lavres19$fit['fmin'] - ph18$power$fmin, 4) == 0
+  
+  
+  # 4 waves, no wave-invariant constraints, autoregY equal 
+  
+  ph19 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .35, .25)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'autoregY',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph19$modelH1, ph19$Sigma)
+  par <- lavres$par
+  lavres20 <- helper_lav(ph19$modelH0, ph19$Sigma)
+  par20 <- lavres20$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .6, .05, .2, .35, .6, .05, .2, .25))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par20[par20$lhs == 'f6' & par20$rhs == 'f4', 'est'], 4) == round(par20[par20$lhs == 'f8' & par20$rhs == 'f6', 'est'], 4) && # nullEffect
+    round(par20[par20$lhs == 'f6' & par20$rhs == 'f4', 'est'], 4) == round(par20[par20$lhs == 'f10' & par20$rhs == 'f8', 'est'], 4) && 
+    round(2*lavres20$fit['fmin'] - ph19$power$fmin, 4) == 0
+  
+  
+  
+  # 4 waves, no wave-invariant constraints, crossedX equal 
+  
+  
+  ph20 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .15, .17), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedX',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph20$modelH1, ph20$Sigma)
+  par <- lavres$par
+  lavres21 <- helper_lav(ph20$modelH0, ph20$Sigma)
+  par21 <- lavres21$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .6, .05, .15, .4, .6, .05, .17, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par21[par21$lhs == 'f6' & par21$rhs == 'f3', 'est'], 4) == round(par21[par21$lhs == 'f8' & par21$rhs == 'f5', 'est'], 4) && # nullEffect
+    round(par21[par21$lhs == 'f6' & par21$rhs == 'f3', 'est'], 4) == round(par21[par21$lhs == 'f10' & par21$rhs == 'f7', 'est'], 4) && 
+    round(2*lavres21$fit['fmin'] - ph20$power$fmin, 4) == 0
+  
+  
+  
+  # 4 waves, no wave-invariant constraints, crossedY equal 
+  
+  
+  ph21 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .1, .07)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'crossedY',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph21$modelH1, ph21$Sigma)
+  par <- lavres$par
+  lavres22 <- helper_lav(ph21$modelH0, ph21$Sigma)
+  par22 <- lavres22$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .6, .1, .2, .4, .6, .07, .2, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par22[par22$lhs == 'f5' & par22$rhs == 'f4', 'est'], 4) == round(par22[par22$lhs == 'f7' & par22$rhs == 'f6', 'est'], 4) && # nullEffect
+    round(par22[par22$lhs == 'f5' & par22$rhs == 'f4', 'est'], 4) == round(par22[par22$lhs == 'f9' & par22$rhs == 'f8', 'est'], 4) && 
+    round(2*lavres22$fit['fmin'] - ph21$power$fmin, 4) == 0
+  
+  
+  # 4 waves, no wave-invariant constraints, corXY equal 
+  
+  ph22 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
+                               nWaves = 4,
+                               autoregEffects = list(c(.6, .6, .6), c(.4, .4, .4)),
+                               crossedEffects = list(c(.2, .2, .2), c(.05, .05, .05)),
+                               rXY = c(.3, .2, .1, .2),
+                               rBXBY = .1,
+                               nullEffect = 'corXY',
+                               nIndicator = rep(3, 8), loadM = .5,
+                               metricInvariance = TRUE,
+                               nullWhich = 2,
+                               waveEqual = NULL,
+                               alpha = .05, N = 250)
+  
+  
+  lavres <- helper_lav(ph22$modelH1, ph22$Sigma)
+  par <- lavres$par
+  lavres23 <- helper_lav(ph22$modelH0, ph22$Sigma)
+  par23 <- lavres23$par
+  
+  valid <- valid &&
+    round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .6, .05, .2, .4, .6, .05, .2, .4))^2), 4) == 0 && # regression coefficients
+    round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
+    round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
+    round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 2
+    round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == .1 && # correlation btw. residuals of factors at wave 3
+    round(par[par$lhs == 'f9' & par$rhs == 'f10', 'est'], 4) == .2 && # correlation btw. residuals of factors at wave 4
+    round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
+    round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f7' & par23$rhs == 'f8', 'est'], 4) && # nullEffect
+    round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f9' & par23$rhs == 'f10', 'est'], 4) && 
+    round(2*lavres23$fit['fmin'] - ph22$power$fmin, 4) == 0
+  
+  
+  if(valid){
+    print('test_powerRICLPM: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 test_simulatePower <- function(doTest = TRUE){
   if(!doTest){
     print('test_simulatePower: NOT TESTED')
@@ -1518,6 +2259,7 @@ test_all <- function(){
   test_powerRegression()
   test_powerMediation()
   test_powerCLPM(doTest = TRUE)
+  test_powerRICLPM(doTest = TRUE)
   test_simulatePower(doTest = FALSE)
 }
 

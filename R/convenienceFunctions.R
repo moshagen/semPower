@@ -893,3 +893,360 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 }
 
 
+
+#' semPower.powerRICLPM
+#'
+#' Convenience function for performing power analysis on effects in a random intercept cross-lagged panel model (RI-CLPM).
+#' This requires the lavaan package.
+#' 
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df equal the number of restricted parameters.
+#' @param nWaves number of waves, must be >= 3.
+#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2 -> Y3
+#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.
+#' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
+#' @param rBXBY correlation between random intercept factors
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'autoregX' and 'autoregY' for autoregressive effects, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated). 
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual, and 'autoregX = 0', 'autoregY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y autoregressive effects or the crossed effects to zero, 'corBXBY = 0' to constrain the correlation between the random intercepts to zero, and 'autoregX = autoregY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
+#' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'autoregX = 0' with nullWhich = 2 would constrain the second autoregressive effect for X to zero.    
+#' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the df, power might be affected.
+#' @param Lambda matrix of factor loadings. Columns should be in order X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves. 
+#' @param nIndicator Can be used instead of Lambda: vector indicating the number of indicators for each factor ordered by wave, e.g. c(3, 4, 3, 4, 3, 4) to define three indicators for factor X at waves 1-3 and four indicators for factor Y at waves 1-3.
+#' @param loadings Can be used instead of Lambda: A list of vectors providing the factor loadings for each factor ordered by wave, e.g., list(c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4)) to define loadings of .2 for the three indicators of X at waves 1-3 and loadings of .4 for the four indicators of Y at waves 1-3. Must not contain secondary loadings.   
+#' @param loadM Can be used instead of Lambda: vector giving mean loadings for each factor ordered by wave, e.g., c(.5, .6, .5, .6, .5, .6) to define loadings of .5 for X at waves 1-3 and loadings of .6 for Y at waves 1-3; or single number to use for every loading.
+#' @param loadSD Can be used instead of Lambda: vector giving the standard deviation of loadings for each factor ordered by wave for use in conjunction with loadM. When NULL, SDs are set to zero.
+#' @param loadMinMax Can be used instead of Lambda: list giving the minimum and maximum loading for each factor or vector to apply to all factors.
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @examples
+#' \dontrun{
+#'  
+#' }
+#' @seealso [semPower.genSigma()]
+#' @export
+semPower.powerRICLPM <- function(type, comparison = 'restricted',
+                                 nWaves = NULL, 
+                                 autoregEffects = NULL, crossedEffects = NULL, 
+                                 rXY = NULL,
+                                 rBXBY = NULL,
+                                 waveEqual = NULL, 
+                                 nullEffect = NULL, nullWhich = NULL,
+                                 metricInvariance = TRUE,
+                                 ...){
+  
+  # TODO: do we need autocorrelated residuals?
+  
+  comparison <- checkComparisonModel(comparison)
+  
+  # we override Beta and Sigma later, so let's make sure it is not set in ellipsis argument
+  if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
+  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
+  
+  # validate input
+  if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
+  if(is.null(nWaves) | is.na(nWaves) | nWaves < 3) stop('nWaves must be >= 3.')
+  if(is.null(rXY)) rXY <- rep(0, nWaves)
+  if(length(rXY) != nWaves) stop('rXY must be of length nWaves')
+  invisible(lapply(rXY, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE)))
+  if(is.null(rBXBY)) rBXBY <- 0
+  if(length(rBXBY) != 1) stop('rBXBY must contain a single number.')
+  checkBounded(rBXBY, 'rBXBY ', bound = c(-1, 1), inclusive = FALSE)
+  if(!is.list(autoregEffects)) autoregEffects <- list(rep(autoregEffects[1], (nWaves - 1)), rep(autoregEffects[2], (nWaves - 1)))
+  if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
+  invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
+  invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
+  if(length(autoregEffects) != length(crossedEffects) | (length(crossedEffects) != 2 & length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(autoregEffects[[2]])) stop('autoregEffects for X and Y must be of equal length.')
+  if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != length(crossedEffects[[2]])) stop('CrossedEffects for X and Y must be of equal length.')
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(crossedEffects[[2]])) stop('autoregEffects and crossedEffects must be of equal length.')  
+  if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != (nWaves - 1)) stop('autoregEffects must be of length nWaves - 1.')  
+  if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != (nWaves - 1)) stop('crossedEffects must be of length nWaves - 1.')   
+  
+  if(!is.null(waveEqual)){
+    waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
+    if(any(unlist(lapply(waveEqual, function(x) !x %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain autoregX, autoregY, crossedX, crossedY, corXY')
+  }
+  
+  if(is.null(nullEffect)) stop('nullEffect must be defined.')
+  # we do not allow stacking of hypotheses. there might be a use case for this,
+  # but this would complicate defining the relevant parameter when these vary across waves. 
+  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis.')
+  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
+  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
+  nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
+                 'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
+                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0', 'corbxby=0')
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect.')
+  if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual.')
+  
+  if(is.null(nullWhich) & nWaves == 2) nullWhich <- 1
+  if(is.null(nullWhich) & nWaves > 2){
+    msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
+    if(is.null(waveEqual) & !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
+    if(!'autoregx' %in% waveEqual & nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
+    if(!'autoregy' %in% waveEqual & nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
+    if(!'crossedx' %in% waveEqual & nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'crossedy' %in% waveEqual & nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'corxy' %in% waveEqual & nullEffect %in% c('corxy=0')) stop(msg) 
+    nullWhich <- 1 # this should be the proper default for all remaining cases
+  }
+  if(!is.null(nullWhich)){
+    if(!is.numeric(nullWhich) | length(nullWhich) > 1) stop('nullWhich must be a single number.')
+    if(nullEffect == 'corbxby=0' && nullWhich != 1) stop('If nullEffect is "corBXBY = 0", nullWhich must be 1.')
+    if(nullWhich < 1 | (nullEffect != 'corxy=0' & nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
+  }
+  
+  
+  
+  ### create Lambda 
+  
+  args <- list(...) # to get arguments in ellipsis (...)
+  
+  Lambda  <- args$Lambda
+  if(is.null(Lambda)){
+    Lambda <- genLambda(args[['loadings']], args[['nIndicator']],
+                        args[['loadM']], args[['loadSD']], args[['loadMinMax']])
+  }
+  if(ncol(Lambda) != 2*nWaves) stop('Number of factors must be 2*nWaves.')
+  
+  # modify Lambda according to RI-CLPM structure
+  Lambda <- cbind(matrix(0, nrow = nrow(Lambda), ncol = (2*nWaves + 2)), Lambda) # add between + within factors
+  # cols: Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
+  
+  
+  ### create B
+  B <- matrix(0, ncol = (4*nWaves + 2), nrow = (4*nWaves + 2)) 
+  # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
+  
+  # define between factors (random intercepts)
+  B[seq((3 + 2*nWaves), (4*nWaves + 2), 2), 1] <- 1 # BX
+  B[seq((4 + 2*nWaves), (4*nWaves + 2), 2), 2] <- 1 # BY
+  
+  # define within factors
+  diag(B[((3 + 2*nWaves):(4*nWaves + 2)), (3:(2 + 2*nWaves))]) <- 1 
+  
+  # add autoregressive effects and crossed-effects
+  for(i in 1:(nWaves - 1)){
+    xidx <- 2 + 2*(i - 1) + 3
+    yidx <- xidx + 1
+    # autoregressive effects
+    B[xidx, (xidx - 2)] <- autoregEffects[[1]][i]
+    B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
+    # crossed effects
+    B[yidx, (xidx - 2)] <- crossedEffects[[1]][i]
+    B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
+  }
+  
+  
+  ### create Psi
+  Psi <- diag(ncol(B))
+  # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
+  
+  # add cor between random intercepts
+  Psi[2,1] <- Psi[1,2] <- rBXBY
+  
+  # set residual variance of Fx_1, ..., Fy_nWaves to 0
+  diag(Psi[(3 + 2*nWaves):(4*nWaves + 2), (3 + 2*nWaves):(4*nWaves + 2)]) <- 0 
+  
+  # add (residual) correlations between within-factors
+  if(any(rXY != 0)){
+    for(i in 1:nWaves){
+      Psi[(2*i + 2), (2*i + 1)] <- Psi[(2*i + 1), (2*i + 2)] <- rXY[i]
+    }
+  }
+  
+  
+  # add metric invariance constrains
+  metricInvarianceList <- NULL
+  if(metricInvariance){
+    metricInvarianceList <- list(
+      seq(3 + 2*nWaves, 2 + 4*nWaves, 2),
+      seq(4 + 2*nWaves, 2 + 4*nWaves, 2)  
+    )
+  }
+  
+  
+  ### get model-implied sigma
+  if(!is.null(args[['Lambda']])) args[['Lambda']] <- NULL # delete user-provided Lambda 
+  
+  generated <- do.call(what = semPower.genSigma, 
+                       args = append(list(Lambda = Lambda, Beta = B, Psi = Psi,
+                                          useReferenceIndicator = TRUE,
+                                          metricInvariance = metricInvarianceList), args))
+  
+  Sigma <- generated$Sigma
+  
+  
+  ### create ana model string
+  
+  # define random intercept (between) factors
+  tok1 <- paste0('f1 =~ ', paste0('1*', paste0('f', seq((3 + 2*nWaves), ncol(B), 2)), collapse = ' + '))
+  tok2 <- paste0('f2 =~ ', paste0('1*', paste0('f', seq((4 + 2*nWaves), ncol(B), 2)), collapse = ' + '))
+  model <- paste(tok1, tok2, sep='\n')
+  
+  # define residualized (within) factors
+  for(i in 1:(2*nWaves)){
+    widx <- seq(3, 2*nWaves + 2)[i]
+    fidx <- seq(2*nWaves + 3, 4*nWaves + 2)[i]
+    model <- paste(model, paste0('f', widx, ' =~ 1*f', fidx), sep = '\n')
+  }
+  
+  # add unresidualized factors
+  model <- paste(model, generated$modelTrueCFA, sep='\n')
+  
+  # set residual variance of unresidualized factors to 0
+  for(f in (2*nWaves + 3):(4*nWaves + 2)){
+    tok <- paste0('f', f, ' ~~ 0*', 'f', f)
+    model <- paste(model, tok, sep='\n')
+  }
+  
+  # estimate correlation between random intercepts
+  model <- paste(model, 'f1 ~~ pf0201*f2', sep='\n')
+  
+  # set correlation between random intercepts and residualized factors at wave 1 to 0
+  model <- paste(model, 'f1 + f2 ~~ 0*f3 + 0*f4', sep='\n')
+  
+  # add autoregressive and cross-lagged effects
+  for(f in 3:(2*nWaves + 2)){ # omit rows for random intercepts and unresidualized factors
+    fidx <- which(B[f, ] != 0)
+    if(length(fidx) != 0){
+      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
+      model <- paste(model, tok, sep='\n')
+    }
+  }
+  
+  # add (residual) correlations 
+  for(i in 1:nWaves){
+    tok <- paste0('f',(1 + 2*i),' ~~ ', paste0('pf', paste0(formatC(2 + 2*i, width = 2, flag = 0), formatC(1 + 2*i, width = 2, flag = 0)), '*'), 'f', (2 + 2*i))
+    model <- paste(model, tok, sep='\n')
+  }
+  modelTrue <- model
+  
+  
+  
+  ### define H1 and ana model
+  
+  # first get constraints that may be part of either model
+  tok.autoregx <- tok.autoregy <- tok.crossedx <- tok.crossedy <- tok.corxy <- ''
+  
+  # we also do this for autoregx=0 and autoregx=autoregy, because we need p.autoregx later; tok.autoregx is only used for autoregx 
+  if('autoregx' %in% waveEqual | nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
+    xw <- seq(2 + 2*nWaves - 1, 5, -2)
+    p.autoregx <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
+    for(i in 1:(length(p.autoregx) - 1)){
+      for(j in (i + 1):length(p.autoregx)){
+        tok.autoregx <- paste(tok.autoregx, paste0(p.autoregx[i], '==', p.autoregx[j]), sep = '\n')
+      }  
+    }
+    p.autoregx <- p.autoregx[order(p.autoregx)]
+  }
+  if('autoregy' %in% waveEqual | nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
+    yw <- seq(2 + 2*nWaves, 6, -2)
+    p.autoregy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
+    for(i in 1:(length(p.autoregy) - 1)){
+      for(j in (i + 1):length(p.autoregy)){
+        tok.autoregy <- paste(tok.autoregy, paste0(p.autoregy[i], '==', p.autoregy[j]), sep = '\n')
+      }  
+    }
+    p.autoregy <- p.autoregy[order(p.autoregy)]
+  }
+  # we also do this for crossedx=0 and crossedx=crossedy, because we need p.crossedx later; tok.crossedX is only used for crossedx 
+  if('crossedx' %in% waveEqual | nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
+    xw <- seq(2 + 2*nWaves - 3, 3, -2)
+    yw <- seq(2 + 2*nWaves, 6, -2)
+    p.crossedx <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+    for(i in 1:(length(p.crossedx) - 1)){
+      for(j in (i + 1):length(p.crossedx)){
+        tok.crossedx <- paste(tok.crossedx, paste0(p.crossedx[i], '==', p.crossedx[j]), sep = '\n')
+      }  
+    }
+    p.crossedx <- p.crossedx[order(p.crossedx)]
+  }
+  if('crossedy' %in% waveEqual | nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
+    xw <- seq(2 + 2*nWaves - 1, 5, -2)
+    yw <- seq(2 + 2*nWaves - 2, 4, -2)
+    p.crossedy <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
+    for(i in 1:(length(p.crossedy) - 1)){
+      for(j in (i + 1):length(p.crossedy)){
+        tok.crossedy <- paste(tok.crossedy, paste0(p.crossedy[i], '==', p.crossedy[j]), sep = '\n')
+      }  
+    }
+    p.crossedy <- p.crossedy[order(p.crossedy)]
+  }
+  if('corxy' %in% waveEqual | nullEffect %in% c('corxy', 'corxy=0')){
+    xw <- seq(2+ 2*nWaves - 1, 5, -2)
+    yw <- seq(2 + 2*nWaves, 6, -2)
+    p.corxy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+    for(i in 1:(length(p.corxy) - 1)){
+      for(j in (i + 1):length(p.corxy)){
+        tok.corxy <- paste(tok.corxy, paste0(p.corxy[i], '==', p.corxy[j]), sep = '\n')
+      }  
+    }
+    p.corxy <- p.corxy[order(p.corxy)]
+  }
+  
+  ## add constraints to H1 model
+  modelH1 <- model
+  if(!is.null(waveEqual)){
+    if('autoregx' %in% waveEqual) modelH1 <- paste(modelH1, tok.autoregx, sep = '\n')
+    if('autoregy' %in% waveEqual) modelH1 <- paste(modelH1, tok.autoregy, sep = '\n')
+    if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tok.crossedx, sep = '\n')
+    if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tok.crossedy, sep = '\n')
+    if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tok.corxy, sep = '\n')
+  }
+  
+  ## add constraints to ana model
+  modelAna <- modelH1  
+  # modelH1 constraints are not in nullEffect, so ask again for each type: 
+  if('autoregx' %in% nullEffect) modelAna <- paste(modelAna, tok.autoregx, sep = '\n')
+  if('autoregy' %in% nullEffect) modelAna <- paste(modelAna, tok.autoregy, sep = '\n')
+  if('crossedx' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedx, sep = '\n')
+  if('crossedy' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedy, sep = '\n')
+  if('corxy' %in% nullEffect) modelAna <- paste(modelAna, tok.corxy, sep = '\n')
+  if('autoregx=0' %in% nullEffect){
+    tok <- paste0(p.autoregx[nullWhich], ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('autoregy=0' %in% nullEffect){
+    tok <- paste0(p.autoregy[nullWhich], ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('crossedx=0' %in% nullEffect){
+    tok <- paste0(p.crossedx[nullWhich], ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('crossedy=0' %in% nullEffect){
+    tok <- paste0(p.crossedy[nullWhich], ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('autoregx=autoregy' %in% nullEffect){
+    tok <- paste0(p.autoregx[nullWhich], ' == ', p.autoregy[nullWhich])
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('crossedx=crossedy' %in% nullEffect){
+    tok <- paste0(p.crossedx[nullWhich], ' == ', p.crossedy[nullWhich])
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('corxy=0' %in% nullEffect){
+    p.corxy <- c('pf0403', p.corxy)   # add exog cor
+    tok <- paste0(p.corxy[nullWhich], ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  if('corbxby=0' %in% nullEffect){
+    tok <- paste0('pf0201', ' == 0')
+    modelAna <- paste(modelAna, tok, sep = '\n')
+  } 
+  
+  # here we actually fit modelH1 in case of a restricted comparison
+  # because we cannot be sure that user input yields perfectly fitting h1 models 
+  # when there are additional constraints (waveequal or invariance)
+  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
+  if(comparison == 'saturated') modelH1 <- NULL
+  
+  semPower.powerLav(type, 
+                    modelH0 = modelAna, 
+                    modelH1 = modelH1, 
+                    Sigma = Sigma,
+                    ...)
+}
+
