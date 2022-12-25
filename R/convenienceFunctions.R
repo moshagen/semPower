@@ -960,7 +960,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
   invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
-  if(length(autoregEffects) != length(crossedEffects) | (length(crossedEffects) != 2 & length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
+  if(length(autoregEffects) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
   if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(autoregEffects[[2]])) stop('autoregEffects for X and Y must be of equal length.')
   if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != length(crossedEffects[[2]])) stop('CrossedEffects for X and Y must be of equal length.')
   if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(crossedEffects[[2]])) stop('autoregEffects and crossedEffects must be of equal length.')  
@@ -984,29 +984,26 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect.')
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual.')
   
-  if(is.null(nullWhich) & nWaves == 2) nullWhich <- 1
-  if(is.null(nullWhich) & nWaves > 2){
+  if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
+  if(is.null(nullWhich) && nWaves > 2){
     msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
-    if(is.null(waveEqual) & !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
-    if(!'autoregx' %in% waveEqual & nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
-    if(!'autoregy' %in% waveEqual & nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
-    if(!'crossedx' %in% waveEqual & nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
-    if(!'crossedy' %in% waveEqual & nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
-    if(!'corxy' %in% waveEqual & nullEffect %in% c('corxy=0')) stop(msg) 
+    if(is.null(waveEqual) && !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
+    if(!'autoregx' %in% waveEqual && nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
+    if(!'autoregy' %in% waveEqual && nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
+    if(!'crossedx' %in% waveEqual && nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'crossedy' %in% waveEqual && nullEffect %in% c('crossedy=0', 'crossedx=crossedy')) stop(msg) 
+    if(!'corxy' %in% waveEqual && nullEffect %in% c('corxy=0')) stop(msg) 
     nullWhich <- 1 # this should be the proper default for all remaining cases
   }
   if(!is.null(nullWhich)){
-    if(!is.numeric(nullWhich) | length(nullWhich) > 1) stop('nullWhich must be a single number.')
+    if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
     if(nullEffect == 'corbxby=0' && nullWhich != 1) stop('If nullEffect is "corBXBY = 0", nullWhich must be 1.')
-    if(nullWhich < 1 | (nullEffect != 'corxy=0' & nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
+    if(nullWhich < 1 || (nullEffect != 'corxy=0' && nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
   }
-  
-  
+
   
   ### create Lambda 
-  
-  args <- list(...) # to get arguments in ellipsis (...)
-  
+  args <- list(...)
   Lambda  <- args$Lambda
   if(is.null(Lambda)){
     Lambda <- genLambda(args[['loadings']], args[['nIndicator']],
@@ -1125,17 +1122,15 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     tok <- paste0('f',(1 + 2*i),' ~~ ', paste0('pf', paste0(formatC(2 + 2*i, width = 2, flag = 0), formatC(1 + 2*i, width = 2, flag = 0)), '*'), 'f', (2 + 2*i))
     model <- paste(model, tok, sep='\n')
   }
-  modelTrue <- model
-  
-  
-  
+
+
   ### define H1 and ana model
   
   # first get constraints that may be part of either model
   tok.autoregx <- tok.autoregy <- tok.crossedx <- tok.crossedy <- tok.corxy <- ''
   
   # we also do this for autoregx=0 and autoregx=autoregy, because we need p.autoregx later; tok.autoregx is only used for autoregx 
-  if('autoregx' %in% waveEqual | nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
+  if('autoregx' %in% waveEqual || nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
     xw <- seq(2 + 2*nWaves - 1, 5, -2)
     p.autoregx <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
     for(i in 1:(length(p.autoregx) - 1)){
@@ -1145,7 +1140,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     }
     p.autoregx <- p.autoregx[order(p.autoregx)]
   }
-  if('autoregy' %in% waveEqual | nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
+  if('autoregy' %in% waveEqual || nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
     yw <- seq(2 + 2*nWaves, 6, -2)
     p.autoregy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
     for(i in 1:(length(p.autoregy) - 1)){
@@ -1156,7 +1151,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     p.autoregy <- p.autoregy[order(p.autoregy)]
   }
   # we also do this for crossedx=0 and crossedx=crossedy, because we need p.crossedx later; tok.crossedX is only used for crossedx 
-  if('crossedx' %in% waveEqual | nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
+  if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
     xw <- seq(2 + 2*nWaves - 3, 3, -2)
     yw <- seq(2 + 2*nWaves, 6, -2)
     p.crossedx <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
@@ -1167,7 +1162,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     }
     p.crossedx <- p.crossedx[order(p.crossedx)]
   }
-  if('crossedy' %in% waveEqual | nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
+  if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
     xw <- seq(2 + 2*nWaves - 1, 5, -2)
     yw <- seq(2 + 2*nWaves - 2, 4, -2)
     p.crossedy <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
@@ -1178,7 +1173,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     }
     p.crossedy <- p.crossedy[order(p.crossedy)]
   }
-  if('corxy' %in% waveEqual | nullEffect %in% c('corxy', 'corxy=0')){
+  if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
     xw <- seq(2+ 2*nWaves - 1, 5, -2)
     yw <- seq(2 + 2*nWaves, 6, -2)
     p.corxy <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
@@ -1201,45 +1196,45 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
   
   ## add constraints to ana model
-  modelAna <- modelH1  
+  modelH0 <- modelH1  
   # modelH1 constraints are not in nullEffect, so ask again for each type: 
-  if('autoregx' %in% nullEffect) modelAna <- paste(modelAna, tok.autoregx, sep = '\n')
-  if('autoregy' %in% nullEffect) modelAna <- paste(modelAna, tok.autoregy, sep = '\n')
-  if('crossedx' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedx, sep = '\n')
-  if('crossedy' %in% nullEffect) modelAna <- paste(modelAna, tok.crossedy, sep = '\n')
-  if('corxy' %in% nullEffect) modelAna <- paste(modelAna, tok.corxy, sep = '\n')
+  if('autoregx' %in% nullEffect) modelH0 <- paste(modelH0, tok.autoregx, sep = '\n')
+  if('autoregy' %in% nullEffect) modelH0 <- paste(modelH0, tok.autoregy, sep = '\n')
+  if('crossedx' %in% nullEffect) modelH0 <- paste(modelH0, tok.crossedx, sep = '\n')
+  if('crossedy' %in% nullEffect) modelH0 <- paste(modelH0, tok.crossedy, sep = '\n')
+  if('corxy' %in% nullEffect) modelH0 <- paste(modelH0, tok.corxy, sep = '\n')
   if('autoregx=0' %in% nullEffect){
     tok <- paste0(p.autoregx[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('autoregy=0' %in% nullEffect){
     tok <- paste0(p.autoregy[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=0' %in% nullEffect){
     tok <- paste0(p.crossedx[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedy=0' %in% nullEffect){
     tok <- paste0(p.crossedy[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('autoregx=autoregy' %in% nullEffect){
     tok <- paste0(p.autoregx[nullWhich], ' == ', p.autoregy[nullWhich])
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('crossedx=crossedy' %in% nullEffect){
     tok <- paste0(p.crossedx[nullWhich], ' == ', p.crossedy[nullWhich])
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('corxy=0' %in% nullEffect){
     p.corxy <- c('pf0403', p.corxy)   # add exog cor
     tok <- paste0(p.corxy[nullWhich], ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   if('corbxby=0' %in% nullEffect){
     tok <- paste0('pf0201', ' == 0')
-    modelAna <- paste(modelAna, tok, sep = '\n')
+    modelH0 <- paste(modelH0, tok, sep = '\n')
   } 
   
   # here we actually fit modelH1 in case of a restricted comparison
@@ -1249,7 +1244,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if(comparison == 'saturated') modelH1 <- NULL
   
   semPower.powerLav(type, 
-                    modelH0 = modelAna, 
+                    modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     Sigma = Sigma,
                     ...)
