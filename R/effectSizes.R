@@ -152,15 +152,25 @@ getF.AGFI <- function(AGFI, df, p){
 #' @param N list of sample weights
 #' @return list of indices
 getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL, N = NULL){
-  fit <- list(
-    rmsea = getRMSEA.F(fmin, df, nGroups = ifelse(length(N) > 1, length(N), 1)),
-    mc = getMc.F(fmin),
-    gfi = NULL,
-    agfi = NULL
-  )
-  if(!is.null(p)){
-    fit[['gfi']] <- getGFI.F(fmin, p)
-    fit[['agfi']] <- getAGFI.F(fmin, df, p)
+  # may happen in simulated power
+  if(fmin <= 0){
+    fit <- list(
+      rmsea = 0,
+      mc = 1,
+      gfi = 1, 
+      agfi = 1
+    )
+  }else{
+    fit <- list(
+      rmsea = getRMSEA.F(fmin, df, nGroups = ifelse(length(N) > 1, length(N), 1)),
+      mc = getMc.F(fmin),
+      gfi = NULL,
+      agfi = NULL
+    )
+    if(!is.null(p)){
+      fit[['gfi']] <- getGFI.F(fmin, p)
+      fit[['agfi']] <- getAGFI.F(fmin, df, p)
+    }
   }
   if(!is.null(SigmaHat)){
     if(length(N) > 1){
