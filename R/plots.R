@@ -6,11 +6,12 @@
 #' @param ncp non-centrality parameter under H1
 #' @param df degrees of freedom
 #' @param linewidth linewidth
+#' @param showLabels whether to add labels
 #' @importFrom stats qchisq dchisq
 #' @importFrom graphics plot abline lines polygon
 #' @importFrom grDevices rgb
 #' @export
-semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
+semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE){
   
   # define central and non-central chi
   maxvalue <- qchisq(.99999, df, ncp)
@@ -53,11 +54,13 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1){
   polygon(c(lb, x[i], ub), c(0, xncchi[i], 0), col = color, border = NA)
   
   # add labels
-  text(expression(paste("Central ", chi^2)), x = df, y = max(xchi), pos = 4, cex = .8, col = 'red')
-  text(expression(paste("Non-Central ", chi^2)), x = (df + ncp), y = .9*max(xncchi), pos = 4, cex = .8, col = 'blue')
-  text(expression(paste("Critical ", chi^2)), x = chiCrit, y = .8*max(xchi), pos = 4, cex = .8)
-  text(expression(paste(alpha, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 4, cex = .8, col = 'red')
-  text(expression(paste(beta, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 2, cex = .8, col = 'blue')
+  if(showLabels){
+    text(expression(paste("Central ", chi^2)), x = df, y = max(xchi), pos = 4, cex = .8, col = 'red')
+    text(expression(paste("Non-Central ", chi^2)), x = (df + ncp), y = .9*max(xncchi), pos = 4, cex = .8, col = 'blue')
+    text(expression(paste("Critical ", chi^2)), x = chiCrit, y = .8*max(xchi), pos = 4, cex = .8)
+    text(expression(paste(alpha, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 4, cex = .8, col = 'red')
+    text(expression(paste(beta, "-error")), x = chiCrit, y = dchisq(qchisq(.985, df), df), pos = 2, cex = .8, col = 'blue')
+  }
 }
 
 
