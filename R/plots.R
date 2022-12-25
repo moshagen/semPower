@@ -8,7 +8,7 @@
 #' @param linewidth linewidth
 #' @param showLabels whether to add labels
 #' @importFrom stats qchisq dchisq
-#' @importFrom graphics plot abline lines polygon
+#' @importFrom graphics plot abline lines polygon text
 #' @importFrom grDevices rgb
 #' @export
 semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE){

@@ -20,7 +20,7 @@
 #' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @return list
-#' @importFrom utils installed.packages
+#' @importFrom utils installed.packages menu
 powerPrepare <- function(type = NULL, 
                          effect = NULL, effect.measure = NULL,
                          alpha = NULL, beta = NULL, power = NULL, abratio = NULL,

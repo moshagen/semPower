@@ -16,7 +16,7 @@
 #' @examples
 #' \dontrun{
 #' }
-#' @importFrom utils txtProgressBar 
+#' @importFrom utils txtProgressBar setTxtProgressBar
 simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      Sigma = NULL, mu = NULL, 
                      N = NULL,
