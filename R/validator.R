@@ -167,7 +167,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
-  
+
   known.effects.measures <- c("F0", "RMSEA", "MC", "GFI", "AGFI")
   
   if(!simulatedPower){
@@ -392,7 +392,7 @@ checkPositive <- function(x, message = NULL){
 #' @param inclusive whether x might lie on boundary
 checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
   if(is.null(message)) message <- deparse(substitute(x))
-  inv <- is.null(x) || is.na(x)
+  inv <- is.null(x) || is.na(x) || !is.numeric(x)
   if(!inv && !inclusive && (x <= bound[1] || x >= bound[2])) inv <- TRUE
   if(!inv && inclusive && (x < bound[1] || x > bound[2])) inv <- TRUE
   if(inv) stop(paste(message, "must must lie within", bound[1], 'and', bound[2]))
