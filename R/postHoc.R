@@ -75,8 +75,8 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                     lavOptions = lavOptions)
     nrep <- sim[['nrep']]
     df <- sim[['df']]
-    fmin <- sim[['medianF']]
-    fmin.g <- sim[['medianF']]
+    fmin <- fmin.g <- sim[['meanFmin']]
+    if(!is.null(sim[['meanFminGroups']])) fmin.g <- sim[['meanFminGroups']]
     
     fit <- getIndices.F(fmin = fmin, df = df, p = pp[['p']], N = pp[['N']])
     ncp <- getNCP(fmin.g, pp[['N']])

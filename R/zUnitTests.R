@@ -2149,7 +2149,7 @@ test_simulatePower <- function(doTest = TRUE){
     round(phs$power$power - phs2$power, 4) == 0 &&
     round(pha2$power - pha$power$power, 4) == 0 &&
     round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
-    abs(phs2$fmin - pha2$fmin) < .05 * pha2$fmin # 5% margin should be ok
+    abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  # need some margin
 
   # restricted comparison model
   pha3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
@@ -2226,18 +2226,46 @@ test_simulatePower <- function(doTest = TRUE){
                        sample.nobs = list(500, 500),
                        group.equal = c('loadings'))
   
-  ph <- semPower.postHoc(modelH0 = generated$modelTrue,
-                         Sigma = list(generated$Sigma, generated2$Sigma),
-                         lavOptions = list(group.equal = c('loadings')),
-                         alpha = .05, N = list(500, 500), df = 3, 
-                         simulatedPower = TRUE, nReplications = 250, 
-                         seed = 30012021)  
-  summary(ph)
-  ## TODO add meaningful tests for multigroup
-  
-  ## TODO consider weights in simulated apriori multigroup power 
+  pha5 <- semPower.powerLav('ph',
+                            modelH0 = generated$modelTrue,
+                            Sigma = list(generated$Sigma, generated2$Sigma),
+                            lavOptions = list(group.equal = c('loadings')),
+                            alpha = .05, N = list(500, 500),
+                            simulatedPower = FALSE, 
+                            seed = 30012021)  
+  phs5 <- semPower.postHoc(modelH0 = generated$modelTrue,
+                           Sigma = list(generated$Sigma, generated2$Sigma),
+                           lavOptions = list(group.equal = c('loadings')),
+                           alpha = .05, N = list(500, 500),
+                           simulatedPower = TRUE, nReplications = 250, 
+                           seed = 30012021)  
+  aps5 <- semPower.aPriori(modelH0 = generated$modelTrue,
+                           Sigma = list(generated$Sigma, generated2$Sigma),
+                           lavOptions = list(group.equal = c('loadings')),
+                           alpha = .05, power = pha5$power$power, N = list(1, 1),
+                           simulatedPower = TRUE, nReplications = 250, 
+                           seed = 30012021)
+  # add weights
+  apa6 <- semPower.powerLav('ap',
+                            modelH0 = generated$modelTrue,
+                            Sigma = list(generated$Sigma, generated2$Sigma),
+                            lavOptions = list(group.equal = c('loadings')),
+                            alpha = .05, power = .5, N = list(1, 2),
+                            simulatedPower = FALSE, 
+                            seed = 30012021)  
+  aps6 <- semPower.aPriori(modelH0 = generated$modelTrue,
+                           Sigma = list(generated$Sigma, generated2$Sigma),
+                           lavOptions = list(group.equal = c('loadings')),
+                           alpha = .05, power = apa6$power$impliedPower, N = list(1, 2),
+                           simulatedPower = TRUE, nReplications = 250, 
+                           seed = 30012021)
 
-  if(valid5){
+  valid6 <- valid5 &&
+    abs(pha5$power$power - phs5$power) < .05 &&
+    abs(sum(unlist(aps5$requiredN)) - sum(unlist(pha5$power$N))) < .1*sum(unlist(pha5$power$N)) &&
+    sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$requiredN.g))) < .1*apa6$power$requiredN
+
+  if(valid6){
     print('test_simulatePower: OK')
   }else{
     warning('Invalid')

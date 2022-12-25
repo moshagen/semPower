@@ -95,7 +95,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                             critChi = critChi, logBetaTarget = logBetaTarget, fmin = unlist(fmin.g), df = df, weights = weights,
                             method = 'Nelder-Mead', control = list(warn.1d.NelderMead = FALSE))
       
-      requiredN <- sum(ceiling(weights*chiCritOptim$par))  
+      requiredN <- sum(ceiling(weights * chiCritOptim$par))  
       
       # even N = 10 achieves or exceeds desired power
       if(requiredN < 10){
@@ -123,13 +123,13 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # determine starting N using analytical power
     ap <- semPower.powerLav(type = 'a-priori', 
                             alpha = alpha, beta = beta, power = power,
-                            modelH0 = modelH0, modelH1 = modelH1,
-                            Sigma = Sigma, mu = mu)
+                            modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
+                            Sigma = Sigma, mu = mu, lavOptions = lavOptions)
     startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
 
     
     # for simulated power, we refuse to do anything
-    bPrecisionWarning <- (ap[['power']][['requiredN']] < ncol(Sigma))  
+    bPrecisionWarning <- (ap[['power']][['requiredN']] < pp[['p']])  
     if(bPrecisionWarning) stop("Required N is smaller than the number of variables. Simulated power will not work well in this case because of very high nonconvergence rates.")
 
     # we need a pretty high tolerance because of sampling error: it doesn't make sense 
@@ -139,7 +139,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # the option below increases tolerance with decreasing nrep and beta, but is more restrictive.
     tolerance <- logBetaTarget^2 * 2 / nReplications
     chiCritOptim <- optim(par = c(N = startN), fn = getBetadiff,
-                          logBetaTarget = logBetaTarget,
+                          logBetaTarget = logBetaTarget, weights = weights,
                           modelH0 = modelH0, modelH1 = modelH1,
                           Sigma = Sigma, mu = mu,  
                           alpha = alpha,
@@ -151,25 +151,24 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                           )
     
     if(chiCritOptim$convergence != 0) warning('A priori power analyses did not converge, results may be inaccurate.')    
-    
-    requiredN <- ceiling(chiCritOptim$par)  
-    requiredN.g <- ceiling(chiCritOptim$par)  
-    # TODO add multigroup support
-    # requiredN <- sum(ceiling(weights*chiCritOptim$par))  
-    # requiredN.g <- ceiling(weights * requiredN)
+
+    requiredN <- sum(ceiling(weights * chiCritOptim$par))
+    requiredN.g <- ceiling(weights * requiredN)
+
+    # TODO catch small N situations?
     
     # now call simulate with final N again to get all relevant parameters
     sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
                     Sigma = Sigma, mu = mu,
-                    alpha = alpha, N = requiredN,
+                    alpha = alpha, N = requiredN.g,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                     lavOptions = lavOptions)
     
     nrep <- sim[['nrep']]
     df <- sim[['df']]
-    fmin <- sim[['medianF']]
-    fmin.g <- sim[['medianF']]   ## TODO add multigroup support
-    
+    fmin <- fmin.g <- sim[['meanFmin']]
+    if(!is.null(sim[['meanFminGroups']])) fmin.g <- sim[['meanFminGroups']]
+
     critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
     
     impliedNCP <- getNCP(fmin.g, requiredN.g)
@@ -248,7 +247,10 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL,
   }else{
     
     iterationCounter <<- iterationCounter + 1 
-    ePower <- simulate(N = round(cN), ...)
+    # we round here (instead of ceiling) because this should help optim
+    ccN <- round(cN)
+    if(length(weights) > 1) ccN <- as.list(round(weights * cN))
+    ePower <- simulate(N = ccN, ...)
     if(ePower == 1) ePower <- 1 - 1e-5
     diff <- (logBetaTarget - log(1 - ePower))^2
     print(paste("Iteration", iterationCounter, ":", cN, (1 - ePower), diff))
