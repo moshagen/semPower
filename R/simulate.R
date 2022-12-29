@@ -64,7 +64,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         cfminGroups <- lavresH0@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
       }
       
-      if(lavresH0@optim[["converged"]] == TRUE){ # check convergence
+      if(lavresH0@optim[["converged"]] == TRUE){ # check convergence of H0 model
        
         cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
         p <- lavaan::fitMeasures(lavresH0, 'pvalue')
@@ -74,15 +74,18 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
           df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
         }
         
+        
         ## saturated comparison model
-        efmin <- append(efmin, cfmin)
-        efminGroups <- append(efminGroups, list(cfminGroups)) 
-        
-        if(p < alpha)
-          ePower <- ePower + 1
-        
-        r <- r + 1 
-        
+        if(is.null(modelH1)){
+          efmin <- append(efmin, cfmin)
+          efminGroups <- append(efminGroups, list(cfminGroups)) 
+          
+          if(p < alpha)
+            ePower <- ePower + 1
+          
+          r <- r + 1 
+        }
+
         # handle restricted comparison model 
         # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
         if(!is.null(modelH1)){
@@ -116,14 +119,9 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             
           }
         }
-
       }
       
       
-      # TODO 
-      # handle relevant errors above, as this would also allow
-      # to include non-properly converged models, as these are probably also relevant for
-      # empirical power
     }, warning = function(w) {
       # print(paste('WARNING: ',w))
     }, error = function(e) {
