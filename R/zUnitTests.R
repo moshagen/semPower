@@ -226,7 +226,7 @@ test_generateSigma <- function(){
     round(sum((par[par$lhs == 'f2' & par$rhs == 'f3', 'std.all'] - Phi[2, 3])^2), 4) == 0
   
   ## test lambda with cross loadings
-  Lambda <- matrix(c(
+  LambdaC <- matrix(c(
     c(0.4, 0.0, 0.0),
     c(0.7, 0.0, 0.0),
     c(0.8, 0.0, 0.0),
@@ -237,20 +237,67 @@ test_generateSigma <- function(){
     c(0.0, 0.0, 0.7),
     c(0.0, 0.0, 0.8)
   ), byrow = T, ncol = 3)
-  generated7 <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
+  generated7 <- semPower.genSigma(Phi = Phi, Lambda = LambdaC)
   lavres7 <- helper_lav(generated7$modelTrue, generated7$Sigma)
   par <- lavres7$par
   
   valid8 <- valid7 &&
     round(lavres7$fit['fmin'], 4) == 0 && 
-    round(sum((par[par$lhs == 'f1' & par$op == '=~', 'std.all'] - Lambda[, 1][Lambda[, 1] != 0])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f2' & par$op == '=~', 'std.all'] - Lambda[, 2][Lambda[, 2] != 0])^2), 4) == 0 &&
-    round(sum((par[par$lhs == 'f3' & par$op == '=~', 'std.all'] - Lambda[, 3][Lambda[, 3] != 0])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f1' & par$op == '=~', 'std.all'] - LambdaC[, 1][LambdaC[, 1] != 0])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f2' & par$op == '=~', 'std.all'] - LambdaC[, 2][LambdaC[, 2] != 0])^2), 4) == 0 &&
+    round(sum((par[par$lhs == 'f3' & par$op == '=~', 'std.all'] - LambdaC[, 3][LambdaC[, 3] != 0])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f1' & par$rhs == 'f2', 'std.all'] - Phi[1, 2])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f1' & par$rhs == 'f3', 'std.all'] - Phi[1, 3])^2), 4) == 0 &&
     round(sum((par[par$lhs == 'f2' & par$rhs == 'f3', 'std.all'] - Phi[2, 3])^2), 4) == 0
   
-  if(valid8){
+  # multigroup case
+  generated5c <- semPower.genSigma(nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5), 
+                                   tau = list(rep(0, 6), rep(0, 6)), Alpha = list(c(0, 0), c(0, 1)))
+  generated5cc <- semPower.genSigma(nIndicator = list(c(3, 3), c(3, 3)), loadM = .5, 
+                                   tau = list(rep(0, 6), rep(0, 6)), Alpha = list(c(0, 0), c(0, 1)))
+  
+  generated9 <- semPower.genSigma(loadings = list(list(c(.5, .4, .6), c(.5, .4, .6)),
+                                                  list(c(.7, .6, .5), c(.4, .6, .5))))
+  
+  lavres9 <- lavaan::sem(generated9[[1]]$modelTrueCFA,
+                        sample.cov = list(generated9[[1]]$Sigma, generated9[[2]]$Sigma),
+                        sample.nobs = list(500, 500), sample.cov.rescale = FALSE)
+  par9 <- lavaan::parameterestimates(lavres9)
+  
+  
+  Phi2 <- matrix(c(
+    c(1.0, 0.3, 0.1),
+    c(0.3, 1.0, 0.1),
+    c(0.1, 0.1, 1.0)
+  ), byrow = T, ncol=3)
+  Lambda2 <- matrix(c(
+    c(0.4, 0.0, 0.0),
+    c(0.7, 0.0, 0.0),
+    c(0.8, 0.0, 0.0),
+    c(0.0, 0.6, 0.0),
+    c(0.0, 0.7, 0.0),
+    c(0.0, 0.4, 0.0),
+    c(0.0, 0.0, 0.8),
+    c(0.0, 0.0, 0.7),
+    c(0.0, 0.0, 0.8)
+  ), byrow = T, ncol = 3)  
+  generated10 <- semPower.genSigma(Lambda = list(Lambda, Lambda2), Phi = list(Phi, Phi2))
+  lavres10 <- lavaan::sem(generated10[[1]]$modelTrueCFA,
+                         sample.cov = list(generated10[[1]]$Sigma, generated10[[2]]$Sigma),
+                         sample.nobs = list(500, 500), sample.cov.rescale = FALSE)
+  par10 <- lavaan::parameterestimates(lavres10)
+
+  valid9 <- valid8 &&
+    sum(generated5c[[1]]$Sigma - generated5cc[[1]]$Sigma) < 1e-8 &&
+    sum(generated5c[[1]]$Sigma - generated5a$Sigma) < 1e-8 &&
+    sum(generated5c[[2]]$Sigma - generated5b$Sigma) < 1e-8 &&
+    sum(generated5c[[1]]$mu - generated5a$mu) < 1e-8 &&
+    sum(generated5c[[2]]$mu - generated5b$mu) < 1e-8 &&
+    round(sum(abs(par9[par9$op == '=~', 'est'] - c(.5, .4, .6, .5, .4, .6, .7, .6, .5, .4, .6, .5))), 4) == 0 &&
+    round(sum(abs(par10[par10$op == '=~' & par10$group == 1, 'est'] - c(Lambda[1:3, 1], Lambda[4:6, 2], Lambda[7:9, 3]))), 4) == 0 &&
+    round(sum(abs(par10[par10$op == '=~' & par10$group == 2, 'est'] - c(Lambda2[1:3, 1], Lambda2[4:6, 2], Lambda2[7:9, 3]))), 4) == 0
+
+  if(valid9){
     print('test_generateSigma: OK')
   }else{
     warning('Invalid')

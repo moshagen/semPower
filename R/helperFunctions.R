@@ -128,7 +128,32 @@ semPower.genSigma <- function(Lambda = NULL,
                               ...){
   
   args <- list(...)
-  
+
+  # multigroup case
+  argsMG <- append(list(Lambda = Lambda, Phi = Phi, Beta = Beta, Psi = Psi, Theta = Theta, tau = tau, Alpha = Alpha), args)
+  nGroups <- unlist(lapply(seq_along(argsMG), function(x){
+    len <- 1
+    if(names(argsMG)[x] %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax')){
+      if(names(argsMG)[x] %in% c('loadings', 'loadMinMax')){
+        if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]][[1]])
+      }else{
+        if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
+      }
+    }
+    len
+  }))
+  if(any(nGroups > 1)){
+    if(sum(nGroups != 1) > 1 && var(nGroups[nGroups != 1]) != 0) stop('All list arguments in multiple group analysis must have the same length.')
+    if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
+    if(!is.null(argsMG[['loadSD']]) && !is.list(argsMG[['loadSD']])) argsMG[['loadSD']] <- as.list(rep(list(argsMG[['loadSD']]), max(nGroups)))
+    ## TODO handle list structure in loadMinMax
+    return(
+      lapply(1:max(nGroups), function(x)
+        do.call(semPower.genSigma, lapply(argsMG, '[[', x))) 
+    )
+  }
+
+  # the following applies to single group cases 
   if(is.null(Lambda)){
     Lambda <- genLambda(args[['loadings']], args[['nIndicator']], 
                         args[['loadM']], args[['loadSD']], args[['loadMinMax']]) 
@@ -231,11 +256,11 @@ semPower.genSigma <- function(Lambda = NULL,
 #'
 #' Generate Lambda from various shortcuts
 #' 
-#' @param loadings Can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.   
-#' @param nIndicator Can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
-#' @param loadM Can be used instead of Lambda (see details): vector giving mean loadings for each factor or single number to use for every loading
-#' @param loadSD Can be used instead of Lambda (see details): vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax Can be used instead of Lambda (see details): list giving the minimum and maximum loading for each factor or vector to apply to all factors 
+#' @param loadings A list providing the factor loadings by factor. Must not contain secondary loadings.   
+#' @param nIndicator Vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM Either a vector giving mean loadings for each factor or a single number to use for every loading
+#' @param loadSD Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with loadM. When NULL, SDs are set to zero.
+#' @param loadMinMax A list giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @return A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
 #' @examples
 #' \dontrun{
@@ -249,6 +274,7 @@ genLambda <- function(loadings = NULL,
 
   # validate input  
   if(!is.null(nIndicator) && !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
+  if(is.null(nIndicator) && !(is.null(loadM) || is.null(loadMinMax))) stop('Provide loadings and number of indicators by factor.')
   if(is.null(nIndicator) && !is.list(loadings)) stop('loadings must be a list')
   nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
   if(is.null(loadings)){
