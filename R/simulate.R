@@ -39,6 +39,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   while(r <= nReplications && rr <= nReplications / minConvergenceRate){
     setTxtProgressBar(progress, r)
     tryCatch({
+      
       if(!is.list(Sigma)){
         # single group case
         cdata <- genData(N, Sigma, mu)
@@ -64,26 +65,14 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         cfminGroups <- lavresH0@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
       }
       
-      if(lavresH0@optim[["converged"]] == TRUE){ # check convergence of H0 model
-       
+      if(lavresH0@optim[["converged"]]){
+        
         cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
         p <- lavaan::fitMeasures(lavresH0, 'pvalue')
         df <- lavaan::fitMeasures(lavresH0, 'df')
         if(lavresH0@Options[['estimator']] %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
           p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
           df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
-        }
-        
-        
-        ## saturated comparison model
-        if(is.null(modelH1)){
-          efmin <- append(efmin, cfmin)
-          efminGroups <- append(efminGroups, list(cfminGroups)) 
-          
-          if(p < alpha)
-            ePower <- ePower + 1
-          
-          r <- r + 1 
         }
 
         # handle restricted comparison model 
@@ -99,29 +88,30 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             lavresH1 <- do.call(lavaan::lavaan, 
                                 append(list(model = modelH1, data = cdata,
                                             check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), append(list(group = 'gIdx'), lavOptions)))
-            cfminGroups <- cfminGroups - lavresH1@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
           }
           
-          if(lavresH1@optim[["converged"]] == TRUE){ # check convergence of H1 model
+          if(lavresH1@optim[["converged"]]){
             
             mcomp <- lavaan::anova(lavresH0, lavresH1) 
             p <- mcomp$`Pr(>Chisq)`[2]
             df <- mcomp$`Df diff`[2]
             cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
-            
-            efmin <- append(efmin, cfmin)
-            efminGroups <- append(efminGroups, list(cfminGroups)) 
-            
-            if(p < alpha)
-              ePower <- ePower + 1
-            
-            r <- r + 1 
+            if(is.list(Sigma)) cfminGroups <- cfminGroups - lavresH1@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
             
           }
         }
       }
-      
-      
+
+      if(lavresH0@optim[["converged"]] && (is.null(modelH1)|| lavresH1@optim[["converged"]])){
+        efmin <- append(efmin, cfmin)
+        efminGroups <- append(efminGroups, list(cfminGroups)) 
+        
+        if(p < alpha)
+          ePower <- ePower + 1
+        
+        r <- r + 1 
+      }
+
     }, warning = function(w) {
       # print(paste('WARNING: ',w))
     }, error = function(e) {
