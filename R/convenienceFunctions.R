@@ -145,7 +145,6 @@ semPower.powerLav <- function(type,
         
   # simulated power
   }else{
-    ## TODO add multigroup support
     power <- semPower(type = type, 
                       Sigma = Sigma, mu = mu, 
                       modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
@@ -426,8 +425,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   model <- paste(generated[['modelTrueCFA']], 
                  paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = ' + ')), 
                  sep = '\n')
-  modelTrue <- model
-  
+
   if(nullEffect == 'slopex=slopez'){
     tok <- ''
     for(i in 1:(length(nullWhich) - 1)){
@@ -443,7 +441,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   modelH1 <- NULL
   if(comparison == 'restricted'){
     # h1 model always fits perfectly, only needed for delta df
-    modelH1 <- modelTrue
+    modelH1 <- model
     fitH1model <- FALSE 
   } 
   
