@@ -43,14 +43,18 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         # single group case
         cdata <- genData(N, Sigma, mu)
         lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata), lavOptions))
+                            append(list(model = modelH0, data = cdata,
+                                        check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), # suppress checks
+                                        lavOptions))
         cfminGroups <- NULL
       }else{
         # multigroup group case
         gdata <- lapply(1:length(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x))
         cdata <- unlist(do.call(rbind, gdata))
         lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata), append(list(group = 'gIdx'), lavOptions)))
+                            append(list(model = modelH0, data = cdata,
+                                        check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), # suppress checks 
+                                   append(list(group = 'gIdx'), lavOptions)))
         # store fmin by group
         if(lavresH0@Options[['estimator']] %in% c("ML", "MLF", "WLS", "DWLS", "ULS")) testType <- 'standard' 
         if(lavresH0@Options[['estimator']] %in% c("MLM", "WLSM", "ULSM")) testType <- 'satorra.bentler' 
@@ -59,44 +63,65 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         if(lavresH0@Options[['estimator']] %in% c("MLMVS")) testType <- 'mean.var.adjusted' 
         cfminGroups <- lavresH0@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
       }
-      cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
-      p <- lavaan::fitMeasures(lavresH0, 'pvalue')
-      df <- lavaan::fitMeasures(lavresH0, 'df')
-      if(lavresH0@Options[['estimator']] %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
-        p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
-        df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
-      }
-
-      # handle restricted comparison model 
-      # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
-      if(!is.null(modelH1)){
-        if(!is.list(Sigma)){
-          # single group case
-          lavresH1 <- do.call(lavaan::lavaan, 
-                              append(list(model = modelH1, data = cdata), lavOptions))
-        }else{
-          # multigroup group case
-          lavresH1 <- do.call(lavaan::lavaan, 
-                              append(list(model = modelH1, data = cdata), append(list(group = 'gIdx'), lavOptions)))
-          cfminGroups <- cfminGroups - lavresH1@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
+      
+      if(lavresH0@optim[["converged"]] == TRUE){ # check convergence of H0 model
+       
+        cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
+        p <- lavaan::fitMeasures(lavresH0, 'pvalue')
+        df <- lavaan::fitMeasures(lavresH0, 'df')
+        if(lavresH0@Options[['estimator']] %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
+          p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
+          df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
         }
-        mcomp <- lavaan::anova(lavresH0, lavresH1) 
-        p <- mcomp$`Pr(>Chisq)`[2]
-        df <- mcomp$`Df diff`[2]
-        cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
+        
+        
+        ## saturated comparison model
+        if(is.null(modelH1)){
+          efmin <- append(efmin, cfmin)
+          efminGroups <- append(efminGroups, list(cfminGroups)) 
+          
+          if(p < alpha)
+            ePower <- ePower + 1
+          
+          r <- r + 1 
+        }
+
+        # handle restricted comparison model 
+        # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
+        if(!is.null(modelH1)){
+          if(!is.list(Sigma)){
+            # single group case
+            lavresH1 <- do.call(lavaan::lavaan, 
+                                append(list(model = modelH1, data = cdata,
+                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), lavOptions))
+          }else{
+            # multigroup group case
+            lavresH1 <- do.call(lavaan::lavaan, 
+                                append(list(model = modelH1, data = cdata,
+                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), append(list(group = 'gIdx'), lavOptions)))
+            cfminGroups <- cfminGroups - lavresH1@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
+          }
+          
+          if(lavresH1@optim[["converged"]] == TRUE){ # check convergence of H1 model
+            
+            mcomp <- lavaan::anova(lavresH0, lavresH1) 
+            p <- mcomp$`Pr(>Chisq)`[2]
+            df <- mcomp$`Df diff`[2]
+            cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
+            
+            efmin <- append(efmin, cfmin)
+            efminGroups <- append(efminGroups, list(cfminGroups)) 
+            
+            if(p < alpha)
+              ePower <- ePower + 1
+            
+            r <- r + 1 
+            
+          }
+        }
       }
-      efmin <- append(efmin, cfmin)
-      efminGroups <- append(efminGroups, list(cfminGroups)) 
-                            
-      if(p < alpha)
-        ePower <- ePower + 1
       
-      r <- r + 1
       
-      # TODO 
-      # handle relevant errors above, as this would also allow
-      # to include non-properly converged models, as these are probably also relevant for
-      # empirical power
     }, warning = function(w) {
       # print(paste('WARNING: ',w))
     }, error = function(e) {
