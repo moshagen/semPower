@@ -236,7 +236,7 @@ semPower.powerLav <- function(type,
 #' cfapower.ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
 #'                                  nullEffect = 'corA=corB',
 #'                                  Phi = list(.2, .1), loadM = .5, 
-#'                                  nIndicator = list(c(3, 3), c(3, 3)), 
+#'                                  nIndicator = c(3, 3), 
 #'                                  alpha = .05, N = c(250, 250))
 #' 
 #' }
@@ -265,7 +265,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   generated <- semPower.genSigma(Phi = Phi, ...)
   
   ### now do validation of nullWhich, since we now know Phi
-  if(is.list(Phi)) nfac <- ncol(generated[[1]][['Phi']]) else nfac <- ncol(generated[['Phi']]) 
+  isMultigroup <- is.list(Phi)
+  if(isMultigroup) nfac <- ncol(generated[[1]][['Phi']]) else nfac <- ncol(generated[['Phi']]) 
   if(is.null(nullWhich) && nfac == 2) nullWhich <- c(1, 2)
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
@@ -281,7 +282,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   }
   
   ### H0 model
-  if(is.list(Phi)) modelH0 <- generated[[1]][['modelTrueCFA']] else modelH0 <- generated[['modelTrueCFA']] 
+  if(isMultigroup) modelH0 <- generated[[1]][['modelTrueCFA']] else modelH0 <- generated[['modelTrueCFA']] 
   if(nullEffect == 'cor=0'){
     modelH0 <- paste(c(modelH0,
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
@@ -304,7 +305,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   }else if(nullEffect == 'cora=corb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- 1:length(Phi)
     lab <- rep('NA', length(Psi))
-    lab[nullWhichGroups] <- 'p1'
+    lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(c(modelH0,
                        paste0('f', nullWhich[[1]], collapse = paste0(' ~~ ', lab))),
@@ -315,18 +316,18 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 
   # we always enforce invariance constraints in the multigroup case
   lavOptions <- NULL
-  if(is.list(Phi)) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
 
   modelH1 <- NULL
   if(comparison == 'restricted'){
-    if(is.list(Phi)) modelH1 <- generated[[1]][['modelTrueCFA']] else modelH1 <- generated[['modelTrueCFA']] 
+    if(isMultigroup) modelH1 <- generated[[1]][['modelTrueCFA']] else modelH1 <- generated[['modelTrueCFA']] 
     # single group case: the h1 model always fits perfectly
     # multigroup case: we cannot be sure that user input yields a perfectly fitting model
-    fitH1model <- is.list(Phi) 
+    fitH1model <- isMultigroup 
   } 
   
-  if(is.list(Phi)) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
-
+  if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
+  
   semPower.powerLav(type = type,
                     Sigma = Sigma,
                     modelH0 = modelH0,
@@ -344,11 +345,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
-#' @param slopes vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. 
-#' @param nullEffect defines the hypothesis of interest. Valid are 'slope = 0' (the default) and 'slopeX = slopeZ' to test for the equality of slopes. Define the slopes to set to equality in nullWhich 
-#' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.
-#' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. 
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis 
+#' @param slopes vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.
+#' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are assumed in all groups). 
+#' @param nullEffect defines the hypothesis of interest. Valid are 'slope = 0' (the default), 'slopeX = slopeZ' to test for the equality of slopes, and 'slopeA = slopeB' to test for the equality of slopes across groups.  Define the slopes to set to equality in nullWhich.
+#' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0', or indicating which slope to restrict to equality across groups when nullEffect = 'slopeA = slopeB', or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes, e.g. c(1, 2, 3) to constrain the first three slopes to equality.
+#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so nfactors = slopes + 1 are needed), and the type of power analysis 
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
 #' \dontrun{
@@ -399,6 +401,16 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      nIndicator = c(4, 3, 5, 4),
 #'                                      loadM = c(.5, .5, .6, .7),
 #'                                      alpha = .05, beta = .05)
+#' # multigroup example                                      
+#' regPower <- semPower.powerRegression(type = 'post-hoc',
+#'                                      slopes = list(c(.2, .3, .4), c(.2, .0, .4)), 
+#'                                      corXX = corXX, 
+#'                                      nullEffect = 'slopeA = slopeB', 
+#'                                      nullWhich = 2,
+#'                                      nIndicator = c(4, 3, 5, 4),
+#'                                      loadM = c(.5, .5, .6, .7), 
+#'                                      N = list(250, 250),
+#'                                      alpha = .05, beta = .05)
 #'                                      
 #' }
 #' @seealso [semPower.genSigma()]
@@ -408,6 +420,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                                      corXX = NULL, 
                                      nullEffect = 'slope = 0',
                                      nullWhich = NULL,
+                                     nullWhichGroups = NULL,
                                      ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -417,48 +430,77 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of corXX and the slopes.')
   
   # validate input
-  if(is.null(slopes)) stop('slopes cannot be NULL.')
-  if(!is.vector(slopes) && !is.matrix(slopes)) stop('slopes must be a single number of a vector')
-  invisible(lapply(slopes, function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
-  if(sum(slopes^2) > 1) stop('slopes imply a negative residual variance for Y, make sure that the sum of the squared slopes is < 1')
-  if(!is.matrix(slopes)) slopes <- matrix(slopes, nrow = length(slopes))
-  
-  if(is.null(corXX)) corXX <- diag(nrow(slopes)) 
-  if(is.vector(corXX) && length(corXX) > 1) stop('corXX must be a single number or a matrix') 
-  if(!is.matrix(corXX)){
-    corXX <- matrix(corXX, nrow = 2, ncol = 2) 
-    diag(corXX) <- 1
-  } 
-  checkPositiveDefinite(corXX)
-  if(ncol(corXX) != nrow(slopes)) stop('Dimension of corXX does not match number of predictors.')
-  
   if(is.null(nullEffect)) stop('nullEffect must be defined.')
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez'))))) stop('nullEffect must be either slope=0 or slopex=slopez')
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez', 'slopea=slopeb'))))) stop('nullEffect must one of slope=0, slopex=slopez, or slopea=slopeb.')
+  
+  if(is.null(slopes)) stop('slopes cannot be NULL.')
+  if(nullEffect == 'slopea=slobeb' && !is.list(slopes)) stop('slopes must be a list when a multiple group analysis is requested.')
+  if(is.list(slopes)) if(var(unlist(lapply(slopes, length))) > 0) stop('the same number of slopes must be provided for each group.')
+  if(!is.list(slopes)) slopes <- list(slopes)
+  if(!is.null(corXX) && !is.list(corXX)) corXX <- list(corXX)
+
+  if(any(!unlist(lapply(slopes, is.vector))) && any(!unlist(lapply(slopes, is.matrix)))) stop('slopes must be a single number or a vector')
+  lapply(slopes, function(y) invisible(lapply(y, function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE))))
+  if(any(unlist(lapply(slopes, function(x) sum(x^2) > 1)))) stop('slopes imply a negative residual variance for Y, make sure that the sum of the squared slopes is < 1')
+  slopes <- lapply(slopes, function(x) if(!is.matrix(x)) matrix(x, nrow = length(x)) else x)
+  isMultigroup <- length(slopes) > 1
+
+  if(is.null(corXX)) corXX <- lapply(slopes, function(x) diag(nrow(x))) 
+  if(any(unlist(lapply(corXX, is.vector)) && unlist(lapply(corXX, length)) > 1)) stop('corXX must be a single number or a matrix') 
+  if(isMultigroup && length(corXX) == 1) corXX <- rep(corXX, length(slopes)) # assume same corXX for all groups
+  corXX <- lapply(corXX, function(x) {
+    if(!is.matrix(x)){
+      xx <- matrix(x, nrow = 2, ncol = 2) 
+      diag(xx) <- 1
+      xx
+    }else{
+      x
+    }
+  })
+  invisible(lapply(corXX, checkPositiveDefinite))
+  if(any(unlist(lapply(seq_along(corXX), function(x) ncol(corXX[[x]]) != nrow(slopes[[x]]))))) stop('Dimension of corXX does not match number of predictors.')
   
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
-  if(any(nullWhich < 1) || any(nullWhich > nrow(slopes))) stop('nullWhich is invalid.')
+  if(any(nullWhich < 1) || any(nullWhich > nrow(slopes[[1]]))) stop('nullWhich is invalid.')
   if(nullEffect == 'slopex=slopez'){
-    if(length(nullWhich) < 2 || length(nullWhich) > nrow(slopes)) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
+    if(length(nullWhich) < 2 || length(nullWhich) > nrow(slopes[[1]])) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
   }else{
     if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0')
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
-  # calc implied sigma. phi is defined directly, because this special case is simpler than defining B and calling getPhi.B  
-  corXY <- (corXX %*% slopes)
-  Phi <- t(c(1, corXY))
-  Phi <- rbind(Phi, cbind(corXY, corXX))
-  generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
+  # calc implied sigma. 
+  # for single groups, phi is defined directly, because this special case is simpler than defining B and calling getPhi.B  
+  if(!isMultigroup){
+    corXY <- (corXX[[1]] %*% slopes[[1]])
+    Phi <- t(c(1, corXY))
+    Phi <- rbind(Phi, cbind(corXY, corXX[[1]]))
+    generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
+    # for multigroup, the approach does not work, because we need to go unstandardized 
+  }else{
+    B <- lapply(slopes, function(x){
+      cB <- matrix(0, ncol = (length(x) + 1), nrow = (length(x) + 1))
+      cB[1, ] <- c(0, x)  # we want the first factor endogenous
+      cB
+    })
+    Psi <- lapply(seq_along(slopes), function(x){
+      cPsi <- diag(ncol(B[[x]]))
+      cPsi[2:nrow(cPsi), 2:ncol(cPsi)] <- corXX[[x]]
+      cPsi
+    })
+    generated <- semPower.genSigma(B = B, Psi = Psi, 
+                                   useReferenceIndicator = TRUE, ...)
+  }
+  
 
   ### create ana model string
   # add regressions 
-  model <- paste(generated[['modelTrueCFA']], 
-                 paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX))), '*f',(1 + 1:ncol(corXX)), collapse = ' + ')), 
-                 sep = '\n')
-
+  if(isMultigroup) model <- generated[[1]][['modelTrueCFA']] else model <- generated[['modelTrueCFA']]
+  np <- (1 + 1:ncol(corXX[[1]]))
+  
   if(nullEffect == 'slopex=slopez'){
     tok <- ''
     for(i in 1:(length(nullWhich) - 1)){
@@ -466,23 +508,58 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
         tok <- paste(tok, paste0('pf', nullWhich[i], ' == ', 'pf', nullWhich[j]), sep = '\n')
       }
     }
-    modelH0 <- paste(model, '\n', tok)  
+    modelH0 <- paste(model, 
+                     paste0('f1 ~ ', paste0(paste0('pf', np), '*f', np, collapse = ' + ')),
+                     tok,
+                     sep = '\n')
+  }else if(nullEffect == 'slope=0'){
+    modelH0 <- paste(model, 
+                     paste0('f1 ~ ', paste0(paste0('pf', np), '*f', np, collapse = ' + ')),
+                     paste0('pf', nullWhich,' == 0'),
+                     sep = '\n')
+  }else if(nullEffect == 'slopea=slopeb'){
+    if(is.null(nullWhichGroups)) nullWhichGroups <- seq_along(slopes)
+    lab <- rep('NA', length(slopes))
+    lab[nullWhichGroups] <- 'pf1'
+    lab <- paste0('c(', paste(lab, collapse = ','), ')*')
+    modelH0 <- paste(model, 
+                     paste0('f1 ~ ', paste0(lab, 'f', np[(nullWhich - 1)], ' + '), paste0('f',np[-(nullWhich - 1)], collapse = ' + ')),
+                     sep = '\n')
   }else{
-    modelH0 <- paste(model, '\n', paste0('pf', nullWhich,' == 0'))  
+    stop('nullEffect not defined.')
   }
+
+  
+  # we always enforce invariance constraints in the multigroup case
+  lavOptions <- NULL
+  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
   
   modelH1 <- NULL
   if(comparison == 'restricted'){
-    # h1 model always fits perfectly, only needed for delta df
-    modelH1 <- model
-    fitH1model <- FALSE 
+    if(!isMultigroup){
+      modelH1 <- paste(model, 
+                       paste0('f1 ~ ', paste0(paste0('pf',(1 + 1:ncol(corXX[[1]]))), '*f',(1 + 1:ncol(corXX[[1]])), collapse = ' + ')),
+                       sep = '\n')
+    }else{
+      # no slope labels in multigroup case
+      modelH1 <- paste(model, 
+                       paste0('f1 ~ ', paste0('f',(1 + 1:ncol(corXX[[1]])), collapse = ' + ')),
+                       sep = '\n')
+      
+    }
+    # single group case: the h1 model always fits perfectly
+    # multigroup case: we cannot be sure that user input yields a perfectly fitting model
+    fitH1model <- isMultigroup 
   } 
+
+  if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
   semPower.powerLav(type, 
-                    Sigma = generated[['Sigma']], 
+                    Sigma = Sigma, 
                     modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     fitH1model = fitH1model,
+                    lavOptions = lavOptions,
                     ...)
 }
 

@@ -1051,8 +1051,28 @@ test_powerRegression <- function(){
     round(par7[par7$lhs == 'f1' & par7$rhs == 'f2', 'std.all'] - .2, 4) == 0 &&
     round(par7[par7$lhs == 'f1' & par7$rhs == 'f3', 'std.all'] - .3, 4) == 0 &&
     round(par7[par7$lhs == 'f2' & par7$rhs == 'f3', 'std.all'] - .4, 4) == 0    
+  
+  # multigroup case, single predictor correlation matrix
+  ph11 <- semPower.powerRegression(type = 'post-hoc', comparison = 'restricted',
+                                   slopes = list(c(.2, .3, .4), c(.2, .1, .4)), corXX = corXX, 
+                                   nullEffect = 'slopea=slopeb', nullWhich = 2,
+                                   nIndicator = list(c(4, 3, 5, 4), c(4, 3, 5, 4)),
+                                   loadM = c(.5, .5, .6, .7),
+                                   alpha = .05, N = list(250, 250))
+  lavres11 <- helper_lav(ph11$modelH1, ph11$Sigma, sample.nobs = c(250, 250), group.equal = c('loadings', 'lv.variances'))
+  par11 <- lavres11$par
+  lavres11b <- helper_lav(ph11$modelH0, ph11$Sigma, sample.nobs = c(250, 250), group.equal = c('loadings', 'lv.variances'))
+  par11b <- lavres11b$par
 
-  if(valid){
+  valid2 <- valid &&
+    round(sum(abs(par11[par11$op == '=~' & par11$group == 1, 'est'] - par11[par11$op == '=~' & par11$group == 2, 'est'])), 4) == 0 &&
+    round(sum(abs(par11[par11$op == '=~' & par11$group == 1, 'est'] - c(rep(.5, 7), rep(.6, 5), rep(.7, 4)))), 4) == 0 &&
+    round(sum(abs(par11[par11$lhs == 'f1' & par11$op == '~', 'est'] - c(.2, .3, .4, .2, .1, .4))), 4) == 0 &&
+    round(2*lavres11b$fit['fmin'] - ph11$power$fmin, 4) == 0 &&
+    round(par11b[par11b$lhs == 'f1' & par11b$rhs == 'f3' & par11b$group == 1, 'est'] - par11b[par11b$lhs == 'f1' & par11b$rhs == 'f3' & par11b$group == 2, 'est'], 4) == 0 &&
+    round(sum(par11b[par11b$lhs == 'f1' & par11b$op == '~' & par11b$rhs != 'f3' & par11b$group == 1, 'est'] - par11b[par11b$lhs == 'f1' & par11b$op == '~' & par11b$rhs != 'f3' & par11b$group == 2, 'est']), 4) > 0
+  
+  if(valid2){
     print('test_powerRegression: OK')
   }else{
     warning('Invalid')
