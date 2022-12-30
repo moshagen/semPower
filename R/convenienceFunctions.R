@@ -226,10 +226,18 @@ semPower.powerLav <- function(type,
 #'                c(0.7, 0.6, 0.5, 0.4)
 #'                )
 #'
-#' cfapower <- semPower.powerCFA(type = 'post-hoc',
-#'                               nullWhich = c(1, 2), 
-#'                               Phi = Phi, loadings = loadings,
-#'                               alpha = .05, N = 250)
+#' cfapower.ph <- semPower.powerCFA(type = 'post-hoc',
+#'                                  nullWhich = c(1, 2), 
+#'                                  Phi = Phi, loadings = loadings,
+#'                                  alpha = .05, N = 250)
+#' 
+#' # multigroup case to test that there are no group differences 
+#' # concerning the correlation between two factors   
+#' cfapower.ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+#'                                  nullEffect = 'corA=corB',
+#'                                  Phi = list(.2, .1), loadM = .5, 
+#'                                  nIndicator = list(c(3, 3), c(3, 3)), 
+#'                                  alpha = .05, N = c(250, 250))
 #' 
 #' }
 #' @seealso [semPower.genSigma()]
@@ -250,6 +258,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
   if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz', 'cora=corb'))))) stop('nullEffect must be one of cor=0, corx=corz, or cora=corb')
   if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
+  if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to muligroup analysis, so Phi must be a list.')
   if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, bound(1, length(Phi)))) 
     
   # generate sigma 
