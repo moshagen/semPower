@@ -178,8 +178,9 @@ semPower.powerLav <- function(type,
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
 #' @param Phi either a single number defining the correlation between exactly two factors or the factor correlation matrix.
-#' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich 
-#' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]
+#' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default), 'corX = corZ' to test for the equality of correlations, and 'corA = corB' to test the eequality of a correlation across groups. Define the correlations to be set to equality in nullWhich and the groups in nullWhichGroups. 
+#' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3].
+#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied. If NULL, all groups are constrained to equality.
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 #' @examples
@@ -236,7 +237,9 @@ semPower.powerLav <- function(type,
 semPower.powerCFA <- function(type, comparison = 'restricted', 
                               Phi = NULL,
                               nullEffect = 'cor = 0',
-                              nullWhich = NULL, ...){
+                              nullWhich = NULL, 
+                              nullWhichGroups = NULL, 
+                              ...){
   
   # validate input
   comparison <- checkComparisonModel(comparison)
@@ -245,18 +248,21 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz'))))) stop('nullEffect must be either cor=0 or corx=corz')
-  
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz', 'cora=corb'))))) stop('nullEffect must be one of cor=0, corx=corz, or cora=corb')
+  if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
+  if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, bound(1, length(Phi)))) 
+    
   # generate sigma 
   generated <- semPower.genSigma(Phi = Phi, ...)
   
   ### now do validation of nullWhich, since we now know Phi
-  if(is.null(nullWhich) && ncol(generated[['Phi']]) == 2) nullWhich <- c(1, 2)
+  if(is.list(Phi)) nfac <- ncol(generated[[1]][['Phi']]) else nfac <- ncol(generated[['Phi']]) 
+  if(is.null(nullWhich) && nfac == 2) nullWhich <- c(1, 2)
   if(is.null(nullWhich)) stop('nullWhich must be defined.')
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
   if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
   if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
-  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > ncol(generated[['Phi']]) | x[2] > ncol(generated[['Phi']])))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
+  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > nfac | x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
   if(length(nullWhich) > 1){
     for(i in 1:(length(nullWhich) - 1)){
       for(j in (i + 1):length(nullWhich)){
@@ -265,13 +271,13 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     }
   }
   
-  ### H0 model 
-  modelH0 <- generated[['modelTrueCFA']]
+  ### H0 model
+  if(is.list(Phi)) modelH0 <- generated[[1]][['modelTrueCFA']] else modelH0 <- generated[['modelTrueCFA']] 
   if(nullEffect == 'cor=0'){
     modelH0 <- paste(c(modelH0,
       paste0('f', nullWhich[[1]], collapse = ' ~~ 0*')),
       collapse = '\n')
-  }else{
+  }else if(nullEffect == 'corx=corz'){
     labs <- list()
     tok <- ''
     for(i in 1:length(nullWhich)){
@@ -286,20 +292,38 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
       }
     }
     modelH0 <- paste(c(modelH0, tok), collapse = '\n')
+  }else if(nullEffect == 'cora=corb'){
+    if(is.null(nullWhichGroups)) nullWhichGroups <- 1:length(Phi)
+    lab <- rep('NA', length(Psi))
+    lab[nullWhichGroups] <- 'p1'
+    lab <- paste0('c(', paste(lab, collapse = ','), ')*')
+    modelH0 <- paste(c(modelH0,
+                       paste0('f', nullWhich[[1]], collapse = paste0(' ~~ ', lab))),
+                       collapse = '\n')
+  }else{
+    stop('nullEffect not defined')
   }
-  
+
+  # we always enforce invariance constraints in the multigroup case
+  lavOptions <- NULL
+  if(is.list(Phi)) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+
   modelH1 <- NULL
   if(comparison == 'restricted'){
-    # h1 model always fits perfectly, only needed for delta df
-    modelH1 <- generated[['modelTrueCFA']]
-    fitH1model <- FALSE 
+    if(is.list(Phi)) modelH1 <- generated[[1]][['modelTrueCFA']] else modelH1 <- generated[['modelTrueCFA']] 
+    # single group case: the h1 model always fits perfectly
+    # multigroup case: we cannot be sure that user input yields a perfectly fitting model
+    fitH1model <- is.list(Phi) 
   } 
   
+  if(is.list(Phi)) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
+
   semPower.powerLav(type = type,
-                    Sigma = generated[['Sigma']],
+                    Sigma = Sigma,
                     modelH0 = modelH0,
                     modelH1 = modelH1,
                     fitH1model = fitH1model,
+                    lavOptions = lavOptions,
                     ...)
   
 }
@@ -414,7 +438,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
-  # calc implied sigma. we do this here, because this is a special case and simpler than defining B and calling getPhi.B  
+  # calc implied sigma. phi is defined directly, because this special case is simpler than defining B and calling getPhi.B  
   corXY <- (corXX %*% slopes)
   Phi <- t(c(1, corXY))
   Phi <- rbind(Phi, cbind(corXY, corXX))

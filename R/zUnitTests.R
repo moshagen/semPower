@@ -895,7 +895,64 @@ test_powerCFA <- function(){
         par4[par4$lhs == 'f1' & par4$rhs == 'f3', 'std.all'])), 4) == 0 &&
     ph8$power$df == 2
   
-  if(valid3){
+  # multigroup case
+  Phi1 <- matrix(c(
+    c(1, .1, .2),
+    c(.1, 1, .3),
+    c(.2, .3, 1)
+  ), byrow = T, ncol = 3)
+  Phi2 <- matrix(c(
+    c(1, .2, .2),
+    c(.2, 1, .3),
+    c(.2, .3, 1)
+  ), byrow = T, ncol = 3)
+  
+  ph9 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'corA=corB',
+                           nullWhich = c(1, 2),
+                           Phi = list(Phi1, Phi2), 
+                           nIndicator = list(rep(3, 3), rep(3, 3)), 
+                           loadM = c(.5, .6, .7),
+                           alpha = .05, N = c(250, 250))
+  lavres9a <- helper_lav(ph9$modelH1, ph9$Sigma, sample.nobs = c(250, 250), 
+                        group.equal = c('loadings', 'lv.variances'))
+  par9 <- lavres9a$par
+  lavres9b <- helper_lav(ph9$modelH0, ph9$Sigma, sample.nobs = c(250, 250), 
+                        group.equal = c('loadings', 'lv.variances'))
+  par9b <- lavres9b$par
+
+  # multigroup: single phi + loadings
+  ph10 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                           nullEffect = 'corA=corB',
+                           nullWhich = c(1, 2),
+                           Phi = list(.2, .1), 
+                           loadings = list(list(c(.5, .7, .6), c(.8, .5, .4)),
+                                           list(c(.5, .7, .6), c(.8, .5, .4))),
+                           alpha = .05, N = c(250, 250))
+  lavres10a <- helper_lav(ph10$modelH1, ph10$Sigma, sample.nobs = c(250, 250), 
+                         group.equal = c('loadings', 'lv.variances'))
+  par10 <- lavres10a$par
+  lavres10b <- helper_lav(ph10$modelH0, ph10$Sigma, sample.nobs = c(250, 250), 
+                          group.equal = c('loadings', 'lv.variances'))
+  par10b <- lavres10b$par
+
+  valid4 <- valid3 &&
+    round(sum(abs(par9[par9$op == '=~' & par9$group == 1, 'est'] - par9[par9$op == '=~' & par9$group == 2, 'est'])), 4) == 0 &&
+    round(sum(abs(par9[par9$op == '=~' & par9$group == 1, 'est'] - c(.5, .5, .5, .6, .6, .6, .7, .7, .7))), 4) == 0 &&
+    round(sum(abs(par9[par9$op == '~~' & par9$lhs != par9$rhs & par9$group == 1, 'est'] - c(Phi1[lower.tri(Phi1)]))), 4) == 0 &&
+    round(sum(abs(par9[par9$op == '~~' & par9$lhs != par9$rhs & par9$group == 2, 'est'] - c(Phi2[lower.tri(Phi2)]))), 4) == 0 &&
+    round(var(par9b[par9b$op == '~~' & par9b$lhs == 'f1' & par9b$rhs == 'f2', 'est']), 6) == 0 &&
+    round(lavres9a$fit['fmin'], 6) == 0  &&
+    (lavres9b$fit['df'] - lavres9a$fit['df']) == ph9$power$df &&
+    round(2*lavres9b$fit['fmin'] - ph9$power$fmin, 6) == 0 &&
+    round(sum(abs(par10[par10$op == '=~' & par10$group == 1, 'est'] - par10[par10$op == '=~' & par10$group == 2, 'est'])), 4) == 0 &&
+    round(sum(abs(par10[par10$op == '=~' & par10$group == 1, 'est'] - c(.5, .7, .6, .8, .5, .4))), 4) == 0 &&
+    round(2*lavres10b$fit['fmin'] - ph10$power$fmin, 6) == 0 &&
+    round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 1, 'est'] - .2, 4) == 0 &&
+    round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 2, 'est'] - .1, 4) == 0 &&
+    round(var(par10b[par10b$op == '~~' & par10b$lhs == 'f1' & par10b$rhs == 'f2', 'est']), 6) == 0
+  
+  if(valid4){
     print('test_powerCFA: OK')
   }else{
     warning('Invalid')
@@ -2338,4 +2395,4 @@ test_all <- function(){
   test_simulatePower(doTest = FALSE)
 }
 
-test_all()
+#test_all()

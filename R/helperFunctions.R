@@ -130,15 +130,14 @@ semPower.genSigma <- function(Lambda = NULL,
   args <- list(...)
 
   # multigroup case
-  argsMG <- append(list(Lambda = Lambda, Phi = Phi, Beta = Beta, Psi = Psi, Theta = Theta, tau = tau, Alpha = Alpha), args)
+  argsMG <- c(as.list(environment()), list(...))
+  argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax')]
   nGroups <- unlist(lapply(seq_along(argsMG), function(x){
     len <- 1
-    if(names(argsMG)[x] %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax')){
-      if(names(argsMG)[x] %in% c('loadings', 'loadMinMax')){
-        if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]][[1]])
-      }else{
-        if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
-      }
+    if(names(argsMG)[x] %in% c('loadings', 'loadMinMax')){
+      if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]][[1]])
+    }else{
+      if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
     }
     len
   }))
@@ -146,10 +145,10 @@ semPower.genSigma <- function(Lambda = NULL,
     if(sum(nGroups != 1) > 1 && var(nGroups[nGroups != 1]) != 0) stop('All list arguments in multiple group analysis must have the same length.')
     if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
     if(!is.null(argsMG[['loadSD']]) && !is.list(argsMG[['loadSD']])) argsMG[['loadSD']] <- as.list(rep(list(argsMG[['loadSD']]), max(nGroups)))
-    ## TODO handle list structure in loadMinMax
+    if(!is.null(argsMG[['loadMinMax']]) && !is.list(argsMG[['loadMinMax']])) argsMG[['loadMinMax']] <- as.list(rep(list(argsMG[['loadMinMax']]), max(nGroups)))
+    params <- lapply(1:max(nGroups), function(x) lapply(argsMG, '[[', x))
     return(
-      lapply(1:max(nGroups), function(x)
-        do.call(semPower.genSigma, lapply(argsMG, '[[', x))) 
+      lapply(params, function(x) do.call(semPower.genSigma, x)) 
     )
   }
 
@@ -348,7 +347,7 @@ genModelString <- function(Lambda = NULL,
     if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
     if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
     if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
-    if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metriInvariance must have the same number of indicators')
+    if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metricInvariance must have the same number of indicators')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', formatC(x, width = 2, flag = 0), formatC(1:nIndicator[metricInvariance[[x]][1]], width = 2, flag = 0), '*')) 
   }
   
