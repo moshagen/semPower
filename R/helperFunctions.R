@@ -144,11 +144,11 @@ semPower.genSigma <- function(Lambda = NULL,
   if(any(nGroups > 1)){
     if(sum(nGroups != 1) > 1 && var(nGroups[nGroups != 1]) != 0) stop('All list arguments in multiple group analysis must have the same length.')
     # when no list structure is provided for indicators or loadings, assume the same applies for all groups 
+    if(!is.null(argsMG[['loadings']]) && !is.list(argsMG[['loadings']][[1]])) argsMG[['loadings']] <- as.list(rep(list(argsMG[['loadings']]), max(nGroups)))
     if(!is.null(argsMG[['nIndicator']]) && !is.list(argsMG[['nIndicator']])) argsMG[['nIndicator']] <- as.list(rep(list(argsMG[['nIndicator']]), max(nGroups)))
     if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
     if(!is.null(argsMG[['loadSD']]) && !is.list(argsMG[['loadSD']])) argsMG[['loadSD']] <- as.list(rep(list(argsMG[['loadSD']]), max(nGroups)))
-    ## TODO do the same for loadings and loadMinMax (this requires more processing)
-    #if(!is.null(argsMG[['loadMinMax']]) && !is.list(argsMG[['loadMinMax']])) argsMG[['loadMinMax']] <- as.list(rep(list(argsMG[['loadMinMax']]), max(nGroups)))
+    if(!is.null(argsMG[['loadMinMax']])) argsMG[['loadMinMax']] <- as.list(rep(list(argsMG[['loadMinMax']]), max(nGroups)))
     params <- lapply(1:max(nGroups), function(x) lapply(argsMG, '[[', x))
     return(
       lapply(params, function(x) do.call(semPower.genSigma, x)) 
