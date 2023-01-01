@@ -252,11 +252,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   # validate input
   comparison <- checkComparisonModel(comparison)
   if(is.null(Phi)) stop('Phi must be defined')
-  if(is.null(nullEffect)) stop('nullEffect must be defined.')
-  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
-  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
-  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('cor=0', 'corx=corz', 'cora=corb'))))) stop('nullEffect must be one of cor=0, corx=corz, or cora=corb')
+  nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb'))
   if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
   if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to muligroup analysis, so Phi must be a list.')
   if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, bound(1, length(Phi)))) 
@@ -430,12 +426,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of corXX and the slopes.')
   
   # validate input
-  if(is.null(nullEffect)) stop('nullEffect must be defined.')
-  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
-  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
-  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('slope=0', 'slopex=slopez', 'slopea=slopeb'))))) stop('nullEffect must one of slope=0, slopex=slopez, or slopea=slopeb.')
-  
+  nullEffect <- checkNullEffect(nullEffect, c('slope=0', 'slopex=slopez', 'slopea=slopeb'))
   if(is.null(slopes)) stop('slopes cannot be NULL.')
   if(nullEffect == 'slopea=slobeb' && !is.list(slopes)) stop('slopes must be a list when a multiple group analysis is requested.')
   if(is.list(slopes)) if(var(unlist(lapply(slopes, length))) > 0) stop('the same number of slopes must be provided for each group.')
@@ -678,12 +669,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of Beta (or the slopes).')
   
   # validate input
-  if(is.null(nullEffect)) stop('nullEffect must be defined.')
-  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
-  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
-  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('ind=0', 'inda=indb'))))) stop('nullEffect must one of ind=0 or inda=indb.')
-  
+  nullEffect <- checkNullEffect(nullEffect, c('ind=0', 'inda=indb'))
   if(!is.null(Beta) && (!is.null(bYX) || !is.null(bMX) || !is.null(bYM))) stop('Either provide bYX, bMX, and bYM or provide Beta, but not both.')
   if(is.null(Beta)){
     if(is.null(bYX) || is.null(bMX) || is.null(bYM)) stop('Provide bYX, bYM, and bYM or provide Beta')
@@ -861,7 +847,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
   #validate input
-  if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
+  if(is.null(autoregEffects) || is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.')
   if(is.null(rXY)) rXY <- rep(0, nWaves)
   if(length(rXY) != nWaves) stop('rXY must be of length nWaves')
@@ -882,15 +868,13 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     if(any(unlist(lapply(waveEqual, function(x) !x %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain autoregX, autoregY, crossedX, crossedY, corXY')
   }
   
-  if(is.null(nullEffect)) stop('nullEffect must be defined.')
   # we do not allow stacking of hypotheses. there might be a use case for this,
   # but this would complicate defining the relevant parameter when these vary across waves. 
-  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
-  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
-  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
   nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
                  'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
                  'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0')
+  nullEffect <- checkNullEffect(nullEffect, nullValid)
+
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect')
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual')
   if(nWaves == 2 && nullEffect %in% c('autoregx', 'autoregy','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one autoregressive effect each, and only one X-Y residual correlation. Did you mean crossedX = 0 or autoregX = 0?')
@@ -1161,16 +1145,12 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     if(any(unlist(lapply(waveEqual, function(x) !x %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain autoregX, autoregY, crossedX, crossedY, corXY')
   }
   
-  if(is.null(nullEffect)) stop('nullEffect must be defined.')
   # we do not allow stacking of hypotheses. there might be a use case for this,
   # but this would complicate defining the relevant parameter when these vary across waves. 
-  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis.')
-  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
-  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
   nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
                  'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
                  'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0', 'corbxby=0')
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect.')
+  nullEffect <- checkNullEffect(nullEffect, nullValid)
   if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual.')
   
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1

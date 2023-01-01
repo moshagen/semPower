@@ -439,7 +439,6 @@ checkSquare <- function(x, message = NULL){
     stop(paste(message, " must be a square matrix"))
 }
 
-
 #' checkPowerTypes
 #'
 #' checks whether type is one of 'a-priori', 'post-hoc', or 'compromise' (or respective shortcuts)
@@ -467,4 +466,20 @@ checkComparisonModel <- function(comparison){
   if(comparison == 'restricted' || comparison == 'restr') comparison <- 'restricted'
   if(!comparison %in% c('saturated', 'restricted')) stop('Comparison model must be one of "saturated" or "restricted"')
   comparison
+}
+
+#' checkNullEffect
+#'
+#' checks whether nullEffect is one among valid effect
+#' @param nullEffect nullEffect
+#' @param valid vector of valid effects 
+#' @return nullEffect
+checkNullEffect <- function(nullEffect, valid){
+  mesage <- deparse(substitute(nullEffect))
+  if(is.null(nullEffect)) stop(paste(mesage, 'must be defined.'))
+  if(length(nullEffect) > 1) stop(paste(mesage, 'must contain a single hypothesis'))
+  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
+  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% valid)))) stop(paste(mesage, 'must be one of', paste(valid, collapse = ' ')))
+  nullEffect
 }
