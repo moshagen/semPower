@@ -2254,6 +2254,87 @@ test_powerRICLPM <- function(doTest = TRUE){
   }
 }
 
+
+
+test_powerMI <- function(){
+  # metric vs saturated
+  ph <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
+                         nullEffect = 'metric',
+                         Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                         alpha = .05, N = list(250, 250))
+  
+  lavres <- helper_lav(ph$modelH0, ph$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
+  
+  # metric vs configural
+  ph2 <- semPower.powerMI(type = 'post-hoc', comparison = 'configural',
+                          nullEffect = 'metric',
+                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          alpha = .05, N = list(250, 250))
+  
+  lavres2a <- helper_lav(ph2$modelH0, ph2$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
+  lavres2b <- helper_lav(ph2$modelH1, ph2$Sigma, sample.nobs = list(250, 250))
+  
+  # scalar vs metric
+  ph3 <- semPower.powerMI(type = 'post-hoc', comparison = 'metric',
+                          nullEffect = 'scalar',
+                          Phi = list(.2, .2), 
+                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
+                          tau = list(rep(0, 6), rep(.1, 6)),
+                          alpha = .05, N = list(250, 250))
+  
+  lavres3a <- helper_lav(ph3$modelH0, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings', 'intercepts'))
+  lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings'))
+  
+  valid <- round(2*lavres$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    lavres$fit['df'] - ph$power$df == 0 &&
+    ph2$power$fmin - ph$power$fmin < 1e-6 &&
+    ph2$power$df == (lavres2a$fit['df'] - lavres2b$fit['df']) &&
+    round(ph2$power$fmin - 2*(lavres2a$fit['fmin'] - lavres2b$fit['fmin']), 4) == 0 &&
+    ph3$power$df - (lavres3a$fit['df'] - lavres3b$fit['df']) == 0 &&
+    round(ph3$power$fmin - 2*(lavres3a$fit['fmin'] - lavres3b$fit['fmin']), 4) == 0
+  
+  # metric vs saturated: lav model string
+  ph4 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
+                          nullEffect = c('loadings'),
+                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          alpha = .05, N = list(250, 250))
+  # metric vs configural: lav model string
+  ph5 <- semPower.powerMI(type = 'post-hoc', comparison = 'none',
+                          nullEffect = c('loadings'),
+                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          alpha = .05, N = list(250, 250))
+  # scalar vs metric: lav model string
+  ph6 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings'),
+                          nullEffect = c('loadings', 'intercepts'),
+                          Phi = list(.2, .2), 
+                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
+                          tau = list(rep(0, 6), rep(.1, 6)),
+                          alpha = .05, N = list(250, 250))
+  # lv variances vs residual: lav model string
+  ph7 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings', 'intercepts'),
+                          nullEffect = c('loadings', 'intercepts', 'means'),
+                          Phi = list(.2, .2), 
+                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
+                          tau = list(rep(0, 6), rep(.1, 6)), Alpha = list(c(0, 0), c(.5, .5)),
+                          alpha = .05, N = list(250, 250))
+  
+  lavres7a <- helper_lav(ph7$modelH0, ph7$Sigma, sample.nobs = list(250, 250), sample.mean = ph7$mu, group.equal = c('loadings', 'intercepts', 'means'))
+  lavres7b <- helper_lav(ph7$modelH1, ph7$Sigma, sample.nobs = list(250, 250), sample.mean = ph7$mu, group.equal = c('loadings', 'intercepts'))
+  
+  valid2 <- valid &&
+    round(ph4$power$fmin - ph$power$fmin, 4) == 0 &&
+    round(ph5$power$fmin - ph2$power$fmin, 4) == 0 &&
+    round(ph6$power$fmin - ph3$power$fmin, 4) == 0 &&
+    ph7$power$df == (lavres7a$fit['df'] - lavres7b$fit['df']) &&
+    round(ph7$power$fmin - 2*(lavres7a$fit['fmin'] - lavres7b$fit['fmin']), 4) == 0 
+  
+  if(valid2){
+    print('test_powerMI: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 test_simulatePower <- function(doTest = TRUE){
   if(!doTest){
     print('test_simulatePower: NOT TESTED')
@@ -2413,87 +2494,6 @@ test_simulatePower <- function(doTest = TRUE){
   }
 }
 
-
-test_powerMI <- function(){
-  # metric vs saturated
-  ph <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
-                         nullEffect = 'metric',
-                         Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
-                         alpha = .05, N = list(250, 250))
-  
-  lavres <- helper_lav(ph$modelH0, ph$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
-  
-  # metric vs configural
-  ph2 <- semPower.powerMI(type = 'post-hoc', comparison = 'configural',
-                          nullEffect = 'metric',
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
-                          alpha = .05, N = list(250, 250))
-  
-  lavres2a <- helper_lav(ph2$modelH0, ph2$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
-  lavres2b <- helper_lav(ph2$modelH1, ph2$Sigma, sample.nobs = list(250, 250))
-  
-  # scalar vs metric
-  ph3 <- semPower.powerMI(type = 'post-hoc', comparison = 'metric',
-                          nullEffect = 'scalar',
-                          Phi = list(.2, .2), 
-                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
-                          tau = list(rep(0, 6), rep(.1, 6)),
-                          alpha = .05, N = list(250, 250))
-  
-  lavres3a <- helper_lav(ph3$modelH0, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings', 'intercepts'))
-  lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings'))
-  
-  valid <- round(2*lavres$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    lavres$fit['df'] - ph$power$df == 0 &&
-    ph2$power$fmin - ph$power$fmin < 1e-6 &&
-    ph2$power$df == (lavres2a$fit['df'] - lavres2b$fit['df']) &&
-    round(ph2$power$fmin - 2*(lavres2a$fit['fmin'] - lavres2b$fit['fmin']), 4) == 0 &&
-    ph3$power$df - (lavres3a$fit['df'] - lavres3b$fit['df']) == 0 &&
-    round(ph3$power$fmin - 2*(lavres3a$fit['fmin'] - lavres3b$fit['fmin']), 4) == 0
-  
-  # metric vs saturated: lav model string
-  ph4 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
-                          nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
-                          alpha = .05, N = list(250, 250))
-  # metric vs configural: lav model string
-  ph5 <- semPower.powerMI(type = 'post-hoc', comparison = 'none',
-                          nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
-                          alpha = .05, N = list(250, 250))
-  # scalar vs metric: lav model string
-  ph6 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings'),
-                          nullEffect = c('loadings', 'intercepts'),
-                          Phi = list(.2, .2), 
-                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
-                          tau = list(rep(0, 6), rep(.1, 6)),
-                          alpha = .05, N = list(250, 250))
-  # lv variances vs residual: lav model string
-  ph7 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings', 'intercepts'),
-                          nullEffect = c('loadings', 'intercepts', 'means'),
-                          Phi = list(.2, .2), 
-                          nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .5),
-                          tau = list(rep(0, 6), rep(.1, 6)), Alpha = list(c(0, 0), c(.5, .5)),
-                          alpha = .05, N = list(250, 250))
-  
-  lavres7a <- helper_lav(ph7$modelH0, ph7$Sigma, sample.nobs = list(250, 250), sample.mean = ph7$mu, group.equal = c('loadings', 'intercepts', 'means'))
-  lavres7b <- helper_lav(ph7$modelH1, ph7$Sigma, sample.nobs = list(250, 250), sample.mean = ph7$mu, group.equal = c('loadings', 'intercepts'))
-  
-  valid2 <- valid &&
-    round(ph4$power$fmin - ph$power$fmin, 4) == 0 &&
-    round(ph5$power$fmin - ph2$power$fmin, 4) == 0 &&
-    round(ph6$power$fmin - ph3$power$fmin, 4) == 0 &&
-    ph7$power$df == (lavres7a$fit['df'] - lavres7b$fit['df']) &&
-    round(ph7$power$fmin - 2*(lavres7a$fit['fmin'] - lavres7b$fit['fmin']), 4) == 0 
-  
-  if(valid2){
-    print('test_powerMI: OK')
-  }else{
-    warning('Invalid')
-  }
-}
-
-
 test_all <- function(){
   options("warnPartialMatchDollar" = TRUE)  # tmp, to see whether there are other errors lurking somewhere 
   test_powerConsistency()  
@@ -2510,8 +2510,8 @@ test_all <- function(){
   test_powerMediation()
   test_powerCLPM(doTest = TRUE)
   test_powerRICLPM(doTest = TRUE)
-  test_simulatePower(doTest = FALSE)
   test_powerMI()
+  test_simulatePower(doTest = FALSE)
 }
 
 #test_all()
