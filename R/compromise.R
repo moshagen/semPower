@@ -13,7 +13,7 @@
 #' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis. Not supported for compromise power analysis.
+#' @param simulatedPower Not supported for compromise power analysis, only needed for consistency. 
 #' @return list
 #' @examples
 #' \dontrun{

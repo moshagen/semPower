@@ -12,7 +12,7 @@
 #' @param mu population means (if modelPop is not set).
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower. 
-#' @param lavOptionsH1 alternative lavOptions only used for H1 model. If NULL, the same as lavOptions. 
+#' @param lavOptionsH1 alternative lavOptions only used for the H1 model. If NULL, the same as lavOptions. 
 #' @param ... other parameters related to the specific type of power analysis requested
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
 #' @examples

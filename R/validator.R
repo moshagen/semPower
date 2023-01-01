@@ -19,6 +19,9 @@
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param nReplications for simulated power: number of random samples drawn.
+#' @param minConvergenceRate for simulated power: the minimum convergence rate required
+#' @param lavOptions for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
 #' @return list
 #' @importFrom utils installed.packages menu
 powerPrepare <- function(type = NULL, 
