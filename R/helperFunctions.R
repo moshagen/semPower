@@ -134,7 +134,7 @@ semPower.genSigma <- function(Lambda = NULL,
   argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax', 'useReferenceIndicator', 'metricInvariance')]
   nGroups <- unlist(lapply(seq_along(argsMG), function(x){
     len <- 1
-    if(names(argsMG)[x] %in% c('loadings', 'loadMinMax')){
+    if(names(argsMG)[x] %in% c('loadings', 'loadMinMax', 'metricInvariance')){
       if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]][[1]])
     }else{
       if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
@@ -144,7 +144,7 @@ semPower.genSigma <- function(Lambda = NULL,
   if(any(nGroups > 1)){
     if(sum(nGroups != 1) > 1 && var(nGroups[nGroups != 1]) != 0) stop('All list arguments in multiple group analysis must have the same length.')
     # when no list structure is provided for indicators or loadings, assume the same applies for all groups 
-    if(!is.null(argsMG[['Lambda']]) && !is.list(argsMG[['Lambda']][[1]])) argsMG[['Lambda']] <- as.list(rep(list(argsMG[['Lambda']]), max(nGroups)))
+    if(!is.null(argsMG[['Lambda']]) && !is.list(argsMG[['Lambda']])) argsMG[['Lambda']] <- as.list(rep(list(argsMG[['Lambda']]), max(nGroups)))
     if(!is.null(argsMG[['loadings']]) && !is.list(argsMG[['loadings']][[1]])) argsMG[['loadings']] <- as.list(rep(list(argsMG[['loadings']]), max(nGroups)))
     if(!is.null(argsMG[['nIndicator']]) && !is.list(argsMG[['nIndicator']])) argsMG[['nIndicator']] <- as.list(rep(list(argsMG[['nIndicator']]), max(nGroups)))
     if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
