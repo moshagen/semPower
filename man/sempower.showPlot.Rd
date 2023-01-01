@@ -4,7 +4,7 @@
 \alias{semPower.showPlot}
 \title{semPower.showPlot}
 \usage{
-semPower.showPlot(chiCrit, ncp, df, linewidth = 1)
+semPower.showPlot(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE)
 }
 \arguments{
 \item{chiCrit}{critical chi-square, e.g. qchisq(alpha, df, ncp=0, lower.tail = F)}
@@ -14,6 +14,8 @@ semPower.showPlot(chiCrit, ncp, df, linewidth = 1)
 \item{df}{degrees of freedom}
 
 \item{linewidth}{linewidth}
+
+\item{showLabels}{whether to add labels}
 }
 \description{
 show a plot showing central and non-central chi-square distribution

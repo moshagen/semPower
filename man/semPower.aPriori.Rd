@@ -11,12 +11,19 @@ semPower.aPriori(
   beta = NULL,
   power = NULL,
   N = NULL,
-  df,
+  df = NULL,
   p = NULL,
   SigmaHat = NULL,
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  simulatedPower = FALSE,
+  modelH0 = NULL,
+  modelH1 = NULL,
+  nReplications = 250,
+  minConvergenceRate = 0.5,
+  lavOptions = NULL,
+  seed = NULL,
   ...
 )
 }
@@ -44,6 +51,20 @@ semPower.aPriori(
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+
+\item{modelH0}{for simulated power: lavaan model string defining the (incorrect) analysis model.}
+
+\item{modelH1}{for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+
+\item{nReplications}{for simulated power: number of random samples drawn.}
+
+\item{minConvergenceRate}{for simulated power: the minimum convergence rate required}
+
+\item{lavOptions}{for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation}
+
+\item{seed}{for simulated power}
 }
 \value{
 list

@@ -13,15 +13,15 @@ genLambda(
 )
 }
 \arguments{
-\item{loadings}{Can be used instead of Lambda: A list providing the factor loadings by factor. Must not contain secondary loadings.}
+\item{loadings}{A list providing the factor loadings by factor. Must not contain secondary loadings.}
 
-\item{nIndicator}{Can be used instead of Lambda: vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively}
+\item{nIndicator}{Vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively}
 
-\item{loadM}{Can be used instead of Lambda (see details): vector giving mean loadings for each factor or single number to use for every loading}
+\item{loadM}{Either a vector giving mean loadings for each factor or a single number to use for every loading}
 
-\item{loadSD}{Can be used instead of Lambda (see details): vector giving the standard deviation of loadings for each factor for use in conjunction with loadM. When NULL, SDs are set to zero.}
+\item{loadSD}{Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with loadM. When NULL, SDs are set to zero.}
 
-\item{loadMinMax}{Can be used instead of Lambda (see details): list giving the minimum and maximum loading for each factor or vector to apply to all factors}
+\item{loadMinMax}{A list giving the minimum and maximum loading for each factor or vector to apply to all factors}
 }
 \value{
 A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.

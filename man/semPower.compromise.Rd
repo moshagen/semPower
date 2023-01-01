@@ -9,12 +9,13 @@ semPower.compromise(
   effect.measure = NULL,
   abratio = 1,
   N,
-  df,
+  df = NULL,
   p = NULL,
   SigmaHat = NULL,
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  simulatedPower = FALSE,
   ...
 )
 }
@@ -38,6 +39,8 @@ semPower.compromise(
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis. Not supported for compromise power analysis.}
 }
 \value{
 list

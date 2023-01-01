@@ -11,6 +11,7 @@ semPower.powerRegression(
   corXX = NULL,
   nullEffect = "slope = 0",
   nullWhich = NULL,
+  nullWhichGroups = NULL,
   ...
 )
 }
@@ -19,18 +20,20 @@ semPower.powerRegression(
 
 \item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
 
-\item{corXX}{correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated.}
+\item{slopes}{vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are 'slope = 0' (the default) and 'slopeX = slopeZ' to test for the equality of slopes. Define the slopes to set to equality in nullWhich}
+\item{corXX}{correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are assumed in all groups).}
 
-\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0' or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes.}
+\item{nullEffect}{defines the hypothesis of interest. Valid are 'slope = 0' (the default), 'slopeX = slopeZ' to test for the equality of slopes, and 'slopeA = slopeB' to test for the equality of slopes across groups.  Define the slopes to set to equality in nullWhich.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so you need nfactors = slopes + 1), and the type of power analysis}
+\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0', or indicating which slope to restrict to equality across groups when nullEffect = 'slopeA = slopeB', or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes, e.g. c(1, 2, 3) to constrain the first three slopes to equality.}
 
-\item{slope}{vector of standardized slopes (or a single number for a single slope) of the k predictors for Y.}
+\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.}
+
+\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so nfactors = slopes + 1 are needed), and the type of power analysis}
 }
 \value{
-a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)
+a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 }
 \description{
 Convenience function for performing power analysis on slope(s) in a latent regression.
@@ -39,7 +42,7 @@ This requires the lavaan package.
 \examples{
 \dontrun{
 # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
-# request power for the hypothesis that the slope of X1 ist zero. 
+# request power for the hypothesis that the slope of X1 is zero. 
 # providing the number of indicators by factor (Y, X1, X2) each loading by the same magnitude on its designed factor.
 regPower <- semPower.powerRegression(type = 'a-priori',
                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
@@ -63,7 +66,7 @@ corXX <- matrix(c(
 ), ncol = 3,byrow = TRUE)
 regPower <- semPower.powerRegression(type = 'a-priori',
                                      slopes = c(.2, .3, .4), corXX = corXX, 
-                                     nullWhich = 1
+                                     nullWhich = 1,
                                      nIndicator = c(4, 3, 5, 4),
                                      loadM = c(.5, .5, .6, .7),
                                      alpha = .05, beta = .05)
@@ -84,6 +87,16 @@ regPower <- semPower.powerRegression(type = 'a-priori',
                                      nullWhich = c(1, 2, 3),
                                      nIndicator = c(4, 3, 5, 4),
                                      loadM = c(.5, .5, .6, .7),
+                                     alpha = .05, beta = .05)
+# multigroup example                                      
+regPower <- semPower.powerRegression(type = 'post-hoc',
+                                     slopes = list(c(.2, .3, .4), c(.2, .0, .4)), 
+                                     corXX = corXX, 
+                                     nullEffect = 'slopeA = slopeB', 
+                                     nullWhich = 2,
+                                     nIndicator = c(4, 3, 5, 4),
+                                     loadM = c(.5, .5, .6, .7), 
+                                     N = list(250, 250),
                                      alpha = .05, beta = .05)
                                      
 }

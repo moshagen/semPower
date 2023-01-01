@@ -19,5 +19,5 @@ getErrorDiff(critChiSquare, df, ncp, log.abratio)
 squared difference between alpha and beta on a log scale
 }
 \description{
-determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
+Determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
 }

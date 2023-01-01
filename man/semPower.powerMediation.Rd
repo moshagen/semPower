@@ -12,6 +12,8 @@ semPower.powerMediation(
   bYM = NULL,
   Beta = NULL,
   indirect = NULL,
+  nullEffect = "ind = 0",
+  nullWhichGroups = NULL,
   ...
 )
 }
@@ -20,24 +22,35 @@ semPower.powerMediation(
 
 \item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
 
-\item{bYX}{the standardized slope (direct effect) for X -> Y}
+\item{bYX}{the standardized slope (direct effect) for X -> Y. A list for multiple group models.}
 
-\item{bMX}{the standardized slope for X -> M}
+\item{bMX}{the standardized slope for X -> M. A list for multiple group models.}
 
-\item{bYM}{the standardized slope for M -> Y}
+\item{bYM}{the standardized slope for M -> Y. A list for multiple group models.}
 
-\item{Beta}{matrix of regression weights connecting the latent factors, akin to all-Y notation.}
+\item{Beta}{matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first rows, so the upper triangular of Beta must be zero. A list for multiple group models.}
 
 \item{indirect}{a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).}
+
+\item{nullEffect}{defines the hypothesis of interest. Valid are 'ind = 0' (the default) and 'indA = indB' to test for the equality of indirect effects across groups. See details.}
+
+\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.}
 
 \item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
 \value{
-a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)
+a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 }
 \description{
 Convenience function for performing power analysis concerning indirect effect(s) in a mediation model.
 This requires the lavaan package.
+}
+\details{
+For models without latent variables, nullEffect = 'ind=0' and nullEffect = 'inda=indb' constrain the indirect effect to zero and to equality, respectively.
+For models with latent variables and nullEffect = 'ind=0', power is approximated by constraining the smallest slope contained in the indirect effect to zero. 
+For models with latent variables multiple groups (i.e., nullEffect = 'inda=indb'), there is currently no way to determine power, 
+because implementing equality constrains on the indirect effects leads to non-convergence and 
+the approach to constrain a single or all slopes to equality across groups misrepresents the actual hypothesis of interest.
 }
 \examples{
 \dontrun{
@@ -68,7 +81,7 @@ Lambda <- matrix(c(
                 c(0.0, 0.5, 0.0),
                 c(0.0, 0.0, 0.5),
                 c(0.0, 0.0, 0.4),
-                c(0.0, 0.0, 0.6),
+                c(0.0, 0.0, 0.6)
                ), byrow = TRUE, ncol = 3)
 medPower <- semPower.powerMediation(type = 'a-priori', 
                                     bYX = .25, bMX = .3, bYM = .4,
@@ -108,6 +121,12 @@ medPower <- semPower.powerMediation(type = 'a-priori',
                                     loadings = loadings,
                                     alpha = .05, beta = .05)
  
+# multigroup example
+medPower <- semPower.powerMediation(type = 'a-priori', 
+                                    nullEffect = 'indA = indB',
+                                    bYX = list(.25, .25), bMX = list(.3, .3), bYM = list(.4, .5),
+                                    Lambda = diag(3), N = list(1, 1),
+                                    alpha = .05, beta = .05)
 }
 }
 \seealso{

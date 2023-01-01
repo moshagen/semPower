@@ -8,7 +8,7 @@ semPower.powerCLPM(
   type,
   comparison = "restricted",
   nWaves = NULL,
-  stabilities = NULL,
+  autoregEffects = NULL,
   crossedEffects = NULL,
   rXY = NULL,
   waveEqual = NULL,
@@ -21,28 +21,28 @@ semPower.powerCLPM(
 \arguments{
 \item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
 
-\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df are always 1.}
+\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df equal the number of restricted parameters.}
 
 \item{nWaves}{number of waves, must be >= 2.}
 
-\item{stabilities}{vector of the stabilities of X and Y (constant across waves), or a list of vectors of stabilities for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a stability of .7 for x1->x2 and .6 for x2->x3}
+\item{autoregEffects}{vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a autoregressive effect of .7 for x1->x2 and .6 for x2->x3}
 
 \item{crossedEffects}{vector of crossed effects of x on y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of x on y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for x1->y2 = .2 and x2->y3 = .3.}
 
 \item{rXY}{vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero.}
 
-\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'stabX' and 'stabY' for stabilities, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect).}
+\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'autoregX' and 'autoregY' for autoregressive effects, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect).}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'stabX = 0', 'stabY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y stabilities or the crossed effects to zero, 'stabX = stabY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.}
+\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'autoregX = 0', 'autoregY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y autoregressive effects or the crossed effects to zero, 'autoregX = autoregY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.}
 
-\item{nullWhich}{used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'stabX = 0' with nullWhich = 2 would constrain the second stability coefficient for X to zero.}
+\item{nullWhich}{used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'autoregX = 0' with nullWhich = 2 would constrain the second autoregressive effect for X to zero.}
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.}
 
 \item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
 \value{
-a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)
+a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 }
 \description{
 Convenience function for performing power analysis on effects in a cross-lagged panel model (CLPM).

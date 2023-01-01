@@ -10,6 +10,7 @@ semPower.powerCFA(
   Phi = NULL,
   nullEffect = "cor = 0",
   nullWhich = NULL,
+  nullWhichGroups = NULL,
   ...
 )
 }
@@ -20,14 +21,16 @@ semPower.powerCFA(
 
 \item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix.}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are 'cor = 0' (the default) and 'corX = corZ' to test for the equality of correlations. Define the correlations to be set to equality in nullWhich}
+\item{nullEffect}{defines the hypothesis of interest. Valid are 'cor = 0' (the default), 'corX = corZ' to test for the equality of correlations, and 'corA = corB' to test the eequality of a correlation across groups. Define the correlations to be set to equality in nullWhich and the groups in nullWhichGroups.}
 
-\item{nullWhich}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3]}
+\item{nullWhich}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3].}
+
+\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied. If NULL, all groups are constrained to equality.}
 
 \item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
 }
 \value{
-a list containing the results of the power analysis, Sigma and SigmaHat, the implied loading matrix (lambda), as well as several lavaan model strings (modelPop, modelTrue, and modelAna)
+a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
 }
 \description{
 Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
@@ -45,7 +48,7 @@ cfapower.ap <- semPower.powerCFA(type = 'a-priori',
 
 # same as above, but compare to the saturated model 
 # (rather than to the less restricted model)
-#' cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
+cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
                                  nullWhich = c(1, 2), 
                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                  alpha = .05, beta = .05)
@@ -76,10 +79,18 @@ loadings <- list(
                c(0.7, 0.6, 0.5, 0.4)
                )
 
-cfapower <- semPower.powerCFA(type = 'post-hoc',
-                              nullWhich = c(1, 2), 
-                              Phi = phi, loadings = loadings,
-                              alpha = .05, N = 250)
+cfapower.ph <- semPower.powerCFA(type = 'post-hoc',
+                                 nullWhich = c(1, 2), 
+                                 Phi = Phi, loadings = loadings,
+                                 alpha = .05, N = 250)
+
+# multigroup case to test that there are no group differences 
+# concerning the correlation between two factors   
+cfapower.ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
+                                 nullEffect = 'corA=corB',
+                                 Phi = list(.2, .1), loadM = .5, 
+                                 nIndicator = c(3, 3), 
+                                 alpha = .05, N = c(250, 250))
 
 }
 }

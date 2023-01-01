@@ -26,6 +26,10 @@ getIndices.F(
 
 \item{Sigma}{population covariance matrix}
 
+\item{muHat}{model implied means}
+
+\item{mu}{population means}
+
 \item{N}{list of sample weights}
 }
 \value{

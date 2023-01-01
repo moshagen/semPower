@@ -12,6 +12,9 @@ semPower.powerLav(
   fitH1model = TRUE,
   Sigma = NULL,
   mu = NULL,
+  simulatedPower = FALSE,
+  lavOptions = NULL,
+  lavOptionsH1 = lavOptions,
   ...
 )
 }
@@ -24,16 +27,22 @@ semPower.powerLav(
 
 \item{modelH1}{lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
-\item{fitH1model}{whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and the delta df are set to 1.}
+\item{fitH1model}{whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.}
 
 \item{Sigma}{population covariance matrix (if modelPop is not set).}
 
 \item{mu}{population means (if modelPop is not set).}
 
+\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+
+\item{lavOptions}{a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower.}
+
+\item{lavOptionsH1}{alternative lavOptions only used for H1 model. If NULL, the same as lavOptions.}
+
 \item{...}{other parameters related to the specific type of power analysis requested}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma, the H0 implied matrix SigmaHat, as well as various lavaan model strings
+a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
 }
 \description{
 Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings

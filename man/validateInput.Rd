@@ -19,6 +19,9 @@ validateInput(
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  simulatedPower = FALSE,
+  modelH0 = NULL,
+  modelH1 = NULL,
   power.min = alpha,
   power.max = 0.999,
   effect.min = NULL,
@@ -56,6 +59,12 @@ validateInput(
 
 \item{mu}{observed (or population) mean vector}
 
+\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+
+\item{modelH0}{for simulated power: lavaan model string defining the (incorrect) analysis model.}
+
+\item{modelH1}{for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+
 \item{power.min}{for plotting: minimum power}
 
 \item{power.max}{for plotting: maximum power}
@@ -69,5 +78,5 @@ validateInput(
 \item{linewidth}{for plotting: linewidth}
 }
 \description{
-Validates input for power calcuation function
+Validates input for power functions
 }
