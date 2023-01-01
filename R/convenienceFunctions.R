@@ -304,7 +304,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     modelH0 <- paste(c(modelH0, tok), collapse = '\n')
   }else if(nullEffect == 'cora=corb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- 1:length(Phi)
-    lab <- rep('NA', length(Psi))
+    lab <- rep('NA', length(Phi))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(c(modelH0,
