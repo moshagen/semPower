@@ -131,7 +131,10 @@ semPower.genSigma <- function(Lambda = NULL,
 
   # multigroup case
   argsMG <- c(as.list(environment()), list(...))
-  argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax', 'useReferenceIndicator', 'metricInvariance')]
+  argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & 
+                     names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 
+                                          'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax', 
+                                          'useReferenceIndicator', 'metricInvariance')]
   nGroups <- unlist(lapply(seq_along(argsMG), function(x){
     len <- 1
     if(names(argsMG)[x] %in% c('loadings', 'loadMinMax', 'metricInvariance')){
@@ -150,6 +153,7 @@ semPower.genSigma <- function(Lambda = NULL,
     if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
     if(!is.null(argsMG[['loadSD']]) && !is.list(argsMG[['loadSD']])) argsMG[['loadSD']] <- as.list(rep(list(argsMG[['loadSD']]), max(nGroups)))
     if(!is.null(argsMG[['loadMinMax']])) argsMG[['loadMinMax']] <- as.list(rep(list(argsMG[['loadMinMax']]), max(nGroups)))
+    ## TODO shall we do this for tau/Alpha as well? is there any use case for this?
     # also create list structure for additional arguments 
     if(!is.null(argsMG[['useReferenceIndicator']])) argsMG[['useReferenceIndicator']] <- as.list(rep(list(argsMG[['useReferenceIndicator']]), max(nGroups)))
     if(!is.null(argsMG[['metricInvariance']])) argsMG[['metricInvariance']] <- as.list(rep(list(argsMG[['metricInvariance']]), max(nGroups)))
@@ -226,7 +230,7 @@ semPower.genSigma <- function(Lambda = NULL,
   Sigma <- SigmaND + Theta
   colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
 
-  ### compute Mu
+  ### compute mu
   mu <- NULL
   if(!is.null(tau)){
     if(is.null(Beta)){
@@ -268,9 +272,6 @@ semPower.genSigma <- function(Lambda = NULL,
 #' @param loadSD Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with loadM. When NULL, SDs are set to zero.
 #' @param loadMinMax A list giving the minimum and maximum loading for each factor or vector to apply to all factors 
 #' @return A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
-#' @examples
-#' \dontrun{
-#' }
 #' @importFrom stats rnorm runif 
 genLambda <- function(loadings = NULL, 
                       nIndicator = NULL,
@@ -420,7 +421,7 @@ genModelString <- function(Lambda = NULL,
   
   modelPop <- paste(unlist(tok), collapse = '\n')
   
-  # build  analysis models strings, one pure cfa based, and one including regression relationships 
+  # build analysis models strings, one pure cfa based, and one including regression relationships 
   tok <- list()
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
@@ -615,9 +616,6 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
 #' @param isCovarianceMatrix if TRUE, also adds sample.nobs = 1000 and sample.cov.rescale = FALSE to lavoptions 
 #' @param nGroupes the number of groups, 1 by default
 #' @return a list of lav defaults
-#' @examples
-#' \dontrun{
-#' }
 getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1){
   # defaults as defined in lavaan::sem()
   lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
