@@ -12,6 +12,7 @@
 #' @param mu population means (if modelPop is not set).
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
 #' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower. 
+#' @param lavOptionsH1 alternative lavOptions only used for H1 model. If NULL, the same as lavOptions. 
 #' @param ... other parameters related to the specific type of power analysis requested
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
 #' @examples
@@ -51,7 +52,8 @@ semPower.powerLav <- function(type,
                               modelPop = NULL, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
                               Sigma = NULL, mu = NULL, 
                               simulatedPower = FALSE, 
-                              lavOptions = NULL, ...){
+                              lavOptions = NULL, lavOptionsH1 = lavOptions, 
+                              ...){
   
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
@@ -97,11 +99,12 @@ semPower.powerLav <- function(type,
     
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
+      lavOptionsH1 <- getLavOptions(lavOptionsH1, nGroups = length(Sigma))
       modelH1Fit <- do.call(lavaan::lavaan,
                             append(list(model = modelH1,
                                         sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
                                         sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
-                                   lavOptions))
+                                   lavOptionsH1))
       if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
       dfH1 <- modelH1Fit@test[['standard']][['df']]
       if(dfH1 >= dfH0) stop('The df of the H0 model are not larger than the df of the H1 model, as they should be.')
@@ -149,7 +152,9 @@ semPower.powerLav <- function(type,
                       Sigma = Sigma, mu = mu, 
                       modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
                       simulatedPower = simulatedPower, 
-                      lavOptions = lavOptions,   # simulate() takes care of proper lavOptions
+                      # simulate() takes care of proper lavOptions
+                      lavOptions = lavOptions,  
+                      lavOptionsH1 = lavOptionsH1, 
                       ...)
     SigmaHat <- muHat <- NULL
   }
@@ -1417,5 +1422,125 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                     modelH1 = modelH1, 
                     Sigma = Sigma,
                     ...)
+}
+
+#' semPower.powerMI
+#'
+#' Convenience function for performing power analysis for multigroup measurement invariance models.
+#' This requires the lavaan package.
+#' 
+#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
+#' @param comparison comparison model, either 'saturated', or one of 'configural', 'metric', 'scalar', or a vector of restrictions in lavaan format (with 'none' for no restrictions). See details.
+#' @param nullEffect defines the hypothesis of interest. One of 'metric', 'scalar', 'residual', or a vector of restrictions in lavaan format (with 'none' for no restrictions).  See details.   
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
+#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @details
+#' The models defined in the comparison and the nullEffect arguments can be specified as follows:
+#' \itemize{
+#' \item `configural`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
+#' \item `metric`: all loadings are restricted to equality. 
+#' \item `scalar`: all loadings and (item-)intercepts are restricted to equality. 
+#' \item `residual`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+#' }
+#' For greater flexibility, the models can also be defined using lavaan style group.equal restrictions as a vector: 
+#' \itemize{
+#' \item `'none'`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
+#' \item `c('loadings')`: all loadings are restricted to equality. 
+#' \item `c('loadings', 'intercepts')`: all loadings and (item-)intercepts are restricted to equality. 
+#' \item `c('loadings', 'intercepts', 'residuals')`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+#' \item `c('loadings', 'residuals')`: all loadings and (item-)residuals are restricted to equality.
+#' \item `c('loadings', 'intercepts', 'means')`: all loadings, (item-)intercepts, and latent means are restricted to equality.
+#' }
+#' Note that variance scaling is used, so invariance of variances (`lv.variances`) is always met. 
+#' @examples
+#' \dontrun{
+#' }
+#' @seealso [semPower.genSigma()]
+#' @export
+semPower.powerMI <- function(type, 
+                             comparison = NULL,
+                             nullEffect = NULL,
+                             ...){
+  
+  # validate input
+  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.variances', 'lv.covariances','regressions', 'means')
+  useLavOptions <- any(grepl(paste(lavGroupStrings, collapse = '|'), comparison)) || any(grepl(paste(lavGroupStrings, collapse = '|'), nullEffect))
+  # we only check typos etc when not using lavstrings
+  if(!useLavOptions){
+    comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar'))
+    nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual'))
+    if(which(c('saturated', 'configural', 'metric', 'scalar') %in% comparison) >= 
+       (2 + which(c('metric', 'scalar', 'residuals') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
+  }else{
+    if(!any(c('saturated', 'none') %in% comparison) && !all(comparison %in% nullEffect)) stop('Comparison model is not nested in hypothesized model; all restrictions in comparison must also be present in nullEffect.')
+  }
+  
+  ### generate sigmas
+  # we use variance scaling. If using reference indicators instead, 
+  # the model string requires adaptation (in the likely case of unequal loadings), 
+  # because currently only the generated modelstring from the first group (generated[[1]]) 
+  # is used to define modelH0 and modelH1
+  # the downside is that lv.variances is always true.
+  generated <- semPower.genSigma(...)   
+  
+  # more input validations
+  if(!is.list(generated[[1]])) stop('Loadings, Phi, Beta, etc. must be provided as a list for each group.')
+  if(is.null(generated[[1]][['mu']])){
+    inv <- FALSE
+    if(useLavOptions){
+      inv <- any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect))
+    }else{
+      inv <- (nullEffect == 'scalar' || nullEffect == 'residuals')
+    }
+    if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
+  }
+
+  # models are the same, the only difference pertains to lavOptions
+  modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
+  
+  # set proper lavOptions
+  lavOptionsH1 <- NULL
+  if(!useLavOptions){
+    lavOptionsH0 <- list(group.equal = switch(nullEffect,
+                                              'metric' = c('loadings'),
+                                              'scalar' = c('loadings', 'intercepts'),
+                                              'residual' = c('loadings', 'intercepts', 'residuals')
+    ))
+    if(comparison %in% c('metric', 'scalar', 'residuals')){
+      lavOptionsH1 <- list(group.equal = switch(comparison,
+                                                'metric' = c('loadings'),
+                                                'scalar' = c('loadings', 'intercepts'),
+                                                'residual' = c('loadings', 'intercepts', 'residuals')
+      ))
+    }
+  }else{
+    lavOptionsH0 <- list(group.equal = nullEffect)
+    if(!any(c('saturated', 'none') %in% comparison)){
+      lavOptionsH1 <- list(group.equal = comparison)
+    }
+  }
+  
+  if('saturated' %in% comparison) modelH1 <- NULL
+  
+  Sigma <- lapply(generated, '[[', 'Sigma')
+  mu <- NULL
+  if(!useLavOptions){
+    if(nullEffect == 'scalar' || nullEffect == 'residuals')
+      mu <- lapply(generated, '[[', 'mu')
+  }else{
+    if(any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect)))
+      mu <- lapply(generated, '[[', 'mu')
+  }
+  
+  semPower.powerLav(type = type,
+                    Sigma = Sigma,
+                    mu = mu,
+                    modelH0 = modelH0,
+                    modelH1 = modelH1,
+                    fitH1model = TRUE,
+                    lavOptions = lavOptionsH0,
+                    lavOptionsH1 = lavOptionsH1,
+                    ...)
+  
 }
 

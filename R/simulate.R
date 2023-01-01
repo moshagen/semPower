@@ -11,6 +11,7 @@
 #' @param nReplications number of random samples drawn.
 #' @param minConvergenceRate the minimum convergence rate required
 #' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
+#' @param lavOptionsH1 lavoptions for H1model. If NULL, the same as lavOptions.
 #' @param returnFmin whether return the median unbiased Fmin over replications (i.e, fmin_0 = fmin_hat - df/N) 
 #' @return empirical power: sum(p < alpha) / nReplications
 #' @examples
@@ -22,7 +23,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      N = NULL,
                      alpha = NULL,
                      nReplications = 250, minConvergenceRate = .5,
-                     lavOptions = NULL,
+                     lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
 
   checkBounded(nReplications, bound = c(10, 100000), inclusive = TRUE)
@@ -73,16 +74,19 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         # handle restricted comparison model 
         # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
         if(!is.null(modelH1)){
+          lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
           if(!is.list(Sigma)){
             # single group case
             lavresH1 <- do.call(lavaan::lavaan, 
                                 append(list(model = modelH1, data = cdata,
-                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), lavOptions))
+                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), 
+                                       lavOptionsH1))
           }else{
             # multigroup group case
             lavresH1 <- do.call(lavaan::lavaan, 
                                 append(list(model = modelH1, data = cdata,
-                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), append(list(group = 'gIdx'), lavOptions)))
+                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), 
+                                       append(list(group = 'gIdx'), lavOptionsH1)))
           }
           
           if(lavresH1@optim[["converged"]]){
