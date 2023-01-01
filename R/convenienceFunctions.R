@@ -434,7 +434,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   nullEffect <- checkNullEffect(nullEffect, c('slope=0', 'slopex=slopez', 'slopea=slopeb'))
   if(is.null(slopes)) stop('slopes cannot be NULL.')
   if(nullEffect == 'slopea=slobeb' && !is.list(slopes)) stop('slopes must be a list when a multiple group analysis is requested.')
-  if(is.list(slopes)) if(var(unlist(lapply(slopes, length))) > 0) stop('the same number of slopes must be provided for each group.')
+  if(is.list(slopes)) if(length(unique(unlist(lapply(slopes, length)))) > 1) stop('the same number of slopes must be provided for each group.')
   if(!is.list(slopes)) slopes <- list(slopes)
   if(!is.null(corXX) && !is.list(corXX)) corXX <- list(corXX)
 
@@ -697,7 +697,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     if(!is.list(Beta)) Beta <- list(Beta)
     if(any(unlist(lapply(Beta, function(x) any(diag(x) != 0) )))) stop('All diagonal elements of Beta must be zero.')
     lapply(Beta, function(y) invisible(apply(y, c(1, 2), function(x) checkBounded(x, 'All elements in Beta', bound = c(-1, 1), inclusive = TRUE))))
-    if(isMultigroup && (var(unlist(lapply(Beta, ncol))) > 0 || var(unlist(lapply(Beta, nrow))) > 0)) stop('Beta must be of same dimension for all groups') 
+    if(isMultigroup && (length(unique(unlist(lapply(Beta, ncol)))) > 1 || length(unique(unlist(lapply(Beta, nrow)))) > 1)) stop('Beta must be of same dimension for all groups') 
     # negative implied residual variances are checked in getPhi.B
     if(is.null(indirect)) stop('indirect must not be NULL when Beta is defined.')
     if(any(lapply(indirect, function(x) length(x)) != 2)) stop('Indirect must be a list containing vectors of size two each')

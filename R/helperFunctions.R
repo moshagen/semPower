@@ -145,7 +145,7 @@ semPower.genSigma <- function(Lambda = NULL,
     len
   }))
   if(any(nGroups > 1)){
-    if(sum(nGroups != 1) > 1 && var(nGroups[nGroups != 1]) != 0) stop('All list arguments in multiple group analysis must have the same length.')
+    if(sum(nGroups != 1) > 1 && length(unique(nGroups[nGroups != 1])) > 1) stop('All list arguments in multiple group analysis must have the same length.')
     # when no list structure is provided for indicators or loadings, assume the same applies for all groups 
     if(!is.null(argsMG[['Lambda']]) && !is.list(argsMG[['Lambda']])) argsMG[['Lambda']] <- as.list(rep(list(argsMG[['Lambda']]), max(nGroups)))
     if(!is.null(argsMG[['loadings']]) && !is.list(argsMG[['loadings']][[1]])) argsMG[['loadings']] <- as.list(rep(list(argsMG[['loadings']]), max(nGroups)))
@@ -336,7 +336,6 @@ genLambda <- function(loadings = NULL,
 #' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. 
 #' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.  
 #' @return A list containing the lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
-#' @importFrom stats var
 genModelString <- function(Lambda = NULL,
                            Phi = NULL,
                            Beta = NULL,  # capital Beta, to distinguish from beta error
@@ -355,7 +354,7 @@ genModelString <- function(Lambda = NULL,
     if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
     if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
     if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
-    if(any(unlist(lapply(metricInvariance, function(x) var(nIndicator[x]))) != 0)) stop('factors in metricInvariance must have the same number of indicators')
+    if(any(unlist(lapply(metricInvariance, function(x) length(unique(nIndicator[x])) > 1)))) stop('factors in metricInvariance must have the same number of indicators')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', formatC(x, width = 2, flag = 0), formatC(1:nIndicator[metricInvariance[[x]][1]], width = 2, flag = 0), '*')) 
   }
   
