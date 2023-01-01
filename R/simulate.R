@@ -57,12 +57,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                                         check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), # suppress checks 
                                    append(list(group = 'gIdx'), lavOptions)))
         # store fmin by group
-        if(lavresH0@Options[['estimator']] %in% c("ML", "MLF", "WLS", "DWLS", "ULS")) testType <- 'standard' 
-        if(lavresH0@Options[['estimator']] %in% c("MLM", "WLSM", "ULSM")) testType <- 'satorra.bentler' 
-        if(lavresH0@Options[['estimator']] %in% c("MLR")) testType <- 'yuan.bentler.mplus' 
-        if(lavresH0@Options[['estimator']] %in% c("MLMV", "WLSMV")) testType <- 'scaled.shifted' 
-        if(lavresH0@Options[['estimator']] %in% c("MLMVS")) testType <- 'mean.var.adjusted' 
-        cfminGroups <- lavresH0@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
+        cfminGroups <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
       }
       
       if(lavresH0@optim[["converged"]]){
@@ -70,7 +65,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
         p <- lavaan::fitMeasures(lavresH0, 'pvalue')
         df <- lavaan::fitMeasures(lavresH0, 'df')
-        if(lavresH0@Options[['estimator']] %in% c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")){
+        if(lavresH0@Options[['test']] != 'standard'){
           p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
           df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
         }
