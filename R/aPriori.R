@@ -20,6 +20,7 @@
 #' @param nReplications for simulated power: number of random samples drawn.
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required
 #' @param lavOptions for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
+#' @param lavOptionsH1 for simulated power: alternative lavOptions only used for the H1 model. If NULL, the same as lavOptions. 
 #' @param seed for simulated power
 #' @return list
 #' @examples
@@ -43,7 +44,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                              simulatedPower = FALSE, 
                              modelH0 = NULL, modelH1 = NULL,
-                             nReplications = 250, minConvergenceRate = .5, lavOptions = NULL, 
+                             nReplications = 250, minConvergenceRate = .5, 
+                             lavOptions = NULL, lavOptionsH1 = lavOptions, 
                              seed = NULL,
                              ...){
 
@@ -124,7 +126,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     ap <- semPower.powerLav(type = 'a-priori', 
                             alpha = alpha, beta = beta, power = power,
                             modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
-                            Sigma = Sigma, mu = mu, lavOptions = lavOptions)
+                            Sigma = Sigma, mu = mu, 
+                            lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
     startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
 
     
@@ -144,7 +147,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                           Sigma = Sigma, mu = mu,  
                           alpha = alpha,
                           nReplications = nReplications, minConvergenceRate = minConvergenceRate,
-                          lavOptions = lavOptions, simulatedPower = TRUE,
+                          lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1,
+                          simulatedPower = TRUE,
                           returnF = FALSE,
                           method = 'Nelder-Mead', 
                           control = list(warn.1d.NelderMead = FALSE, abstol = tolerance)
@@ -162,7 +166,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                     Sigma = Sigma, mu = mu,
                     alpha = alpha, N = requiredN.g,
                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
-                    lavOptions = lavOptions)
+                    lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
     
     nrep <- sim[['nrep']]
     df <- sim[['df']]
