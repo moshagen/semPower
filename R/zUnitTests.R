@@ -1172,7 +1172,24 @@ test_powerMediation <- function(){
     round(par5[par5$lhs == 'ind', 'std.all'] - .3*.4, 4) == 0 && 
     round(par6[par6$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 
 
-  if(valid3){
+  
+  # multigroup case (observed only)
+  ph7 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                 nullEffect = 'inda=indb',
+                                 bYX = list(.25, .25), bMX = list(.3, .3), bYM = list(.4, .5),
+                                 Lambda = diag(3),
+                                 alpha = .05, N = list(250, 250))
+  
+  lavres7 <- helper_lav(ph7$modelH1, ph7$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings', 'lv.variances'))
+  par7 <- lavres7$par
+  lavres7b <- helper_lav(ph7$modelH0, ph7$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings', 'lv.variances'))
+  par7b <- lavres7b$par
+
+  valid4 <- valid3 &&
+    round(sum(abs(par7[par7$op == '~' & par7$lhs != par7$rhs, 'est'] - c(.3, .25, .4, .3, .25, .5))), 4) == 0 &&
+    round(abs(par7b[par7b$lhs == 'ind1', 'est'] - par7b[par7b$lhs == 'ind2', 'est']), 4) == 0
+  
+  if(valid4){
     print('test_powerMediation: OK')
   }else{
     warning('Invalid')

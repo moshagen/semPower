@@ -529,7 +529,6 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
     stop('nullEffect not defined.')
   }
 
-  
   # we always enforce invariance constraints in the multigroup case
   lavOptions <- NULL
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
@@ -571,13 +570,22 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' 
 #' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
 #' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
-#' @param bYX the standardized slope (direct effect) for X -> Y 
-#' @param bMX the standardized slope for X -> M
-#' @param bYM the standardized slope for M -> Y
-#' @param Beta matrix of regression weights connecting the latent factors, akin to all-Y notation.
+#' @param bYX the standardized slope (direct effect) for X -> Y. A list for multiple group models. 
+#' @param bMX the standardized slope for X -> M. A list for multiple group models.
+#' @param bYM the standardized slope for M -> Y. A list for multiple group models.
+#' @param Beta matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first rows, so the upper triangular of Beta must be zero. A list for multiple group models.
 #' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
+#' @param nullEffect defines the hypothesis of interest. Valid are 'ind = 0' (the default) and 'indA = indB' to test for the equality of indirect effects across groups. See details.
+#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.
 #' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
 #' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @details
+#' For models without latent variables, nullEffect = 'ind=0' and nullEffect = 'inda=indb' constrain the indirect effect to zero and to equality, respectively.
+#' For models with latent variables and nullEffect = 'ind=0', power is approximated by constraining the smallest slope contained in the indirect effect to zero. 
+#' For models with latent variables multiple groups (i.e., nullEffect = 'inda=indb'), there is currently no way to determine power, 
+#' because implementing equality constrains on the indirect effects leads to non-convergence and 
+#' the approach to constrain a single or all slopes to equality across groups misrepresents the actual hypothesis of interest. 
+#' 
 #' @examples
 #' \dontrun{
 #' # simple case of X -> M -> Y mediation
@@ -647,12 +655,21 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     loadings = loadings,
 #'                                     alpha = .05, beta = .05)
 #'  
+#' # multigroup example
+#' medPower <- semPower.powerMediation(type = 'a-priori', 
+#'                                     nullEffect = 'indA = indB',
+#'                                     bYX = list(.25, .25), bMX = list(.3, .3), bYM = list(.4, .5),
+#'                                     Lambda = diag(3), N = list(1, 1),
+#'                                     alpha = .05, beta = .05)
 #' }
 #' @seealso [semPower.genSigma()]
 #' @export
 semPower.powerMediation <- function(type, comparison = 'restricted',
                                     bYX = NULL, bMX = NULL, bYM = NULL,
-                                    Beta = NULL, indirect = NULL, ...){
+                                    Beta = NULL, indirect = NULL, 
+                                    nullEffect = 'ind = 0',
+                                    nullWhichGroups = NULL, 
+                                    ...){
   
   comparison <- checkComparisonModel(comparison)
   
@@ -661,76 +678,140 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma, because Sigma is determined as function of Beta (or the slopes).')
   
   # validate input
+  if(is.null(nullEffect)) stop('nullEffect must be defined.')
+  if(length(nullEffect) > 1) stop('nullEffect must contain a single hypothesis')
+  nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
+  nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% c('ind=0', 'inda=indb'))))) stop('nullEffect must one of ind=0 or inda=indb.')
+  
   if(!is.null(Beta) && (!is.null(bYX) || !is.null(bMX) || !is.null(bYM))) stop('Either provide bYX, bMX, and bYM or provide Beta, but not both.')
   if(is.null(Beta)){
     if(is.null(bYX) || is.null(bMX) || is.null(bYM)) stop('Provide bYX, bYM, and bYM or provide Beta')
-    if(length(bYX) != 1) stop('bYX must be a single slope (X -> Y)')
-    if(length(bMX) != 1) stop('bMX must be a single slope (X -> M)')
-    if(length(bYM) != 1) stop('bYM must be a single slope (M -> Y)')
-    invisible(lapply(c(bYX, bMX, bYM), function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
-    if((bYX^2 + bYM^2) > 1) stop('bYX and bYM imply a negative residual variance for Y, make sure that the sum of the squared slopes on Y is < 1')
-    if(bMX == 0 || bYM == 0) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
+    isMultigroup <- is.list(bYX) && length(bYX) > 1
+    if(!is.list(bYX)) bYX <- list(bYX)
+    if(!is.list(bMX)) bMX <- list(bMX)
+    if(!is.list(bYM)) bYM <- list(bYM)
+    if(length(unique(unlist(lapply(list(bYX, bMX, bYM), length)))) != 1) stop('bYX, bYM, and bYM must be of same lenght in multiple group analysis.')
+    if(any(unlist(lapply(bYX, length)) != 1)) stop('Each bYX must be a single slope (X -> Y)')
+    if(any(unlist(lapply(bMX, length)) != 1)) stop('Each bMX must be a single slope (X -> M)')
+    if(any(unlist(lapply(bYM, length)) != 1)) stop('Each bYX must be a single slope (M -> Y)')
+    if(!isMultigroup) invisible(lapply(c(bYX, bMX, bYM), function(x) checkBounded(x, 'All slopes ', bound = c(-1, 1), inclusive = TRUE)))
+    if(any(unlist(bYX)^2 + unlist(bYM)^2 > 1)) stop('bYX and bYM imply a negative residual variance for Y, make sure that the sum of the squared slopes on Y is < 1')
+    if(!isMultigroup && (bMX == 0 || bYM == 0)) stop('One of bMX and bYM is zero, implying the indirect effect is zero. The indirect effect must differ from zero.')
     indirect <- list(c(2, 1), c(3, 2))
   }
   
   if(!is.null(Beta)){
-    if(is.null(indirect)) stop('indirect must not be NULL when Beta is defined.')
-    if(isSymmetric(Beta)) stop('Beta must be symmetric.')
-    invisible(apply(Beta, c(1, 2), function(x) checkBounded(x, 'All elements in Beta', bound = c(-1, 1), inclusive = TRUE)))
-    if(any(diag(Beta) != 0)) stop('All diagonal elements of Beta must be zero.')
+    isMultigroup <- is.list(Beta) && length(Beta) > 1
+    if(!is.list(Beta)) Beta <- list(Beta)
+    if(any(unlist(lapply(Beta, function(x) any(diag(x) != 0) )))) stop('All diagonal elements of Beta must be zero.')
+    lapply(Beta, function(y) invisible(apply(y, c(1, 2), function(x) checkBounded(x, 'All elements in Beta', bound = c(-1, 1), inclusive = TRUE))))
+    if(isMultigroup && (var(unlist(lapply(Beta, ncol))) > 0 || var(unlist(lapply(Beta, nrow))) > 0)) stop('Beta must be of same dimension for all groups') 
     # negative implied residual variances are checked in getPhi.B
+    if(is.null(indirect)) stop('indirect must not be NULL when Beta is defined.')
     if(any(lapply(indirect, function(x) length(x)) != 2)) stop('Indirect must be a list containing vectors of size two each')
     if(any(unlist(lapply(indirect, function(x) any(x > ncol(Beta)))))) stop('At least one element in indirect is an out of bounds index concerning B')
-    if(any(unlist(lapply(indirect, function(x) Beta[x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
+    if(any(unlist(lapply(indirect, function(x) Beta[[1]][x[1], x[2]])) == 0)) stop('Beta and indirect imply an indirect effect of zero. The indirect effect must differ from zero.')
   }
+  if(nullEffect == 'inda=indb' && !isMultigroup) stop('bYX, bYM, and bYM or Beta must be a list for multiple group comparisons.')
+  if(nullEffect == 'ind=0' && isMultigroup) stop('Multiple group models are only valid for nullEffect = inda=indb.')
   
   B <- Beta
   if(is.null(B)){
-    B <- matrix(c(
-      c(0, 0, 0),      # X
-      c(bMX, 0, 0),    # M
-      c(bYX, bYM, 0)   # Y
-    ), byrow = TRUE, ncol = 3)
+    B <- lapply(seq_along(bMX), function(x){
+      matrix(c(
+        c(0, 0, 0),                # X
+        c(bMX[[x]], 0, 0),         # M
+        c(bYX[[x]], bYM[[x]], 0)   # Y
+      ), byrow = TRUE, ncol = 3)
+    })
   }
   
+  if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups'), bound = c(1, length(B)), inclusive = TRUE)
+  
+    
   ### get Sigma
-  # we want the completely standardized slopes, so transform to standard cfa model by converting B to implied phi
-  Phi <- getPhi.B(B) 
+  # we want completely standardized slopes, so transform to standard cfa model by converting B to implied phi
+  Phi <- lapply(B, getPhi.B)
+  if(!isMultigroup) Phi <- Phi[[1]]
+  
   generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-
+  if(!isMultigroup) isObserved <- ncol(generated[['Sigma']]) == ncol(Phi) else isObserved <- ncol(generated[[1]][['Sigma']]) == ncol(Phi[[1]])
+  
   ### create model strings
-  model <- generated[['modelTrueCFA']]
+  if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   # add mediation structure
-  for(f in 1:ncol(B)){
-    fidx <- which(B[f, ] != 0)
+  for(f in 1:ncol(B[[1]])){
+    fidx <- unique(unlist(lapply(B, function(x) which(x[f, ] != 0))))
     if(length(fidx) != 0){
-      tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
+      clab <- paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)))
+      if(isMultigroup) clab <- unlist(lapply(clab, function(x) paste0('c(', paste0(x, 'g', seq_along(B), collapse = ', '), ')')))
+      tok <- paste0('f', f, ' ~ ', paste(clab, paste0('*f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
     }
   }
   # add indirect effects
   ind <- unlist(lapply(indirect, function(x) paste0('pf', paste0(formatC(x, width = 2, flag = 0), collapse = ''))))
-  modelTrue <- paste(model, '\n', 'ind := ', paste(ind, collapse = '*'))
-  
-  # lav doesn't like constraining the indirect effect to zero. 
-  # we instead constrain the smallest of the contained direct effects, so this
-  # actually gives power for a single slope. however, this seems to closely reflect
-  # power for the indirect effect (and indeed works much better than using ind=0 as 
-  # comparison model, which grossly overestimates the true effect)
-  # modelH0 <- paste(modelTrue, '\n', 'ind == 0')  
-  cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[x[1], x[2]])))]]
-  mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
-  modelH0 <- paste(modelTrue, '\n', paste0(mb,' == 0'))  
+  if(!isMultigroup){
+    model <- paste(model, '\n', 'ind := ', paste(ind, collapse = '*'))
+  }else{
+    ind <- lapply(seq_along(B), function(x) paste0(ind, 'g', x))
+    tok <- paste0('ind', seq_along(B), ' := ', unlist(lapply(ind, function(x) paste(x, collapse = '*'))), collapse = '\n')
+    model <- paste(model, '\n', tok)
+  }
+
+  # lav doesn't like constraining the indirect effect to zero or to equality for latent variable models, 
+  # so we apply different approaches depending on whether there are latent variables
+  if(nullEffect == 'ind=0'){
+    if(isObserved){
+      # constrain indirect effect
+      modelH0 <- paste(model, '\n', 'ind == 0')
+    }else{
+      # constrain the smallest of the contained direct effects, so this
+      # actually gives power for a single slope. however, this seems to closely reflect
+      # power for the indirect effect (and indeed works much better than using ind=0 as 
+      # comparison model, which grossly overestimates the true effect)
+      cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[[1]][x[1], x[2]])))]]
+      mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
+      modelH0 <- paste(model, '\n', paste0(mb,' == 0'))  
+    }
+  }else if(nullEffect == 'inda=indb'){
+    if(isObserved){
+      # constrain indirect effect
+      if(is.null(nullWhichGroups)) nullWhichGroups <- seq_along(B)
+      indeffects <- paste0('ind', nullWhichGroups)
+      tok <- list()
+      for(i in 1:(length(indeffects) - 1)){
+        for(j in (i + 1):length(indeffects)){
+          tok <- append(tok, paste0(indeffects[i], ' == ', indeffects[j]))
+        }
+      }
+      modelH0 <- paste(c(model, unlist(tok)), collapse = '\n')
+    }else{
+      # setting indirect effects to equality does not work 
+      stop('Multigroup comparisons of indirect effects are not supported for latent variable models.')
+    }
+  }else{
+    stop('nullEffect not defined.')
+  }
+
+  # enforce invariance constraints in the multigroup case
+  lavOptions <- NULL
+  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
   
   modelH1 <- NULL
   if(comparison == 'restricted'){
     # h1 model always fits perfectly, only needed for delta df
-    modelH1 <- modelTrue
-    fitH1model <- FALSE 
+    modelH1 <- model
+    # single group case: the h1 model always fits perfectly
+    # multigroup case: we cannot be sure that user input yields a perfectly fitting model
+    fitH1model <- isMultigroup 
   } 
   
+  if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
+  
   semPower.powerLav(type, 
-                    Sigma = generated[['Sigma']], 
+                    Sigma = Sigma, 
                     modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     fitH1model = fitH1model,
