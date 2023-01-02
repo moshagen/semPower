@@ -27,7 +27,7 @@ semPower.postHoc(
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.}
+\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
 \item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
@@ -47,7 +47,7 @@ semPower.postHoc(
 
 \item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
 
-\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. Only available if \code{Sigma} and \code{SigmaHat} are defined.}
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. Only available if \code{Sigma} and \code{modelH0} are defined.}
 
 \item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
 

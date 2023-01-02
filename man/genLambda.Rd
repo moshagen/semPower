@@ -13,19 +13,21 @@ genLambda(
 )
 }
 \arguments{
-\item{loadings}{A list providing the factor loadings by factor. Must not contain secondary loadings.}
+\item{loadings}{A list providing the loadings by factor, e. g. \code{list(c(.4, .5, .6), c(7, .8, .8))} to define two factors with three indicators each with the specified loadings. The vectors must not contain secondary loadings.}
 
-\item{nIndicator}{Vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively}
+\item{nIndicator}{Vector indicating the number of indicators for each factor, e. g. \code{c(4, 6)} to define two factors with 4 and 6 indicators, respectively}
 
-\item{loadM}{Either a vector giving mean loadings for each factor or a single number to use for every loading}
+\item{loadM}{Either a vector giving the mean loadings for each factor or a single number to use for every loading.}
 
-\item{loadSD}{Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with loadM. When NULL, SDs are set to zero.}
+\item{loadSD}{Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with \code{loadM}. If \code{NULL}, SDs are set to zero. Otherwise, loadings are sampled from a normal distribution.}
 
-\item{loadMinMax}{A list giving the minimum and maximum loading for each factor or vector to apply to all factors}
+\item{loadMinMax}{A list giving the minimum and maximum loading for each factor or a vector to apply to all factors. If set, loadings are sampled from a uniform distribution.}
 }
 \value{
-A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+The loading matrix Lambda.
 }
 \description{
-Generate Lambda from various shortcuts
+Generate a loading matrix Lambda from various shortcuts, each assuming a simple structure.
+Either define \code{loadings}, or define \code{nIndicator} and \code{loadM} (and optionally \code{loadSD}), or define
+\code{nIndicator} and \code{loadMinMax}.
 }

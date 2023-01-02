@@ -1,15 +1,30 @@
 #' semPower.genSigma
 #'
-#' Generate a covariance matrix (and mean vector) and associated lavaan model strings based on defined model features.
+#' Generate a covariance matrix (and a mean vector) and associated `lavaan` model strings based on CFA or SEM model matrices.
+#' This method is internally called by all `semPower` convenience methods 
+#' (such as [semPower.powerCFA()], [semPower.powerMediation()], and [semPower.powerCLPM()]), so the definitions of the 
+#' factor models relies on the arguments of this function. 
 #' 
-#' @param Lambda Factor loading matrix. 
-#' @param Phi Factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors. 
-#' @param Beta Regression slopes between latent variables (all-y notation). 
-#' @param Psi Variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed. 
-#' @param Theta Variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.      
-#' @param tau Intercepts. If NULL and Alpha is set, these are assumed to be zero. 
-#' @param Alpha Factor means. If NULL and tau is set, these are assumed to be zero. 
-#' @return A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+#' @param Lambda factor loading matrix. A list for multiple group models. Can also be specified using various shortcuts, see [genLambda()].
+#' @param Phi for CFA models, factor correlation (or covariance) matrix or single number giving the correlation between all factors or `NULL` for uncorrelated factors. A list for multiple group models. 
+#' @param Beta for SEM models, matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. 
+#' @param Psi for SEM models, variance-covariance matrix of latent residuals when `Beta` is specified. If `NULL`, a diagonal matrix is assumed. A list for multiple group models. 
+#' @param Theta variance-covariance matrix between manifest residuals. If `NULL` and `Lambda` is not a square matrix, `Theta` is diagonal so that the manifest variances are 1. If `NULL` and `Lambda` is square, `Theta` is 0. A list for multiple group models.      
+#' @param tau vector of intercepts. If `NULL` and `Alpha` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
+#' @param Alpha vector of factor means. If `NULL` and `tau` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
+#' @return Returns a list (or list of lists for multiple group models) containing the following components:
+#' \item{`Sigma`}{implied variance-covariance matrix.}
+#' \item{`mu`}{implied means}
+#' \item{`Lambda`}{loading matrix}
+#' \item{`Phi`}{covariance matrix of latent variables}
+#' \item{`Beta`}{matrix of regression slopes}
+#' \item{`Psi`}{residual covariance matrix of latent variables}
+#' \item{`Theta`}{residual covariance matrix of observed variables}
+#' \item{`tau`}{intercepts}
+#' \item{`Alpha`}{factor means}
+#' \item{`modelPop`}{`lavaan` model string defining the population model}
+#' \item{`modelTrue`}{`lavaan` model string defining the "true" analysis model freely estimating all non-zero parameters.}
+#' \item{`modelTrueCFA`}{`lavaan` model string defining a model similar to `modelTrue`, but purely CFA based and thus omitting any regression relationships.}
 #' @details
 #' This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model. 
 #' 
@@ -29,12 +44,12 @@
 #' When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.  
 #' 
 #' If `Phi` is defined, a CFA model is used, if `Beta` is defined, a structural equation model. 
-#' When both `Phi` and `Beta` are NULL, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
+#' When both `Phi` and `Beta` are `NULL`, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
 #' When `Phi` is a single number, all factor correlations are equal to this number.
 #' 
-#' When `Beta` is defined and `Psi` is NULL, \eqn{\Psi = I}.
+#' When `Beta` is defined and `Psi` is `NULL`, \eqn{\Psi = I}.
 #' 
-#' When `Theta` is NULL, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
+#' When `Theta` is `NULL`, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
 #'
 #' Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts:
 #' \itemize{
@@ -47,75 +62,81 @@
 #'  
 #' @examples
 #' \dontrun{
-#' # Provide the factor correlation for a two-factor model, the number of indicators by factor, 
-#' # and a single loading which is equal for all indicators
-#' genSigma <- semPower.genSigma(Phi = .2, nIndicator = c(5, 6), loadM = .5)
-#' genSigma$Sigma # implied covariance matrix
+#' # single factor model with five indicators each loading by .5
+#' gen <- semPower.genSigma(nIndicator = 5, loadM = .5)
+#' gen$Sigma     # implied covariance matrix
+#' gen$modelTrue # analysis model string
+#' gen$modelPop  # population model string
 #' 
-#' # Provide Beta for a three factor model 
-#' # with 3, 4, and 5 indicators loading by .6, 5, and .4, respectively. 
+#' # orthogonal two factor model with four and five indicators each loading by .5
+#' gen <- semPower.genSigma(nIndicator = c(4, 5), loadM = .5)
+#' 
+#' # correlated (r = .25) two factor model with 
+#' # four indicators loading by .7 on the first factor 
+#' # and five indicators loading by .6 on the second factor
+#' gen <- semPower.genSigma(Phi = .25, nIndicator = c(4, 5), loadM = c(.7, .6))
+#' 
+#' # correlated three factor model with variying indicators and loadings, 
+#' # factor correlations according to Phi
+#' Phi <- matrix(c(
+#'   c(1.0, 0.2, 0.5),
+#'   c(0.2, 1.0, 0.3),
+#'   c(0.5, 0.3, 1.0)
+#' ), byrow = TRUE, ncol = 3)
+#' gen <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 4, 5), loadM = c(.7, .6, .5))
+#' 
+#' # same as above, but using a factor loadings matrix
+#' Lambda <- matrix(c(
+#'   c(0.8, 0.0, 0.0),
+#'   c(0.7, 0.0, 0.0),
+#'   c(0.6, 0.0, 0.0),
+#'   c(0.0, 0.7, 0.0),
+#'   c(0.0, 0.8, 0.0),
+#'   c(0.0, 0.5, 0.0),
+#'   c(0.0, 0.4, 0.0),
+#'   c(0.0, 0.0, 0.5),
+#'   c(0.0, 0.0, 0.4),
+#'   c(0.0, 0.0, 0.6),
+#'   c(0.0, 0.0, 0.4),
+#'   c(0.0, 0.0, 0.5),
+#' ), byrow = TRUE, ncol = 3)
+#' gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
+#' 
+#' # same as above, but using a reduced loading matrix, i. e.
+#' # only define the primary loadings for each factor
+#' loadings <- list(
+#'   c(0.8, 0.7, 0.6),
+#'   c(0.7, 0.8, 0.5, 0.4),
+#'   c(0.5, 0.4, 0.6, 0.4, 0.5)
+#' )
+#' gen <- semPower.genSigma(Phi = Phi, loadings = loadings)
+#' 
+#' # Provide Beta for a three factor model
+#' # with 3, 4, and 5 indicators 
+#' # loading by .6, 5, and .4, respectively.
 #' Beta <- matrix(c(
 #'                 c(0.0, 0.0, 0.0),
 #'                 c(0.3, 0.0, 0.0),  # f2 = .3*f1
 #'                 c(0.2, 0.4, 0.0)   # f3 = .2*f1 + .4*f2
 #'                ), byrow = TRUE, ncol = 3)
-#' genSigma <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), loadM = c=(.6, .5, .4)
+#' gen <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), loadM = c(.6, .5, .4))
 #' 
-#' # Provide factor correlation matrix and loading matrix
-#' Phi <- matrix(c(
-#'                 c(1.0, 0.2, 0.5),
-#'                 c(0.2, 1.0, 0.3),
-#'                 c(0.5, 0.3, 1.0)
-#'                ), byrow = TRUE, ncol = 3)
-#' Lambda <- matrix(c(
-#'                 c(0.5, 0.0, 0.0),
-#'                 c(0.4, 0.0, 0.0),
-#'                 c(0.3, 0.0, 0.0),
-#'                 c(0.0, 0.7, 0.0),
-#'                 c(0.0, 0.8, 0.0),
-#'                 c(0.0, 0.5, 0.0),
-#'                 c(0.0, 0.0, 0.5),
-#'                 c(0.0, 0.0, 0.4),
-#'                 c(0.0, 0.0, 0.6),
-#'                ), byrow = TRUE, ncol = 3)
-#'                
-#' genSigma <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
-#' 
-#' # same as above, but providing a reduced loading matrix, i.e.
-#' # only define the primary loadings for each factor
-#' loadings <- list(
-#'                c(0.4, 0.5, 0.8),
-#'                c(0.7, 0.6, 0.5, 0.4, 0.5),
-#'                c(0.5, 0.5, 0.6, 0.8)
-#'                )
-#'                
-#' genSigma <- semPower.genSigma(Phi = Phi, loadings = loadings)
-#'   
-#' # same as above, but providing
-#' # the number of indicators by factor 
-#' # and min-max loading for all factors (sampling from a uniform distribution)
-#' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
-#'                               loadMinMax = c(.3, .8))
-#'
-#' # same as above, but providing
-#' # mean and SD loading for all factors (sampling from a normal distribution)
-#' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
-#'                               loadM = .5, loadSD = .1)
-#'
-#'
-#' # same as above, but providing mean and sd of loadings for each factor
-#' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
-#'                               loadM = c(.5, .6, .7), loadSD = c(0, .05, .01))
-#'
-#' # same as above, but using min-max loadings for each factor
-#' loadMinMax <- list(
-#'                    c(.4, .6),
-#'                    c(.5, .8),
-#'                    c(.3, .7)
-#'                    )
-#' genSigma <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 5, 4), 
-#'                               loadMinMax = loadMinMax)
-#'                               
+#' # two group example: 
+#' # correlated two factor model (r = .25 and .35 in the first and second group, respectively)
+#' # the first factor is indicated by four indicators loading by .7 in the first and .5 in the second group,
+#' # the second factor is indicated by five indicators loading by .6 in the first and .8 in the second group,
+#' # all item intercepts are zero in both groups, 
+#' # the latent means are zero in the first group and .25 and .10 in the second group.
+#' gen <- semPower.genSigma(Phi = list(.25, .35), 
+#'                          nIndicator = list(c(4, 5), c(4, 5)), 
+#'                          loadM = list(c(.7, .6), c(.5, .8)), 
+#'                          tau = list(rep(0, 9), rep(0, 9)), 
+#'                          Alpha = list(c(0, 0), c(.25, .10))
+#'                          )
+#' gen[[1]]$Sigma  # implied covariance matrix group 1 
+#' gen[[2]]$Sigma  # implied covariance matrix group 2
+#' gen[[1]]$mu     # implied means group 1 
+#' gen[[2]]$mu     # implied means group 2
 #' }
 #' @export
 semPower.genSigma <- function(Lambda = NULL,
@@ -264,14 +285,16 @@ semPower.genSigma <- function(Lambda = NULL,
 
 #' genLambda
 #'
-#' Generate Lambda from various shortcuts
+#' Generate a loading matrix Lambda from various shortcuts, each assuming a simple structure. 
+#' Either define `loadings`, or define `nIndicator` and `loadM` (and optionally `loadSD`), or define
+#' `nIndicator` and `loadMinMax`.
 #' 
-#' @param loadings A list providing the factor loadings by factor. Must not contain secondary loadings.   
-#' @param nIndicator Vector indicating the number of indicators for each factor, e.g. c(4, 6) to define two factors with 4 and 6 indicators, respectively 
-#' @param loadM Either a vector giving mean loadings for each factor or a single number to use for every loading
-#' @param loadSD Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax A list giving the minimum and maximum loading for each factor or vector to apply to all factors 
-#' @return A list containing the implied variance-covariance matrix (Sigma), the loading matrix (Lambda), the factor-covariance matrix (Phi) or the slopes (Beta) and the residual variances (Psi), the variance-covariance matrix between the manifest residuals (Theta), the implied indicator means (mu), intercepts (tau), and latent means (Alpha), as well as the associated lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+#' @param loadings A list providing the loadings by factor, e. g. `list(c(.4, .5, .6), c(7, .8, .8))` to define two factors with three indicators each with the specified loadings. The vectors must not contain secondary loadings.    
+#' @param nIndicator Vector indicating the number of indicators for each factor, e. g. `c(4, 6)` to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM Either a vector giving the mean loadings for each factor or a single number to use for every loading.
+#' @param loadSD Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with `loadM`. If `NULL`, SDs are set to zero. Otherwise, loadings are sampled from a normal distribution.
+#' @param loadMinMax A list giving the minimum and maximum loading for each factor or a vector to apply to all factors. If set, loadings are sampled from a uniform distribution.
+#' @return The loading matrix Lambda.
 #' @importFrom stats rnorm runif 
 genLambda <- function(loadings = NULL, 
                       nIndicator = NULL,
@@ -325,17 +348,21 @@ genLambda <- function(loadings = NULL,
 
 #' genModelString
 #'
-#' creates lavaan model strings from model matrices.
+#' Creates `lavaan` model strings from model matrices.
+#' 
 #' @param Lambda Factor loading matrix. 
-#' @param Phi Factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors. 
+#' @param Phi Factor correlation (or covariance) matrix. If `NULL`, all factors are orthogonal.
 #' @param Beta Regression slopes between latent variables (all-y notation). 
-#' @param Psi Variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed. 
-#' @param Theta Variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.      
-#' @param tau Intercepts. If NULL and Alpha is set, these are assumed to be zero. 
-#' @param Alpha Factor means. If NULL and tau is set, these are assumed to be zero. 
-#' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach. 
-#' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.  
-#' @return A list containing the lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+#' @param Psi Variance-covariance matrix of latent residuals when `Beta` is specified. If `NULL`, a diagonal matrix is assumed. 
+#' @param Theta Variance-covariance matrix of manifest residuals. If `NULL` and `Lambda` is not a square matrix, `Theta` is diagonal so that the manifest variances are 1. If `NULL` and `Lambda` is square, `Theta` is 0.      
+#' @param tau Intercepts. If `NULL` and`` Alpha`` is set, these are assumed to be zero. 
+#' @param Alpha Factor means. If `NULL` and `tau` is set, these are assumed to be zero. 
+#' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (`TRUE`) or by setting their variance to 1 (`FALSE`). When `Beta` is defined, a reference indicator is used by default, otherwise the variance approach. 
+#' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. `list(c(1, 2), c(3, 4))` to assume invariance for f1 and f2 as well as f3 and f4.  
+#' @return A list containing the following `lavaan` model strings:
+#' \item{`modelPop`}{population model}
+#' \item{`modelTrue`}{"true" analysis model freely estimating all non-zero parameters.}
+#' \item{`modelTrueCFA`}{similar to `modelTrue`, but purely CFA based and thus omitting any regression relationships.}
 genModelString <- function(Lambda = NULL,
                            Phi = NULL,
                            Beta = NULL,  # capital Beta, to distinguish from beta error
@@ -552,12 +579,12 @@ getPhi.B <- function(B, lPsi = NULL){
 
 #' semPower.getDf
 #'
-#' Determines the degrees of freedom of a given model provided as lavaan model string. 
-#' This requires the lavaan package.
+#' Determines the degrees of freedom of a given model provided as `lavaan` model string. 
+#' This requires the `lavaan` package.
 #' 
-#' @param lavModel the lavaan model string 
+#' @param lavModel the `lavaan` model string 
 #' @param nGroups for multigroup models: the number of groups 
-#' @param group.equal for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the lavaan conventions (loadings, intercepts, means, residuals, residual.covariances, lv.variances, lv.covariances, regressions)
+#' @param group.equal for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the `lavaan` conventions (`loadings`, `intercepts`, `means`, `residuals`, `residual.covariances`, `lv.variances`, `lv.covariances`, `regressions`).
 #' @return the df of the model
 #' @examples
 #' \dontrun{
@@ -609,12 +636,12 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
 
 #' getLavOptions
 #'
-#' returns lavaan options including defaults as set in sem() as a list to be passed to lavaan() 
+#' returns `lavaan` options including defaults as set in `sem()` as a list to be passed to `lavaan()` 
 #' 
 #' @param lavOptions additional options to be added to (or overwriting) the defaults  
-#' @param isCovarianceMatrix if TRUE, also adds sample.nobs = 1000 and sample.cov.rescale = FALSE to lavoptions 
+#' @param isCovarianceMatrix if `TRUE`, also adds `sample.nobs = 1000` and `sample.cov.rescale = FALSE` to `lavoptions` 
 #' @param nGroupes the number of groups, 1 by default
-#' @return a list of lav defaults
+#' @return a list of `lavaan` defaults
 getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1){
   # defaults as defined in lavaan::sem()
   lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,

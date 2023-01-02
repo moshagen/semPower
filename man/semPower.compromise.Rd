@@ -20,7 +20,7 @@ semPower.compromise(
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.}
+\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
 \item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 

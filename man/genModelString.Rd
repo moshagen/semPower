@@ -19,25 +19,28 @@ genModelString(
 \arguments{
 \item{Lambda}{Factor loading matrix.}
 
-\item{Phi}{Factor correlation (or covariance) matrix or single number giving correlation between all factors or NULL for uncorrelated factors.}
+\item{Phi}{Factor correlation (or covariance) matrix. If \code{NULL}, all factors are orthogonal.}
 
 \item{Beta}{Regression slopes between latent variables (all-y notation).}
 
-\item{Psi}{Variance-covariance matrix of latent residuals when Beta is specified. If NULL, a diagonal matrix is assumed.}
+\item{Psi}{Variance-covariance matrix of latent residuals when \code{Beta} is specified. If \code{NULL}, a diagonal matrix is assumed.}
 
-\item{Theta}{Variance-covariance matrix of manifest residuals. If NULL and Lambda is not a square matrix, Theta is diagonal so that the manifest variances are 1. If NULL and Lambda is square, Theta is 0.}
+\item{Theta}{Variance-covariance matrix of manifest residuals. If \code{NULL} and \code{Lambda} is not a square matrix, \code{Theta} is diagonal so that the manifest variances are 1. If \code{NULL} and \code{Lambda} is square, \code{Theta} is 0.}
 
-\item{tau}{Intercepts. If NULL and Alpha is set, these are assumed to be zero.}
+\item{tau}{Intercepts. If \code{NULL} and\code{ Alpha} is set, these are assumed to be zero.}
 
-\item{Alpha}{Factor means. If NULL and tau is set, these are assumed to be zero.}
+\item{Alpha}{Factor means. If \code{NULL} and \code{tau} is set, these are assumed to be zero.}
 
-\item{useReferenceIndicator}{Whether to identify factors in accompanying model strings by a reference indicator (TRUE) or by setting their variance to 1 (FALSE). When Beta is defined, a reference indicator is used by default, otherwise the variance approach.}
+\item{useReferenceIndicator}{Whether to identify factors in accompanying model strings by a reference indicator (\code{TRUE}) or by setting their variance to 1 (\code{FALSE}). When \code{Beta} is defined, a reference indicator is used by default, otherwise the variance approach.}
 
-\item{metricInvariance}{A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. list(c(1,2), c(3,4)) to assume invariance for f1 and f2 as well as f3 and f4.}
+\item{metricInvariance}{A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. \code{list(c(1, 2), c(3, 4))} to assume invariance for f1 and f2 as well as f3 and f4.}
 }
 \value{
-A list containing the lavaan model string defining the population (modelPop) and two lavaan models string defining a corresponding true (modelTrue) or pure cfa analysis model (modelTrueCFA) omitting any regression relationships.
+A list containing the following \code{lavaan} model strings:
+\item{\code{modelPop}}{population model}
+\item{\code{modelTrue}}{"true" analysis model freely estimating all non-zero parameters.}
+\item{\code{modelTrueCFA}}{similar to \code{modelTrue}, but purely CFA based and thus omitting any regression relationships.}
 }
 \description{
-creates lavaan model strings from model matrices.
+Creates \code{lavaan} model strings from model matrices.
 }

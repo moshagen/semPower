@@ -9,13 +9,13 @@ getLavOptions(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1)
 \arguments{
 \item{lavOptions}{additional options to be added to (or overwriting) the defaults}
 
-\item{isCovarianceMatrix}{if TRUE, also adds sample.nobs = 1000 and sample.cov.rescale = FALSE to lavoptions}
+\item{isCovarianceMatrix}{if \code{TRUE}, also adds \code{sample.nobs = 1000} and \code{sample.cov.rescale = FALSE} to \code{lavoptions}}
 
 \item{nGroupes}{the number of groups, 1 by default}
 }
 \value{
-a list of lav defaults
+a list of \code{lavaan} defaults
 }
 \description{
-returns lavaan options including defaults as set in sem() as a list to be passed to lavaan()
+returns \code{lavaan} options including defaults as set in \code{sem()} as a list to be passed to \code{lavaan()}
 }

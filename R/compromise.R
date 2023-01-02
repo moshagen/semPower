@@ -3,7 +3,7 @@
 #'
 #' Performs a compromise power analysis, i. e., determines the critical chi-square along with the implied alpha error and beta error , given the alpha/beta ratio, a measure of effect, N, and df
 #'
-#' @param effect effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.
+#' @param effect effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences. Can be `NULL` if `Sigma` and `SigmaHat` are set.
 #' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`. Can be `NULL` if `Sigma` and `SigmaHat` are set.
 #' @param abratio the ratio of alpha to beta
 #' @param N the number of observations  (a list for multiple group models)
