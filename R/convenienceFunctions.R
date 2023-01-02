@@ -196,7 +196,7 @@ semPower.powerLav <- function(type,
 #' @param nullEffect defines the hypothesis of interest, must be one of `'cor = 0'` (the default) to test whether a correlation is zero, `'corX = corZ'` to test for the equality of correlations, and `'corA = corB'` to test for the equality of a correlation across groups. Define the correlations to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
 #' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e. `nullWhich = c(1, 2)`.
 #' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]).
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -368,7 +368,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest, must be one of `'slope = 0'` (the default) to test whether a slope is zero, `'slopeX = slopeZ'` to test for the equality of slopes, or `'slopeA = slopeB'` to test for the equality of slopes across groups. Define the slopes to set to equality in `nullWhich`.
 #' @param nullWhich single number indicating which slope is hypothesized to equal zero when `nullEffect = 'slope = 0'`, or indicating which slope to restrict to equality across groups when `nullEffect = 'slopeA = slopeB'`, or vector defining the slopes to restrict to equality when `nullEffect = 'slopeX = slopeZ'`. Can also contain more than two slopes, e.g. `c(1, 2, 3)` to constrain the first three slopes to equality.
 #' @param nullWhichGroups for `nullEffect = 'slopeA = slopeB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]; note the first factor is treated as Y and the subsequent factors as X) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]). Note the first factor is treated as Y and the subsequent factors as the predictors X_k.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -597,7 +597,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' @param indirect `NULL` unless `Beta` is set. Otherwise a list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect of interest, e.g. `list(c(2, 1), c(3, 2))`. See details.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'ind = 0'` (the default) to test whether the indirect effect is zero or `'indA = indB'` to test for the equality of indirect effects across groups. See details.
 #' @param nullWhichGroups for `nullEffect = 'indA = indB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]).  Note that in case of a simple mediation, the order of factors is X, M, Y. 
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -627,7 +627,8 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' summary(medPower$power)
 #'                                     
-#' # same mediation model as above, but assuming single loading of 1 for all factors (=> mediation model with manifest variables)
+#' # same mediation model as above, but assuming single loading of 1 for all factors 
+#' # (=> mediation model with manifest variables)
 #' medPower <- semPower.powerMediation(type = 'a-priori', 
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(1, 1, 1), loadM = 1,
@@ -635,7 +636,8 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' 
 #' # same latent mediation model as above, but specifying loadings through Lambda 
 #' Lambda <- matrix(c(
-#'                 c(0.5, 0.0, 0.0),    # X, M, Y
+#'                  #  X,   M,   Y
+#'                 c(0.5, 0.0, 0.0),    
 #'                 c(0.4, 0.0, 0.0),
 #'                 c(0.3, 0.0, 0.0),
 #'                 c(0.0, 0.7, 0.0),
@@ -665,17 +667,17 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' # of the form X -> M1 -> M2 -> Y 
 #' # and using a reduced loading matrix
 #' B <- matrix(c(
-#'               c(.00, .00, .00, .00),
-#'               c(.20, .00, .00, .00),
-#'               c(.00, .30, .00, .00),
-#'               c(.00, .00, .40, .00)
+#'               c(.00, .00, .00, .00),       # X
+#'               c(.20, .00, .00, .00),       # M1
+#'               c(.00, .30, .00, .00),       # M2
+#'               c(.00, .00, .40, .00)        # Y
 #'               ), byrow = TRUE, ncol = 4)
 #' # only define primary loadings by factor
 #' loadings <- list(
-#'                c(0.4, 0.5, 0.8),
-#'                c(0.7, 0.6, 0.5, 0.8),
-#'                c(0.5, 0.6, 0.3, 0.4, 0.6),
-#'                c(0.6, 0.7, 0.8)
+#'                c(0.4, 0.5, 0.8),           # X
+#'                c(0.7, 0.6, 0.5, 0.8),      # M1
+#'                c(0.5, 0.6, 0.3, 0.4, 0.6), # M2
+#'                c(0.6, 0.7, 0.8)            # Y
 #'                )
 #'
 #' medPower <- semPower.powerMediation(type = 'a-priori', 
@@ -857,7 +859,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]). Note that the order of factors is (x1, y1, x2, y2, ..., x_nWaves, y_nWaves). 
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -1132,7 +1134,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]). Note that the order of factors is (x1, y1, x2, y2, ..., x_nWaves, y_nWaves), see details. 
+#' @details 
+#' Specification of the factor model assumes the following ordering:
+#' * `Lambda`: Columns should be in order X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves. 
+#' * `loadings`: List of vectors providing the factor loadings for each factor ordered by wave, e.g., list(c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4)) to define loadings of .2 for the three indicators of X at waves 1-3 and loadings of .4 for the four indicators of Y at waves 1-3. Must not contain secondary loadings.   
+#' * `nIndicator` Vector indicating the number of indicators for each factor ordered by wave, e.g. c(3, 4, 3, 4, 3, 4) to define three indicators for factor X at waves 1-3 and four indicators for factor Y at waves 1-3.
+#' * `loadM` Vector giving mean loadings for each factor ordered by wave, e.g., c(.5, .6, .5, .6, .5, .6) to define loadings of .5 for X at waves 1-3 and loadings of .6 for Y at waves 1-3; or single number to use for every loading.
+#' 
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
