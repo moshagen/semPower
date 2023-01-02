@@ -1,25 +1,31 @@
 
-#' sempower.compromise
+#' semPower.compromise
 #'
-#' Performs a compromise power analysis, i.e. determines the critical chi-square along with the implied alpha and beta, given a specified alpha/beta ratio, effect, N, and df
+#' Performs a compromise power analysis, i. e., determines the critical chi-square along with the implied alpha error and beta error , given the alpha/beta ratio, a measure of effect, N, and df
 #'
-#' @param effect effect size specifying the discrepancy between H0 and H1  (a list for multiple group models; a vector of length 2 for effect-size differences)
-#' @param effect.measure type of effect, one of "F0","RMSEA", "Mc", "GFI", AGFI"
+#' @param effect effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`. Can be `NULL` if `Sigma` and `SigmaHat` are set.
 #' @param abratio the ratio of alpha to beta
 #' @param N the number of observations  (a list for multiple group models)
-#' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.  
-#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @param simulatedPower Not supported for compromise power analysis, only needed for consistency. 
-#' @return list
+#' @param df the model degrees of freedom. See [semPower.getDf()] for a way to obtain the df of a specific model. 
+#' @param p the number of observed variables, only required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`.
+#' @param SigmaHat can be used instead of `effect` and `effect.measure`: model implied covariance matrix (a list for multiple group models). Used in conjunction with `Sigma` to define the effect.
+#' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
+#' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
+#' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
+#' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. This is not supported for compromise power analysis and is only present to remind users that this cannot be reasonably done. 
+#' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
 #' \dontrun{
-#' cp.ph <- semPower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
-#' summary(cp.ph)
+#' 
+#' # determine the critical value such that alpha = beta when distinguishing a model
+#' # involving 200 df exhibiting an RMSEA >= .08 from a perfectly fitting model.  
+#' cp <- semPower.compromise(effect = .08, effect.measure = "RMSEA", 
+#'                           abratio = 1, N = 250, df = 200)
+#' summary(cp)
+#' 
 #' }
+#' @seealso [semPower.aPriori()] [semPower.postHoc()]
 #' @importFrom stats qchisq pchisq optim
 #' @export
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,

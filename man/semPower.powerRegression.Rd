@@ -16,27 +16,34 @@ semPower.powerRegression(
 )
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{slopes}{vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.}
 
-\item{corXX}{correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are assumed in all groups).}
+\item{corXX}{correlation(s) between the k predictors (X). Either \code{NULL} for uncorrelated predictors, a single number (for k = 2 predictors), or a matrix. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are used in all groups).}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are 'slope = 0' (the default), 'slopeX = slopeZ' to test for the equality of slopes, and 'slopeA = slopeB' to test for the equality of slopes across groups.  Define the slopes to set to equality in nullWhich.}
+\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'slope = 0'} (the default) to test whether a slope is zero, \code{'slopeX = slopeZ'} to test for the equality of slopes, or \code{'slopeA = slopeB'} to test for the equality of slopes across groups. Define the slopes to set to equality in \code{nullWhich}.}
 
-\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0', or indicating which slope to restrict to equality across groups when nullEffect = 'slopeA = slopeB', or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes, e.g. c(1, 2, 3) to constrain the first three slopes to equality.}
+\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'}. Can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality.}
 
-\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.}
+\item{nullWhichGroups}{for \code{nullEffect = 'slopeA = slopeB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so nfactors = slopes + 1 are needed), and the type of power analysis}
+\item{...}{other parameters specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}; note the first factor is treated as Y and the subsequent factors as X) and the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+A list containing the following components is returned:
+\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+\item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
+\item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
+\item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{modelH0}}{\code{lavaan} H0 model string.}
+\item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
-Convenience function for performing power analysis on slope(s) in a latent regression.
+Convenience function for performing power analysis on slope(s) in a latent regression of the form Y = XB.
 This requires the lavaan package.
 }
 \examples{
@@ -102,5 +109,5 @@ regPower <- semPower.powerRegression(type = 'post-hoc',
 }
 }
 \seealso{
-[semPower.genSigma()]
+\code{\link[=semPower.genSigma]{semPower.genSigma()}} \code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

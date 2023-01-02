@@ -1,5 +1,4 @@
-##########################  output and formatting #####################
-
+### TODO result should be accessed using [[x]] instead of $x 
 
 #' getFormattedResults
 #'

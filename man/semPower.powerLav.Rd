@@ -19,34 +19,42 @@ semPower.powerLav(
 )
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'.}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{modelPop}{lavaan model string defining the true model.}
+\item{modelPop}{\code{lavaan} model string defining the true model. Can be omitted when \code{Sigma} is set.}
 
-\item{modelH0}{lavaan model string defining the (incorrect) analysis model.}
+\item{modelH0}{\code{lavaan} model string defining the (incorrect) analysis model.}
 
-\item{modelH1}{lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+\item{modelH1}{\code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
-\item{fitH1model}{whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.}
+\item{fitH1model}{whether to fit the H1 model. If \code{FALSE}, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.}
 
-\item{Sigma}{population covariance matrix (if modelPop is not set).}
+\item{Sigma}{can be used instead of \code{modelPop}: population covariance matrix. A list for multiple group models.}
 
-\item{mu}{population means (if modelPop is not set).}
+\item{mu}{can be used instead of \code{modelPop}: vector of population means. Can be omitted for no meanstructure. A list for multiple group models.}
 
-\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. See \code{\link[=simulate]{simulate()}} for additional options.}
 
-\item{lavOptions}{a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower.}
+\item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation. Mostly useful in conjunction with \code{simulatedPower}.}
 
-\item{lavOptionsH1}{alternative lavOptions only used for H1 model. If NULL, the same as lavOptions.}
+\item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
 
-\item{...}{other parameters related to the specific type of power analysis requested}
+\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
+A list containing the following components is returned:
+\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+\item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
+\item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
+\item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{modelH0}}{\code{lavaan} H0 model string.}
+\item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
-Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
-This requires the lavaan package.
+Perform a power analysis given \code{lavaan} model strings defining the H0 and the H1 model based on either
+a \code{lavaan} model string defining the population model or the population covariance matrix Sigma and the population means mu.
+This requires the \code{lavaan} package.
 }
 \examples{
 \dontrun{
@@ -67,16 +75,19 @@ mPop <- '
   f1 ~~ .2*f2
 '
 # define analysis model (restricting the factor correlation to zero) 
-mAna <- '
+mH0 <- '
   f1 =~ x1 + x2 + x3
   f2 =~ x4 + x5 + x6
   f1 ~~ 0*f2
 '
 # do a priori power analsis
 lavpower.ap <- semPower.powerLav(type = 'a-priori', 
-                                 modelPop = mPop, modelH0 = mAna,
+                                 modelPop = mPop, modelH0 = mH0,
                                  alpha = .05, beta = .05)
 summary(lavpower.ap$power)
 
 }
+}
+\seealso{
+\code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

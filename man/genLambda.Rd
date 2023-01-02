@@ -29,7 +29,3 @@ A list containing the implied variance-covariance matrix (Sigma), the loading ma
 \description{
 Generate Lambda from various shortcuts
 }
-\examples{
-\dontrun{
-}
-}

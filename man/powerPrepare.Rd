@@ -61,6 +61,12 @@ powerPrepare(
 \item{modelH0}{for simulated power: lavaan model string defining the (incorrect) analysis model.}
 
 \item{modelH1}{for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+
+\item{nReplications}{for simulated power: number of random samples drawn.}
+
+\item{minConvergenceRate}{for simulated power: the minimum convergence rate required}
+
+\item{lavOptions}{for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation}
 }
 \value{
 list

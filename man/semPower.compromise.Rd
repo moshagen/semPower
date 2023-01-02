@@ -2,7 +2,7 @@
 % Please edit documentation in R/compromise.R
 \name{semPower.compromise}
 \alias{semPower.compromise}
-\title{sempower.compromise}
+\title{semPower.compromise}
 \usage{
 semPower.compromise(
   effect = NULL,
@@ -20,37 +20,45 @@ semPower.compromise(
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between H0 and H1  (a list for multiple group models; a vector of length 2 for effect-size differences)}
+\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.}
 
-\item{effect.measure}{type of effect, one of "F0","RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
 \item{abratio}{the ratio of alpha to beta}
 
 \item{N}{the number of observations  (a list for multiple group models)}
 
-\item{df}{the model degrees of freedom}
+\item{df}{the model degrees of freedom. See \code{\link[=semPower.getDf]{semPower.getDf()}} for a way to obtain the df of a specific model.}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, only required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}.}
 
-\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied covariance matrix (a list for multiple group models). Used in conjunction with \code{Sigma} to define the effect.}
 
-\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{can be used instead of \code{effect} and \code{effect.measure}: population covariance matrix (a list for multiple group models). Used in conjunction with \code{SigmaHat} to define effect.}
 
-\item{muHat}{model implied mean vector}
+\item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
 
-\item{mu}{observed (or population) mean vector}
+\item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
 
-\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis. Not supported for compromise power analysis.}
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. This is not supported for compromise power analysis and is only present to remind users that this cannot be reasonably done.}
 }
 \value{
-list
+Returns a list. Use \code{summary()} to obtain formatted results.
 }
 \description{
-Performs a compromise power analysis, i.e. determines the critical chi-square along with the implied alpha and beta, given a specified alpha/beta ratio, effect, N, and df
+Performs a compromise power analysis, i. e., determines the critical chi-square along with the implied alpha error and beta error , given the alpha/beta ratio, a measure of effect, N, and df
 }
 \examples{
 \dontrun{
-cp.ph <- semPower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
-summary(cp.ph)
+
+# determine the critical value such that alpha = beta when distinguishing a model
+# involving 200 df exhibiting an RMSEA >= .08 from a perfectly fitting model.  
+cp <- semPower.compromise(effect = .08, effect.measure = "RMSEA", 
+                          abratio = 1, N = 250, df = 200)
+summary(cp)
+
 }
+}
+\seealso{
+\code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}}
 }

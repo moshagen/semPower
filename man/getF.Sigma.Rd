@@ -22,6 +22,6 @@ Fmin
 calculates minimum of the ML-fit-function given model-implied and observed covariance matrix.
 }
 \details{
-F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
+F_min = tr(S \%*\% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
 with meanstructure add (mu - muHat)' SigmaHat^-1 (mu - muHat)
 }

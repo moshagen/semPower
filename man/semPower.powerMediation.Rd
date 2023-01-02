@@ -18,39 +18,49 @@ semPower.powerMediation(
 )
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{bYX}{the standardized slope (direct effect) for X -> Y. A list for multiple group models.}
+\item{bYX}{the standardized slope (direct effect) for X -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
-\item{bMX}{the standardized slope for X -> M. A list for multiple group models.}
+\item{bMX}{the standardized slope for X -> M. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
-\item{bYM}{the standardized slope for M -> Y. A list for multiple group models.}
+\item{bYM}{the standardized slope for M -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
-\item{Beta}{matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first rows, so the upper triangular of Beta must be zero. A list for multiple group models.}
+\item{Beta}{can be used instead of \code{bYX}, \code{bMX}, and \code{bYM}: matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. A list for multiple group models.}
 
-\item{indirect}{a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).}
+\item{indirect}{\code{NULL} unless \code{Beta} is set. Otherwise a list of vectors of size 2 indicating the elements of \code{Beta} that define the indirect effect of interest, e.g. \code{list(c(2, 1), c(3, 2))}. See details.}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are 'ind = 0' (the default) and 'indA = indB' to test for the equality of indirect effects across groups. See details.}
+\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'ind = 0'} (the default) to test whether the indirect effect is zero or \code{'indA = indB'} to test for the equality of indirect effects across groups. See details.}
 
-\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.}
+\item{nullWhichGroups}{for \code{nullEffect = 'indA = indB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
+\item{...}{other parameters specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}) and the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+A list containing the following components is returned:
+\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+\item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
+\item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
+\item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{modelH0}}{\code{lavaan} H0 model string.}
+\item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
 Convenience function for performing power analysis concerning indirect effect(s) in a mediation model.
 This requires the lavaan package.
 }
 \details{
-For models without latent variables, nullEffect = 'ind=0' and nullEffect = 'inda=indb' constrain the indirect effect to zero and to equality, respectively.
-For models with latent variables and nullEffect = 'ind=0', power is approximated by constraining the smallest slope contained in the indirect effect to zero. 
-For models with latent variables multiple groups (i.e., nullEffect = 'inda=indb'), there is currently no way to determine power, 
-because implementing equality constrains on the indirect effects leads to non-convergence and 
+Notes on implementation:
+\itemize{
+\item For models without latent variables, \code{nullEffect = 'ind = 0'} and \code{nullEffect = 'indA = indB'} constrain the indirect effect to zero and to equality, respectively.
+\item For models with latent variables and \code{nullEffect = 'ind = 0'}, power is approximated by constraining the smallest slope contained in the indirect effect to zero.
+\item For models with latent variables multiple groups (i.e., \code{nullEffect = 'indA = indB'}), there is currently no way to determine power,
+because implementing equality constrains on the indirect effects leads to non-convergence and
 the approach to constrain a single or all slopes to equality across groups misrepresents the actual hypothesis of interest.
+}
 }
 \examples{
 \dontrun{
@@ -130,5 +140,5 @@ medPower <- semPower.powerMediation(type = 'a-priori',
 }
 }
 \seealso{
-[semPower.genSigma()]
+\code{\link[=semPower.genSigma]{semPower.genSigma()}} \code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

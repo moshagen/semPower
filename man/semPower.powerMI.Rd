@@ -7,44 +7,57 @@
 semPower.powerMI(type, comparison = NULL, nullEffect = NULL, ...)
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, either 'saturated', or one of 'configural', 'metric', 'scalar', or a vector of restrictions in lavaan format (with 'none' for no restrictions). See details.}
+\item{comparison}{comparison model, either \code{'saturated'} or one of \code{'configural'}, \code{'metric'}, \code{'scalar'}, or a vector of restrictions in \code{lavaan} format (with \code{'none'} for no restrictions). See details.}
 
-\item{nullEffect}{defines the hypothesis of interest. One of 'metric', 'scalar', 'residual', or a vector of restrictions in lavaan format (with 'none' for no restrictions).  See details.}
+\item{nullEffect}{defines the hypothesis of interest. One of \code{'metric'}, \code{'scalar'}, \code{'residual'}, or a vector of restrictions in \code{lavaan} format. See details.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
+\item{...}{other parameters specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}) and the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+A list containing the following components is returned:
+\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+\item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
+\item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
+\item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{modelH0}}{\code{lavaan} H0 model string.}
+\item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
 Convenience function for performing power analysis for multigroup measurement invariance models.
 This requires the lavaan package.
 }
 \details{
-The models defined in the comparison and the nullEffect arguments can be specified as follows:
+Multigroup invariance models fit the specified model simultaneously to various groups and place increasingly
+restrictive cross-group equality constrains on the model parameters. The typical - but not in all parts necessary -
+sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance, where each level of invariance is
+compared against the previous level (e.g., scalar vs. metric). In the context, power analysis asks for the
+power to reject a particular level of invariance.
+
+The models defined in the \code{comparison} and the \code{nullEffect} arguments can be specified as follows:
 \itemize{
-\item `configural`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
-\item `metric`: all loadings are restricted to equality. 
-\item `scalar`: all loadings and (item-)intercepts are restricted to equality. 
-\item `residual`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+\item \code{configural}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
+\item \code{metric}: all loadings are restricted to equality.
+\item \code{scalar}: all loadings and (item-)intercepts are restricted to equality.
+\item \code{residual}: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
 }
-For greater flexibility, the models can also be defined using lavaan style group.equal restrictions as a vector: 
+For greater flexibility, the models can also be defined using lavaan style group.equal restrictions as a vector:
 \itemize{
-\item `'none'`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
-\item `c('loadings')`: all loadings are restricted to equality. 
-\item `c('loadings', 'intercepts')`: all loadings and (item-)intercepts are restricted to equality. 
-\item `c('loadings', 'intercepts', 'residuals')`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
-\item `c('loadings', 'residuals')`: all loadings and (item-)residuals are restricted to equality.
-\item `c('loadings', 'residuals', 'lv.variances)`: all loadings, (item-)residuals, and latent variances are restricted to equality.
-\item `c('loadings', 'intercepts', 'means)`: all loadings, (item-)intercepts, and latent means are restricted to equality.
+\item \code{'none'}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
+\item \code{c('loadings')}: all loadings are restricted to equality.
+\item \code{c('loadings', 'intercepts')}: all loadings and (item-)intercepts are restricted to equality.
+\item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+\item \code{c('loadings', 'residuals')}: all loadings and (item-)residuals are restricted to equality.
+\item \code{c('loadings', 'intercepts', 'means')}: all loadings, (item-)intercepts, and latent means are restricted to equality.
 }
+Note that variance scaling is used, so invariance of variances (\code{'lv.variances'}) is always met.
 }
 \examples{
 \dontrun{
 }
 }
 \seealso{
-[semPower.genSigma()]
+\code{\link[=semPower.genSigma]{semPower.genSigma()}} \code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

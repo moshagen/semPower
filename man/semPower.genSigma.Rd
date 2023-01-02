@@ -37,38 +37,38 @@ A list containing the implied variance-covariance matrix (Sigma), the loading ma
 Generate a covariance matrix (and mean vector) and associated lavaan model strings based on defined model features.
 }
 \details{
-This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model. 
+This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model.
 
-In the CFA model, 
+In the CFA model,
 \deqn{\Sigma = \Lambda \Phi \Lambda' + \Theta}
 where \eqn{\Lambda} is the \eqn{p \cdot m} loading matrix, \eqn{\Phi} is the variance-covariance matrix of the \eqn{m} factors, and \eqn{\Theta} is the residual variance-covariance matrix of the observed variables. The means are
 \deqn{\mu = \tau + \Lambda \alpha}
 with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\alpha}.
 
-In the structural equation model, 
-\deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta } 
+In the structural equation model,
+\deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta }
 where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
 \deqn{\mu = \tau + \Lambda (I - \Beta)^{-1} \alpha}
 
-In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts. 
+In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts.
 
-When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.  
+When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.
 
-If `Phi` is defined, a CFA model is used, if `Beta` is defined, a structural equation model. 
-When both `Phi` and `Beta` are NULL, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
-When `Phi` is a single number, all factor correlations are equal to this number.
+If \code{Phi} is defined, a CFA model is used, if \code{Beta} is defined, a structural equation model.
+When both \code{Phi} and \code{Beta} are NULL, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
+When \code{Phi} is a single number, all factor correlations are equal to this number.
 
-When `Beta` is defined and `Psi` is NULL, \eqn{\Psi = I}.
+When \code{Beta} is defined and \code{Psi} is NULL, \eqn{\Psi = I}.
 
-When `Theta` is NULL, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
+When \code{Theta} is NULL, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
 
-Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts:
+Instead of providing the loading matrix \eqn{\Lambda} via \code{Lambda}, there are several shortcuts:
 \itemize{
-\item `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
-\item `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
-\item `loadM`: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
-\item `loadSD`: used in conjunction with `loadM`, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor. 
-\item `loadMinMax`: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform distribution. For example, `loadMinMax = list(c(.4, .6), c(.4, .8))` defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8. 
+\item \code{loadings}: defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: used in conjunction with \code{loadM} or \code{loadMinmax}, defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
+\item \code{loadSD}: used in conjunction with \code{loadM}, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor.
+\item \code{loadMinMax}: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform distribution. For example, \code{loadMinMax = list(c(.4, .6), c(.4, .8))} defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8.
 }
 }
 \examples{

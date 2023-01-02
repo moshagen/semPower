@@ -17,7 +17,7 @@ semPower.getDf(lavModel, nGroups = NULL, group.equal = NULL)
 the df of the model
 }
 \description{
-Determines the degrees of freedom of a given model provided as lavaan model string. 
+Determines the degrees of freedom of a given model provided as lavaan model string.
 This requires the lavaan package.
 }
 \examples{

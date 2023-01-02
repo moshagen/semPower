@@ -137,7 +137,7 @@ Useful links:
 }
 
 
-[semPower.aPriori()], [semPower.postHoc()], [semPower.compromise()]
+\code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, \code{\link[=semPower.compromise]{semPower.compromise()}}
 }
 \author{
 Morten Moshagen \email{morten.moshagen@uni-ulm.de}

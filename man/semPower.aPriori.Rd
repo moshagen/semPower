@@ -23,66 +23,96 @@ semPower.aPriori(
   nReplications = 250,
   minConvergenceRate = 0.5,
   lavOptions = NULL,
+  lavOptionsH1 = lavOptions,
   seed = NULL,
   ...
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)}
+\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences.}
 
-\item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
 \item{alpha}{alpha error}
 
-\item{beta}{beta error; set either beta or power}
+\item{beta}{beta error; set either \code{beta} or \code{power}.}
 
-\item{power}{power (1-beta); set either beta or power}
+\item{power}{power (= 1 - beta); set either \code{beta} or \code{power}.}
 
-\item{N}{a list of sample weights for multiple group power analyses, e.g. list(1,2) to make the second group twice as large as the first one}
+\item{N}{a list of sample weights for multiple group power analyses, e.g. \code{list(1, 2)} to make the second group twice as large as the first one.}
 
-\item{df}{the model degrees of freedom}
+\item{df}{the model degrees of freedom. See \code{\link[=semPower.getDf]{semPower.getDf()}} for a way to obtain the df of a specific model.}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, only required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}.}
 
-\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied covariance matrix (a list for multiple group models). Used in conjunction with \code{Sigma} to define the effect.}
 
-\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{can be used instead of \code{effect} and \code{effect.measure}: population covariance matrix (a list for multiple group models). Used in conjunction with \code{SigmaHat} to define effect.}
 
-\item{muHat}{model implied mean vector}
+\item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
 
-\item{mu}{observed (or population) mean vector}
+\item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
 
-\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. Only available if \code{Sigma} and \code{SigmaHat} are defined.}
 
-\item{modelH0}{for simulated power: lavaan model string defining the (incorrect) analysis model.}
+\item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
 
-\item{modelH1}{for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+\item{modelH1}{for simulated power: \code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
 \item{nReplications}{for simulated power: number of random samples drawn.}
 
-\item{minConvergenceRate}{for simulated power: the minimum convergence rate required}
+\item{minConvergenceRate}{for simulated power: the minimum convergence rate required.}
 
-\item{lavOptions}{for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation}
+\item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation.}
 
-\item{seed}{for simulated power}
+\item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
+
+\item{seed}{for simulated power: the seed.}
 }
 \value{
-list
+Returns a list. Use \code{summary()} to obtain formatted results.
 }
 \description{
-Determine required sample size given alpha, beta/power, df, and effect
+Performs an a-priori power analysis, i. e., determines the required sample size given alpha, beta (or power: 1 - beta), df, and a measure of effect.
 }
 \examples{
 \dontrun{
-power <- semPower.aPriori(effect = .05, effect.measure = "RMSEA", alpha = .05, beta = .05, df = 200)
-summary(power)
-power <- semPower.aPriori(effect = .15, effect.measure = "F0", alpha = .05, power = .80, df = 100)
-summary(power)
-power <- semPower.aPriori(effect = list(.05, .10), effect.measure = "F0", alpha = .05, 
-                          power = .80, N = list(1, 1), df = 100)
-summary(power)
-power <- semPower.aPriori(alpha = .01, beta = .05, df = 5, 
-                          SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-summary(power)
+# determine the required sample size to reject a model showing misspecifications 
+# amounting to RMSEA >= .05 on 200 df with a power of 95 \% on alpha = .05   
+ap <- semPower.aPriori(effect = .05, effect.measure = "RMSEA", 
+                       alpha = .05, beta = .05, df = 200)
+summary(ap)
+
+# use f0 as effect size metric
+ap <- semPower.aPriori(effect = .15, effect.measure = "F0", 
+                       alpha = .05, power = .80, df = 200)
+summary(ap)
+
+# power analysis for to detect the difference between a model (with df = 200) exhibiting RMSEA = .05
+# and a model (with df = 210) exhibiting RMSEA = .06.
+ap <- semPower.aPriori(effect = c(.05, .06), effect.measure = "RMSEA", 
+                       alpha = .05, power = .80, df = c(200, 210))
+summary(ap)
+
+# power analysis based on SigmaHat and Sigma (nonsense example)
+ap <- semPower.aPriori(alpha = .05, beta = .05, df = 5, 
+                       SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
+summary(ap)
+
+# multiple group example
+ap <- semPower.aPriori(effect = list(.05, .10), effect.measure = "F0", 
+                       alpha = .05, power = .80, df = 100, 
+                       N = list(1, 1))
+summary(ap)
+
+# simulated power analysis (nonsense example)
+ap <- semPower.aPriori(alpha = .05, beta = .05, df = 200, 
+                       SigmaHat = list(diag(4), diag(4)), 
+                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), cov(matrix(rnorm(4*1000), ncol=4))),
+                       simulatedPower = TRUE, nReplications = 100)
+summary(ap)
 }
+}
+\seealso{
+\code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

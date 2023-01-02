@@ -15,22 +15,29 @@ semPower.powerCFA(
 )
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix.}
+\item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix. A list for multiple group models.}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are 'cor = 0' (the default), 'corX = corZ' to test for the equality of correlations, and 'corA = corB' to test the eequality of a correlation across groups. Define the correlations to be set to equality in nullWhich and the groups in nullWhichGroups.}
+\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'cor = 0'} (the default) to test whether a correlation is zero, \code{'corX = corZ'} to test for the equality of correlations, and \code{'corA = corB'} to test for the equality of a correlation across groups. Define the correlations to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
-\item{nullWhich}{vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3].}
+\item{nullWhich}{vector of size 2 indicating which factor correlation in \code{Phi} is hypothesized to equal zero when \code{nullEffect = 'cor = 0'}, or to restrict to equality across groups when \code{nullEffect = 'corA = corB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'corX = corZ'}. Can also contain more than two correlations, e.g., \code{list(c(1, 2), c(1, 3), c(2, 3))} to set \code{Phi[1, 2] = Phi[1, 3] = Phi[2, 3]}. If omitted, the correlation between the first and the second factor is targeted, i. e. \code{nullWhich = c(1, 2)}.}
 
-\item{nullWhichGroups}{vector indicating for which groups equality constrains should be applied. If NULL, all groups are constrained to equality.}
+\item{nullWhichGroups}{for \code{nullEffect = 'corA = corB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis}
+\item{...}{other parameters specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}) and the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
 }
 \value{
-a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+A list containing the following components is returned:
+\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+\item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
+\item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
+\item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
+\item{\code{modelH0}}{\code{lavaan} H0 model string.}
+\item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
 Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
@@ -95,5 +102,5 @@ cfapower.ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
 }
 }
 \seealso{
-[semPower.genSigma()]
+\code{\link[=semPower.genSigma]{semPower.genSigma()}} \code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

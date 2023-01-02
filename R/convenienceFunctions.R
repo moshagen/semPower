@@ -1,20 +1,28 @@
 #' semPower.powerLav
 #'
-#' Perform power analysis on population and model-implied Sigmas as defined through lavaan model strings
-#' This requires the lavaan package.
+#' Perform a power analysis given `lavaan` model strings defining the H0 and the H1 model based on either 
+#' a `lavaan` model string defining the population model or the population covariance matrix Sigma and the population means mu.
+#' This requires the `lavaan` package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'.
-#' @param modelPop lavaan model string defining the true model.
-#' @param modelH0 lavaan model string defining the (incorrect) analysis model.
-#' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param fitH1model whether to fit the H1 model. If FALSE, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
-#' @param Sigma population covariance matrix (if modelPop is not set).
-#' @param mu population means (if modelPop is not set).
-#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
-#' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation. Probably mostly useful in conjunction with simulatedPower. 
-#' @param lavOptionsH1 alternative lavOptions only used for the H1 model. If NULL, the same as lavOptions. 
-#' @param ... other parameters related to the specific type of power analysis requested
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelPop, modelH0, and modelH1)
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param modelPop `lavaan` model string defining the true model. Can be omitted when `Sigma` is set.
+#' @param modelH0 `lavaan` model string defining the (incorrect) analysis model.
+#' @param modelH1 `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param fitH1model whether to fit the H1 model. If `FALSE`, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
+#' @param Sigma can be used instead of `modelPop`: population covariance matrix. A list for multiple group models.
+#' @param mu can be used instead of `modelPop`: vector of population means. Can be omitted for no meanstructure. A list for multiple group models.
+#' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. See [simulate()] for additional options.
+#' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation. Mostly useful in conjunction with `simulatedPower`. 
+#' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @examples
 #' \dontrun{
 #' ## a priori power analysis for the null hypothesis that the correlation between 
@@ -34,22 +42,24 @@
 #'   f1 ~~ .2*f2
 #' '
 #' # define analysis model (restricting the factor correlation to zero) 
-#' mAna <- '
+#' mH0 <- '
 #'   f1 =~ x1 + x2 + x3
 #'   f2 =~ x4 + x5 + x6
 #'   f1 ~~ 0*f2
 #' '
 #' # do a priori power analsis
 #' lavpower.ap <- semPower.powerLav(type = 'a-priori', 
-#'                                  modelPop = mPop, modelH0 = mAna,
+#'                                  modelPop = mPop, modelH0 = mH0,
 #'                                  alpha = .05, beta = .05)
 #' summary(lavpower.ap$power)
 #'
 #' }
+#' @seealso [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @importFrom utils installed.packages
 #' @export
 semPower.powerLav <- function(type, 
-                              modelPop = NULL, modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
+                              modelPop = NULL, 
+                              modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
                               Sigma = NULL, mu = NULL, 
                               simulatedPower = FALSE, 
                               lavOptions = NULL, lavOptionsH1 = lavOptions, 
@@ -180,14 +190,21 @@ semPower.powerLav <- function(type,
 #' Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the parameter defined by nullCor to zero, so the df are always 1.
-#' @param Phi either a single number defining the correlation between exactly two factors or the factor correlation matrix.
-#' @param nullEffect defines the hypothesis of interest. Valid are 'cor = 0' (the default), 'corX = corZ' to test for the equality of correlations, and 'corA = corB' to test the eequality of a correlation across groups. Define the correlations to be set to equality in nullWhich and the groups in nullWhichGroups. 
-#' @param nullWhich vector of size 2 indicating which factor correlation in phi is hypothesized to equal zero when nullEffect = 'cor = 0' or list of vectors defining which correlations to restrict to equality when nullEffect = 'corX = corZ'. Can also contain more than two correlations, e.g., list(c(1,2), c(1,3), c(2,3)) to set phi[1,2] = phi[1,3] = phi[2,3].
-#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied. If NULL, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'Saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'Restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
+#' @param Phi either a single number defining the correlation between exactly two factors or the factor correlation matrix. A list for multiple group models.
+#' @param nullEffect defines the hypothesis of interest, must be one of `'cor = 0'` (the default) to test whether a correlation is zero, `'corX = corZ'` to test for the equality of correlations, and `'corA = corB'` to test for the equality of a correlation across groups. Define the correlations to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
+#' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e. `nullWhich = c(1, 2)`.
+#' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @examples
 #' \dontrun{
 #' # a priori power analysis only providing the number of indicators to define 
@@ -245,7 +262,7 @@ semPower.powerLav <- function(type,
 #'                                  alpha = .05, N = c(250, 250))
 #' 
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerCFA <- function(type, comparison = 'restricted', 
                               Phi = NULL,
@@ -341,18 +358,25 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 
 #' semPower.powerRegression
 #'
-#' Convenience function for performing power analysis on slope(s) in a latent regression.
+#' Convenience function for performing power analysis on slope(s) in a latent regression of the form Y = XB.
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'Saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'Restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param slopes vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.
-#' @param corXX correlation(s) between the k predictors (X). Either NULL, a single number (for k = 2 predictors), or a matrix. If NULL, the predictors are uncorrelated. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are assumed in all groups). 
-#' @param nullEffect defines the hypothesis of interest. Valid are 'slope = 0' (the default), 'slopeX = slopeZ' to test for the equality of slopes, and 'slopeA = slopeB' to test for the equality of slopes across groups.  Define the slopes to set to equality in nullWhich.
-#' @param nullWhich single number indicating which slope is hypothesized to equal zero when nullEffect = 'slope = 0', or indicating which slope to restrict to equality across groups when nullEffect = 'slopeA = slopeB', or vector defines which slopes to restrict to equality when nullEffect = 'slopeX = slopeZ'. Can also contain more than two slopes, e.g. c(1, 2, 3) to constrain the first three slopes to equality.
-#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]), where the first factor corresponds to Y (so nfactors = slopes + 1 are needed), and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param corXX correlation(s) between the k predictors (X). Either `NULL` for uncorrelated predictors, a single number (for k = 2 predictors), or a matrix. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are used in all groups). 
+#' @param nullEffect defines the hypothesis of interest, must be one of `'slope = 0'` (the default) to test whether a slope is zero, `'slopeX = slopeZ'` to test for the equality of slopes, or `'slopeA = slopeB'` to test for the equality of slopes across groups. Define the slopes to set to equality in `nullWhich`.
+#' @param nullWhich single number indicating which slope is hypothesized to equal zero when `nullEffect = 'slope = 0'`, or indicating which slope to restrict to equality across groups when `nullEffect = 'slopeA = slopeB'`, or vector defining the slopes to restrict to equality when `nullEffect = 'slopeX = slopeZ'`. Can also contain more than two slopes, e.g. `c(1, 2, 3)` to constrain the first three slopes to equality.
+#' @param nullWhichGroups for `nullEffect = 'slopeA = slopeB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]; note the first factor is treated as Y and the subsequent factors as X) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @examples
 #' \dontrun{
 #' # latent regression of the form Y = .2*X1 + .3*X2, where X1 and X2 correlate by .4
@@ -414,7 +438,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      alpha = .05, beta = .05)
 #'                                      
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerRegression <- function(type, comparison = 'restricted',
                                      slopes = NULL, 
@@ -564,21 +588,29 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' Convenience function for performing power analysis concerning indirect effect(s) in a mediation model.
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the indirect effect to zero, so the df are always 1.
-#' @param bYX the standardized slope (direct effect) for X -> Y. A list for multiple group models. 
-#' @param bMX the standardized slope for X -> M. A list for multiple group models.
-#' @param bYM the standardized slope for M -> Y. A list for multiple group models.
-#' @param Beta matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first rows, so the upper triangular of Beta must be zero. A list for multiple group models.
-#' @param indirect a list of indices indicating the elements of B that define the indirect effect of interest, e.g. list(c(2,1),c(3,2)).
-#' @param nullEffect defines the hypothesis of interest. Valid are 'ind = 0' (the default) and 'indA = indB' to test for the equality of indirect effects across groups. See details.
-#' @param nullWhichGroups vector indicating for which groups equality constrains should be applied, e.g. c(1, 3) to constrain the slopes in the first and third group to equality. If NULL, all groups are constrained to equality.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'Saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'Restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
+#' @param bYX the standardized slope (direct effect) for X -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param bMX the standardized slope for X -> M. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param bYM the standardized slope for M -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param Beta can be used instead of `bYX`, `bMX`, and `bYM`: matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. A list for multiple group models.
+#' @param indirect `NULL` unless `Beta` is set. Otherwise a list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect of interest, e.g. `list(c(2, 1), c(3, 2))`. See details.
+#' @param nullEffect defines the hypothesis of interest, must be one of `'ind = 0'` (the default) to test whether the indirect effect is zero or `'indA = indB'` to test for the equality of indirect effects across groups. See details.
+#' @param nullWhichGroups for `nullEffect = 'indA = indB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @details
-#' For models without latent variables, nullEffect = 'ind=0' and nullEffect = 'inda=indb' constrain the indirect effect to zero and to equality, respectively.
-#' For models with latent variables and nullEffect = 'ind=0', power is approximated by constraining the smallest slope contained in the indirect effect to zero. 
-#' For models with latent variables multiple groups (i.e., nullEffect = 'inda=indb'), there is currently no way to determine power, 
+#' Notes on implementation:
+#' * For models without latent variables, `nullEffect = 'ind = 0'` and `nullEffect = 'indA = indB'` constrain the indirect effect to zero and to equality, respectively.
+#' * For models with latent variables and `nullEffect = 'ind = 0'`, power is approximated by constraining the smallest slope contained in the indirect effect to zero. 
+#' * For models with latent variables multiple groups (i.e., `nullEffect = 'indA = indB'`), there is currently no way to determine power, 
 #' because implementing equality constrains on the indirect effects leads to non-convergence and 
 #' the approach to constrain a single or all slopes to equality across groups misrepresents the actual hypothesis of interest. 
 #' 
@@ -658,7 +690,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     Lambda = diag(3), N = list(1, 1),
 #'                                     alpha = .05, beta = .05)
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerMediation <- function(type, comparison = 'restricted',
                                     bYX = NULL, bMX = NULL, bYM = NULL,
@@ -815,23 +847,30 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' Convenience function for performing power analysis on effects in a cross-lagged panel model (CLPM).
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df equal the number of restricted parameters.
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'Saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'Restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param nWaves number of waves, must be >= 2.
-#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for a autoregressive effect of .7 for x1->x2 and .6 for x2->x3
-#' @param crossedEffects vector of crossed effects of x on y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of x on y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for x1->y2 = .2 and x2->y3 = .3.
+#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for a autoregressive effect of .7 for x1->x2 and .6 for x2->x3
+#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e. g. `list(c(.2, .3), c(.1, .1))` for x1->y2 = .2 and x2->y3 = .3.
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
-#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'autoregX' and 'autoregY' for autoregressive effects, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated, subject to the constraints defined in nullEffect). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual and 'autoregX = 0', 'autoregY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y autoregressive effects or the crossed effects to zero, 'autoregX = autoregY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
-#' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'autoregX = 0' with nullWhich = 2 would constrain the second autoregressive effect for X to zero.    
-#' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the difference in the df for comparisons to the restricted model, power might be affected.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
+#' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
+#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @examples
 #' \dontrun{
 #'  
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerCLPM <- function(type, comparison = 'restricted',
                                nWaves = NULL, 
@@ -1082,30 +1121,31 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' Convenience function for performing power analysis on effects in a random intercept cross-lagged panel model (RI-CLPM).
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, one of 'saturated' or 'restricted'. This determines the df for power analyses. 'Saturated' provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. 'Restricted' provides power to reject the model when compared to a model that just restricts the effect of interest to zero, so the df equal the number of restricted parameters.
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'Saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'Restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param nWaves number of waves, must be >= 3.
-#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. list(c(.7, .6), c(.5, .5)) for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2 -> Y3
-#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. list(c(.2, .3), c(.1, .1)) for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.
-#' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
-#' @param rBXBY correlation between random intercept factors
-#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are 'autoregX' and 'autoregY' for autoregressive effects, 'crossedX' and 'crossedY' for crossed effects, 'corXY' for residual correlations, or NULL for none (so that all parameters are freely estimated). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in waveEqual, and 'autoregX = 0', 'autoregY = 0', 'crossedX = 0', 'crossedY = 0' to constrain the X or Y autoregressive effects or the crossed effects to zero, 'corBXBY = 0' to constrain the correlation between the random intercepts to zero, and 'autoregX = autoregY' and 'crossedX = crossedY' to constrain them to be equal for X and Y.
-#' @param nullWhich used in conjunction with nullEffect to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, nullEffect = 'autoregX = 0' with nullWhich = 2 would constrain the second autoregressive effect for X to zero.    
-#' @param metricInvariance whether metric invariance over waves is assumed (TRUE) or not (FALSE). Whereas this does not change the df, power might be affected.
-#' @param Lambda matrix of factor loadings. Columns should be in order X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves. 
-#' @param nIndicator Can be used instead of Lambda: vector indicating the number of indicators for each factor ordered by wave, e.g. c(3, 4, 3, 4, 3, 4) to define three indicators for factor X at waves 1-3 and four indicators for factor Y at waves 1-3.
-#' @param loadings Can be used instead of Lambda: A list of vectors providing the factor loadings for each factor ordered by wave, e.g., list(c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4)) to define loadings of .2 for the three indicators of X at waves 1-3 and loadings of .4 for the four indicators of Y at waves 1-3. Must not contain secondary loadings.   
-#' @param loadM Can be used instead of Lambda: vector giving mean loadings for each factor ordered by wave, e.g., c(.5, .6, .5, .6, .5, .6) to define loadings of .5 for X at waves 1-3 and loadings of .6 for Y at waves 1-3; or single number to use for every loading.
-#' @param loadSD Can be used instead of Lambda: vector giving the standard deviation of loadings for each factor ordered by wave for use in conjunction with loadM. When NULL, SDs are set to zero.
-#' @param loadMinMax Can be used instead of Lambda: list giving the minimum and maximum loading for each factor or vector to apply to all factors.
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2 -> Y3
+#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.
+#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. 
+#' @param rBXBY correlation between random intercept factors.
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated). 
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
+#' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
+#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @examples
 #' \dontrun{
 #'  
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  nWaves = NULL, 
@@ -1429,13 +1469,26 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' Convenience function for performing power analysis for multigroup measurement invariance models.
 #' This requires the lavaan package.
 #' 
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param comparison comparison model, either 'saturated', or one of 'configural', 'metric', 'scalar', or a vector of restrictions in lavaan format (with 'none' for no restrictions). See details.
-#' @param nullEffect defines the hypothesis of interest. One of 'metric', 'scalar', 'residual', or a vector of restrictions in lavaan format (with 'none' for no restrictions).  See details.   
-#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the type of power analysis 
-#' @return a list containing the results of the power analysis, the population covariance matrix Sigma and mean vector mu, the H0 implied matrix SigmaHat and mean vector muHat, as well as various lavaan model strings (modelH0, and modelH1)
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
+#' @param nullEffect defines the hypothesis of interest. One of `'metric'`, `'scalar'`, `'residual'`, or a vector of restrictions in `lavaan` format. See details.   
+#' @param ... other parameters specifying the factor model (see [semPower.genSigma()]) and the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()].
+#' @return A list containing the following components is returned:
+#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
+#' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
+#' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
+#' \item{`modelH0`}{`lavaan` H0 model string.}
+#' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @details
-#' The models defined in the comparison and the nullEffect arguments can be specified as follows:
+#' Multigroup invariance models fit the specified model simultaneously to various groups and place increasingly
+#' restrictive cross-group equality constrains on the model parameters. The typical - but not in all parts necessary -
+#' sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance, where each level of invariance is
+#' compared against the previous level (e.g., scalar vs. metric). In the context, power analysis asks for the 
+#' power to reject a particular level of invariance. 
+#'  
+#' The models defined in the `comparison` and the `nullEffect` arguments can be specified as follows:
 #' \itemize{
 #' \item `configural`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
 #' \item `metric`: all loadings are restricted to equality. 
@@ -1451,11 +1504,11 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' \item `c('loadings', 'residuals')`: all loadings and (item-)residuals are restricted to equality.
 #' \item `c('loadings', 'intercepts', 'means')`: all loadings, (item-)intercepts, and latent means are restricted to equality.
 #' }
-#' Note that variance scaling is used, so invariance of variances (`lv.variances`) is always met. 
+#' Note that variance scaling is used, so invariance of variances (`'lv.variances'`) is always met. 
 #' @examples
 #' \dontrun{
 #' }
-#' @seealso [semPower.genSigma()]
+#' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
 semPower.powerMI <- function(type, 
                              comparison = NULL,

@@ -19,7 +19,3 @@ a list of lav defaults
 \description{
 returns lavaan options including defaults as set in sem() as a list to be passed to lavaan()
 }
-\examples{
-\dontrun{
-}
-}
