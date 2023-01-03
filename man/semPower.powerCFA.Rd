@@ -17,13 +17,13 @@ semPower.powerCFA(
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix. A list for multiple group models.}
 
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'cor = 0'} (the default) to test whether a correlation is zero, \code{'corX = corZ'} to test for the equality of correlations, and \code{'corA = corB'} to test for the equality of a correlation across groups. Define the correlations to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
-\item{nullWhich}{vector of size 2 indicating which factor correlation in \code{Phi} is hypothesized to equal zero when \code{nullEffect = 'cor = 0'}, or to restrict to equality across groups when \code{nullEffect = 'corA = corB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'corX = corZ'}. Can also contain more than two correlations, e.g., \code{list(c(1, 2), c(1, 3), c(2, 3))} to set \code{Phi[1, 2] = Phi[1, 3] = Phi[2, 3]}. If omitted, the correlation between the first and the second factor is targeted, i. e. \code{nullWhich = c(1, 2)}.}
+\item{nullWhich}{vector of size 2 indicating which factor correlation in \code{Phi} is hypothesized to equal zero when \code{nullEffect = 'cor = 0'}, or to restrict to equality across groups when \code{nullEffect = 'corA = corB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'corX = corZ'}. Can also contain more than two correlations, e.g., \code{list(c(1, 2), c(1, 3), c(2, 3))} to set \code{Phi[1, 2] = Phi[1, 3] = Phi[2, 3]}. If omitted, the correlation between the first and the second factor is targeted, i. e., \code{nullWhich = c(1, 2)}.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'corA = corB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
@@ -40,24 +40,39 @@ A list containing the following components is returned:
 \item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
 }
 \description{
-Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
+Convenience function for performing power analyses for CFA models to reject one of the following hypotheses:
+(a) a zero correlation between two factors, (b) the equality of two correlations between factors,
+or (c) the equality of a correlation between two factors across two or more groups.
 This requires the lavaan package.
 }
 \details{
+This function performs a power analysis to reject various hypotheses arising
+in standard CFA models:
+\itemize{
+\item \code{nullEffect = 'cor = 0'}: Tests the hypothesis that the correlation between two factors is zero.
+\item \code{nullEffect = 'corX = corZ'}: Tests the hypothesis that two or more correlations between three or more factors are equal to each other.
+\item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between two factors is equal in two or more groups.
+}
+
+For hypotheses regarding regression relationships between factors, see \code{\link[=semPower.powerRegression]{semPower.powerRegression()}}.
+For hypotheses regarding mediation effects, see \code{\link[=semPower.powerMediation]{semPower.powerMediation()}}.
+For hypotheses regarding measurement invariance, see \code{\link[=semPower.powerMI]{semPower.powerMI()}}.
+
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
 
-Additional arguments related to the definition of the factor model:
+Additional arguments related to the \strong{definition of the factor model}:
 \itemize{
 \item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4..
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}, defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6.
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
-If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
 }
 
-Additional arguments related to the requested type of power analysis:
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
+If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+
+Additional arguments related to the requested type of \strong{power analysis}:
 \itemize{
 \item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
 \item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
@@ -65,7 +80,7 @@ Additional arguments related to the requested type of power analysis:
 \item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
 }
 
-Optional arguments if a simulated power analysis (\code{simulatedPower = TRUE}) is requested:
+Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
 \itemize{
 \item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 \item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
@@ -73,59 +88,93 @@ Optional arguments if a simulated power analysis (\code{simulatedPower = TRUE}) 
 }
 \examples{
 \dontrun{
-# a priori power analysis only providing the number of indicators to define 
-# two factors with correlation of phi and same loading for all indicators
-cfapower.ap <- semPower.powerCFA(type = 'a-priori',
-                                 nullWhich = c(1, 2), 
-                                 Phi = .2, nIndicator = c(5, 6), loadM = .5,
-                                 alpha = .05, beta = .05)
-summary(cfapower.ap$power)
+# get required N to detect a correlation of >= .2 between two factors
+# measured by 5 and 6 indicators, respectively, and all loadings equal to .5
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              Phi = .2, 
+                              nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, beta = .05)
+summary(cfapower$power)
 
-# same as above, but compare to the saturated model 
-# (rather than to the less restricted model)
-cfapower.ap <- semPower.powerCFA(type = 'a-priori', comparison = 'saturated', 
-                                 nullWhich = c(1, 2), 
-                                 Phi = .2, nIndicator = c(5, 6), loadM = .5,
-                                 alpha = .05, beta = .05)
+# same as above, but request a post-hoc power analysis with N = 500
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              Phi = .2, 
+                              nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, N = 500)
 
 # same as above, but request a compromise power analysis
-cfapower.cp <- semPower.powerCFA(type = 'compromise',
-                                 nullWhich = c(1, 2), 
-                                 Phi = .2, nIndicator = c(5, 6), loadM = .5,
-                                 abratio = 1, N = 200)
-
-# same as above, but request a post-hoc power analysis
-cfapower.ph <- semPower.powerCFA(type = 'post-hoc', 
-                                 nullWhich = c(1, 2), 
-                                 Phi = .2, nIndicator = c(5, 6), loadM = .5,
-                                 alpha = .05, N = 200)
-
-# post-hoc power analysis providing factor correlation matrix 
-# and reduced loading matrix 
+cfapower <- semPower.powerCFA(type = 'compromise',
+                              Phi = .2, 
+                              nIndicator = c(5, 6), loadM = .5,
+                              abratio = 1, N = 500)
+                              
+# same as above, but compare to the saturated model 
+# (rather than to the less restricted model)
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              comparison = 'saturated',
+                              Phi = .2, 
+                              nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, beta = .05)
+                              
+# same as above, but provide a reduced loading matrix defining
+# three indicators with loadings of .7., .6, and .5 on the first factor and
+# four indicators with loadings of .5, .6, .4, .8 on the second factor 
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              Phi = .2, 
+                              loadings = list(c(.7, .6, .5), c(.5, .6, .4, .8)),
+                              alpha = .05, beta = .05)
+                              
+# get required N to detect a correlation of >= .3 between factors 1 and 3  
+# in a three factor model. Factors are measured by 3 indicators each, and all loadings 
+# on the first, second, and third factor are .5, .6, and .7, respectively.
 Phi <- matrix(c(
-                c(1.0, 0.1),
-                c(0.1, 1.0)
-              ), byrow = T, ncol = 2)
+  c(1.00, 0.20, 0.30),
+  c(0.20, 1.00, 0.10),
+  c(0.30, 0.10, 1.00)
+), ncol = 3,byrow = TRUE)
 
-# loadings: only define primary loadings 
-# must not contain secondary loadings
-loadings <- list(
-               c(0.4, 0.5, 0.8),
-               c(0.7, 0.6, 0.5, 0.4)
-               )
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              Phi = Phi,
+                              nullWhich = c(1, 3), 
+                              nIndicator = c(3, 3, 3), loadM = c(.5, .6, .7),
+                              alpha = .05, beta = .05)
 
-cfapower.ph <- semPower.powerCFA(type = 'post-hoc',
-                                 nullWhich = c(1, 2), 
-                                 Phi = Phi, loadings = loadings,
-                                 alpha = .05, N = 250)
+# same as above, but ask for N to detect that 
+# the correlation between factors 1 and 2 (of r = .2) differs from
+# the correlation between factors 2 and 3 (of r = .3).
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              Phi = Phi,
+                              nullEffect = 'corX = corZ',
+                              nullWhich = list(c(1, 2), c(1, 3)), 
+                              nIndicator = c(3, 3, 3), loadM = c(.5, .6, .7),
+                              alpha = .05, beta = .05)
+                              
+# same as above, but ask for N to detect that all three correlations are unequal
+cfapower <- semPower.powerCFA(type = 'a-priori',
+                              Phi = Phi,
+                              nullEffect = 'corX = corZ',
+                              nullWhich = list(c(1, 2), c(1, 3), c(2, 3)), 
+                              nIndicator = c(3, 3, 3), loadM = c(.5, .6, .7),
+                              alpha = .05, beta = .05)
+                              
+# get required N to detect that the correlation between two factors
+# in group 1 (of r = .2) differs from the one in group 2 (of r = .4). 
+# The measurement model is identical for both groups:
+# The first factor is measured by 3 indicators each loading by .7, 
+# the second facgtor is measured by 6 indicators each loading by .5.
+cfapower <- semPower.powerCFA(type = 'a-priori', 
+                              nullEffect = 'corA = corB',
+                              Phi = list(.2, .4), 
+                              loadM = c(.7, .5), 
+                              nIndicator = c(3, 6), 
+                              alpha = .05, beta = .05, N = c(1, 1))
 
-# multigroup case to test that there are no group differences 
-# concerning the correlation between two factors   
-cfapower.ph <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
-                                 nullEffect = 'corA=corB',
-                                 Phi = list(.2, .1), loadM = .5, 
-                                 nIndicator = c(3, 3), 
-                                 alpha = .05, N = c(250, 250))
+# request a simulated post-hoc power analysis with 500 replications.
+cfapower <- semPower.powerCFA(type = 'post-hoc',
+                              Phi = .2, 
+                              nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, N = 500, 
+                              simulatedPower = TRUE, nReplications = 500)
 
 }
 }
