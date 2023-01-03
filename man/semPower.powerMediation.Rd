@@ -36,7 +36,7 @@ semPower.powerMediation(
 
 \item{nullWhichGroups}{for \code{nullEffect = 'indA = indB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}) and the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
+\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}).  Note that in case of a simple mediation, the order of factors is X, M, Y.}
 }
 \value{
 A list containing the following components is returned:
@@ -75,7 +75,8 @@ medPower <- semPower.powerMediation(type = 'a-priori',
                                     alpha = .05, beta = .05)
 summary(medPower$power)
                                     
-# same mediation model as above, but assuming single loading of 1 for all factors (=> mediation model with manifest variables)
+# same mediation model as above, but assuming single loading of 1 for all factors 
+# (=> mediation model with manifest variables)
 medPower <- semPower.powerMediation(type = 'a-priori', 
                                     bYX = .25, bMX = .3, bYM = .4,
                                     nIndicator = c(1, 1, 1), loadM = 1,
@@ -83,7 +84,8 @@ medPower <- semPower.powerMediation(type = 'a-priori',
 
 # same latent mediation model as above, but specifying loadings through Lambda 
 Lambda <- matrix(c(
-                c(0.5, 0.0, 0.0),    # X, M, Y
+                 #  X,   M,   Y
+                c(0.5, 0.0, 0.0),    
                 c(0.4, 0.0, 0.0),
                 c(0.3, 0.0, 0.0),
                 c(0.0, 0.7, 0.0),
@@ -113,17 +115,17 @@ medPower <- semPower.powerMediation(type = 'a-priori',
 # of the form X -> M1 -> M2 -> Y 
 # and using a reduced loading matrix
 B <- matrix(c(
-              c(.00, .00, .00, .00),
-              c(.20, .00, .00, .00),
-              c(.00, .30, .00, .00),
-              c(.00, .00, .40, .00)
+              c(.00, .00, .00, .00),       # X
+              c(.20, .00, .00, .00),       # M1
+              c(.00, .30, .00, .00),       # M2
+              c(.00, .00, .40, .00)        # Y
               ), byrow = TRUE, ncol = 4)
 # only define primary loadings by factor
 loadings <- list(
-               c(0.4, 0.5, 0.8),
-               c(0.7, 0.6, 0.5, 0.8),
-               c(0.5, 0.6, 0.3, 0.4, 0.6),
-               c(0.6, 0.7, 0.8)
+               c(0.4, 0.5, 0.8),           # X
+               c(0.7, 0.6, 0.5, 0.8),      # M1
+               c(0.5, 0.6, 0.3, 0.4, 0.6), # M2
+               c(0.6, 0.7, 0.8)            # Y
                )
 
 medPower <- semPower.powerMediation(type = 'a-priori', 

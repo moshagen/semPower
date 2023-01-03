@@ -196,7 +196,7 @@ semPower.powerLav <- function(type,
 #' @param nullEffect defines the hypothesis of interest, must be one of `'cor = 0'` (the default) to test whether a correlation is zero, `'corX = corZ'` to test for the equality of correlations, and `'corA = corB'` to test for the equality of a correlation across groups. Define the correlations to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
 #' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e. `nullWhich = c(1, 2)`.
 #' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
-#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]).
+#' @param ... other parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and specifying the factor model (see [semPower.genSigma()]). See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -205,6 +205,29 @@ semPower.powerLav <- function(type,
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' @details 
+#' 
+#' Beyond the arguments explicitly contained in the function call, additional arguments 
+#' are required specifying the factor model and the requested type of power analysis.  
+#' 
+#' Additional arguments related to the *definition of the factor model*:
+#' * `Lambda`: The factor loading matrix (with the number of columns equaling the number of factors).
+#' * `loadings`: Can be used instead of `Lambda`: Defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4..
+#' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
+#' * `loadM`: Can be used instead of `Lambda`: Defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6.
+#' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. 
+#' If the model contains observed variables only, use `Lambda = diag(x)` where `x` is the number of variables.
+#' 
+#' Additional arguments related to the requested type of *power analysis*:
+#' * `alpha`: The alpha error probability. Required for `type = 'a-priori'` and `type = 'post-hoc'`.
+#' * Either `beta` or `power`: The beta error probability and the statistical power (1 - beta), respectively. Only for `type = 'a-priori'`.
+#' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
+#' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
+#' 
+#' Optional arguments if a *simulated power analysis* (`simulatedPower = TRUE`) is requested:
+#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' 
 #' @examples
 #' \dontrun{
 #' # a priori power analysis only providing the number of indicators to define 
@@ -213,7 +236,7 @@ semPower.powerLav <- function(type,
 #'                                  nullWhich = c(1, 2), 
 #'                                  Phi = .2, nIndicator = c(5, 6), loadM = .5,
 #'                                  alpha = .05, beta = .05)
-#'                                  summary(cfapower.ap$power)
+#' summary(cfapower.ap$power)
 #'
 #' # same as above, but compare to the saturated model 
 #' # (rather than to the less restricted model)

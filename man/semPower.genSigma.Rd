@@ -18,7 +18,7 @@ semPower.genSigma(
 \arguments{
 \item{Lambda}{factor loading matrix. A list for multiple group models. Can also be specified using various shortcuts, see \code{\link[=genLambda]{genLambda()}}.}
 
-\item{Phi}{for CFA models, factor correlation (or covariance) matrix or single number giving correlation between all factors or \code{NULL} for uncorrelated factors. A list for multiple group models.}
+\item{Phi}{for CFA models, factor correlation (or covariance) matrix or single number giving the correlation between all factors or \code{NULL} for uncorrelated factors. A list for multiple group models.}
 
 \item{Beta}{for SEM models, matrix of regression slopes between latent variables (all-y notation). A list for multiple group models.}
 
@@ -39,7 +39,7 @@ Returns a list (or list of lists for multiple group models) containing the follo
 \item{\code{Beta}}{matrix of regression slopes}
 \item{\code{Psi}}{residual covariance matrix of latent variables}
 \item{\code{Theta}}{residual covariance matrix of observed variables}
-\item{\code{nu}}{intercepts}
+\item{\code{tau}}{intercepts}
 \item{\code{Alpha}}{factor means}
 \item{\code{modelPop}}{\code{lavaan} model string defining the population model}
 \item{\code{modelTrue}}{\code{lavaan} model string defining the "true" analysis model freely estimating all non-zero parameters.}
@@ -124,7 +124,7 @@ Lambda <- matrix(c(
   c(0.0, 0.0, 0.4),
   c(0.0, 0.0, 0.6),
   c(0.0, 0.0, 0.4),
-  c(0.0, 0.0, 0.5),
+  c(0.0, 0.0, 0.5)
 ), byrow = TRUE, ncol = 3)
 gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
 

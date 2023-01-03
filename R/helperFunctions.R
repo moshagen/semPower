@@ -98,7 +98,7 @@
 #'   c(0.0, 0.0, 0.4),
 #'   c(0.0, 0.0, 0.6),
 #'   c(0.0, 0.0, 0.4),
-#'   c(0.0, 0.0, 0.5),
+#'   c(0.0, 0.0, 0.5)
 #' ), byrow = TRUE, ncol = 3)
 #' gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
 #' 
