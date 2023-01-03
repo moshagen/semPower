@@ -187,7 +187,9 @@ semPower.powerLav <- function(type,
 
 #' semPower.powerCFA
 #'
-#' Convenience function for performing power analysis for simple CFA models involving one hypothesized zero correlation between factors.
+#' Convenience function for performing power analyses for CFA models to reject one of the following hypotheses: 
+#' (a) a zero correlation between two factors, (b) the equality of two correlations between factors,
+#' or (c) the equality of a correlation between two factors across two or more groups. 
 #' This requires the lavaan package.
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
@@ -207,6 +209,12 @@ semPower.powerLav <- function(type,
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
 #' @details 
 #' 
+#' This function performs power analyses to reject various hypotheses arising
+#' in standard CFA models involving at least two factors:
+#' * `nullEffect = 'cor = 0'`: Tests the hypothesis that the correlation between two factors is zero.
+#' * `nullEffect = 'corX = corY'`: Tests the hypothesis that two correlations between factors are equal.
+#' * `nullEffect = 'corA = corB'`: Tests the hypothesis that the correlation between two factors are equal across groups.
+#' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
 #' 
@@ -215,6 +223,7 @@ semPower.powerLav <- function(type,
 #' * `loadings`: Can be used instead of `Lambda`: Defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4..
 #' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
 #' * `loadM`: Can be used instead of `Lambda`: Defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6.
+#' 
 #' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. 
 #' If the model contains observed variables only, use `Lambda = diag(x)` where `x` is the number of variables.
 #' 
@@ -295,6 +304,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
                               ...){
   
   # validate input
+  checkEllipsis(...)
   comparison <- checkComparisonModel(comparison)
   if(is.null(Phi)) stop('Phi must be defined')
   nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb'))
@@ -472,6 +482,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                                      ...){
   
   comparison <- checkComparisonModel(comparison)
+  checkEllipsis(...)
   
   # we override Phi and Sigma later, so let's make sure it is not set in ellipsis argument
   if('Phi' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Phi, because the factor correlations depend on corXX and the slopes.')
@@ -725,6 +736,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
                                     ...){
   
   comparison <- checkComparisonModel(comparison)
+  checkEllipsis(...)
   
   # we override Phi and Sigma later, so let's make sure it is not set in ellipsis argument
   if('Phi' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Phi, because the factor correlations depend on Beta (or the slopes).')
@@ -910,6 +922,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # TODO: do we need autocorrelated residuals?
   
   comparison <- checkComparisonModel(comparison)
+  checkEllipsis(...)
   
   # we override Beta and Sigma later, so let's make sure it is not set in ellipsis argument
   if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
@@ -1192,6 +1205,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   # TODO: do we need autocorrelated residuals?
   
   comparison <- checkComparisonModel(comparison)
+  checkEllipsis(...)
   
   # we override Beta and Sigma later, so let's make sure it is not set in ellipsis argument
   if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
@@ -1548,6 +1562,7 @@ semPower.powerMI <- function(type,
                              ...){
   
   # validate input
+  checkEllipsis(...)
   lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.variances', 'lv.covariances','regressions', 'means')
   useLavOptions <- any(grepl(paste(lavGroupStrings, collapse = '|'), comparison)) || any(grepl(paste(lavGroupStrings, collapse = '|'), nullEffect))
   # we only check typos etc when not using lavstrings

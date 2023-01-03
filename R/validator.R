@@ -486,3 +486,14 @@ checkNullEffect <- function(nullEffect, valid){
   if(any(unlist(lapply(nullEffect, function(x) !x %in% valid)))) stop(paste(mesage, 'must be one of', paste(valid, collapse = ' ')))
   nullEffect
 }
+
+#' checkEllipsis
+#'
+#' checks whether ... contains arguments related to loadings and to power.
+#' @param ... the parameters to search
+#' @return whether loadings and power are found
+checkEllipsis <- function(...){
+  args <- names(list(...))
+  if(!any(c('Lambda', 'loadings', 'nIndicator', 'loadM') %in% args)) stop('Missing arguments specifying the factor model. Remember to set either Lambda, loadings, or nIndicator and loadM.')
+  if(!('alpha' %in% args || 'abratio' %in% args)) stop('Missing arguments related to power analysis. Remember to set alpha, power, N, and/or abratio.')
+}
