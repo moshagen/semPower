@@ -45,7 +45,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
   df <- pp[['df']]
   
-  fit <- getIndices.F(pp[['fmin']], df, pp[['p']], SigmaHat, Sigma, muHat, mu, pp[['N']])
+  fit <- getIndices.F(pp[['fmin']], df, pp[['p']], pp[['SigmaHat']], pp[['Sigma']], pp[['muHat']], pp[['mu']], pp[['N']])
   
   ncp <- getNCP(pp[['fmin.g']], pp[['N']])
   log.abratio <- log(abratio)
