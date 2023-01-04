@@ -3,13 +3,12 @@
 
 #' getNCP
 #'
-#' calculates non-centrality parameter from the population minimum of the fit-function
+#' Computes the non-centrality parameter from the population minimum of the fit-function 
+#' (dividing by N - 1 following the Wishart likelihood): `ncp = (N - 1) * F0`.
 #'
-#' ncp = (n-1) * F
-#'
-#' @param Fmin population minimum of the fit-function
-#' @param n number of observations
-#' @return NCP
+#' @param Fmin population minimum of the fit-function (can be a list for multiple group models).
+#' @param n number of observations (can be a list for multiple group models).
+#' @return Returns the implied NCP.
 getNCP <- function(Fmin, n){
   NCP <- unlist(Fmin) * (unlist(n) - 1)
   sum(NCP)
@@ -18,13 +17,11 @@ getNCP <- function(Fmin, n){
 
 #' getChiSquare.NCP
 #'
-#' calculates chi-square from NCP
-#'
-#' chi = ncp + df
+#' Computes chi-square from the non-centrality parameter: `chi-square = ncp + df`.
 #'
 #' @param NCP non-centrality parameter
 #' @param df model degrees of freedom
-#' @return chiSquare
+#' @return Returns chi-square
 getChiSquare.NCP <- function(NCP, df){
   chiSquare <- NCP + df
   chiSquare
@@ -32,16 +29,14 @@ getChiSquare.NCP <- function(NCP, df){
 
 #' getChiSquare.F
 #'
-#' calculates chis-square from the population minimum of the fit-function
+#' Computes the (Wishart-) chi-square from the population minimum of the fit-function: 
+#' `chi-square = (N - 1) * F0 + df = ncp + df`. Note that F0 is the population minimum. 
+#' Using F_hat would give `chi-square = (N - 1) * F_hat`.
 #'
-#' chi = (n-1)*F +  df = ncp + df
-#'
-#' note that F is the population minimum; using F_hat would give chi = (n-1)*F_hat
-#'
-#' @param Fmin population minimum of the fit-function
-#' @param n number of observations
+#' @param Fmin population minimum of the fit-function (can be a list for multiple group models).
+#' @param n number of observations  (can be a list for multiple group models).
 #' @param df model degrees of freedom
-#' @return NCP
+#' @return Returns chi-square
 getChiSquare.F <- function(Fmin, n, df){
   chiSquare <- getNCP(Fmin, n) + df
   chiSquare
@@ -52,16 +47,18 @@ getChiSquare.F <- function(Fmin, n, df){
 
 
 #' getF
-#' calculates minimum of the ML-fit-function from known fit indices
+#' 
+#' Computes the minimum of the ML-fit-function from known fit indices.
+#' 
 #' @param effect magnitude of effect
-#' @param effect.measure measure of effect, one of 'fmin','rmsea','agfi','gfi','mc'
+#' @param effect.measure measure of effect, one of `'fmin'`, `'rmsea'`, `'agfi'`, `'gfi'`, `'mc'`
 #' @param df model degrees of freedom
-#' @param p number of observed varaibles
+#' @param p number of observed variables
 #' @param SigmaHat model implied covariance matrix
-#' @param Sigma population covariance matrix
+#' @param Sigma observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @return Fmin
+#' @return Returns Fmin
 getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
   fmin <- effect
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
@@ -80,13 +77,12 @@ getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, S
 
 #' getF.RMSEA
 #'
-#' calculates minimum of the ML-fit-function from RMSEA
-#'
-#' F_min = rmsea^2 * df
+#' Computes the minimum of the ML-fit-function from RMSEA:
+#' `F_min = rmsea^2 * df`.
 #'
 #' @param RMSEA RMSEA
 #' @param df model degrees of freedom
-#' @return Fmin
+#' @return Returns Fmin
 getF.RMSEA <- function(RMSEA, df){
   fmin <- RMSEA^2 * df
   fmin
@@ -95,11 +91,10 @@ getF.RMSEA <- function(RMSEA, df){
 
 #' getF.Mc
 #'
-#' calculates minimum of the ML-fit-function from Mc
-#'
+#' Computes the minimum of the ML-fit-function from Mc.
 #'
 #' @param Mc Mc
-#' @return Fmin
+#' @return Returns Fmin
 getF.Mc <- function(Mc){
   fmin <- -2 * log(Mc)
   fmin
@@ -107,12 +102,11 @@ getF.Mc <- function(Mc){
 
 #' getF.GFI
 #'
-#' calculates minimum of the ML-fit-function from AGFI
-#'
+#' Computes the minimum of the ML-fit-function from GFI.
 #'
 #' @param GFI GFI
 #' @param p number of observed variables
-#' @return Fmin
+#' @return Returns Fmin
 getF.GFI <- function(GFI, p){
   fmin <- -(GFI - 1) * p / (2 * GFI)
   fmin
@@ -121,14 +115,12 @@ getF.GFI <- function(GFI, p){
 
 #' getF.AGFI
 #'
-#' calculates minimum of the ML-fit-function from AGFI
-#'
-#' F_min = rmsea^2 * df
+#' Computes the minimum of the ML-fit-function from AGFI.
 #'
 #' @param AGFI AGFI
 #' @param df model degrees of freedom
 #' @param p number of observed variables
-#' @return Fmin
+#' @return Returns Fmin
 getF.AGFI <- function(AGFI, df, p){
   fmin <- -(AGFI - 1) * df * p / (p * p + p + (2 * AGFI - 2) * df)
   fmin
@@ -139,8 +131,7 @@ getF.AGFI <- function(AGFI, df, p){
 
 #' getIndices.F
 #'
-#' calculates known indices from minimum of the ML-fit-function
-#'
+#' Computes known indices from the minimum of the ML-fit-function.
 #'
 #' @param fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
@@ -185,17 +176,15 @@ getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHa
 }
 
 
-
 #' getRMSEA.F
 #'
-#' calculates RMSEA from minimum of the ML-fit-function
-#'
-#' F_min = rmsea^2 * df
+#' Computes RMSEA from the minimum of the ML-fit-function
+#' `F_min = rmsea^2 * df`.
 #'
 #' @param Fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
 #' @param nGroups the number of groups
-#' @return RMSEA
+#' @return Returns RMSEA
 getRMSEA.F <- function(Fmin, df, nGroups = 1){
   RMSEA <- sqrt(Fmin / df) * sqrt(nGroups)
   RMSEA
@@ -203,11 +192,10 @@ getRMSEA.F <- function(Fmin, df, nGroups = 1){
 
 #' getMc.F
 #'
-#' calculates Mc from minimum of the ML-fit-function
-#'
+#' Computes Mc from the minimum of the ML-fit-function.
 #'
 #' @param Fmin minimum of the ML-fit-function
-#' @return Mc
+#' @return Returns Mc
 getMc.F <- function(Fmin){
   Mc <- exp(-.5 * Fmin)
   Mc
@@ -216,12 +204,11 @@ getMc.F <- function(Fmin){
 
 #' getGFI.F
 #'
-#' calculates GFI from minimum of the ML-fit-function
-#'
+#' Computes GFI from the minimum of the ML-fit-function.
 #'
 #' @param Fmin minimum of the ML-fit-function
 #' @param p number of observed variables
-#' @return GFI
+#' @return Returns GFI
 getGFI.F <- function(Fmin, p){
   GFI <- p / (p + 2 * Fmin)
   GFI
@@ -230,13 +217,12 @@ getGFI.F <- function(Fmin, p){
 
 #' getAGFI.F
 #'
-#' calculates AGFI from minimum of the ML-fit-function
-#'
+#' Computes AGFI from the minimum of the ML-fit-function.
 #'
 #' @param Fmin minimum of the ML-fit-function
 #' @param df model degrees of freedom
 #' @param p number of observed variables
-#' @return AGFI
+#' @return Returns AGFI
 getAGFI.F <- function(Fmin, df, p){
   AGFI <- -(Fmin * p * p + (Fmin - df) * p - 2 * df * Fmin) / (df * p + 2 * df * Fmin)
   AGFI
@@ -249,16 +235,15 @@ getAGFI.F <- function(Fmin, df, p){
 
 #' getF.Sigma
 #'
-#' calculates minimum of the ML-fit-function given model-implied and observed covariance matrix.
-#'
-#' F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
-#' with meanstructure add (mu - muHat)' SigmaHat^-1 (mu - muHat)
+#' Computes the minimum of the ML-fit-function given the model-implied and the observed (or population) covariance matrix:
+#' `F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))`. When a meanstructure is included, 
+#' `(mu - muHat)' SigmaHat^-1 (mu - muHat)` is added.
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @return Fmin
+#' @return Returns Fmin
 getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
@@ -272,14 +257,14 @@ getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
 
 #' getSRMR.Sigma
 #'
-#' calculates SRMR given model-implied and observed covariance matrix.
-#'
+#' Computes SRMR given the model-implied and the observed (or population) covariance matrix, 
+#' using the Hu & Bentler approach to standardization.
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @return SRMR
+#' @return Returns SRMR
 getSRMR.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
@@ -318,14 +303,16 @@ getSRMR.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
 
 #' getSRMR.Sigma.mgroups 
 #'
-#' calculates SRMR given model-implied and observed covariance matrix for multiple group models
+#' Computes SRMR given the model-implied and the observed (or population) covariance matrix for multiple group models
+#' using the Hu & Bentler approach to standardization and the MPlus approach to multiple group sampling weights 
+#' (weight squared sums of residuals).
 #'
 #' @param SigmaHat a list of model implied covariance matrices
 #' @param S a list of observed (or population) covariance matrices
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
 #' @param N a list of group weights
-#' @return SRMR
+#' @return Returns SRMR
 getSRMR.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
   if(is.null(mu)){
     srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]]))
@@ -341,19 +328,16 @@ getSRMR.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
 }
 
 
-
-
 #' getCFI.Sigma
 #'
-#' calculates CFI given model-implied and observed covariance matrix.
-#'
-#' cfi= (f_null - f_hyp) / f_null
+#' Computes CFI given the model-implied and the observed (or population) covariance matrix: 
+#' `CFI = (F_null - F_hyp) / F_null`.
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @return CFI
+#' @return Returns CFI
 getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
@@ -368,16 +352,15 @@ getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
 
 #' getCFI.Sigma.mgroups
 #'
-#' calculates CFI given model-implied and observed covariance matrix for multiple group models.
-#'
-#' cfi= (f_null - f_hyp) / f_null
+#' Computes CFI given the model-implied and the observed (or population) covariance matrix for multiple group models.
+#' `CFI = (F_null - F_hyp) / F_null` applying multiple group sampling weights to `F_hyp` and `F_null`. 
 #'
 #' @param SigmaHat a list of model implied covariance matrix
 #' @param S a list of observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
 #' @param N a list of group weights
-#' @return CFI
+#' @return Returns CFI
 getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
   N <- unlist(N)
   
