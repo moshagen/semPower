@@ -159,7 +159,7 @@ semPower.genSigma <- function(Lambda = NULL,
   nGroups <- unlist(lapply(seq_along(argsMG), function(x){
     len <- 1
     if(names(argsMG)[x] %in% c('loadings', 'loadMinMax', 'metricInvariance')){
-      if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]][[1]])
+      if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]])
     }else{
       if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
     }
