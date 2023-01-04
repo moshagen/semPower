@@ -95,7 +95,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             p <- mcomp$`Pr(>Chisq)`[2]
             df <- mcomp$`Df diff`[2]
             cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
-            if(is.list(Sigma)) cfminGroups <- cfminGroups - lavresH1@Fit@test[[testType]][['stat.group']] / (unlist(N) - 1)
+            if(is.list(Sigma)) cfminGroups <- cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
             
           }
         }
