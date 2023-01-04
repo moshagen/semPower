@@ -147,7 +147,10 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     if(!is.null(seed)) set.seed(seed)
     iterationCounter <<- 1
 
-    # determine starting N using analytical power
+    ### determine starting N using analytical power
+    # set ml estm in case lavoptions request otherwise to avoid semPower complaining
+    if(!is.null(lavOptions[['estimator']])) lavOptions[['estimator']] <- 'ML'
+    if(!is.null(lavOptionsH1[['estimator']])) lavOptionsH1[['estimator']] <- 'ML'
     ap <- semPower.powerLav(type = 'a-priori', 
                             alpha = alpha, beta = beta, power = power,
                             modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
