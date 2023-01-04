@@ -1,21 +1,36 @@
 #' simulate
 #'
-#' estimate empirical power using a simulation approach
+#' Estimates empirical power using a simulation approach.
 #' 
-#' @param modelH0 lavaan model string defining the (incorrect) analysis model.
-#' @param modelH1 lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param modelH0 `lavaan` model string defining the (incorrect) analysis model.
+#' @param modelH1 `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
 #' @param N sample size
 #' @param alpha alpha error probability
 #' @param nReplications number of random samples drawn.
 #' @param minConvergenceRate the minimum convergence rate required
-#' @param lavOptions a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
-#' @param lavOptionsH1 lavoptions for H1model. If NULL, the same as lavOptions.
-#' @param returnFmin whether return the median unbiased Fmin over replications (i.e, fmin_0 = fmin_hat - df/N) 
-#' @return empirical power: sum(p < alpha) / nReplications
+#' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation
+#' @param lavOptionsH1 lavoptions when fitting `modelH1`. If `NULL`, the same as `lavOptions`.
+#' @param returnFmin whether to return the mean unbiased Fmin over replications (i. e., `fmin_0 = fmin_hat - df/N`) 
+#' @return Returns empirical power: `sum(p < alpha) / nReplications` or a list (if `returnFmin = TRUE`) with the following components:
+#' \item{`ePower`}{the empirical power.}
+#' \item{`meanFmin`}{the estimated mean unbiased Fmin over replications (i. e., `fmin_0 = fmin_hat - df/N`).}
+#' \item{`meanFminGroups`}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, `meanFmin != sum(meanFminGroups)`}
+#' \item{`df`}{the model df.}
+#' \item{`nrep`}{the successful number of replications.}
 #' @examples
 #' \dontrun{
+#' # get Sigma and modelH0
+#' powerCFA <- semPower.powerCFA(type = 'a-priori',
+#'                               comparison = 'saturated',
+#'                               Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)), 
+#'                               alpha = .05, beta = .05)
+#' # perform simulation       
+#' simulate(modelH0 = powerCFA$modelH0, 
+#'          powerCFA$Sigma,
+#'          N = powerCFA$power$requiredN,
+#'          alpha = powerCFA$power$alpha)
 #' }
 #' @importFrom utils txtProgressBar setTxtProgressBar
 simulate <- function(modelH0 = NULL, modelH1 = NULL,
@@ -148,23 +163,25 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 
 #' genData
 #' 
-#' generate random data from population variance-covariance matrix and population means.
-#' currently normal case only.
+#' Generates random data from population variance-covariance matrix and population means.
+#' Currently only the multivariate normal case.
 #'
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
-#' @param gIdx if not NULL, add gIdx as numeric group index as additional variable to generated data
-#' @return data
+#' @param gIdx if not `NULL`, add gIdx as numeric group index as additional variable to generated data
+#' @return Returns the generated data
 #' @examples
 #' \dontrun{
+#' gen <- semPower.genSigma(Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
+#' data <- genData(N = 500, Sigma = gen$Sigma) 
 #' }
 #' @importFrom stats rnorm 
 genData <- function(N = NULL, Sigma = NULL, mu = NULL, gIdx = NULL){
   randomData <- matrix(rnorm(N * ncol(Sigma)), N, ncol(Sigma)) 
   rdat <- t(t(chol(Sigma)) %*% t(randomData))
   if(!is.null(mu)) rdat <- rdat + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE)
-  if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL,c('gIdx')))) 
+  if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) 
   rdat
 }
 

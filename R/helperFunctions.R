@@ -1,9 +1,6 @@
 #' semPower.genSigma
 #'
 #' Generate a covariance matrix (and a mean vector) and associated `lavaan` model strings based on CFA or SEM model matrices.
-#' This method is internally called by all `semPower` convenience methods 
-#' (such as [semPower.powerCFA()], [semPower.powerMediation()], and [semPower.powerCLPM()]), so the definitions of the 
-#' factor models relies on the arguments of this function. 
 #' 
 #' @param Lambda factor loading matrix. A list for multiple group models. Can also be specified using various shortcuts, see [genLambda()].
 #' @param Phi for CFA models, factor correlation (or covariance) matrix or single number giving the correlation between all factors or `NULL` for uncorrelated factors. A list for multiple group models. 
@@ -44,14 +41,14 @@
 #' When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.  
 #' 
 #' If `Phi` is defined, a CFA model is used, if `Beta` is defined, a structural equation model. 
-#' When both `Phi` and `Beta` are `NULL`, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
+#' When both `Phi` and `Beta` are `NULL`, a CFA model is used with \eqn{\Phi = I}, i. e., uncorrelated factors.
 #' When `Phi` is a single number, all factor correlations are equal to this number.
 #' 
 #' When `Beta` is defined and `Psi` is `NULL`, \eqn{\Psi = I}.
 #' 
 #' When `Theta` is `NULL`, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
 #'
-#' Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts:
+#' Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts (see [genLambda()]):
 #' \itemize{
 #' \item `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
 #' \item `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
@@ -507,7 +504,7 @@ genModelString <- function(Lambda = NULL,
 #' 
 #' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
 #' @param lPsi (lesser) matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations off the diagonal. Can be omitted for no correlations beyond those implied by B. 
-#' @return the implied correlation matrix
+#' @return Returns the implied correlation matrix
 #' @examples
 #' \dontrun{
 #' # mediation model
@@ -580,13 +577,13 @@ getPhi.B <- function(B, lPsi = NULL){
 
 #' semPower.getDf
 #'
-#' Determines the degrees of freedom of a given model provided as `lavaan` model string. 
+#' Determines the degrees of freedom of a given model provided as `lavaan` model string. This only returns the regular df and does not account for approaches using scaled df.
 #' This requires the `lavaan` package.
 #' 
-#' @param lavModel the `lavaan` model string 
-#' @param nGroups for multigroup models: the number of groups 
-#' @param group.equal for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the `lavaan` conventions (`loadings`, `intercepts`, `means`, `residuals`, `residual.covariances`, `lv.variances`, `lv.covariances`, `regressions`).
-#' @return the df of the model
+#' @param lavModel the `lavaan` model string. Can also include (restrictions on) defined parameters.
+#' @param nGroups for multigroup models: the number of groups.
+#' @param group.equal for multigroup models: vector defining the type(s) of cross-group equality constraints following the `lavaan` conventions (`loadings`, `intercepts`, `means`, `residuals`, `residual.covariances`, `lv.variances`, `lv.covariances`, `regressions`).
+#' @return Returns the df of the model.
 #' @examples
 #' \dontrun{
 #' lavModel <- '
