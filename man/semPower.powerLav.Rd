@@ -39,7 +39,7 @@ semPower.powerLav(
 
 \item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
 
-\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}.}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}. See details.}
 }
 \value{
 A list containing the following components is returned:
@@ -56,11 +56,32 @@ Perform a power analysis given \code{lavaan} model strings defining the H0 and t
 a \code{lavaan} model string defining the population model or the population covariance matrix Sigma and the population means mu.
 This requires the \code{lavaan} package.
 }
+\details{
+Generic function to perform a power analysis based  on a true population covariance matrix Sigma
+and a model implied covariance matrix SigmaHat (and optionally the associated mean vectors),
+where SigmaHat (and muHat) is determined by fitting a respective H0 model using \code{lavaan},
+and Sigma (and mu) can also be provided through a corresponding \code{lavaan} model string.
+
+All \code{semPower} convenience functions internally call this function.
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
+\itemize{
+\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
+}
+}
 \examples{
 \dontrun{
-## a priori power analysis for the null hypothesis that the correlation between 
-## two cfa factors with a true correlation of .2 differs from zero
-# define population model 
+# set up two CFA factors with a true correlation of .2
 mPop <- '
   f1 =~ .5*x1 + .6*x2 + .4*x3
   f2 =~ .7*x4 + .8*x5 + .3*x6
@@ -74,18 +95,48 @@ mPop <- '
   f2 ~~ 1*f2
   f1 ~~ .2*f2
 '
-# define analysis model (restricting the factor correlation to zero) 
+# define the H0 analysis model (restricting the factor correlation to zero) 
 mH0 <- '
   f1 =~ x1 + x2 + x3
   f2 =~ x4 + x5 + x6
   f1 ~~ 0*f2
 '
-# do a priori power analsis
-lavpower.ap <- semPower.powerLav(type = 'a-priori', 
-                                 modelPop = mPop, modelH0 = mH0,
-                                 alpha = .05, beta = .05)
-summary(lavpower.ap$power)
+# determine N to reject the H0 that the correlation is zero 
+# with a power of 95\% on alpha = .05
+powerLav <- semPower.powerLav(type = 'a-priori', 
+                              modelPop = mPop, modelH0 = mH0,
+                              alpha = .05, beta = .05)
+summary(powerLav$power)
 
+# same as above, but also define an H1 comparison model 
+mH1 <- '
+  f1 =~ x1 + x2 + x3
+  f2 =~ x4 + x5 + x6
+  f1 ~~ f2
+'
+powerLav <- semPower.powerLav(type = 'a-priori', 
+                              modelPop = mPop, modelH0 = mH0, modelH1 = mH1,
+                              alpha = .05, beta = .05)
+
+# same as above, but use covariance matrix input instead of modelPop
+gen <- semPower.genSigma(Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)))
+Sigma <- gen$Sigma
+powerLav <- semPower.powerLav(type = 'a-priori', 
+                              Sigma = Sigma, modelH0 = mH0,
+                              alpha = .05, beta = .05)
+
+# note all of the above is identical to the output provided by the powerCFA convenience function
+powerCFA <- semPower.powerCFA(type = 'a-priori',
+                              comparison = 'saturated',
+                              Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
+                              alpha = .05, beta = .05)
+
+# same as above, but use simulated power analysis based on a robust ML estimator
+powerLav <- semPower.powerLav(type = 'a-priori', 
+                              Sigma = Sigma, modelH0 = mH0,
+                              alpha = .05, beta = .05, 
+                              simulatedPower = TRUE, nReplications = 500,
+                              lavOptions = list(estimator = 'MLM'))
 }
 }
 \seealso{

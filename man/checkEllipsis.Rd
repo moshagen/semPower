@@ -7,11 +7,8 @@
 checkEllipsis(...)
 }
 \arguments{
-\item{...}{the parameters to search}
-}
-\value{
-whether loadings and power are found
+\item{...}{the parameters to search.}
 }
 \description{
-checks whether ... contains arguments related to loadings and to power.
+Checks whether \code{...} contains arguments related to loadings and to power, stop otherwise.
 }

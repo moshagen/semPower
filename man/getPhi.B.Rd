@@ -12,7 +12,7 @@ getPhi.B(B, lPsi = NULL)
 \item{lPsi}{(lesser) matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations off the diagonal. Can be omitted for no correlations beyond those implied by B.}
 }
 \value{
-the implied correlation matrix
+Returns the implied correlation matrix
 }
 \description{
 Computes implied correlations (completely standardized) from Beta matrix, disallowing recursive paths.

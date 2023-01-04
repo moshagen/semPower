@@ -32,13 +32,13 @@ powerPrepare(
 
 \item{effect}{effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)}
 
-\item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}}
 
 \item{alpha}{alpha error}
 
 \item{beta}{beta error; set either beta or power}
 
-\item{power}{power (1-beta); set either beta or power}
+\item{power}{power (=1 - beta); set either beta or power}
 
 \item{abratio}{the ratio of alpha to beta}
 
@@ -46,31 +46,31 @@ powerPrepare(
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}}
 
-\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjunction with \code{Sigma} to define \code{effect} and \code{effect.measure}.}
 
-\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{observed (or population) covariance matrix (a list for multiple group models). Use in conjunction with \code{SigmaHat} to define \code{effect} and \code{effect.measure}.}
 
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
 
-\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}) (rather than analytical, \code{FALSE}) power analysis.}
 
-\item{modelH0}{for simulated power: lavaan model string defining the (incorrect) analysis model.}
+\item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
 
-\item{modelH1}{for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+\item{modelH1}{for simulated power: \code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
 \item{nReplications}{for simulated power: number of random samples drawn.}
 
 \item{minConvergenceRate}{for simulated power: the minimum convergence rate required}
 
-\item{lavOptions}{for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation}
+\item{lavOptions}{for simulated power: a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation.}
 }
 \value{
 list
 }
 \description{
-do some preparations common to all types of power analyses
+Performs some preparations common to all types of power analyses.
 }

@@ -14,11 +14,8 @@ getF.AGFI(AGFI, df, p)
 \item{p}{number of observed variables}
 }
 \value{
-Fmin
+Returns Fmin
 }
 \description{
-calculates minimum of the ML-fit-function from AGFI
-}
-\details{
-F_min = rmsea^2 * df
+Computes the minimum of the ML-fit-function from AGFI.
 }

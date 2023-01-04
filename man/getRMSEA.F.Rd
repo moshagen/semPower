@@ -14,11 +14,9 @@ getRMSEA.F(Fmin, df, nGroups = 1)
 \item{nGroups}{the number of groups}
 }
 \value{
-RMSEA
+Returns RMSEA
 }
 \description{
-calculates RMSEA from minimum of the ML-fit-function
-}
-\details{
-F_min = rmsea^2 * df
+Computes RMSEA from the minimum of the ML-fit-function
+\code{F_min = rmsea^2 * df}.
 }

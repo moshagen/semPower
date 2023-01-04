@@ -16,8 +16,9 @@ getSRMR.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
 \item{mu}{observed (or population) mean vector}
 }
 \value{
-SRMR
+Returns SRMR
 }
 \description{
-calculates SRMR given model-implied and observed covariance matrix.
+Computes SRMR given the model-implied and the observed (or population) covariance matrix,
+using the Hu & Bentler approach to standardization.
 }

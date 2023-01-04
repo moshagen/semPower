@@ -12,8 +12,8 @@ checkNullEffect(nullEffect, valid)
 \item{valid}{vector of valid effects}
 }
 \value{
-nullEffect
+Returns cleaned nullEffect
 }
 \description{
-checks whether nullEffect is one among valid effect
+Checks whether \code{nullEffect} is one of the valid effects, stop otherwise.
 }

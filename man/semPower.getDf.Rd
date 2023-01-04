@@ -7,17 +7,17 @@
 semPower.getDf(lavModel, nGroups = NULL, group.equal = NULL)
 }
 \arguments{
-\item{lavModel}{the \code{lavaan} model string}
+\item{lavModel}{the \code{lavaan} model string. Can also include (restrictions on) defined parameters.}
 
-\item{nGroups}{for multigroup models: the number of groups}
+\item{nGroups}{for multigroup models: the number of groups.}
 
-\item{group.equal}{for multigroup models: vector of strings defining the type(s) of cross-group equality constraints following the \code{lavaan} conventions (\code{loadings}, \code{intercepts}, \code{means}, \code{residuals}, \code{residual.covariances}, \code{lv.variances}, \code{lv.covariances}, \code{regressions}).}
+\item{group.equal}{for multigroup models: vector defining the type(s) of cross-group equality constraints following the \code{lavaan} conventions (\code{loadings}, \code{intercepts}, \code{means}, \code{residuals}, \code{residual.covariances}, \code{lv.variances}, \code{lv.covariances}, \code{regressions}).}
 }
 \value{
-the df of the model
+Returns the df of the model.
 }
 \description{
-Determines the degrees of freedom of a given model provided as \code{lavaan} model string.
+Determines the degrees of freedom of a given model provided as \code{lavaan} model string. This only returns the regular df and does not account for approaches using scaled df.
 This requires the \code{lavaan} package.
 }
 \examples{

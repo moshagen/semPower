@@ -13,16 +13,18 @@ genData(N = NULL, Sigma = NULL, mu = NULL, gIdx = NULL)
 
 \item{mu}{population means.}
 
-\item{gIdx}{if not NULL, add gIdx as numeric group index as additional variable to generated data}
+\item{gIdx}{if not \code{NULL}, add gIdx as numeric group index as additional variable to generated data}
 }
 \value{
-data
+Returns the generated data
 }
 \description{
-generate random data from population variance-covariance matrix and population means.
-currently normal case only.
+Generates random data from population variance-covariance matrix and population means.
+Currently only the multivariate normal case.
 }
 \examples{
 \dontrun{
+gen <- semPower.genSigma(Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
+data <- genData(N = 500, Sigma = gen$Sigma) 
 }
 }

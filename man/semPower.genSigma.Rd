@@ -47,9 +47,6 @@ Returns a list (or list of lists for multiple group models) containing the follo
 }
 \description{
 Generate a covariance matrix (and a mean vector) and associated \code{lavaan} model strings based on CFA or SEM model matrices.
-This method is internally called by all \code{semPower} convenience methods
-(such as \code{\link[=semPower.powerCFA]{semPower.powerCFA()}}, \code{\link[=semPower.powerMediation]{semPower.powerMediation()}}, and \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}), so the definitions of the
-factor models relies on the arguments of this function.
 }
 \details{
 This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model.
@@ -70,14 +67,14 @@ In either model, the meanstructure can be omitted, leading to factors with zero 
 When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.
 
 If \code{Phi} is defined, a CFA model is used, if \code{Beta} is defined, a structural equation model.
-When both \code{Phi} and \code{Beta} are \code{NULL}, a CFA model is used with \eqn{\Phi = I}, i.e., uncorrelated factors.
+When both \code{Phi} and \code{Beta} are \code{NULL}, a CFA model is used with \eqn{\Phi = I}, i. e., uncorrelated factors.
 When \code{Phi} is a single number, all factor correlations are equal to this number.
 
 When \code{Beta} is defined and \code{Psi} is \code{NULL}, \eqn{\Psi = I}.
 
 When \code{Theta} is \code{NULL}, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
 
-Instead of providing the loading matrix \eqn{\Lambda} via \code{Lambda}, there are several shortcuts:
+Instead of providing the loading matrix \eqn{\Lambda} via \code{Lambda}, there are several shortcuts (see \code{\link[=genLambda]{genLambda()}}):
 \itemize{
 \item \code{loadings}: defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.
 \item \code{nIndicator}: used in conjunction with \code{loadM} or \code{loadMinmax}, defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.

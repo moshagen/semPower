@@ -14,8 +14,8 @@ getAGFI.F(Fmin, df, p)
 \item{p}{number of observed variables}
 }
 \value{
-AGFI
+Returns AGFI
 }
 \description{
-calculates AGFI from minimum of the ML-fit-function
+Computes AGFI from the minimum of the ML-fit-function.
 }

@@ -10,8 +10,8 @@ getF.Mc(Mc)
 \item{Mc}{Mc}
 }
 \value{
-Fmin
+Returns Fmin
 }
 \description{
-calculates minimum of the ML-fit-function from Mc
+Computes the minimum of the ML-fit-function from Mc.
 }

@@ -16,12 +16,10 @@ getF.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
 \item{mu}{observed (or population) mean vector}
 }
 \value{
-Fmin
+Returns Fmin
 }
 \description{
-calculates minimum of the ML-fit-function given model-implied and observed covariance matrix.
-}
-\details{
-F_min = tr(S \%*\% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
-with meanstructure add (mu - muHat)' SigmaHat^-1 (mu - muHat)
+Computes the minimum of the ML-fit-function given the model-implied and the observed (or population) covariance matrix:
+\code{F_min = tr(S \%*\% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))}. When a meanstructure is included,
+\verb{(mu - muHat)' SigmaHat^-1 (mu - muHat)} is added.
 }

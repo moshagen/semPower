@@ -17,5 +17,5 @@ getFormattedResults(type, result, digits = 6)
 data.frame
 }
 \description{
-returned dataframe containing formatted results
+Return data.frame containing formatted results.
 }

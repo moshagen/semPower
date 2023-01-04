@@ -12,8 +12,8 @@ getGFI.F(Fmin, p)
 \item{p}{number of observed variables}
 }
 \value{
-GFI
+Returns GFI
 }
 \description{
-calculates GFI from minimum of the ML-fit-function
+Computes GFI from the minimum of the ML-fit-function.
 }

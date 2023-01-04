@@ -10,8 +10,8 @@ checkComparisonModel(comparison)
 \item{comparison}{comparison}
 }
 \value{
-valid type
+Returns cleaned comparison
 }
 \description{
-checks whether comparison is one of 'restricted' or 'saturated' (or respective shortcuts)
+Checks whether comparison is one of \code{'restricted'} or \code{'saturated'} (or respective shortcuts), stop otherwise.
 }

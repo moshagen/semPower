@@ -7,20 +7,17 @@
 getChiSquare.F(Fmin, n, df)
 }
 \arguments{
-\item{Fmin}{population minimum of the fit-function}
+\item{Fmin}{population minimum of the fit-function (can be a list for multiple group models).}
 
-\item{n}{number of observations}
+\item{n}{number of observations  (can be a list for multiple group models).}
 
 \item{df}{model degrees of freedom}
 }
 \value{
-NCP
+Returns chi-square
 }
 \description{
-calculates chis-square from the population minimum of the fit-function
-}
-\details{
-chi = (n-1)*F +  df = ncp + df
-
-note that F is the population minimum; using F_hat would give chi = (n-1)*F_hat
+Computes the (Wishart-) chi-square from the population minimum of the fit-function:
+\code{chi-square = (N - 1) * F0 + df = ncp + df}. Note that F0 is the population minimum.
+Using F_hat would give \code{chi-square = (N - 1) * F_hat}.
 }

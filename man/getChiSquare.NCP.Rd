@@ -12,11 +12,8 @@ getChiSquare.NCP(NCP, df)
 \item{df}{model degrees of freedom}
 }
 \value{
-chiSquare
+Returns chi-square
 }
 \description{
-calculates chi-square from NCP
-}
-\details{
-chi = ncp + df
+Computes chi-square from the non-centrality parameter: \code{chi-square = ncp + df}.
 }

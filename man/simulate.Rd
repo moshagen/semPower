@@ -19,9 +19,9 @@ simulate(
 )
 }
 \arguments{
-\item{modelH0}{lavaan model string defining the (incorrect) analysis model.}
+\item{modelH0}{\code{lavaan} model string defining the (incorrect) analysis model.}
 
-\item{modelH1}{lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+\item{modelH1}{\code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
 \item{Sigma}{population covariance matrix.}
 
@@ -35,19 +35,34 @@ simulate(
 
 \item{minConvergenceRate}{the minimum convergence rate required}
 
-\item{lavOptions}{a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation}
+\item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation}
 
-\item{lavOptionsH1}{lavoptions for H1model. If NULL, the same as lavOptions.}
+\item{lavOptionsH1}{lavoptions when fitting \code{modelH1}. If \code{NULL}, the same as \code{lavOptions}.}
 
-\item{returnFmin}{whether return the median unbiased Fmin over replications (i.e, fmin_0 = fmin_hat - df/N)}
+\item{returnFmin}{whether to return the mean unbiased Fmin over replications (i. e., \code{fmin_0 = fmin_hat - df/N})}
 }
 \value{
-empirical power: sum(p < alpha) / nReplications
+Returns empirical power: \code{sum(p < alpha) / nReplications} or a list (if \code{returnFmin = TRUE}) with the following components:
+\item{\code{ePower}}{the empirical power.}
+\item{\code{meanFmin}}{the estimated mean unbiased Fmin over replications (i. e., \code{fmin_0 = fmin_hat - df/N}).}
+\item{\code{meanFminGroups}}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, \code{meanFmin != sum(meanFminGroups)}}
+\item{\code{df}}{the model df.}
+\item{\code{nrep}}{the successful number of replications.}
 }
 \description{
-estimate empirical power using a simulation approach
+Estimates empirical power using a simulation approach.
 }
 \examples{
 \dontrun{
+# get Sigma and modelH0
+powerCFA <- semPower.powerCFA(type = 'a-priori',
+                              comparison = 'saturated',
+                              Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)), 
+                              alpha = .05, beta = .05)
+# perform simulation       
+simulate(modelH0 = powerCFA$modelH0, 
+         powerCFA$Sigma,
+         N = powerCFA$power$requiredN,
+         alpha = powerCFA$power$alpha)
 }
 }

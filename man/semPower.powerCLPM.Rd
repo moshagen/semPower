@@ -21,7 +21,7 @@ semPower.powerCLPM(
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{nWaves}{number of waves, must be >= 2.}
 
@@ -39,7 +39,7 @@ semPower.powerCLPM(
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).}
 
-\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}). Note that the order of factors is (x1, y1, x2, y2, ..., x_nWaves, y_nWaves).}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
 }
 \value{
 A list containing the following components is returned:
@@ -55,9 +55,323 @@ A list containing the following components is returned:
 Convenience function for performing power analysis on effects in a cross-lagged panel model (CLPM).
 This requires the lavaan package.
 }
+\details{
+This function performs a power analysis to reject various hypotheses arising
+in crossed-lagged panel models (CLPM). In a standard CLPM implemented here,
+two variables X and Y are repeatedly assessed at two or more different time points (\code{nWaves}), yielding
+autoregressive effects (stabilities; X1 -> X2 and Y1 -> Y2),
+synchronous effects (X1 <-> Y1, X2 <-> Y2), and cross-lagged effects (X1 -> Y2 and Y1 -> X2).
+CLPM including more than two waves are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., X1 -> Y3).
+CLPM based on latent factors usually assume at least metric invariance of the factors over waves (\code{metricInvariance}).
+
+Relevant hypotheses in arising in a CLPM are:
+\itemize{
+\item \code{autoregX = 0} and \code{autoregY = 0}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero.
+\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is zero.
+\item \code{autoregX = autoregY}: Tests the hypothesis that the autoregressive effect of X and Y are equal.
+\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}) are equal.
+\item \code{autoregX} and \code{autoregY}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves.
+\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is equal across waves.
+\item \code{corXY}: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves.
+}
+
+For hypotheses regarding the random-intercept CLPM, see \code{\link[=semPower.powerRICLPM]{semPower.powerRICLPM()}}.
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the factor model and the requested type of power analysis.
+
+Additional arguments related to the \strong{definition of the factor model}:
+\itemize{
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
+}
+
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
+If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+
+Note that the order of the factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves), i. e., the first factor is treated as the first measurement of X, the second as the first measurement of Y, the third as the second measurement of X, etc..
+
+Additional arguments related to the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
+\itemize{
+\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
+}
+}
 \examples{
 \dontrun{
- 
+# Determine required N in a 2-wave CLPM
+# to detect a crossed-effect of X (X1 -> Y2) of >= .2 
+# with a power of 95\% on alpha = 5\%, where
+# X1 and X2 are measured by 5 indicators loading by .5 each, and
+# Y1 and Y2 are measured by 3 indicators loading by .6 each, and
+# there is no synchronous correlation between X and Y (rXY = NULL), 
+# the stability of X is .8,
+# the stability of Y is .7, and
+# the crossed-effect of Y (Y1 -> X2) is .1.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# show summary
+summary(powerCLPM$power)
+# optionally use lavaan to verify the model was set-up as intended
+lavaan::sem(powerCLPM$modelH1, sample.cov = powerCLPM$Sigma,
+            sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+lavaan::sem(powerCLPM$modelH0, sample.cov = powerCLPM$Sigma,
+            sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+
+# same as above, but determine power with N = 500 on alpha = .05
+powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, N = 500)
+
+# same as above, but determine the critical chi-square with N = 500 so that alpha = beta
+powerCLPM <- semPower.powerCLPM(type = 'compromise',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                abratio = 1, N = 500)
+
+# same as above, but compare to the saturated model
+# (rather than to the less restricted model)
+powerCLPM <- semPower.powerCLPM(type = 'compromise',
+                                comparison = 'saturated',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                abratio = 1, N = 500)
+
+# same as above, but assume only observed variables
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                Lambda = diag(4),
+                                alpha = .05, beta = .05)
+
+# same as above, but provide reduced loadings matrix to define that
+# X1 and X2 are measured by 5 indicators each loading by .4, .5, .6, .5, .4, .6 
+# Y1 and Y2 are measured by 3 indicators each loading by .8, .6, .7
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                loadings = list(
+                                  c(.4, .5, .6, .5, .4, .6),    # X1
+                                  c(.8, .6, .7),                # Y1
+                                  c(.4, .5, .6, .5, .4, .6),    # X2
+                                  c(.8, .6, .7)                 # Y2
+                                ),
+                                alpha = .05, beta = .05)
+
+# same as above, but do not assume metric invariance across waves
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                metricInvariance = FALSE,
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that the crossed-effect of Y (Y1 -> X2) is >= .1.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedY = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that the stability of X (X1 -> X2) is >= .8.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'autoregX = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that the stability of Y (Y1 -> Y2) is >= .7.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'autoregY = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that 
+# the crossed effect of X (X1 -> Y2) of .2 differs from 
+# the crossed effect of Y (Y1 -> X2) of .1  
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = crossedY',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that 
+# the autoregressive effect of X (X1 -> X2) of .8 differs from 
+# the autoregressive effect of Y (Y1 -> Y2) of .7  
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'autoregX = autoregY',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but assume that the synchronous correlation between X and Y 
+# is .3 at the first wave, and the respective residual correlation is .2 at the second wave, 
+# and determine N to detect that synchronous residual correlation (at wave 2) is => .2.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = c(.3, .2),
+                                nullEffect = 'corXY = 0',
+                                nIndicator = c(5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# Determine required N in a 3-wave CLPM
+# to detect a crossed-effect of X (X1 -> Y2 and X2 -> Y3) of >= .2 
+# with a power of 95\% on alpha = 5\%, where
+# the crossed, autoregressive, and synchronous effects of X and Y are equal over waves,
+# X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
+# Y1, Y2, and X3 are measured by 3 indicators loading by .6 each, and
+# the synchronous correlation between X and Y are .2 across all three waves, and
+# the stability of X is .8 across all three waves,
+# the stability of Y is .7 across all three waves, and
+# the crossed-effect of Y (Y1 -> X2, and Y2 -> Y3) is .1.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 3,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = c(.2, .2, .2),
+                                waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+                                nullEffect = 'crossedX = 0',
+                                nIndicator = c(5, 3, 5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# Determine required N in a 3-wave CLPM to detect that 
+# the crossed-effect of X in waves 1 (X1 -> Y2) of .20 is equal to the 
+# the crossed-effect of X in waves 2 (X2 -> Y3) of .05 
+# with a power of 95\% on alpha = 5\%, where
+# the autoregressive effects of X and Y are equal over waves,
+# X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
+# Y1, Y2, and X3 are measured by 3 indicators loading by .6 each, and
+# the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, and
+# the stability of X is .8 across all three waves,
+# the stability of Y is .7 across all three waves, and
+# the crossed-effects of Y (Y1 -> X2, and Y2 -> Y3) are both .1 (but freely estimated for each wave).
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 3,
+                                autoregEffects = c(.8, .7), 
+                                crossedEffects = list(
+                                  #  X    Y
+                                  c(.20, .10),   # wave1 -> wave2
+                                  c(.05, .10)),  # wave2 -> wave3
+                                rXY = c(.2, .3, .4),
+                                nullEffect = 'crossedX',
+                                waveEqual = c('autoregX', 'autoregY'),
+                                nIndicator = c(5, 3, 5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that 
+# the crossed-effect of X at wave 2 is >= .1.
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 3,
+                                autoregEffects = c(.8, .7), 
+                                crossedEffects = list(
+                                  #  X    Y
+                                  c(.20, .10),   # wave1 -> wave2
+                                  c(.05, .10)),  # wave2 -> wave3
+                                rXY = c(.2, .3, .4),
+                                nullEffect = 'crossedX',
+                                nullWhich = 2,
+                                waveEqual = c('autoregX', 'autoregY'),
+                                nIndicator = c(5, 3, 5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# same as above, but determine N to detect that 
+# the residual correlation between X and Y at wave 2 (of .3) differs from 
+# the residual correlation between X and Y at wave 3 (of .4) differs from 
+powerCLPM <- semPower.powerCLPM(type = 'a-priori',
+                                nWaves = 3,
+                                autoregEffects = c(.8, .7), 
+                                crossedEffects = list(
+                                   #  X    Y
+                                  c(.20, .10),   # wave1 -> wave2
+                                  c(.05, .10)),  # wave2 -> wave3
+                                rXY = c(.2, .3, .4),
+                                nullEffect = 'corXY',
+                                waveEqual = c('autoregX', 'autoregY'),
+                                nIndicator = c(5, 3, 5, 3, 5, 3),
+                                loadM = c(.5, .6, .5, .6, .5, .6),
+                                alpha = .05, beta = .05)
+
+# request a simulated post-hoc power analysis with 500 replications.
+powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
+                                nWaves = 2,
+                                autoregEffects = c(.8, .7),
+                                crossedEffects = c(.2, .1),
+                                rXY = NULL,
+                                nullEffect = 'crossedX = 0',
+                                Lambda = diag(4),
+                                alpha = .05, N = 500, 
+                                simulatedPower = TRUE, nReplications = 500)
 }
 }
 \seealso{

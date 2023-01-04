@@ -7,7 +7,7 @@
 semPower.showPlot(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE)
 }
 \arguments{
-\item{chiCrit}{critical chi-square, e.g. qchisq(alpha, df, ncp=0, lower.tail = F)}
+\item{chiCrit}{critical chi-square, e. g. \code{qchisq(alpha, df, ncp = 0, lower.tail = FALSE)}}
 
 \item{ncp}{non-centrality parameter under H1}
 
@@ -18,5 +18,5 @@ semPower.showPlot(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE)
 \item{showLabels}{whether to add labels}
 }
 \description{
-show a plot showing central and non-central chi-square distribution
+Shows a plot showing central and non-central chi-square distribution.
 }

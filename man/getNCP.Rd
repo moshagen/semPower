@@ -7,16 +7,14 @@
 getNCP(Fmin, n)
 }
 \arguments{
-\item{Fmin}{population minimum of the fit-function}
+\item{Fmin}{population minimum of the fit-function (can be a list for multiple group models).}
 
-\item{n}{number of observations}
+\item{n}{number of observations (can be a list for multiple group models).}
 }
 \value{
-NCP
+Returns the implied NCP.
 }
 \description{
-calculates non-centrality parameter from the population minimum of the fit-function
-}
-\details{
-ncp = (n-1) * F
+Computes the non-centrality parameter from the population minimum of the fit-function
+(dividing by N - 1 following the Wishart likelihood): \code{ncp = (N - 1) * F0}.
 }

@@ -9,9 +9,9 @@
 semPower(type, ...)
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{...}{other parameters related to the specific type of power analysis requested}
+\item{...}{other parameters related to the specific type of power analysis requested.}
 }
 \value{
 list

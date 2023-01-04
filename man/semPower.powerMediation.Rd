@@ -20,7 +20,7 @@ semPower.powerMediation(
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{bYX}{the standardized slope (direct effect) for X -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
@@ -36,7 +36,7 @@ semPower.powerMediation(
 
 \item{nullWhichGroups}{for \code{nullEffect = 'indA = indB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}).  Note that in case of a simple mediation, the order of factors is X, M, Y.}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. In case of a simple mediation, the order of factors is X, M, Y. See details.}
 }
 \value{
 A list containing the following components is returned:
@@ -53,92 +53,192 @@ Convenience function for performing power analysis concerning indirect effect(s)
 This requires the lavaan package.
 }
 \details{
+This function performs a power analysis to reject various hypotheses arising
+in the context of mediation:
+\itemize{
+\item \code{nullEffect = 'ind = 0'}: Tests the hypothesis that an indirect effect is zero.
+\item \code{nullEffect = 'indA = indB'}: Tests the hypothesis that an indirect effect is equal in two or more groups (always assuming metric invariance). This is currently only possible for models without latent variables.
+}
+
+The indirect effect of interest can be specified in two ways:
+\itemize{
+\item If a simple mediation involving three variables of the form \code{X -> M -> Y} is assumed, the arguments
+\code{bYX}, \code{bMX}, and \code{bYM} are used to define the respective slopes, e. g.  \code{bYX = .4}, \code{bMX = .5}, and \code{bYM = .3} translates to
+\verb{X -- .5 --> M -- .3 --> Y} and  \verb{X -- .4 --> Y}.
+\item More complex mediation structures can be defined by providing the \code{Beta} matrix along with \code{indirect} specifying which paths define the indirect effect. See examples below.
+}
+
 Notes on implementation:
 \itemize{
 \item For models without latent variables, \code{nullEffect = 'ind = 0'} and \code{nullEffect = 'indA = indB'} constrain the indirect effect to zero and to equality, respectively.
-\item For models with latent variables and \code{nullEffect = 'ind = 0'}, power is approximated by constraining the smallest slope contained in the indirect effect to zero.
-\item For models with latent variables multiple groups (i.e., \code{nullEffect = 'indA = indB'}), there is currently no way to determine power,
+\item For models with latent variables and \code{nullEffect = 'ind = 0'}, power is approximated by constraining the smallest slope contained in the indirect effect to zero. Although this hypothesis is not identical to the hypothesis of the absence of an indirect effect, it provides a close approximation of the resulting power.
+\item For models with latent variables multiple groups (i. e., \code{nullEffect = 'indA = indB'}), there is currently no way to determine power,
 because implementing equality constrains on the indirect effects leads to non-convergence and
-the approach to constrain a single or all slopes to equality across groups misrepresents the actual hypothesis of interest.
+the approach to constrain a single or all slopes to equality across groups can severely misrepresent the actual hypothesis of interest.
+}
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the factor model and the requested type of power analysis.
+
+Additional arguments related to the \strong{definition of the factor model}:
+\itemize{
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
+}
+
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
+If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+
+Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the thrird as Y. In case of a more complex mediation defined via the \code{Beta} matrix, the order of factors matches the order of \code{Beta}.
+
+Additional arguments related to the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
+\itemize{
+\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
 }
 }
 \examples{
 \dontrun{
-# simple case of X -> M -> Y mediation
-# X -- .30 --> M -- .40 --> Y 
-# X --------- .25 --------> Y 
-# providing the number of indicators by factor (X, M, Y) each loading by the same magnitude on its designed factor.
-medPower <- semPower.powerMediation(type = 'a-priori', 
+# simple case of X -> M -> Y mediation in the form of
+# X -- .30 --> M -- .40 --> Y
+# X --------- .25 --------> Y
+# determine the required N to detect the indirect effect of >= .12 (= .3 * .4) 
+# with a power of 95\% on alpha = 5\%, where   
+# X is measured by 3 indicators loading by .5 each, 
+# M is measured by 5 indicators loading by .6 each, 
+# Y is measured by 4 indicators loading by .7 each.
+powerMed <- semPower.powerMediation(type = 'a-priori',
                                     bYX = .25, bMX = .3, bYM = .4,
-                                    nIndicator = c(3, 5, 4), 
-                                    loadM = c(.5, .6, .7),                                     
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
                                     alpha = .05, beta = .05)
-summary(medPower$power)
-                                    
-# same mediation model as above, but assuming single loading of 1 for all factors 
-# (=> mediation model with manifest variables)
-medPower <- semPower.powerMediation(type = 'a-priori', 
+# show summary
+summary(powerMed$power)
+# optionally use lavaan to verify the model was set-up as intended
+lavaan::sem(powerMed$modelH1, sample.cov = powerMed$Sigma,
+sample.nobs = powerMed$power$requiredN, sample.cov.rescale = FALSE)
+lavaan::sem(powerMed$modelH0, sample.cov = powerMed$Sigma,
+sample.nobs = powerMed$power$requiredN, sample.cov.rescale = FALSE)
+
+# same as above, but determine power with N = 500 on alpha = .05
+powerMed <- semPower.powerMediation(type = 'post-hoc',
                                     bYX = .25, bMX = .3, bYM = .4,
-                                    nIndicator = c(1, 1, 1), loadM = 1,
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
+                                    alpha = .05, N = 500)
+
+# same as above, but determine the critical chi-square with N = 500 so that alpha = beta
+powerMed <- semPower.powerMediation(type = 'compromise',
+                                    bYX = .25, bMX = .3, bYM = .4,
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
+                                    abratio = 1, N = 500)
+
+# same as above, but compare to the saturated model
+# (rather than to the less restricted model)
+powerMed <- semPower.powerMediation(type = 'a-priori',
+                                    comparison = 'saturated',
+                                    bYX = .25, bMX = .3, bYM = .4,
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
                                     alpha = .05, beta = .05)
 
-# same latent mediation model as above, but specifying loadings through Lambda 
-Lambda <- matrix(c(
-                 #  X,   M,   Y
-                c(0.5, 0.0, 0.0),    
-                c(0.4, 0.0, 0.0),
-                c(0.3, 0.0, 0.0),
-                c(0.0, 0.7, 0.0),
-                c(0.0, 0.8, 0.0),
-                c(0.0, 0.5, 0.0),
-                c(0.0, 0.0, 0.5),
-                c(0.0, 0.0, 0.4),
-                c(0.0, 0.0, 0.6)
-               ), byrow = TRUE, ncol = 3)
-medPower <- semPower.powerMediation(type = 'a-priori', 
+# same as above, but assuming observed variables only (Lambda = diag(3))
+powerMed <- semPower.powerMediation(type = 'a-priori',
                                     bYX = .25, bMX = .3, bYM = .4,
-                                    Lambda = Lambda,                                     
+                                    Lambda = diag(3),
                                     alpha = .05, beta = .05)
 
-# same mediation model as above, but specifying Beta 
-B <- matrix(c(
-              c(.00, .00, .00),
-              c(.30, .00, .00),
-              c(.25, .40, .00)
-              ), byrow = TRUE, ncol = 3)
-medPower <- semPower.powerMediation(type = 'a-priori', 
-                                    Beta = B, indirect = list(c(2,1), c(3,2)),
-                                    Lambda = Lambda,
+
+# same mediation model as above, but specifying Beta and indirect
+Beta <- matrix(c(
+  #   X    M    Y
+  c(.00, .00, .00),    # X
+  c(.30, .00, .00),    # M
+  c(.25, .40, .00)     # Y
+), byrow = TRUE, ncol = 3)
+powerMed <- semPower.powerMediation(type = 'a-priori',
+                                    Beta = Beta, 
+                                    indirect = list(c(2, 1), c(3, 2)),
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
                                     alpha = .05, beta = .05)
 
 # Beta for a more complex mediation hypothesis
-# of the form X -> M1 -> M2 -> Y 
-# and using a reduced loading matrix
-B <- matrix(c(
-              c(.00, .00, .00, .00),       # X
-              c(.20, .00, .00, .00),       # M1
-              c(.00, .30, .00, .00),       # M2
-              c(.00, .00, .40, .00)        # Y
-              ), byrow = TRUE, ncol = 4)
-# only define primary loadings by factor
+# of the form X -- .2 --> M1 -- .3 --> M2 -- .40 -> Y 
+# (and all other effects being zero)
+# using a reduced loading matrix to define that
+# X is measured by 3 indicators loading by .4, .5, .8 
+# M1 is measured by 4 indicators loading by .7, .6, .5, .8
+# M2 is measured by 5 indicators loading by .5, .6, .3, .4, .6 
+# Y is measured by 4 indicators loading by .6, .7, .8
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # X
+  c(.20, .00, .00, .00),       # M1
+  c(.00, .30, .00, .00),       # M2
+  c(.00, .00, .40, .00)        # Y
+), byrow = TRUE, ncol = 4)
 loadings <- list(
-               c(0.4, 0.5, 0.8),           # X
-               c(0.7, 0.6, 0.5, 0.8),      # M1
-               c(0.5, 0.6, 0.3, 0.4, 0.6), # M2
-               c(0.6, 0.7, 0.8)            # Y
-               )
-
-medPower <- semPower.powerMediation(type = 'a-priori', 
-                                    Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+  c(0.4, 0.5, 0.8),           # X
+  c(0.7, 0.6, 0.5, 0.8),      # M1
+  c(0.5, 0.6, 0.3, 0.4, 0.6), # M2
+  c(0.6, 0.7, 0.8)            # Y
+)
+powerMed <- semPower.powerMediation(type = 'a-priori',
+                                    Beta = B, 
+                                    indirect = list(c(2, 1), c(3, 2), c(4, 3)),
                                     loadings = loadings,
                                     alpha = .05, beta = .05)
- 
-# multigroup example
-medPower <- semPower.powerMediation(type = 'a-priori', 
+
+# Determine required N to detect that the indirect effect 
+# in group 1 (of .2 * .3 = .09) differs from the indirect effect 
+# in group 2 (of .3 * .5 = .15).
+# The direct effect of X on Y is .25 in both groups.  
+# The model is based on observed variables only (Lambda = diag(3))
+# Both groups are sized equally (N = list(1, 1)).
+powerMed <- semPower.powerMediation(type = 'a-priori',
                                     nullEffect = 'indA = indB',
-                                    bYX = list(.25, .25), bMX = list(.3, .3), bYM = list(.4, .5),
-                                    Lambda = diag(3), N = list(1, 1),
-                                    alpha = .05, beta = .05)
+                                    bYX = list(.25, .25), 
+                                    bMX = list(.2, .3), 
+                                    bYM = list(.3, .5),
+                                    Lambda = diag(3),
+                                    alpha = .05, beta = .05, N = list(1, 1))
+
+# same as above, but specifying Beta 
+Beta1 <- matrix(c(
+  c(.00, .00, .00),    # X
+  c(.20, .00, .00),    # M
+  c(.25, .30, .00)     # Y
+), byrow = TRUE, ncol = 3)
+Beta2 <- matrix(c(
+  c(.00, .00, .00),    # X
+  c(.30, .00, .00),    # M
+  c(.25, .50, .00)     # Y
+), byrow = TRUE, ncol = 3)
+powerMed <- semPower.powerMediation(type = 'a-priori',
+                                    nullEffect = 'indA = indB',
+                                    Beta = list(Beta1, Beta2), 
+                                    indirect = list(c(2, 1), c(3, 2)),
+                                    Lambda = diag(3),
+                                    alpha = .05, beta = .05, N = list(1, 1))
+
+# request a simulated post-hoc power analysis with 500 replications.
+powerMed <- semPower.powerMediation(type = 'post-hoc',
+                                    bYX = .25, bMX = .3, bYM = .4,
+                                    nIndicator = c(3, 5, 4),
+                                    loadM = c(.5, .6, .7),
+                                    alpha = .05, N = 500,
+                                    simulatedPower = TRUE, nReplications = 500)
 }
 }
 \seealso{

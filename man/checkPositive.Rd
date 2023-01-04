@@ -9,8 +9,8 @@ checkPositive(x, message = NULL)
 \arguments{
 \item{x}{x}
 
-\item{message}{identifier for x}
+\item{message}{identifier for \code{x}}
 }
 \description{
-checks whether x is defined and a positive number, stop otherwise
+Checks whether \code{x} is defined and a positive number, stop otherwise.
 }

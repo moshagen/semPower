@@ -22,7 +22,7 @@ semPower.powerRICLPM(
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'Saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'Restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{nWaves}{number of waves, must be >= 3.}
 
@@ -42,7 +42,7 @@ semPower.powerRICLPM(
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).}
 
-\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}). Note that the order of factors is (x1, y1, x2, y2, ..., x_nWaves, y_nWaves), see details.}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
 }
 \value{
 A list containing the following components is returned:

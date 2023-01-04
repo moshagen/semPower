@@ -18,8 +18,10 @@ getSRMR.Sigma.mgroups(SigmaHat, S, muHat = NULL, mu = NULL, N)
 \item{N}{a list of group weights}
 }
 \value{
-SRMR
+Returns SRMR
 }
 \description{
-calculates SRMR given model-implied and observed covariance matrix for multiple group models
+Computes SRMR given the model-implied and the observed (or population) covariance matrix for multiple group models
+using the Hu & Bentler approach to standardization and the MPlus approach to multiple group sampling weights
+(weight squared sums of residuals).
 }

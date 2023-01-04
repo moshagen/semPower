@@ -36,5 +36,5 @@ getIndices.F(
 list of indices
 }
 \description{
-calculates known indices from minimum of the ML-fit-function
+Computes known indices from the minimum of the ML-fit-function.
 }

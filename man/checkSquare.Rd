@@ -9,8 +9,8 @@ checkSquare(x, message = NULL)
 \arguments{
 \item{x}{x}
 
-\item{message}{identifier for x}
+\item{message}{identifier for \code{x}}
 }
 \description{
-checks whether x is a square matrix
+Checks whether \code{x} is a square matrix, stop otherwise.
 }

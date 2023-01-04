@@ -12,11 +12,9 @@ getF.RMSEA(RMSEA, df)
 \item{df}{model degrees of freedom}
 }
 \value{
-Fmin
+Returns Fmin
 }
 \description{
-calculates minimum of the ML-fit-function from RMSEA
-}
-\details{
-F_min = rmsea^2 * df
+Computes the minimum of the ML-fit-function from RMSEA:
+\code{F_min = rmsea^2 * df}.
 }

@@ -18,11 +18,9 @@ getCFI.Sigma.mgroups(SigmaHat, S, muHat = NULL, mu = NULL, N)
 \item{N}{a list of group weights}
 }
 \value{
-CFI
+Returns CFI
 }
 \description{
-calculates CFI given model-implied and observed covariance matrix for multiple group models.
-}
-\details{
-cfi= (f_null - f_hyp) / f_null
+Computes CFI given the model-implied and the observed (or population) covariance matrix for multiple group models.
+\code{CFI = (F_null - F_hyp) / F_null} applying multiple group sampling weights to \code{F_hyp} and \code{F_null}.
 }

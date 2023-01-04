@@ -2,8 +2,7 @@
 % Please edit documentation in R/effectSizes.R
 \name{getF}
 \alias{getF}
-\title{getF
-calculates minimum of the ML-fit-function from known fit indices}
+\title{getF}
 \usage{
 getF(
   effect,
@@ -19,24 +18,23 @@ getF(
 \arguments{
 \item{effect}{magnitude of effect}
 
-\item{effect.measure}{measure of effect, one of 'fmin','rmsea','agfi','gfi','mc'}
+\item{effect.measure}{measure of effect, one of \code{'fmin'}, \code{'rmsea'}, \code{'agfi'}, \code{'gfi'}, \code{'mc'}}
 
 \item{df}{model degrees of freedom}
 
-\item{p}{number of observed varaibles}
+\item{p}{number of observed variables}
 
 \item{SigmaHat}{model implied covariance matrix}
 
-\item{Sigma}{population covariance matrix}
+\item{Sigma}{observed (or population) covariance matrix}
 
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
 }
 \value{
-Fmin
+Returns Fmin
 }
 \description{
-getF
-calculates minimum of the ML-fit-function from known fit indices
+Computes the minimum of the ML-fit-function from known fit indices.
 }

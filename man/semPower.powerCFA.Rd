@@ -27,7 +27,7 @@ semPower.powerCFA(
 
 \item{nullWhichGroups}{for \code{nullEffect = 'corA = corB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{...}{other parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and specifying the factor model (see \code{\link[=semPower.genSigma]{semPower.genSigma()}}). See details.}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. See details.}
 }
 \value{
 A list containing the following components is returned:
@@ -51,7 +51,7 @@ in standard CFA models:
 \itemize{
 \item \code{nullEffect = 'cor = 0'}: Tests the hypothesis that the correlation between two factors is zero.
 \item \code{nullEffect = 'corX = corZ'}: Tests the hypothesis that two or more correlations between three or more factors are equal to each other.
-\item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between two factors is equal in two or more groups.
+\item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between two factors is equal in two or more groups (always assuming metric invariance).
 }
 
 For hypotheses regarding regression relationships between factors, see \code{\link[=semPower.powerRegression]{semPower.powerRegression()}}.
@@ -89,37 +89,44 @@ Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower 
 \examples{
 \dontrun{
 # get required N to detect a correlation of >= .2 between two factors
-# measured by 5 and 6 indicators, respectively, and all loadings equal to .5
-cfapower <- semPower.powerCFA(type = 'a-priori',
+# with a power of 95\% on alpha = 5\%, where the factors are  
+# measured by 5 and 6 indicators, respectively, and all loadings are equal to .5
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,
                               alpha = .05, beta = .05)
-summary(cfapower$power)
+# show summary
+summary(powercfa$power)
+# optionally use lavaan to verify the model was set-up as intended
+lavaan::sem(powercfa$modelH1, sample.cov = powercfa$Sigma, 
+sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
+lavaan::sem(powercfa$modelH0, sample.cov = powercfa$Sigma, 
+sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
 
-# same as above, but request a post-hoc power analysis with N = 500
-cfapower <- semPower.powerCFA(type = 'post-hoc',
+# same as above, but determine power with N = 500 on alpha = .05
+powercfa <- semPower.powerCFA(type = 'post-hoc',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,
                               alpha = .05, N = 500)
 
-# same as above, but request a compromise power analysis
-cfapower <- semPower.powerCFA(type = 'compromise',
+# same as above, but determine the critical chi-square with N = 500 so that alpha = beta
+powercfa <- semPower.powerCFA(type = 'compromise',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,
                               abratio = 1, N = 500)
                               
 # same as above, but compare to the saturated model 
 # (rather than to the less restricted model)
-cfapower <- semPower.powerCFA(type = 'a-priori',
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               comparison = 'saturated',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,
                               alpha = .05, beta = .05)
                               
 # same as above, but provide a reduced loading matrix defining
-# three indicators with loadings of .7., .6, and .5 on the first factor and
+# three indicators with loadings of .7, .6, and .5 on the first factor and
 # four indicators with loadings of .5, .6, .4, .8 on the second factor 
-cfapower <- semPower.powerCFA(type = 'a-priori',
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               Phi = .2, 
                               loadings = list(c(.7, .6, .5), c(.5, .6, .4, .8)),
                               alpha = .05, beta = .05)
@@ -133,7 +140,7 @@ Phi <- matrix(c(
   c(0.30, 0.10, 1.00)
 ), ncol = 3,byrow = TRUE)
 
-cfapower <- semPower.powerCFA(type = 'a-priori',
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               Phi = Phi,
                               nullWhich = c(1, 3), 
                               nIndicator = c(3, 3, 3), loadM = c(.5, .6, .7),
@@ -142,7 +149,7 @@ cfapower <- semPower.powerCFA(type = 'a-priori',
 # same as above, but ask for N to detect that 
 # the correlation between factors 1 and 2 (of r = .2) differs from
 # the correlation between factors 2 and 3 (of r = .3).
-cfapower <- semPower.powerCFA(type = 'a-priori',
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               Phi = Phi,
                               nullEffect = 'corX = corZ',
                               nullWhich = list(c(1, 2), c(1, 3)), 
@@ -150,7 +157,7 @@ cfapower <- semPower.powerCFA(type = 'a-priori',
                               alpha = .05, beta = .05)
                               
 # same as above, but ask for N to detect that all three correlations are unequal
-cfapower <- semPower.powerCFA(type = 'a-priori',
+powercfa <- semPower.powerCFA(type = 'a-priori',
                               Phi = Phi,
                               nullEffect = 'corX = corZ',
                               nullWhich = list(c(1, 2), c(1, 3), c(2, 3)), 
@@ -160,17 +167,18 @@ cfapower <- semPower.powerCFA(type = 'a-priori',
 # get required N to detect that the correlation between two factors
 # in group 1 (of r = .2) differs from the one in group 2 (of r = .4). 
 # The measurement model is identical for both groups:
-# The first factor is measured by 3 indicators each loading by .7, 
-# the second facgtor is measured by 6 indicators each loading by .5.
-cfapower <- semPower.powerCFA(type = 'a-priori', 
+# The first factor is measured by 3 indicators loading by .7 each, 
+# the second factor is measured by 6 indicators loading by .5 each.
+# Both groups are sized equally (N = list(1, 1)).
+powercfa <- semPower.powerCFA(type = 'a-priori', 
                               nullEffect = 'corA = corB',
                               Phi = list(.2, .4), 
                               loadM = c(.7, .5), 
                               nIndicator = c(3, 6), 
-                              alpha = .05, beta = .05, N = c(1, 1))
+                              alpha = .05, beta = .05, N = list(1, 1))
 
 # request a simulated post-hoc power analysis with 500 replications.
-cfapower <- semPower.powerCFA(type = 'post-hoc',
+powercfa <- semPower.powerCFA(type = 'post-hoc',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,
                               alpha = .05, N = 500, 
