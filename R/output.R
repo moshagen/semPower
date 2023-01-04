@@ -2,7 +2,7 @@
 
 #' getFormattedResults
 #'
-#' returned dataframe containing formatted results
+#' Return data.frame containing formatted results.
 #' 
 #' @param type type of power analysis
 #' @param result result object (list)

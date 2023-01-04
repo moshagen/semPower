@@ -1,8 +1,8 @@
 #' semPower.showPlot
 #'
-#' show a plot showing central and non-central chi-square distribution
+#' Shows a plot showing central and non-central chi-square distribution.
 #' 
-#' @param chiCrit critical chi-square, e.g. qchisq(alpha, df, ncp=0, lower.tail = F)
+#' @param chiCrit critical chi-square, e. g. `qchisq(alpha, df, ncp = 0, lower.tail = FALSE)`
 #' @param ncp non-centrality parameter under H1
 #' @param df degrees of freedom
 #' @param linewidth linewidth
@@ -67,16 +67,16 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 
 #' sempower.powerPlot.byN
 #'
-#' show a plot showing power as function of N for a given effect and alpha
+#' Shows a plot showing power as function of N for a given effect and alpha.
 #' 
 #' @param effect effect size specifying the discrepancy between H0 and H1
-#' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`
 #' @param alpha alpha error
 #' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure. 
-#' @param Sigma population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.
-#' @param power.min minimum power, must not be smaller than alpha
+#' @param p the number of observed variables, required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`
+#' @param SigmaHat model implied covariance matrix. Use in conjunction with `Sigma`` to define `effect` and `effect.measure`. 
+#' @param Sigma population covariance matrix. Use in conjunction with `SigmaHat` to define `effect` and `effect.measure`.
+#' @param power.min minimum power, must not be smaller than `alpha`.
 #' @param power.max maximum power
 #' @param steps number of steps 
 #' @param linewidth linewidth
@@ -138,13 +138,13 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 
 #' sempower.powerPlot.byEffect
 #'
-#' show a plot showing power as function of N for a given effect and alpha
+#' Shows a plot showing power as function of the effect for a given N and alpha.
 #' 
-#' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`
 #' @param alpha alpha error
 #' @param N the number of observations
 #' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
+#' @param p the number of observed variables, required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`
 #' @param effect.min minimum effect
 #' @param effect.max maximum effect
 #' @param steps number of steps 

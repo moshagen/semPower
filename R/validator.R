@@ -1,27 +1,27 @@
 #' powerPrepare
 #'
-#' do some preparations common to all types of power analyses
+#' Performs some preparations common to all types of power analyses.
 #'
 #' @param type type of power analysis
 #' @param effect effect size specifying the discrepancy between H0 and H1 (a list for multiple group models; a vector of length 2 for effect-size differences)
-#' @param effect.measure type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`
 #' @param alpha alpha error
 #' @param beta beta error; set either beta or power
-#' @param power power (1-beta); set either beta or power
+#' @param power power (=1 - beta); set either beta or power
 #' @param abratio the ratio of alpha to beta
 #' @param N the number of observations (a list for multiple group models)
 #' @param df the model degrees of freedom 
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure. 
-#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
+#' @param p the number of observed variables, required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`
+#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with `Sigma` to define `effect` and `effect.measure`. 
+#' @param Sigma observed (or population) covariance matrix (a list for multiple group models). Use in conjunction with `SigmaHat` to define `effect` and `effect.measure`.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
-#' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
-#' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
+#' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
+#' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param nReplications for simulated power: number of random samples drawn.
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required
-#' @param lavOptions for simulated power: a list of additional options passed to lavaan, e.g., list(estimator = 'mlm') to request robust ML estimation
+#' @param lavOptions for simulated power: a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation.
 #' @return list
 #' @importFrom utils installed.packages menu
 powerPrepare <- function(type = NULL, 
@@ -137,25 +137,25 @@ powerPrepare <- function(type = NULL,
 
 #' validateInput
 #'
-#' Validates input for power functions
+#' Validates input for power functions.
 #'
-#' @param power.type type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"
+#' @param power.type type of power analyses, one of `"a-priori"`, `"post-hoc"`, `"compromise"`, `"powerplot.byN"`, `"powerplot.byEffect"`
 #' @param effect effect size specifying the discrepancy between H0 and H1
-#' @param effect.measure type of effect, one of "F0, "RMSEA", "Mc", "GFI", AGFI"
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`
 #' @param alpha alpha error
 #' @param beta beta error
-#' @param power power (1-beta)
+#' @param power power (= 1 - beta)
 #' @param abratio ratio alpha/beta
 #' @param N the number of observations
 #' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
+#' @param p the number of observed variables, required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`
 #' @param SigmaHat model implied covariance matrix
-#' @param Sigma population covariance matrix
+#' @param Sigma observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
-#' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
-#' @param modelH0 for simulated power: lavaan model string defining the (incorrect) analysis model.
-#' @param modelH1 for simulated power: lavaan model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
+#' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
+#' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param power.min for plotting: minimum power
 #' @param power.max for plotting: maximum power
 #' @param effect.min for plotting: minimum effect
@@ -322,9 +322,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     }else{
       if(!is.null(mu) && length(mu) != ncol(Sigma)) stop("Mu must have the same length as ncol(Sigma).")
     }
-    
-    
-    
+
   }
   
   # specifics depending on type of power analyses
@@ -369,16 +367,15 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     checkPositive(steps)
     checkPositive(linewidth)
   }
-  
-  
+
 }
 
 
 #' checkPositive
 #'
-#' checks whether x is defined and a positive number, stop otherwise
+#' Checks whether `x` is defined and a positive number, stop otherwise.
 #' @param x x
-#' @param message identifier for x
+#' @param message identifier for `x`
 checkPositive <- function(x, message = NULL){
   if(is.null(message)) message <- deparse(substitute(x))
   if(is.null(x) || is.na(x) || x <= 0){
@@ -388,7 +385,7 @@ checkPositive <- function(x, message = NULL){
 
 #' checkBounded
 #'
-#' checks whether x is defined and lies within the specified bound
+#' Checks whether x is defined and lies within the specified bound, stop otherwise.
 #' @param x x
 #' @param message identifier for x
 #' @param bound the boundaries, array of size two
@@ -403,9 +400,10 @@ checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
 
 #' checkPositiveDefinite
 #'
-#' checks whether x is positive definite
+#' Checks whether `x` is positive definite, stop otherwise.
+#' 
 #' @param x x
-#' @param message identifier for x
+#' @param message identifier for `x`
 checkPositiveDefinite <- function(x, message = NULL){
   if(is.null(message)) message <- deparse(substitute(x))
   checkSymmetricSquare(x)
@@ -415,9 +413,10 @@ checkPositiveDefinite <- function(x, message = NULL){
 
 #' checkSymmetricSquare
 #'
-#' checks whether x is a symmetric square matrix
+#' Checks whether `x` is a symmetric square matrix, stop otherwise.
+#' 
 #' @param x x
-#' @param message identifier for x
+#' @param message identifier for `x`
 checkSymmetricSquare <- function(x, message = NULL){
   if(is.null(message)) message <- deparse(substitute(x))
   checkSquare(x)
@@ -427,9 +426,10 @@ checkSymmetricSquare <- function(x, message = NULL){
 
 #' checkSquare
 #'
-#' checks whether x is a square matrix
+#' Checks whether `x` is a square matrix, stop otherwise.
+#' 
 #' @param x x
-#' @param message identifier for x
+#' @param message identifier for `x`
 checkSquare <- function(x, message = NULL){
   if(is.null(message)) message <- deparse(substitute(x))
   if(is.null(x))
@@ -444,9 +444,10 @@ checkSquare <- function(x, message = NULL){
 
 #' checkPowerTypes
 #'
-#' checks whether type is one of 'a-priori', 'post-hoc', or 'compromise' (or respective shortcuts)
+#' Checks whether type is one of `'a-priori'`, `'post-hoc'`, or `'compromise'` (or respective shortcuts), stop otherwise.
+#' 
 #' @param type type
-#' @return  valid type
+#' @return Returns cleaned type
 checkPowerTypes <- function(type){
   if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Type must be one of a-priori, post-hoc, or compromise.')
   type <- tolower(trimws(type))
@@ -459,9 +460,10 @@ checkPowerTypes <- function(type){
 
 #' checkComparisonModel
 #'
-#' checks whether comparison is one of 'restricted' or 'saturated' (or respective shortcuts)
+#' Checks whether comparison is one of `'restricted'` or `'saturated'` (or respective shortcuts), stop otherwise.
+#' 
 #' @param comparison comparison
-#' @return  valid type
+#' @return Returns cleaned comparison
 checkComparisonModel <- function(comparison){
   if(is.null(comparison) || length(comparison) != 1 || typeof(comparison) != 'character') stop('Comparison model must be one of a-priori, post-hoc, or compromise.')
   comparison <- tolower(trimws(comparison))
@@ -473,10 +475,11 @@ checkComparisonModel <- function(comparison){
 
 #' checkNullEffect
 #'
-#' checks whether nullEffect is one among valid effect
+#' Checks whether `nullEffect` is one of the valid effects, stop otherwise.
+#' 
 #' @param nullEffect nullEffect
 #' @param valid vector of valid effects 
-#' @return nullEffect
+#' @return Returns cleaned nullEffect
 checkNullEffect <- function(nullEffect, valid){
   mesage <- deparse(substitute(nullEffect))
   if(is.null(nullEffect)) stop(paste(mesage, 'must be defined.'))
@@ -489,9 +492,9 @@ checkNullEffect <- function(nullEffect, valid){
 
 #' checkEllipsis
 #'
-#' checks whether ... contains arguments related to loadings and to power.
-#' @param ... the parameters to search
-#' @return whether loadings and power are found
+#' Checks whether `...` contains arguments related to loadings and to power, stop otherwise.
+#' 
+#' @param ... the parameters to search.
 checkEllipsis <- function(...){
   args <- names(list(...))
   if(!any(c('Lambda', 'loadings', 'nIndicator', 'loadM') %in% args)) stop('Missing arguments specifying the factor model. Remember to set either Lambda, loadings, or nIndicator and loadM.')
