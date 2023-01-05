@@ -2254,7 +2254,108 @@ test_powerRICLPM <- function(doTest = TRUE){
   }
 }
 
+test_powerPath <- function(){
 
+  #  mediation structure
+  B <- matrix(c(
+    c(.00, .00, .00),
+    c(.30, .00, .00),
+    c(.25, .40, .00)
+  ), byrow = TRUE, ncol = 3)
+  # powerMed <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+  #                                Beta = B, indirect = list(c(2,1), c(3,2)),
+  #                                nIndicator = c(3, 3, 3), loadM = .5,
+  #                                alpha = .05, N = 250)
+  ph1 <- semPower.powerPath(type = 'post-hoc',
+                            Beta = B,
+                            nullWhich = c(3, 1),
+                            nIndicator = c(3, 3, 3),
+                            loadM = .5,
+                            alpha = .05, N = 250)
+  lavres1a <- helper_lav(ph1$modelH1, ph1$Sigma)
+  par1a <- lavres1a$par
+  lavres1b <- helper_lav(ph1$modelH0, ph1$Sigma)
+  par1b <- lavres1b$par
+  
+  valid <- round(sum(abs(par1a[par1a$op == '~', 'est'] - c(.3, .25, .4))), 4) == 0 &&
+    par1b[par1b$lhs == 'f3' & par1b$rhs == 'f1', 'est'] == 0 &&
+    round(2*lavres1b$fit['fmin'] - ph1$power$fmin, 4) == 0
+  
+  #  regression structure
+  B <- matrix(c(
+    c(.00, .00, .00),
+    c(.00, .00, .00),
+    c(.25, .40, .00)
+  ), byrow = TRUE, ncol = 3)
+  Psi <- matrix(c(
+    c(1, .20, .00),
+    c(.20, 1, .00),
+    c(.00, .00, 1)
+  ), byrow = TRUE, ncol = 3)
+  ph2 <- semPower.powerPath(type = 'post-hoc',
+                            Beta = B,
+                            Psi = Psi,
+                            nullWhich = c(3, 1),
+                            nIndicator = c(3, 3, 3),
+                            loadM = .5,
+                            alpha = .05, N = 250)
+  lavres2a <- helper_lav(ph2$modelH1, ph2$Sigma)
+  par2a <- lavres2a$par
+  # preg <- semPower.powerRegression(type = 'post-hoc', 
+  #                                slopes = c(.25, .4), corXX = .2, nullWhich = 1,
+  #                                nIndicator = c(3, 3, 3), loadM = .5,
+  #                                alpha = .05, N = 250)
+  # 
+  # preg$Sigma - ph2$Sigma
+
+  ph3 <- semPower.powerPath(type = 'post-hoc',
+                            Beta = B,
+                            Psi = Psi,
+                            nullEffect = 'betaX = betaZ',
+                            nullWhich = list(c(3, 1), c(3, 2)),
+                            nIndicator = c(3, 3, 3),
+                            loadM = .5,
+                            alpha = .05, N = 250)
+  lavres3a <- helper_lav(ph3$modelH0, ph3$Sigma)
+  par3a <- lavres3a$par
+  
+  # multigroup
+  B1 <- matrix(c(
+    c(.00, .00, .00),
+    c(.00, .00, .00),
+    c(.25, .40, .00)
+  ), byrow = TRUE, ncol = 3)
+  B2 <- B1
+  B2[3, 1] <- 0
+  ph4 <- semPower.powerPath(type = 'post-hoc',
+                            Beta = list(B1, B2),
+                            Psi = list(Psi, Psi),
+                            nullEffect = 'betaA = betaB',
+                            nullWhich = c(3, 1),
+                            nIndicator = list(c(3, 3, 3), c(3, 3, 3)),
+                            loadM = .5,
+                            alpha = .05, N = list(250, 250))
+  lavres4a <- helper_lav(ph4$modelH1, ph4$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
+  par4a <- lavres4a$par
+  lavres4b <- helper_lav(ph4$modelH0, ph4$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
+  par4b <- lavres4b$par
+
+  valid <- round(sum(abs(par1a[par1a$op == '~', 'est'] - c(.3, .25, .4))), 4) == 0 &&
+    par1b[par1b$lhs == 'f3' & par1b$rhs == 'f1', 'est'] == 0 &&
+    round(2*lavres1b$fit['fmin'] - ph1$power$fmin, 4) == 0 &&
+    par2a[par2a$lhs == 'f1' & par2a$rhs == 'f2', 'est'] - .2 < 1e-6 &&
+    length(unique(round(par3a[par3a$lhs == 'f3' & par3a$op == '~', 'est'], 4))) == 1 &&
+    2*lavres3a$fit['fmin'] - ph3$power$fmin < 1e-6  &&
+    length(unique(round(par4a[par4a$lhs == 'f3' & par4a$rhs == 'f1',  'est'], 4))) == 2 &&
+    length(unique(round(par4b[par4b$lhs == 'f3' & par4b$rhs == 'f1',  'est'], 4))) == 1 &&
+    2*lavres4b$fit['fmin'] - ph4$power$fmin < 1e-6
+  
+  if(valid){
+    print('test_powerPath: OK')
+  }else{
+    warning('Invalid')
+  }
+}
 
 test_powerMI <- function(){
   # metric vs saturated
@@ -2510,6 +2611,7 @@ test_all <- function(){
   test_powerMediation()
   test_powerCLPM(doTest = TRUE)
   test_powerRICLPM(doTest = TRUE)
+  test_powerPath()
   test_powerMI()
   test_simulatePower(doTest = FALSE)
 }
