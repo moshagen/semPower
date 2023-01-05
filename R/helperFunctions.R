@@ -550,6 +550,10 @@ getPhi.B <- function(B, lPsi = NULL){
   if(!is.matrix(Be)) Be <- t(matrix(Be))
   
   Phi <- diag(ncol(B)) 
+  if(!is.null(lPsi)){
+    Phi[1:sum(exog), 1:sum(exog)] <- lPsi[1:sum(exog), 1:sum(exog)]
+    diag(Phi) <- 1
+  }
   for(i in 1:nrow(Be)){
     idx <- i + sum(exog) - 1
     cb <- matrix(Be[i, 1:idx])
