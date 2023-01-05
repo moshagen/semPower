@@ -550,7 +550,7 @@ getPhi.B <- function(B, lPsi = NULL){
   if(!is.matrix(Be)) Be <- t(matrix(Be))
   
   Phi <- diag(ncol(B)) 
-  if(!is.null(lPsi)){
+  if(!is.null(lPsi) && sum(exog) > 1){
     Phi[1:sum(exog), 1:sum(exog)] <- lPsi[1:sum(exog), 1:sum(exog)]
     diag(Phi) <- 1
   }
