@@ -12,6 +12,7 @@ semPower.powerRegression(
   nullEffect = "slope = 0",
   nullWhich = NULL,
   nullWhichGroups = NULL,
+  standardized = TRUE,
   ...
 )
 }
@@ -29,6 +30,8 @@ semPower.powerRegression(
 \item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'}. Can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'slopeA = slopeB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
+
+\item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The first factor is treated as Y and the subsequent factors as the predictors X_k. See details.}
 }

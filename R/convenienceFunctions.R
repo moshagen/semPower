@@ -494,6 +494,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest, must be one of `'slope = 0'` (the default) to test whether a slope is zero, `'slopeX = slopeZ'` to test for the equality of slopes, or `'slopeA = slopeB'` to test for the equality of slopes across groups. Define the slopes to set to equality in `nullWhich`.
 #' @param nullWhich single number indicating which slope is hypothesized to equal zero when `nullEffect = 'slope = 0'`, or indicating which slope to restrict to equality across groups when `nullEffect = 'slopeA = slopeB'`, or vector defining the slopes to restrict to equality when `nullEffect = 'slopeX = slopeZ'`. Can also contain more than two slopes, e.g. `c(1, 2, 3)` to constrain the first three slopes to equality.
 #' @param nullWhichGroups for `nullEffect = 'slopeA = slopeB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The first factor is treated as Y and the subsequent factors as the predictors X_k. See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -574,6 +575,13 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
 #'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
+#'
+#' # same as above, but define unstandardized slopes
+#' powerReg <- semPower.powerRegression(type = 'a-priori',
+#'                                     slopes = c(.2, .3), corXX = .4,
+#'                                     standardized = FALSE,
+#'                                     nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                     alpha = .05, beta = .05)
 #'                                      
 #' # same as above, but compare to the saturated model
 #' # (rather than to the less restricted model)
@@ -664,6 +672,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                                      nullEffect = 'slope = 0',
                                      nullWhich = NULL,
                                      nullWhichGroups = NULL,
+                                     standardized = TRUE,
                                      ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -711,14 +720,34 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
-  # calc implied sigma. 
-  # for single groups, phi is defined directly, because this special case is simpler than defining B and calling getPhi.B  
-  if(!isMultigroup){
-    corXY <- (corXX[[1]] %*% slopes[[1]])
-    Phi <- t(c(1, corXY))
-    Phi <- rbind(Phi, cbind(corXY, corXX[[1]]))
-    generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-    # for multigroup, the approach does not work, because we need to go unstandardized 
+  ### calc implied sigma. 
+  # standardized case: transform B and Psi to Phi
+  if(standardized){
+    B <- lapply(slopes, function(x){
+      cB <- matrix(0, ncol = (length(x) + 1), nrow = (length(x) + 1))
+      cB[nrow(cB), ] <- c(x, 0)
+      cB
+    })
+    Psi <- lapply(seq_along(slopes), function(x){
+      cPsi <- diag(ncol(B[[x]]))
+      cPsi[1:(nrow(cPsi) - 1), 1:(ncol(cPsi) - 1)] <- corXX[[x]]
+      cPsi
+    })
+    cPhi <- lapply(seq_along(B), function(x) getPhi.B(B[[x]], Psi[[x]]))
+    # change order so that Y is first factor
+    Phi <- lapply(cPhi, function(x){
+      nf <- ncol(x)
+      nPhi <- diag(nf)
+      nPhi[2:nf, 2:nf] <- x[1:(nf - 1), 1:(nf - 1)]
+      nPhi[1, 1:nf] <- c(1, x[nf, 1:(nf-1)])
+      nPhi[1:nf, 1] <- c(1, x[1:(nf-1), nf])
+      nPhi
+    })
+    
+    generated <- semPower.genSigma(Phi = if(length(Phi) > 1) Phi else Phi[[1]], 
+                                   useReferenceIndicator = TRUE, ...)  
+    
+  # unstandardized case
   }else{
     B <- lapply(slopes, function(x){
       cB <- matrix(0, ncol = (length(x) + 1), nrow = (length(x) + 1))
@@ -730,10 +759,11 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
       cPsi[2:nrow(cPsi), 2:ncol(cPsi)] <- corXX[[x]]
       cPsi
     })
-    generated <- semPower.genSigma(B = B, Psi = Psi, 
+    generated <- semPower.genSigma(Beta = if(length(B) > 1) B else B[[1]], 
+                                   Psi = if(length(Psi) > 1) Psi else Psi[[1]],
                                    useReferenceIndicator = TRUE, ...)
   }
-  
+
 
   ### create ana model string
   # add regressions 
@@ -768,9 +798,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
     stop('nullEffect not defined.')
   }
 
-  # we always enforce invariance constraints in the multigroup case
+  # we always enforce metric invariance in the multigroup case
   lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+  if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))
   
   modelH1 <- NULL
   if(comparison == 'restricted'){
@@ -2338,12 +2368,11 @@ semPower.powerMI <- function(type,
   }
   
   ### generate sigmas
-  # we use variance scaling. If using reference indicators instead, 
-  # the model string requires adaptation (in the likely case of unequal loadings), 
-  # because currently only the generated modelstring from the first group (generated[[1]]) 
-  # is used to define modelH0 and modelH1
+  # we use variance scaling, so the first loading may also differ across groups.
+  # If using reference indicators instead, the first loading must be equal across groups.
+  # Not sure whether to expose this to users.
   # the downside is that lv.variances is always true.
-  generated <- semPower.genSigma(...)   
+  generated <- semPower.genSigma(..., useReferenceIndicator = FALSE)   
   
   # more input validations
   if(!is.list(generated[[1]])) stop('Loadings, Phi, Beta, etc. must be provided as a list for each group.')
@@ -2414,11 +2443,12 @@ semPower.powerMI <- function(type,
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
-#' @param Beta matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. See details. 
+#' @param Beta matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. Exogenous variables must occupy the first rows in `Beta` when `standardized = TRUE`.  See details. 
 #' @param Psi variance-covariance matrix of latent (residual) factors. If `NULL`, a diagonal matrix is assumed. A list for multiple group models. See details.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'beta = 0'` (the default) to test whether a regression slope is zero, `'betaX = betaZ'` to test for the equality of slopes, and `'betaX = betaZ'` to test for the equality of a slope across groups. Define the slopes to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
 #' @param nullWhich vector of size 2 indicating which slope in `Beta` is hypothesized to equal zero when `nullEffect = 'beta = 0'`, or to restrict to equality across groups when `nullEffect = 'betaA = betaB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'betaX = betaZ'`. Can also contain more than two slopes, e.g., `list(c(2, 1), c(3, 1), c(3, 2))` to set `Beta[2, 1] = Beta[3, 1] = Beta[3, 2]`.
 #' @param nullWhichGroups for `nullEffect = 'betaA = betaB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -2585,7 +2615,8 @@ semPower.powerPath <- function(type, comparison = 'restricted',
                                Psi = NULL,
                                nullEffect = 'beta = 0',
                                nullWhich = NULL, 
-                               nullWhichGroups = NULL, 
+                               nullWhichGroups = NULL,
+                               standardized = TRUE,
                                ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -2600,6 +2631,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   isMultigroup <- is.list(Beta) && length(Beta) > 1
   if(!is.list(Beta)) Beta <- list(Beta)
   if(any(unlist(lapply(Beta, function(x) any(diag(x) != 0) )))) stop('All diagonal elements of Beta must be zero.')
+  if(standardized && any(unlist(lapply(Beta, function(x) any(x[upper.tri(x, diag = TRUE)] != 0))))) stop('All upper triangular elements in Beta must be zero when requesting standardized parameters. Remember exogenous variables must occupy the first rows in Beta.')
   if(isMultigroup && (length(unique(unlist(lapply(Beta, ncol)))) > 1 || length(unique(unlist(lapply(Beta, nrow)))) > 1)) stop('Beta must be of same dimension for all groups') 
   lapply(Beta, function(x) checkSquare(x, 'Beta'))
   if(!is.null(Psi)){
@@ -2618,9 +2650,15 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups'), bound = c(1, length(Beta)), inclusive = TRUE)
   
   ### get Sigma
-  generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
-                                 Psi = if(!isMultigroup) Psi[[1]] else Psi, 
-                                 useReferenceIndicator = TRUE, ...)
+  if(standardized){
+    Phi <- lapply(seq_along(Beta), function(x) getPhi.B(Beta[[x]], Psi[[x]]))
+    generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
+                                   useReferenceIndicator = TRUE, ...)  
+  }else{  
+    generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
+                                   Psi = if(!isMultigroup) Psi[[1]] else Psi, 
+                                   useReferenceIndicator = TRUE, ...)
+  }
   
   ### create model strings
   # we need labels, so we use modelTrueCFA and define regression relations here
@@ -2643,7 +2681,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
     }
   }
   # (residual) correlations, assuming the same Psi across groups
-  if(is.null(Psi)) if(isMultigroup) Psi <- list(generated[[1]][['Psi']]) else Psi <- list(generated[['Psi']])
+  if(is.null(Psi)) Psi <- list(diag(ncol(Beta[[1]])))
   for(f in 1:(ncol(Beta[[1]]) - 1)){
     for(ff in (f + 1):ncol(Beta[[1]])){
       if(Psi[[1]][f, ff] != 0)

@@ -18,11 +18,11 @@ semPower.powerPath(
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, either \code{'saturated'} or one of \code{'configural'}, \code{'metric'}, \code{'scalar'}, or a vector of restrictions in \code{lavaan} format (with \code{'none'} for no restrictions). See details.}
+\item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
 \item{Beta}{matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. See details.}
 
-\item{Psi}{variance-covariance matrix of latent residuals when \code{Beta} is specified. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
+\item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
 
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'beta = 0'} (the default) to test whether a regression slope is zero, \code{'betaX = betaZ'} to test for the equality of slopes, and \code{'betaX = betaZ'} to test for the equality of a slope across groups. Define the slopes to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
@@ -56,9 +56,9 @@ in a generic structural equation model specifying regression relations between t
 \item \code{nullEffect = 'betaA = betaB'}: Tests the hypothesis that a slope is equal in two or more groups (always assuming metric invariance).
 }
 
-This function provides a more generic way to perform power analyses compared to functions covering special cases in a more accessible manner.
+This function provides a generic way to perform power analyses (as compared to other functions covering special cases in a more accessible manner).
 
-A specific hypothesis is defined by setting \code{nullEffect} to define the type of hypothesis,
+A specific hypothesis is defined by setting \code{nullEffect} to define the hypothesis type,
 \code{nullWhich} to define the slope(s) that are targeted, and by providing
 the \code{Beta} (and optionally the \code{Psi}) matrix to define the population structure.
 
@@ -66,14 +66,14 @@ To understand the structure of \code{Beta} and \code{Psi}, consider the general 
 \deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta }
 where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors.
 
-Suppose there are four factors (X1, X2, X3, X4), and Beta is defined as follows:
+As an example, suppose there are four factors (X1, X2, X3, X4), and Beta is defined as follows:
 \eqn{
 \begin{array}{lrrr} 
     & X_1 & X_2 & X_3 & X_4\\ 
 X_1 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
 X_2 & 0.0 & 0.0 & 0.0 & 0.0  \\ 
 X_3 & 0.2 & 0.3 & 0.0 & 0.0  \\ 
-X_4 & 0.0 & 0.5 & 0.1 & 0.0  \\ 
+X_4 & 0.3 & 0.5 & 0.0 & 0.0  \\ 
 \end{array}
 }
 
@@ -90,7 +90,7 @@ X_4 = 0.3 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4
 which simplifies to
 
 \eqn{
-X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2
+X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
 X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2 
 }
 
@@ -104,6 +104,7 @@ X_3 & 0.0 & 0.0 & 1.0 & 0.2 \\
 X_4 & 0.0 & 0.0 & 0.2 & 1.0 \\ 
 \end{array}
 }
+
 which implies a correlation between X1 and X2 of .3 and a residual correlation
 between X3 and X4 of .2.
 
@@ -136,149 +137,75 @@ Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower 
 }
 \examples{
 \dontrun{
-# obtain the required N to reject the hypothesis of metric invariance
-# in comparison to the configural invariance model 
-# with a power of 95\% on alpha = 5\% 
-# assuming equally sized groups (N = list(1, 1)) 
-# for a factor model involving a single factor which 
-# is measured by 5 indicators (in both groups)
-# loading by .5 each in the first group and 
-# loading by .6 each in the second group.
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'configural', 
-                            nullEffect = 'metric',
-                            nIndicator = list(5, 5),
-                            loadM = list(.5, .6),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
+# set up pathmodel in the form of
+# f2 = .2*f1
+# f3 = .3*f2
+# f4 = .1*f1 + .4*f3
+# obtain the required N to detect that the 
+# slope f1 -> f4 is >= .10 
+# with a power of 95\% on alpha = 5\%
+# where f1 is measured by 3, f2 by 4, f3 by 5, and f4 by 6 indicators, 
+# and all loadings are .5
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # f1
+  c(.20, .00, .00, .00),       # f2
+  c(.00, .30, .00, .00),       # f3
+  c(.10, .00, .40, .00)        # f4
+), byrow = TRUE, ncol = 4)
+powerPath <- semPower.powerPath(type = 'a-priori',
+                                Beta = Beta,
+                                nullWhich = c(4, 1),
+                                nIndicator = c(3, 4, 5, 6), 
+                                loadM = .5,
+                                alpha = .05, beta = .05)
 # show summary
-summary(powerMI$power)
+summary(powerPath$power)
 # optionally use lavaan to verify the model was set-up as intended
-lavaan::sem(powerMI$modelH1, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-            sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
-lavaan::sem(powerMI$modelH0, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-            sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
+lavaan::sem(powerPath$modelH1, sample.cov = powerPath$Sigma,
+sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
+lavaan::sem(powerPath$modelH0, sample.cov = powerPath$Sigma,
+sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
 
-# same as above, but determine power with N = 500 in each group on alpha = .05
-powerMI <- semPower.powerMI(type = 'post-hoc',
-                            comparison = 'configural', 
-                            nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            alpha = .05, N = list(500, 500))
+# same as above, but detect that the slope f3 -> f4 is >= .30 
+powerPath <- semPower.powerPath(type = 'a-priori',
+                                Beta = Beta,
+                                nullWhich = c(4, 3),
+                                nIndicator = c(3, 4, 5, 6), 
+                                loadM = .5,
+                                alpha = .05, beta = .05)
 
-# same as above, but determine the critical chi-square with N = 500 in each group so that alpha = beta
-powerMI <- semPower.powerMI(type = 'compromise',
-                            comparison = 'configural', 
-                            nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            abratio = 1, N = list(500, 500))
+# same as above, but detect that 
+# the slope f1 -> f2 (of .20) differs from the slope f2 -> f3 (of .30) 
+powerPath <- semPower.powerPath(type = 'a-priori',
+                                Beta = Beta,
+                                nullEffect = 'betaX = betaZ',
+                                nullWhich = list(c(2, 1), c(3, 2)),
+                                nIndicator = c(3, 4, 5, 6), 
+                                loadM = .5,
+                                alpha = .05, beta = .05)
 
-# same as above, but compare to the saturated model
-# (rather than to the configural invariance model)
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'saturated', 
-                            nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# same as above, but provide individual factor loadings by group using a 
-# reduced loading matrix to define a  single factor model with three indicators
-# loading by .4, .6, .5 in the first group and 
-# loading by .5, .6, .7 in the second group
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'saturated', 
-                            nullEffect = 'metric',
-                            loadings = list(
-                              list(c(.4, .6, .5)), 
-                              list(c(.5, .6, .7))),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# same as above, but make first group twice as large as the second group 
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'saturated', 
-                            nullEffect = 'metric',
-                            loadings = list(
-                              list(c(.4, .6, .5)), 
-                              list(c(.5, .6, .7))),
-                            alpha = .05, beta = .05, N = list(2, 1))
-
-# obtain the required N to reject the hypothesis of scalar invariance
-# in comparison to the metric invariance model 
-# with a power of 95\% on alpha = 5\% 
-# assuming equally sized groups (N = list(1, 1)) 
-# for a two factor model, where both factors are  
-# measured by 3 indicators each and all loadings equal .5 (in both groups),
-# the factor correlation is .3 in both groups, and the
-# all intercepts are 0.0 in the first group, but
-# all intercepts are 0.1 in the second group
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'metric', 
-                            nullEffect = 'scalar',
-                            Phi = list(.3, .3),
-                            nIndicator = list(
-                              c(3, 3), 
-                              c(3, 3)),
-                            loadM = .5,
-                            tau = list(
-                              rep(0.0, 6), 
-                              rep(0.1, 6) 
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# same as above, but use lavaan group.equal strings 
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = c('loadings'), 
-                            nullEffect = c('loadings', 'intercepts'),
-                            Phi = list(.3, .3),
-                            nIndicator = list(
-                              c(3, 3), 
-                              c(3, 3)),
-                            loadM = .5,
-                            tau = list(
-                              rep(0.0, 6), 
-                              rep(0.1, 6) 
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# same as above, but
-# obtain the required N to reject the hypothesis of equal latent means
-# in comparison to the scalar invariance model;
-# all intercepts are zero in both groups, 
-# in the first group, the latent means equal 0.0, 
-# in the second group, the latent mean of the factors are 0.0 and 0.5
-powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = c('loadings', 'intercepts'), 
-                            nullEffect = c('loadings', 'intercepts', 'means'),
-                            Phi = list(.3, .3),
-                            nIndicator = list(
-                              c(3, 3), 
-                              c(3, 3)),
-                            loadM = .5,
-                            tau = list(
-                              rep(0.0, 6), 
-                              rep(0.0, 6) 
-                            ),
-                            Alpha = list(
-                              c(0.0, 0.0),
-                              c(0.0, 0.5)
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# request a simulated post-hoc power analysis with 500 replications
-# to reject the hypothesis of metric invariance.
-powerMI <- semPower.powerMI(type = 'post-hoc',
-                            comparison = 'configural', 
-                            nullEffect = 'metric',
-                            nIndicator = list(5, 5),
-                            loadM = list(.5, .6),
-                            alpha = .05, N = list(500, 500), 
-                            simulatedPower = TRUE, nReplications = 500)
-                             
+# same as above, but consider a multiple group model with equally sized groups, 
+# and obtain the required N to detect that the slope 
+# in group 1 (of .20) differs from the one in group 2 (of .40)
+Beta1 <- matrix(c(
+  c(.00, .00, .00, .00),       # f1
+  c(.20, .00, .00, .00),       # f2
+  c(.00, .30, .00, .00),       # f3
+  c(.10, .00, .40, .00)        # f4
+), byrow = TRUE, ncol = 4)
+Beta2[2, 1] <- .40
+Beta <- list(Beta1, Beta2)
+powerPath <- semPower.powerPath(type = 'a-priori',
+                                Beta = Beta,
+                                nullEffect = 'betaA = betaB',
+                                nullWhich = c(2, 1),
+                                nIndicator = list(
+                                  c(3, 4, 5, 6), 
+                                  c(3, 4, 5, 6)), 
+                                loadM = .5,
+                                alpha = .05, beta = .05, N = list(1, 1))
 }
 }
 \seealso{
-\code{\link[=semPower.genSigma]{semPower.genSigma()}} \code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
+\code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.postHoc]{semPower.postHoc()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }

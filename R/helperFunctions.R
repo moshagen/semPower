@@ -539,7 +539,7 @@ getPhi.B <- function(B, lPsi = NULL){
   if(!is.null(lPsi)){
     checkSymmetricSquare(lPsi)
     if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
-    invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1)))))
+    invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1), inclusive = TRUE))))
     diag(lPsi) <- 0
   }
 
