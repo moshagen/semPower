@@ -1359,9 +1359,9 @@ test_powerCLPM <- function(doTest = TRUE){
 
   valid3 <- valid2 &&
     round(par8[par8$lhs == 'f1' & par8$rhs == 'f2', 'est'] - .3, 4) == 0 && 
-    round(par8[par8$lhs == 'f3' & par8$rhs == 'f4', 'est'] - .2, 4) == 0 &&
+    round(par8[par8$lhs == 'f3' & par8$rhs == 'f4', 'std.all'] - .2, 4) == 0 &&
     round(par9[par9$lhs == 'f1' & par9$rhs == 'f2', 'est'] - .3, 4) == 0 && 
-    round(par9[par9$lhs == 'f3' & par9$rhs == 'f4', 'est'] - .2, 4) == 0 &&
+    round(par9[par9$lhs == 'f3' & par9$rhs == 'f4', 'std.all'] - .2, 4) == 0 &&
     round(sum((par9[par9$op == '~', 'est'] - c(.8, .1, .2, .7))^2), 4) == 0 &&
     !any(!(par9[par9$lhs == 'f1' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f3' & par9$op == '=~', 'est'])) &&
     !any(!(par9[par9$lhs == 'f2' & par9$op == '=~', 'est'] != par9[par9$lhs == 'f4' & par9$op == '=~', 'est']))
@@ -1492,6 +1492,7 @@ test_powerCLPM <- function(doTest = TRUE){
                              metricInvariance = TRUE,
                              nullWhich = NULL,
                              waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
+                             standardized = FALSE,
                              alpha = .05, N = 250)
   
   lavres19 <- helper_lav(ph17$modelH0, ph17$Sigma)

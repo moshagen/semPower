@@ -1105,7 +1105,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     generated <- semPower.genSigma(Beta = if(!isMultigroup) B[[1]] else B,  , 
                                    useReferenceIndicator = TRUE, ...)
   }
-  if(!isMultigroup) isObserved <- ncol(generated[['Sigma']]) == ncol(B[[1]]) else isObserved <- ncol(generated[[1]][['Sigma']]) == ncol(B[[1]])
+  if(!isMultigroup) isObserved <- ncol(generated[['Sigma']]) == ncol(B[[1]]) else isObserved <- ncol(generated[[1]][['Sigma']]) == ncol(B[[1]])  
   
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
@@ -1202,6 +1202,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
+#' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
 #' @return A list containing the following components is returned:
@@ -1496,7 +1497,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' 
 #' # same as above, but determine N to detect that 
 #' # the residual correlation between X and Y at wave 2 (of .3) differs from 
-#' # the residual correlation between X and Y at wave 3 (of .4) differs from 
+#' # the residual correlation between X and Y at wave 3 (of .4) differs
+#' # and define unstandardized parameters
 #' powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 #'                                 nWaves = 3,
 #'                                 autoregEffects = c(.8, .7), 
@@ -1507,6 +1509,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 rXY = c(.2, .3, .4),
 #'                                 nullEffect = 'corXY',
 #'                                 waveEqual = c('autoregX', 'autoregY'),
+#'                                 standardized = FALSE,
 #'                                 nIndicator = c(5, 3, 5, 3, 5, 3),
 #'                                 loadM = c(.5, .6, .5, .6, .5, .6),
 #'                                 alpha = .05, beta = .05)
@@ -1530,6 +1533,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                rXY = NULL,
                                waveEqual = NULL, 
                                nullEffect = NULL, nullWhich = NULL,
+                               standardized = TRUE,
                                metricInvariance = TRUE,
                                ...){
   
@@ -1591,6 +1595,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
     if(nullWhich < 1 || (nullEffect != 'corxy=0' && nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
   }
+  if('corxy' %in% nullEffect && standardized) stop('Power analysis for nullEffect == "corxy" can only be performed on unstandardized parameters. Repeat with standardized = FALSE.') 
   
   ### create B
   B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
@@ -1624,10 +1629,17 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   
   ### get Sigma
-  generated <- semPower.genSigma(Beta = B, Psi = Psi, 
-                                 useReferenceIndicator = TRUE, 
-                                 metricInvariance = metricInvarianceList, 
-                                 ...)
+  if(standardized){
+    generated <- semPower.genSigma(Phi = getPhi.B(B, Psi), 
+                                   useReferenceIndicator = TRUE, 
+                                   metricInvariance = metricInvarianceList, 
+                                   ...)
+  }else{
+    generated <- semPower.genSigma(Beta = B, Psi = Psi, 
+                                   useReferenceIndicator = TRUE, 
+                                   metricInvariance = metricInvarianceList, 
+                                   ...)
+  }
 
   ### create model strings
   model <- generated[['modelTrueCFA']]
@@ -1946,14 +1958,13 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   ### get model-implied sigma
   if(!is.null(args[['Lambda']])) args[['Lambda']] <- NULL # delete user-provided Lambda 
   
-  generated <- do.call(what = semPower.genSigma, 
+  generated <- do.call(what = semPower.genSigma,
                        args = append(list(Lambda = Lambda, Beta = B, Psi = Psi,
                                           useReferenceIndicator = TRUE,
                                           metricInvariance = metricInvarianceList), args))
-  
+
   Sigma <- generated$Sigma
-  
-  
+
   ### create ana model string
   
   # define random intercept (between) factors
