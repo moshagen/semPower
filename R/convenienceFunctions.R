@@ -846,6 +846,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' @param indirect `NULL` unless `Beta` is set. Otherwise a list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect of interest, e.g. `list(c(2, 1), c(3, 2))`. See details.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'ind = 0'` (the default) to test whether the indirect effect is zero or `'indA = indB'` to test for the equality of indirect effects across groups. See details.
 #' @param nullWhichGroups for `nullEffect = 'indA = indB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. In case of a simple mediation, the order of factors is X, M, Y. See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -1037,7 +1038,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
                                     bYX = NULL, bMX = NULL, bYM = NULL,
                                     Beta = NULL, indirect = NULL, 
                                     nullEffect = 'ind = 0',
-                                    nullWhichGroups = NULL, 
+                                    nullWhichGroups = NULL,
+                                    standardized = TRUE,
                                     ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -1095,12 +1097,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups'), bound = c(1, length(B)), inclusive = TRUE)
   
   ### get Sigma
-  # we want completely standardized slopes, so transform to standard cfa model by converting B to implied phi
-  Phi <- lapply(B, getPhi.B)
-  if(!isMultigroup) Phi <- Phi[[1]]
-  
-  generated <- semPower.genSigma(Phi = Phi, useReferenceIndicator = TRUE, ...)
-  if(!isMultigroup) isObserved <- ncol(generated[['Sigma']]) == ncol(Phi) else isObserved <- ncol(generated[[1]][['Sigma']]) == ncol(Phi[[1]])
+  if(standardized){
+    Phi <- lapply(B, getPhi.B)
+    generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
+                                   useReferenceIndicator = TRUE, ...)
+  }else{
+    generated <- semPower.genSigma(Beta = if(!isMultigroup) B[[1]] else B,  , 
+                                   useReferenceIndicator = TRUE, ...)
+  }
+  if(!isMultigroup) isObserved <- ncol(generated[['Sigma']]) == ncol(B[[1]]) else isObserved <- ncol(generated[[1]][['Sigma']]) == ncol(B[[1]])
   
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
