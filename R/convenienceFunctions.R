@@ -1839,6 +1839,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
   # validate input
+  if('standardized' %in% names(list(...)) && list(...)[['standardized']]) stop('Standardized is not available for RICLPM.')
   if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) | is.na(nWaves) | nWaves < 3) stop('nWaves must be >= 3.')
   if(is.null(rXY)) rXY <- rep(0, nWaves)

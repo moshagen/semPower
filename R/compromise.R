@@ -13,7 +13,6 @@
 #' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
 #' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
 #' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
-#' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. This is not supported for compromise power analysis and is only present to remind users that this cannot be reasonably done. 
 #' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
 #' \dontrun{
@@ -32,16 +31,16 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
                                  N, df = NULL, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
-                                 simulatedPower = FALSE, ...){
+                                 ...){
 
-  if(simulatedPower) stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
+  if('simulatedPower' %in% names(list(...)) && list(...)[['simulatedPower']]) stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
 
   # validate input and do some preparations
   pp <- powerPrepare('compromise', effect = effect, effect.measure = effect.measure,
                      alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu, 
-                     simulatedPower = simulatedPower)
+                     simulatedPower = FALSE)
 
   df <- pp[['df']]
   
