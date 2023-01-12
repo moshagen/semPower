@@ -667,3 +667,44 @@ getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups 
   
   lavOptions
 }
+
+#' orderLavResults
+#'
+#' returns `lavaan` implied covariance matrix or mean vector in correct order.
+#' 
+#' @param lavCov model implied covariance matrix  
+#' @param lavMu model implied means 
+#' @return either cov or mu in correct order
+orderLavResults <- function(lavCov = NULL, lavMu = NULL){
+  if(!is.null(lavCov)){
+    cn <- colnames(lavCov)
+    cno <- cn[order(nchar(cn), cn)]
+    lavCov[cno, cno]
+  }else if(!is.null(lavMu)){
+    cn <- names(lavMu)
+    cno <- cn[order(nchar(cn), cn)]
+    lavMu[cno]
+  }else{
+    NULL
+  }
+}
+
+#' orderLavCov
+#'
+#' returns `lavaan` implied covariance matrix in correct order.
+#' 
+#' @param lavCov model implied covariance matrix  
+#' @return cov in correct order
+orderLavCov <- function(lavCov = NULL){
+  orderLavResults(lavCov = lavCov)
+}
+
+#' orderLavMu
+#'
+#' returns `lavaan` implied means in correct order.
+#' 
+#' @param lavMu model implied means 
+#' @return mu in correct order
+orderLavMu <- function(lavMu = NULL){
+  orderLavResults(lavMu = lavMu)
+}

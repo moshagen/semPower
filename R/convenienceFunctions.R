@@ -125,8 +125,8 @@ semPower.powerLav <- function(type,
 
   # determine population Sigma / mu
   if(is.null(Sigma)){
-    Sigma <- lapply(modelPop, function(x) lavaan::fitted(lavaan::sem(x))[['cov']])
-    mu <- lapply(modelPop, function(x) lavaan::fitted(lavaan::sem(x))[['mean']])
+    Sigma <- lapply(modelPop, function(x) orderLavCov(lavaan::fitted(lavaan::sem(x))[['cov']]))
+    mu <- lapply(modelPop, function(x) orderLavMu(lavaan::fitted(lavaan::sem(x))[['mean']]))
   }
   
   # analytical power
@@ -145,12 +145,12 @@ semPower.powerLav <- function(type,
     if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
     if(length(Sigma) > 1){
       # multigroup case
-      SigmaHat <- lapply(1:length(Sigma), function(x) lavaan::fitted(modelH0Fit)[[x]][['cov']])
-      muHat <- lapply(1:length(Sigma), function(x) lavaan::fitted(modelH0Fit)[[x]][['mean']])
+      SigmaHat <- lapply(1:length(Sigma), function(x) orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]))
+      muHat <- lapply(1:length(Sigma), function(x) orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]))
     }else{
       # single group case
-      SigmaHat <- list(lavaan::fitted(modelH0Fit)[['cov']])
-      muHat <- list(lavaan::fitted(modelH0Fit)[['mean']])
+      SigmaHat <- list(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]))
+      muHat <- list(orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]))
     }
     df <- dfH0 <- modelH0Fit@test[['standard']][['df']]  # this is probably invalid for estm with adjusted df
     
@@ -169,18 +169,18 @@ semPower.powerLav <- function(type,
       if(length(Sigma) > 1){
         # multigroup case
         fminH0 <- lapply(1:length(Sigma), 
-                         function(x) getF.Sigma(lavaan::fitted(modelH0Fit)[[x]][['cov']], Sigma[[x]], 
-                                                lavaan::fitted(modelH0Fit)[[x]][['mean']], mu[[x]]))
+                         function(x) getF.Sigma(orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]), Sigma[[x]], 
+                                                orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]), mu[[x]]))
         fminH1 <- lapply(1:length(Sigma), 
-                         function(x) getF.Sigma(lavaan::fitted(modelH1Fit)[[x]][['cov']], Sigma[[x]], 
-                                                lavaan::fitted(modelH1Fit)[[x]][['mean']], mu[[x]]))
+                         function(x) getF.Sigma(orderLavCov(lavaan::fitted(modelH1Fit)[[x]][['cov']]), Sigma[[x]], 
+                                                orderLavMu(lavaan::fitted(modelH1Fit)[[x]][['mean']]), mu[[x]]))
         deltaF <- lapply(1:length(Sigma), function(x) fminH0[[x]] - fminH1[[x]]) # result must be a list
       }else{
         # single group case
-        fminH0 <- getF.Sigma(lavaan::fitted(modelH0Fit)[['cov']], Sigma[[1]], 
-                             lavaan::fitted(modelH0Fit)[['mean']], mu[[1]])
-        fminH1 <- getF.Sigma(lavaan::fitted(modelH1Fit)[['cov']], Sigma[[1]], 
-                             lavaan::fitted(modelH1Fit)[['mean']], mu[[1]])
+        fminH0 <- getF.Sigma(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]), Sigma[[1]], 
+                             orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]), mu[[1]])
+        fminH1 <- getF.Sigma(orderLavCov(lavaan::fitted(modelH1Fit)[['cov']]), Sigma[[1]], 
+                             orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
         deltaF <- fminH0 - fminH1
       }
       df <- (dfH0 - dfH1)
@@ -2706,7 +2706,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
     }
   }
   modelH1 <- paste(c(model, unlist(tok)), collapse = '\n')
-
+  
   # define H0 model
   if(nullEffect == 'beta=0'){
     modelH0 <- paste(modelH1, 
@@ -2730,11 +2730,11 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   }else{
     stop('nullEffect not defined.')
   }
-
+  
   # always enforce invariance constraints in the multigroup case
   lavOptions <- NULL
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))
-
+  
   # always fit H1 model
   fitH1model <- TRUE 
   if(comparison == 'saturated'){
