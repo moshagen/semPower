@@ -12,6 +12,7 @@ semPower.powerPath(
   nullEffect = "beta = 0",
   nullWhich = NULL,
   nullWhichGroups = NULL,
+  standardized = TRUE,
   ...
 )
 }
@@ -20,7 +21,7 @@ semPower.powerPath(
 
 \item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{Beta}{matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. See details.}
+\item{Beta}{matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. Exogenous variables must occupy the first rows in \code{Beta} when \code{standardized = TRUE}.  See details.}
 
 \item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
 
@@ -29,6 +30,8 @@ semPower.powerPath(
 \item{nullWhich}{vector of size 2 indicating which slope in \code{Beta} is hypothesized to equal zero when \code{nullEffect = 'beta = 0'}, or to restrict to equality across groups when \code{nullEffect = 'betaA = betaB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'betaX = betaZ'}. Can also contain more than two slopes, e.g., \code{list(c(2, 1), c(3, 1), c(3, 2))} to set \code{Beta[2, 1] = Beta[3, 1] = Beta[3, 2]}.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'betaA = betaB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
+
+\item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. See details.}
 }

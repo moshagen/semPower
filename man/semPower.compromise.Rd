@@ -15,7 +15,6 @@ semPower.compromise(
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
-  simulatedPower = FALSE,
   ...
 )
 }
@@ -39,8 +38,6 @@ semPower.compromise(
 \item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
 
 \item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
-
-\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. This is not supported for compromise power analysis and is only present to remind users that this cannot be reasonably done.}
 }
 \value{
 Returns a list. Use \code{summary()} to obtain formatted results.

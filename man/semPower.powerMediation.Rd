@@ -14,6 +14,7 @@ semPower.powerMediation(
   indirect = NULL,
   nullEffect = "ind = 0",
   nullWhichGroups = NULL,
+  standardized = TRUE,
   ...
 )
 }
@@ -35,6 +36,8 @@ semPower.powerMediation(
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'ind = 0'} (the default) to test whether the indirect effect is zero or \code{'indA = indB'} to test for the equality of indirect effects across groups. See details.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'indA = indB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
+
+\item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. In case of a simple mediation, the order of factors is X, M, Y. See details.}
 }

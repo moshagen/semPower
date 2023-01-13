@@ -14,6 +14,7 @@ semPower.powerCLPM(
   waveEqual = NULL,
   nullEffect = NULL,
   nullWhich = NULL,
+  standardized = TRUE,
   metricInvariance = TRUE,
   ...
 )
@@ -36,6 +37,8 @@ semPower.powerCLPM(
 \item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in \code{waveEqual} and additionally \code{'autoregX = 0'}, \code{'autoregY = 0'}, \code{'crossedX = 0'}, \code{'crossedY = 0'} to constrain the X or Y autoregressive effects or the crossed effects to zero, \code{'autoregX = autoregY'} and \code{'crossedX = crossedY'} to constrain them to be equal for X and Y.}
 
 \item{nullWhich}{used in conjunction with \code{nullEffect} to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, \code{nullEffect = 'autoregX = 0'} with \code{nullWhich = 2} would constrain the second autoregressive effect for X to zero.}
+
+\item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).}
 
@@ -347,7 +350,8 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 
 # same as above, but determine N to detect that 
 # the residual correlation between X and Y at wave 2 (of .3) differs from 
-# the residual correlation between X and Y at wave 3 (of .4) differs from 
+# the residual correlation between X and Y at wave 3 (of .4) differs
+# and define unstandardized parameters
 powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
@@ -358,6 +362,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 rXY = c(.2, .3, .4),
                                 nullEffect = 'corXY',
                                 waveEqual = c('autoregX', 'autoregY'),
+                                standardized = FALSE,
                                 nIndicator = c(5, 3, 5, 3, 5, 3),
                                 loadM = c(.5, .6, .5, .6, .5, .6),
                                 alpha = .05, beta = .05)

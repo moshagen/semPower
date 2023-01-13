@@ -127,6 +127,13 @@ powerReg <- semPower.powerRegression(type = 'a-priori',
                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
                                      alpha = .05, beta = .05)
+
+# same as above, but define unstandardized slopes
+powerReg <- semPower.powerRegression(type = 'a-priori',
+                                    slopes = c(.2, .3), corXX = .4,
+                                    standardized = FALSE,
+                                    nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+                                    alpha = .05, beta = .05)
                                      
 # same as above, but compare to the saturated model
 # (rather than to the less restricted model)
