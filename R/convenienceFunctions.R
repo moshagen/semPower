@@ -1833,11 +1833,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
-  
-  # we override Beta and Sigma later, so let's make sure it is not set in ellipsis argument
-  if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
-  if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
-  
+
   # validate input
   if('standardized' %in% names(list(...)) && list(...)[['standardized']]) stop('Standardized is not available for RICLPM.')
   if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
@@ -1945,7 +1941,6 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     }
   }
   
-  
   # add metric invariance constrains
   metricInvarianceList <- NULL
   if(metricInvariance){
@@ -1954,15 +1949,11 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
       seq(4 + 2*nWaves, 2 + 4*nWaves, 2)  
     )
   }
-  
-  
+
   ### get model-implied sigma
-  if(!is.null(args[['Lambda']])) args[['Lambda']] <- NULL # delete user-provided Lambda 
-  
-  generated <- do.call(what = semPower.genSigma,
-                       args = append(list(Lambda = Lambda, Beta = B, Psi = Psi,
-                                          useReferenceIndicator = TRUE,
-                                          metricInvariance = metricInvarianceList), args))
+  generated <- semPower.genSigma(Lambda = Lambda, Beta = B, Psi = Psi,
+                                 useReferenceIndicator = TRUE,
+                                 metricInvariance = metricInvarianceList)
 
   Sigma <- generated$Sigma
 
@@ -1981,7 +1972,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
   
   # add unresidualized factors
-  model <- paste(model, generated$modelTrueCFA, sep='\n')
+  model <- paste(model, generated[['modelTrueCFA']], sep='\n')
   
   # set residual variance of unresidualized factors to 0
   for(f in (2*nWaves + 3):(4*nWaves + 2)){
