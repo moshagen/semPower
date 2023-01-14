@@ -3038,8 +3038,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
   if(max(unlist(nullWhich)) > ncol(Phi[[1]])) stop('At least one element in nullWhich is an out of bounds index concerning Phi. Recall that Phi must only comprise bifactor(s) and covariate(s), but not specific factors.')
   
-  # args <- list()
-  # args[['loadings']] <- loadings 
   ### create Lambda
   # sLambda only contains specific factors and covariate(s)
   sLambda <- args$Lambda
@@ -3059,7 +3057,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(seq(nGroups), function(g) lapply(seq(numBifactors), function(f){
     length(bfLoadings[[g]][[f]]) < sum(sLambda[[g]][ , bfWhichFactors[[g]][[f]]] != 0)
   }))))) stop('Bifactors must have at least the same number of indicators as the comprised by the respective specific factors. If you want an indicator only loading on a specific factor, assign the respective bifactor loading a value of zero.')
-  
   
   # add bifactor structure to Lambda
   Lambda <- lapply(seq(nGroups), function(g){
@@ -3126,7 +3123,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   
   ### H0 model
   # adapt nullWhich to account for specific factors
-  # nullWhich <- list(c(1, 2))
   nullWhich <- lapply(nullWhich, function(x){
     if(x[[1]] > numBifactors) x[[1]] <- posCov[(x[[1]] - numBifactors)]
     if(x[[2]] > numBifactors) x[[2]] <- posCov[(x[[2]] - numBifactors)]
