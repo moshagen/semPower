@@ -1,5 +1,5 @@
 ---
-title: "Power Analysis for Structural Equation Models: semPower Manual"
+title: "Power Analysis for Structural Equation Models: semPower 2 Manual"
 author: "Morten Moshagen & Martina Bader"
 date: "`r Sys.Date()`"
 output:
@@ -13,7 +13,7 @@ output:
      base_format: rmarkdown::html_vignette
 
 vignette: >
-  %\VignetteIndexEntry{Power Analysis for Structural Equation Models: semPower Manual}
+  %\VignetteIndexEntry{Power Analysis for Structural Equation Models: semPower 2 Manual}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -21,7 +21,7 @@ vignette: >
 library(semPower)
 ```
 
-Power Analysis for Structural Equation Models
+Power Analysis for Structural Equation Models: semPower 2 Manual
 
 Contact: <morten.moshagen@uni-ulm.de>
 
@@ -31,6 +31,9 @@ Please cite as:
 
 
 # Introduction
+
+The following is a bit outdated and should be rewritten:
+
 
 `semPower` provides a collection of functions to perform power analyses for structural equation models. The main functions of `semPower` are:
 
@@ -295,7 +298,7 @@ cp <- semPower.compromise(effect = .08, effect.measure = 'RMSEA',
 ```
 
 
-## Power-analysis to detect a difference between two models {#diffPower}
+## Power-analysis to detect an overall difference between two models {#diffPower}
 
 A common scenario is to test two competing models against each other, where a more restrictive model (involving more df) is compared against a less restrictive model (involving less df). When the difference between these models lies just in a single (or few) particular parameter(s), the effect should be determined [in terms of the model parameters](#modelBasedPower). If, however, the difference between the models potentially spreads across multiple parameters (as, say, when comparing a 3-factor with a 5-factor model), one approach to power analysis it to define the models in terms of overall fit. 
 
@@ -305,7 +308,7 @@ ap <- semPower.aPriori(effect = c(.04, .05), effect.measure = 'RMSEA',
                        alpha = .05, power = .80, df = c(44, 41))
 summary(ap)
 ```
-which shows that 340 observations are required to discriminate these models.
+which shows that 340 observations are required to discriminate these models. Post-hoc and compromise power analyses are performed accordingly.
 
 A similar situation often occurs in tests of measurement invariance, where one wants sufficient power to detect whether certain cross-group constraints on the model parameters (such as equal loadings across groups) are violated. Again, the difference between such models can be defined through [particular parameters](#powerMI), for instance by assuming a single loading differs by .1 across groups. However, it is also reasonable to assume that non-invariance spreads across multiple parameters (say, across all loadings), so that one approach to power analysis it to define the models in terms of overall fit. 
 
@@ -350,13 +353,13 @@ to be written
 ## semPower.powerMI(): Detect measurement non-invariance in a multiple group model {#powerMI}
 to be written
 
+When you do not expect (or are not interested in or do not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assume that non-invariance spreads across multiple parameters (say, across all loadings), consider performing model free power analysis concerning the [overall difference](#diffPower) between two models.
+
 ## semPower.powerCLPM(): Detect correlations and slopes in a CLPM model {#powerCLPM}
 to be written
 
 ## semPower.powerRICLPM(): Detect correlations and slopes in a RI-CLPM model {#powerRICLPM}
 to be written
-
-
 
 
 
@@ -427,6 +430,14 @@ In determining the df, `semPower.getDf` also accounts for any additional restric
 
 ## Multiple Group Models {#multipleGroups}
 All utility methods described above also have support for hypothesis arising in multiple group settings.
+
+here we only want an own chapter for multigroups (for impatient readesr), but should directly refer to the relevant functions above. maybe as a list, say:
+
+* See [powerCFA](powerCFA) to detect that the correlation between two factors differs across groups.
+* See [powerMI](powerMI) for various hypothesis concerning measurement invariance across groups.
+* ...
+
+
 
 ## Simulated power {#simulatedPower}
 to be written
