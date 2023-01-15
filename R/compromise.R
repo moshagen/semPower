@@ -13,6 +13,7 @@
 #' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
 #' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
 #' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
+#' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
 #' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
 #' \dontrun{
@@ -117,7 +118,10 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     cfi = fit[['cfi']],
     max = max,
     min = min,
-    bPrecisionWarning = bPrecisionWarning
+    bPrecisionWarning = bPrecisionWarning,
+    plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
+    plotShowLabels = if('plotShowLabels' %in% names(list(...))) list(...)[['plotShowLabels']] else TRUE
   )
 
   class(result) <- "semPower.compromise"
@@ -173,8 +177,9 @@ summary.semPower.compromise <- function(object, ...){
 
   print(out.table, row.names = FALSE, right = FALSE)
 
-  if(!object[['bPrecisionWarning']])
-    semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']])
+  if(object[['plotShow']] && !object[['bPrecisionWarning']])
+    semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']], 
+                      linewidth = object[['plotLinewidth']], showLabels = object[['plotShowLabels']])
   
 }
 

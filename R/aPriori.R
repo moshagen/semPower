@@ -22,6 +22,7 @@
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation.
 #' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
 #' @param seed for simulated power: the seed.
+#' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
 #' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
 #' \dontrun{
@@ -239,7 +240,10 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     cfi = fit[['cfi']],
     bPrecisionWarning = bPrecisionWarning,
     simulated = simulatedPower,
-    nrep = nrep
+    nrep = nrep,
+    plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
+    plotShowLabels = if('plotShowLabels' %in% names(list(...))) list(...)[['plotShowLabels']] else TRUE
   )
 
   class(result) <- "semPower.aPriori"
@@ -314,7 +318,9 @@ summary.semPower.aPriori <- function(object, ...){
 
   print(out.table, row.names = FALSE, right = FALSE)
   
-  semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['impliedNCP']], df = object[['df']])
+  if(object[['plotShow']])
+    semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['impliedNCP']], df = object[['df']], 
+                      linewidth = object[['plotLinewidth']], showLabels = object[['plotShowLabels']])
   
 }
 
