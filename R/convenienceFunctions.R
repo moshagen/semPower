@@ -122,6 +122,11 @@ semPower.powerLav <- function(type,
   if(simulatedPower && type == 'compromise') stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
   if(!is.null(modelPop) && !is.list(modelPop)) modelPop <- list(modelPop)
   if(!is.null(Sigma) && !is.list(Sigma)) Sigma <- list(Sigma)
+  
+  # lav doesn't like both equality constrains and value constrains on the same parameters, so
+  # transform this by dropping equality constrains and assign value constrains to the affected parameters
+  modelH0 <- makeRestrictionsLavFriendly(modelH0)
+  if(!is.null(modelH1)) modelH1 <- makeRestrictionsLavFriendly(modelH1)
 
   # determine population Sigma / mu
   if(is.null(Sigma)){

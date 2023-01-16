@@ -1520,7 +1520,26 @@ test_powerCLPM <- function(doTest = TRUE){
     round(2*lavres19$fit['fmin'] - ph17$power$fmin) == 0 &&
     round(sum((par18[par18$lhs == 'f3' & par18$rhs == 'f4', 'est'] - par18[par18$lhs == 'f5' & par18$rhs == 'f6', 'est'])^2), 4) == 0  
   
-  if(valid4){
+  
+  # # zero constraints on wave equal param
+  ph20 <- semPower.powerCLPM(type = 'a-priori',
+                             nWaves = 3,
+                             autoregEffects = c(.8, .7),
+                             crossedEffects = c(.2, .1),
+                             waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                             rXY = NULL,
+                             nullEffect = 'autoregY = 0',
+                             nIndicator = c(5, 3, 5, 3, 5, 3),
+                             loadM = c(.5, .4, .5, .4, .5, .4),
+                             alpha = .05, beta = .05)
+
+  lavres20 <- helper_lav(ph20$modelH0, ph20$Sigma)
+  par20 <- lavres20$par
+
+  valid5 <- valid4 && 
+    sum(abs(par20[par20$lhs %in% c('f6', 'f4') & par20$rhs %in% c('f4', 'f2') & par20$op == '~', 'est'])) < 1e-8
+
+  if(valid5){
     print('test_powerCLPM: OK')
   }else{
     warning('Invalid')

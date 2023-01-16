@@ -708,3 +708,75 @@ orderLavCov <- function(lavCov = NULL){
 orderLavMu <- function(lavMu = NULL){
   orderLavResults(lavMu = lavMu)
 }
+
+#' makeRestrictionsLavFriendly
+#'
+#' This function transforms a `lavaan` model string into a model string that works reliably
+#' when both equality constrains and value constrains are imposed on the same parameters.
+#' `lavaan` cannot reliably handle this case, e. g., "a == b \n a == 0" will not always work. 
+#' The solution is to drop the equality constraint and rather apply
+#' the value constraint on each equality constrained parameter, e. g. "a == 0 \n b == 0" will work.
+#'  
+#' @param model `lavaan` model string
+#' @return model with  `lavaan`-friendly constrains
+makeRestrictionsLavFriendly <- function(model){
+  if(!grepl('==', model)) return(model)
+  
+  # determine which parameters are equal and which are constant
+  tok <- strsplit(model, '\\n')[[1]]
+  tok <- tok[nchar(tok) > 0 & !startsWith(tok, '#')]
+  parZero <- parEqual <- list()
+  for(i in seq_along(tok)){
+    if(grepl('==', tok[i])){
+      cp <- unlist(lapply(strsplit(tok[i], '==')[[1]], trimws))
+      ncp <- suppressWarnings(as.numeric(cp))
+      if(any(!is.na(ncp))){
+        cl <- list(cp[which(!is.na(ncp))])
+        names(cl) <- cp[which(is.na(ncp))]
+        parZero <- append(parZero, cl)
+      }else{
+        #parPresent <- unlist(lapply(parEqual, function(x) cp %in% x))
+        parPresent <- lapply(parEqual, function(x) cp %in% x)
+        if(length(parPresent) > 0) parPresent <- apply(do.call(rbind, parPresent), 2, any)
+        if(!any(parPresent)){
+          parEqual <- append(parEqual, list(cp))
+        }else{
+          #idx <- which(unlist(lapply(parEqual, function(x) cp[parPresent] %in% x)))
+          idx <- lapply(parEqual, function(x) cp[parPresent] %in% x)
+          idx <- which(apply(do.call(cbind, idx), 2, any))
+          parEqual[[idx]] <- c(cp[!parPresent], parEqual[[idx]])
+        }
+      }
+    }
+  }
+
+  # replace equality and constant parameters by constant only
+  if(length(parEqual) > 0){
+    pIdx <- which(unlist(lapply(lapply(parEqual, function(x) x %in% names(parZero)), any)))
+    if(length(pIdx) > 0){
+      newRestr <- remParams <- list()
+      for(i in seq_along(pIdx)){
+        params <- parEqual[[pIdx[i]]]
+        remParams <- append(remParams, params)
+        val <- parZero[[which(names(parZero) %in% params)]]
+        newRestr <- append(newRestr, paste0(params, ' == ', val))
+      }
+      
+      # remove offending equality constrained and constant parameters
+      mod <- lapply(tok, function(x){
+        if(grepl('==', x)){
+          cp <- unlist(lapply(strsplit(x, '==')[[1]], trimws))
+          if(!any(unlist(lapply(cp, function(x) x %in% unlist(remParams))))) 
+            x  # only return if not found
+        }else{
+          x
+        }
+      })
+      mod <- mod[nchar(mod) > 0]
+      
+      # now add proper constant constrains
+      model <- paste(c(unlist(mod), newRestr), collapse = '\n')
+    } 
+  }
+  model
+}
