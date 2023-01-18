@@ -25,16 +25,16 @@ vignette: >
   max-width: 95%; !important;
 }
 .book .book-summary {
-  width: 450px;
+  width: 400px;
   position:absolute;
   top:0;
-  left:-450px;
+  left:-400px;
 }
 .book.with-summary .book-header.fixed {
-    left: 450px;
+    left: 400px;
 }
 .book.with-summary .book-body {
-    left: 450px;
+    left: 400px;
 }
 </style>
 ```
@@ -52,7 +52,9 @@ Please cite as:
 * Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54–60. [https://doi.org/10.1080/10705511.2014.950896](https://doi.org/10.1080/10705511.2014.950896)
 
 
-The `semPower` package can be installed via [CRAN](https://cran.r-project.org/package=semPower). The latest development version is available from github at [https://github.com/moshagen/semPower](https://github.com/moshagen/semPower) and can be installed as follows
+##### Installation{-}
+
+The `semPower` package can be installed via [CRAN](https://cran.r-project.org/package=semPower). The latest development version is available from github at [https://github.com/moshagen/semPower](https://github.com/moshagen/semPower) and can be installed as follows:
 
 ```{r eval=FALSE}
 # install.packages("devtools")
@@ -151,13 +153,13 @@ When testing statistical hypotheses using this framework, two types of decision 
 If the H0 is false, the chi-square test statistic is no longer central $\chi^2$(df) distributed, but can be shown to follow a noncentral $\chi^2$(df, $\lambda$) distribution with non-centrality parameter $\lambda$ and expected value df + $\lambda$ (MacCallum, Browne, & Sugawara, 1996). The non-centrality parameter $\lambda$ shifts the expected value of the non-central $\chi^2$(df, $\lambda$) distribution to the right of the corresponding central distribution. Having determined the critical value associated with the desired alpha probability from the central $\chi^2$(df) distribution, the beta-error probability can be computed by constructing the corresponding non-central $\chi^2$(df, $\lambda$) distribution with a certain non-centrality parameter $\lambda$ and obtaining the area (i.e., the integral) of this distribution to the left of the critical value:
 
 $$ \beta = \int_{0}^{\chi^2_{crit}} f_{\chi^2(df, \lambda)}(x) \, dx$$
-Correspondingly, statistical power is the area of the non-central $\chi^2$(df, $\lambda$) distribution to the right of the critical value, i. e., $= 1 - \beta$. The general situation is illustrated in Figure 1.
+Correspondingly, statistical power is the area of the non-central $\chi^2$(df, $\lambda$) distribution to the right of the critical value, i. e., $= 1 - \beta$. The general situation is illustrated in the following figure.
 
 ```{r figure1, echo=FALSE, fig.cap = "Central (red) and non-central (blue) chi-square distributions."}
 semPower.showPlot(chiCrit = 124.3421, ncp = 40.75, df = 100)
 ```
 
-Figure 1 depicts a central (solid)  $\chi^2$(df) and a non-central (dashed)  $\chi^2$(df, $\lambda$) distribution with df = 100 and $\lambda = 40.75$. The area of the central distribution $\chi^2$(df) to the right of the critical value reflects the alpha error. The dotted line indicates a critical value of 124, which corresponds to alpha = .05. The area of $\chi^2$(df, $\lambda$) distribution to the left of the critical value is the beta-error probability, which in this example  takes a value of beta = .20. Statistical power is defined as 1 - beta, that is, the area under the noncentral $\chi^2$(df, $\lambda$) distribution to the right of the critical value.
+The figure depicts a central (solid)  $\chi^2$(df) and a non-central (dashed)  $\chi^2$(df, $\lambda$) distribution with df = 100 and $\lambda = 40.75$. The area of the central distribution $\chi^2$(df) to the right of the critical value reflects the alpha error. The dotted line indicates a critical value of 124, which corresponds to alpha = .05. The area of $\chi^2$(df, $\lambda$) distribution to the left of the critical value is the beta-error probability, which in this example  takes a value of beta = .20. Statistical power is defined as 1 - beta, that is, the area under the noncentral $\chi^2$(df, $\lambda$) distribution to the right of the critical value.
 
 
 ## Measures of Effect {#effects}
@@ -259,7 +261,7 @@ By contrast, [model-based power analyses](#modelBasedPower) define the effect of
 Thus, regardless of whether the effect of interest is directly defined in terms of an [effect size](#effects) understood by `semPower` or indirectly via constrains on particular model parameters, the actual power analysis is always performed by one of the following functions. 
 
 
-## A-priori power analysis: Determine required sample size{#ap}
+## A-priori power analysis: Determine N{#ap}
 
 The purpose of a-priori power analyses is to determine the required sample size to detect an effect with a certain probability on a specified alpha error. In the language of structural equation modeling, an a-priori power analysis asks: How many observations do I need to detect the effect of interest (i. e., falsify the model under scrutiny) with a probability of XX% (statistical power)?
 
@@ -308,7 +310,7 @@ If one is interested in how power changes for a range of sample sizes, it is use
 
 
 
-## Post-hoc power analysis: Determine achieved power {#ph}
+## Post-hoc power analysis: Determine power {#ph}
 
 The purpose of post-hoc power analyses is to determine the actually achieved power to detect a specified effect with given sample size on a certain alpha error. In the language of structural equation modeling, a post-hoc power analysis asks: With my sample at hand, how large is the probability (power) to detect the effect of interest?
 
@@ -407,7 +409,7 @@ summary(ap)
 This shows that 858 observations (286 by group) are required for a power of 80%. 
 
 
-## Define effect through covariance matrices {#InputCovMatrix}
+## Define the effect through covariance matrices {#InputCovMatrix}
 
 The previous sections assumed that the magnitude of effect is determined by defining a certain effect size metric (such as F0 or RMSEA) and a certain magnitude of effect. Alternatively, the effect can also be determined by specifying the population ($\Sigma$) and the model-implied ($\hat{\Sigma}$) covariance matrices (and, if means are part of the model, $\mu$ and $\hat{\mu}$) directly. To determine the associated effect in terms of F0, `semPower` just plugs these matrices in the ML-fitting function: 
 
@@ -438,41 +440,127 @@ The purpose of all convenience functions is to provide high-level interfaces tha
 
 More precisely, all convenience functions internally obtain the population covariance matrix (and mean vector, if necessary) via [`semPower.genSigma`](#generateCov), define the H0 model (and optionally the H1 model), call [`semPower.powerLav`](#powerLav) to fit the models to the population values, which, in turn, obtains the model-implied covariance matrix (and mean vector), and plugs the population and model-implied matrices into one of the [model-free power analyses](#modelFreePower) functions. Since all of these low level functions are also exposed, an even higher level of flexibility can be achieved by calling these functions directly (see [this](#powerLav) and [this](#powerCov) chapter for illustrations).
 
+Given that the functions performing a model-based power analysis operate on a factor model, it is always required to specify the factor model in terms of the number of factors, number of indicators, and loadings. For this reason, the chapter begins with a primer on how to [define the factor model](#factorDefinition).
+ 
+## Definition of the factor model {#factorDefinition}
 
-## semPower.powerCFA: Detect correlations in a CFA model {#powerCFA}
+Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also need to be specified if the model does not include any factor, but operates on observed variables (such as a CLPM based on observed scores, rather than on latent factors). There are several ways to achieve this, which are documented further below, for the impatient reader the easiest way is to add `Lambda = diag(p)`, where p is the number of variables contained in the model.
+
+The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings also affects power, although to a lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
+
+Any `semPower` convenience function expects one of the following arguments defining the factor model:
+
+* `Lambda` to define the loading matrix.
+* `loadings` to define a reduced loading matrix that only contains the primary loadings.
+*  `nIndicator` in conjunction with `loadM`  to define the number of indicators by factor along with a single loading for the indicators of each factor or a single loading to apply for all indicators. 
+
+For example, suppose two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5 shall be defined. The first option to define this factor model is to provide a loading matrix as value to the `Lambda` argument:
+
+```{r eval=FALSE}
+Lambda <- matrix(c(
+  c(.5, 0),
+  c(.5, 0),
+  c(.5, 0),
+  c(0, .5),
+  c(0, .5),
+  c(0, .5),
+  c(0, .5)
+  ), ncol = 2, byrow = TRUE)
+```
+
+A second way to achieve this is to provide a list comprising two vectors as value to the `loadings` argument:
+
+```{r eval=FALSE}
+loadings <- list(
+  c(.5, .5, .5),
+  c(.5, .5, .5, .5)
+  )
+```
+`loadings` must be a list of vectors, where each vector defines the loading of the indicators on the respective factor. In the example above, one vector is needed for each factor, with the first vector comprising 3 and the second 4 elements, reflecting the desired loading matrix above. Note that the `loadings` argument assumes the absence of any secondary loading, so that each loading defined in the vectors refers to a single indicator. As another example, the following are two equivalent ways to define three factors with 3, 4, and 5 indicators loading by the specified values: 
+
+```{r eval=FALSE}
+Lambda <- matrix(c(
+  c(.7, 0, 0),
+  c(.6, 0, 0),
+  c(.5, 0, 0),
+  c(0, .5, 0),
+  c(0, .8, 0),
+  c(0, .6, 0),
+  c(0, .3, 0),
+  c(0, 0, .9),
+  c(0, 0, .5),
+  c(0, 0, .7),
+  c(0, 0, .4),
+  c(0, 0, .6)
+  ), ncol = 2, byrow = TRUE)
+
+loadings <- list(
+  c(.7, .6, .5),
+  c(.5, .8, .6, .3),
+  c(.9, .5, .7, .4, .6)
+  )
+```
+
+
+A third way to define two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5, is to provide both the `nIndicator` and the `loadM` arguments:
+```{r eval=FALSE}
+nIndicator <- c(3, 4)
+loadM <- .5
+```
+`nIndicator` is a vector providing the number of indicators separately for each factor. `loadM` can be a single number (as in the example above) to say that all loadings have the same value. Alternatively, `loadM` can be a vector specifying the loadings separately for each factor, where each indicator of a specific factor takes the defined value as loading. Thus, specifying `loadM <- c(.5, .5)` would achieve the same result, whereas `loadM <- c(.5, .6)` would assign all indicators of the second factor a loading of .6. 
+
+Which of these three ways to use to define the factor models (`Lambda`, `loadings` or `nIndicator` and `loadM`) in the example two factor model with equal loadings is of course arbitrary and ultimately a matter of taste. In general, the `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loadings within a factor. This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
+
+The "factor" model also needs to be defined, when the model does not include any factor, but only contains observed variables. Consider a CLPM with two waves based on observed variables only, so there are 4 observed variables in total. Requesting an observed only model can be achieved by using either of the following:
+
+* `Lambda = diag(4)`
+* `loadings = as.list(rep(1, 4))`
+* `nIndicator = rep(1, 4)` and `loadM = 1`
+
+For many (but not all) convenience functions, it is important to define the factors in the expected order. For instance, [`semPower.powerRegression`](#powerRegression) treats the first factor as criterion (*Y*) and the remaining factors as predictors (*X*). Thus, `nIndicator <- c(10, 5, 5)` says that the criterion is measured by 10 indicators, whereas both predictors are measured by 5 indicators. Using `nIndicator <- c(5, 10, 5)` instead would imply a criterion measured by 5 indicators. Details on the expected order of factors are provided in each specific convenience function.
+
+
+## CFA models {#powerCFA}
 to be written. here we should be very precise and granular so taht the remaining functions can crossreference here:
 
-* explain the definition of the loadings at length (or should we move that to a seperate section? maybe better)
+semPower.powerCFA
 * show all three types of power analysis
 * show and explain difference between saturated and restricted
 * explain why fitindices for restricted differ from what lav reports
 * explain why there are slight differences in fitindices from what lav reports for multigroup models
 
 
-## semPower.powerBifactor: Detect correlations in a model involving a bifactor structure {#powerBifactor}
+## Models involving a bifactor structure {#powerBifactor}
 to be written
+semPower.powerBifactor
 
-## semPower.powerRegression: Detect slopes in a regression model {#powerRegression}
+## Latent regression models {#powerRegression}
 to be written
+semPower.powerRegression
 
-## semPower.powerMediation: Detect mediation effects {#powerMediation}
+## Mediation models  {#powerMediation}
 to be written
+semPower.powerMediation: 
 
-## semPower.powerPath: Detect slopes in a generic path model {#powerPath}
+## Generic path models {#powerPath}
 to be written
+semPower.powerPath
 
-## semPower.powerMI: Detect measurement non-invariance in a multiple group model {#powerMI}
+## Multiple group models {#powerMI}
 to be written
+semPower.powerMI
 
 When you do not expect (or are not interested in or do not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assume that non-invariance spreads across multiple parameters (say, across all loadings), consider performing model free power analysis concerning the [overall difference](#diffPower) between two models.
 
-## semPower.powerCLPM: Detect correlations and slopes in a CLPM model {#powerCLPM}
+## CLPM models {#powerCLPM}
 to be written
+semPower.powerCLPM
 
-## semPower.powerRICLPM: Detect correlations and slopes in a RI-CLPM model {#powerRICLPM}
+## RI-CLPM models {#powerRICLPM}
 to be written
+semPower.powerRICLPM
 
-## semPower.powerLav: Generic model-based power analysis {#powerLav}
+## Generic model-based power analysis {#powerLav}
 
 All of the functions described above implement a high-level approach towards performing model-based power analysis to facilitate the definition of the relevant models and hypotheses. At times, one might want to perform model-based power analysis that are not immediately covered by one of these functions. Therefore, `semPower` also provides a more generic way to perform a model-based power analysis via the `semPower.powerLav` function that requires the direct specification of the H0 and H1 `lavaan` model strings as well as either the population covariance matrix (and means) or the population model.
 
@@ -612,7 +700,7 @@ ap <- semPower.powerLav(type = 'a-priori',
 
 Power plots show the implied power as function of some other variable. `semPower` provides two different types of power plots. You can either plot the achieved power to detect a certain effect over a range of different sample sizes (`semPower.powerPlot.byN`). Alternatively, you can plot the achieved power with a given $N$ to detect a range of different effect size magnitudes (`semPower.powerPlot.byEffect`).   
 
-## Determine power as function of N for a given effect {#plotByN}
+## Power by N for a given effect {#plotByN}
 The function `semPower.powerPlot.byN` creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose we are interested in how the power to detect an effect corresponding to RMSEA = .05 changes as function of $N$. We are interested in a power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the $df$, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
 
 ```{r figurePowerPlotByN, fig.cap = "Power as function of the N to detect RMSEA >= .05"}
@@ -624,7 +712,7 @@ This shows that a model with an associated RMSEA = .05 is rejected with a very h
 
 &nbsp;
 
-## Determine power as function of the magnitude of effect for a given N {#plotByEffect}
+## Power by the magnitude of effect for a given N {#plotByEffect}
 The function `semPower.powerPlot.byEffect` creates a plot showing the achieved power at a given sample size over a range of effect sizes. For example, suppose we are interested in how the power at $N = 500$ changes as function of effect size magnitude, corresponding to an RMSEA ranging from .001 to .10. This is achieved by setting the arguments `effect.measure = 'RMSEA'`, `effect.min = .001` and `effect.max = .10`. In addition, as in any post-hoc power analysis, the sample size, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `df = 100`.
 
 
@@ -640,7 +728,7 @@ This shows that with $N = 500$, a model with an associated RMSEA > .04 is detect
 # Further topics {#furtherTopics}
 to be written
 
-## Obtain the degrees of freedom (df) of a model {#getdf}
+## Obtain the model degrees of freedom {#getdf}
 
 Knowledge of the degrees of freedom (df) is required to perform a power analysis. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
 
@@ -688,7 +776,7 @@ to be written
 
 
 
-## Generic power analyses using covariance matrices {#powerCov}
+## Power analyses based on covariance matrices {#powerCov}
 
 All [model-free power analyses](#modelFreePower) provided in `semPower` also accept [covariance matrices as input](#InputCovMatrix) and then determine the associated effect through trough the supplied covariance matrices. This offers a very high degree of flexibility, but obviously requires a specification of proper covariance matrices. In this section, various options to obtain these matrices are illustrated in detail, ordered by most to least cumbersome.
 
@@ -810,7 +898,57 @@ In the background, `semPower.powerCFA` performs all the necessary steps outlined
 ## Generate a covariance matrix and lavaan model strings {#generateCov}
 to be written...`semPower.genSigma` (#generateCov)
 
+In the CFA model,
+$$\Sigma = \Lambda \Phi \Lambda' + \Theta$$
+where $\Lambda$ is the $p \cdot m$ loading matrix, $\Phi$ is the variance-covariance matrix of the $m$ factors, and $\Theta$ is the residual variance-covariance matrix of the observed variables. The means are
+$$\mu = \tau + \Lambda \alpha$$
+with the $p$ indicator intercepts $\tau$ and the $m$ factor means $\alpha$.
 
+In the structural equation model,
+$$\Sigma = \Lambda (I - \mathbf{B})^{-1} \Psi [(\mathbf{I} - \mathbf{B})^{-1}]'  \Lambda' + \Theta$$
+where $\mathbf{B}$ is the $m \cdot m$ matrix containing the regression slopes and $\Psi$ is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
+$$\mu = \tau + \Lambda (\mathbf{I} - \mathbf{B})^{-1} \alpha$$
+
+As an example, suppose there are four factors ($X_1$, $X_2$, $X_3$, $X_4$), and Beta is defined as follows:
+$$
+\begin{array}{lrrr}
+    & X_1 & X_2 & X_3 & X_4\\
+X_1 & 0.0 & 0.0 & 0.0 & 0.0 \\
+X_2 & 0.0 & 0.0 & 0.0 & 0.0  \\
+X_3 & 0.2 & 0.3 & 0.0 & 0.0  \\
+X_4 & 0.3 & 0.5 & 0.0 & 0.0  \\
+\end{array}
+$$
+Each row specifies how a particular factor is predicted by the available factors,
+so the above implies the following regression relations:
+
+$$
+X_1 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
+X_2 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
+X_3 = 0.2 \cdot X_1 +  0.3 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
+X_4 = 0.3 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4
+$$
+
+which simplifies to
+
+$$
+X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
+X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2
+$$
+
+Further suppose that $\Psi$ is
+$$
+\begin{array}{lrrr}
+    & X_1 & X_2 & X_3 & X_4\\
+X_1 & 1.0 & 0.3 & 0.0 & 0.0 \\
+X_2 & 0.3 & 1.0 & 0.0 & 0.0 \\
+X_3 & 0.0 & 0.0 & 1.0 & 0.2 \\
+X_4 & 0.0 & 0.0 & 0.2 & 1.0 \\
+\end{array}
+$$
+
+which implies a correlation between $X_1$ and $X_2$ of .3 and a residual correlation
+between $X_3$ and $X_4$ of .2.
 
 
 # References {-}
