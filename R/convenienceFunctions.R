@@ -1544,6 +1544,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   # TODO: lagged effects would be nice
   # TODO: do we need autocorrelated residuals?
+  # TODO: change the way combined equality and value restrictions are applied
   
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
@@ -2204,6 +2205,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  ...){
   
   # TODO: do we need autocorrelated residuals?
+  # TODO: change the way combined equality and value restrictions are applied
   
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
