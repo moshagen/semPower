@@ -901,21 +901,62 @@ Internally, all convenience functions performing a [model-based power analysis](
 
 For situations not covered in one of the `semPower` convenience functions, greater flexibility is offered when calling either [`semPower.powerLav`](#powerLav) or a model free power analysis providing [using population and model-implied means and covariance matrices](#InputCovMatrix) directly. An useful utility function described in this section is `semPower.genSigma`, which offers several ways to generate a population variance-covariance matrix (and means) based on the model matrices or model features, respectively.
 
-...to be written...
-
-
-In the CFA model,
+`semPower.genSigma` expects model matrices as input parameters, so different matrices need to be provided depending on whether a CFA or a SEM model is specified. In the CFA model, the model implied variance-covariance matrix is given by
 $$\Sigma = \Lambda \Phi \Lambda' + \Theta$$
 where $\Lambda$ is the $p \cdot m$ loading matrix, $\Phi$ is the variance-covariance matrix of the $m$ factors, and $\Theta$ is the residual variance-covariance matrix of the observed variables. The means are
 $$\mu = \tau + \Lambda \alpha$$
 with the $p$ indicator intercepts $\tau$ and the $m$ factor means $\alpha$.
 
-In the structural equation model,
+Thus, to generate a CFA model implied covariance matrix, `Phi` and `Lambda` (or respective  [shortcuts](#factorDefinition)) need to be provided. For instance, the following generates the implied covariance matrix for a three factor model with factor-correlations as defined in `Phi` and the loading matrix as defined in `Lambda`:
+
+```{r eval=FALSE}
+  Phi <- matrix(c(
+    c(1.0, 0.5, 0.1),
+    c(0.5, 1.0, 0.2),
+    c(0.1, 0.2, 1.0)
+  ), byrow = T, ncol=3)
+  Lambda <- matrix(c(
+    c(0.4, 0.0, 0.0),
+    c(0.7, 0.0, 0.0),
+    c(0.8, 0.0, 0.0),
+    c(0.0, 0.6, 0.0),
+    c(0.0, 0.7, 0.0),
+    c(0.0, 0.4, 0.0),
+    c(0.0, 0.0, 0.8),
+    c(0.0, 0.0, 0.7),
+    c(0.0, 0.0, 0.8)
+  ), byrow = T, ncol = 3)
+  
+  gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
+```
+
+`semPower.genSigma` returns a list comprising all model matrices (in the example above, `Lambda`, `Phi`, and the variance-covariance matrix of the manifest residuals, `Theta`) and the  model-implied variance-covariance matrix `Sigma`. In addition, various `lavaan` model strings are also returned:
+
+* `modelPop` model string defining a population model corresponding to the model matrices. 
+* `modelTrue` analysis model (yielding a perfect model fit) .
+* `modelTrueCFA` only for SEM models: a pure CFA analyses model string omitting any regression relationships between the latent factors and rather allowing all latent factors to be correlated.  
+
+Thus, plugging the generated variance-covariance matrix and the generated true model string into  `lavaan` yields estimates that mirror the defined population matrices: 
+
+```{r eval=FALSE}
+library(lavaan)
+summary(sem(gen$modelTrue, 
+            sample.cov = gen$Sigma, 
+            sample.nobs = 1000,
+            sample.cov.rescale = FALSE))
+
+```
+
+Instead of providing the complete loading matrix as argument for `Lambda`,  `semPower.genSigma`  also understands the shortcuts as described in detail [here](#factorDefinition).
+
+If the model-implied covariance-matrix is rather to be determined from a structural equation model (instead a CFA model), `semPower.genSigma` expects as arguments 
+`Beta`, `Psi`, and `Lambda` (or respective  [shortcuts](#factorDefinition)). In the structural equation model, the model-implied covariance matrix is given by
+
 $$\Sigma = \Lambda (I - \mathbf{B})^{-1} \Psi [(\mathbf{I} - \mathbf{B})^{-1}]'  \Lambda' + \Theta$$
 where $\mathbf{B}$ is the $m \cdot m$ matrix containing the regression slopes and $\Psi$ is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
 $$\mu = \tau + \Lambda (\mathbf{I} - \mathbf{B})^{-1} \alpha$$
 
-As an example, suppose there are four factors ($X_1$, $X_2$, $X_3$, $X_4$), and Beta is defined as follows:
+The structural part of the model is primarily defined through Beta ($\mathbf{B}$). As an example, suppose there are four factors ($X_1$, $X_2$, $X_3$, $X_4$), and Beta is defined as follows:
 $$
 \begin{array}{lrrr}
     & X_1 & X_2 & X_3 & X_4\\
@@ -942,7 +983,7 @@ X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
 X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2
 $$
 
-Further suppose that $\Psi$ is
+Psi ($\Psi$) defines whether there are (residual-)correlations between the factors. Suppose that $\Psi$ is
 $$
 \begin{array}{lrrr}
     & X_1 & X_2 & X_3 & X_4\\
@@ -955,6 +996,53 @@ $$
 
 which implies a correlation between $X_1$ and $X_2$ of .3 and a residual correlation
 between $X_3$ and $X_4$ of .2.
+
+The scenario just described can be achieved by defining `Beta` and `Psi` accordingly and plugging these as input to `semPower.genSigma`:
+
+```{r eval=FALSE}
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),
+  c(.00, .00, .00, .00),
+  c(.20, .30, .00, .00),
+  c(.30, .50, .00, .00)
+), byrow = TRUE, ncol = 4)
+Psi <- matrix(c(
+  c(1, .30, .00, .00),
+  c(.30, 1, .00, .00),
+  c(.00, .00, 1, .20),
+  c(.00, .00, .20, 1)
+), byrow = TRUE, ncol = 4)
+
+gen <- semPower.genSigma(Beta = Beta, Psi = Psi, Lambda = diag(ncol(Beta)))
+
+```
+
+In the example above, a manifest-variable only model is defined by setting `Lambda = diag(ncol(Beta))`. If providing a loading matrix or any of the shortcuts instead, a genuine SEM model is defined, as in the following example:
+
+```{r eval=FALSE}
+gen <- semPower.genSigma(Beta = Beta, Psi = Psi, 
+                         loadM = .5, nIndicator = c(5, 4, 5, 6))
+
+```
+
+`semPower.genSigma` again returns a list comprising all model matrices (here: `Lambda`, `Beta`, `Psi`, and the variance-covariance matrix of the manifest residuals, `Theta`) and the  model-implied variance-covariance matrix `Sigma`. In addition, the same `lavaan` model strings as in the CFA case are returned. Thus, again, plugging the generated variance-covariance matrix and the generated true model string into  `lavaan` yields estimates that mirror the defined population matrices: 
+
+```{r eval=FALSE}
+summary(sem(gen$modelTrue, 
+            sample.cov = gen$Sigma, 
+            sample.nobs = 1000,
+            sample.cov.rescale = FALSE))
+```
+
+In the SEM case, `semPower.genSigma` also returns a pure CFA model which just estimates the factors and allows these to correlate, but discards any regression relationships between the factors:
+
+```{r eval=FALSE}
+summary(sem(gen$modelTrueCFA, 
+            sample.cov = gen$Sigma, 
+            sample.nobs = 1000,
+            sample.cov.rescale = FALSE))
+```
+
 
 
 # References {-}
