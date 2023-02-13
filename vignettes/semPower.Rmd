@@ -68,7 +68,7 @@ Basic functionality is also provided as a shiny app, which can be used online at
 
 `semPower` provides a collection of functions to perform power analyses for structural equation models. Statistical power is a concept arising in the context of classical (frequentist) null-hypothesis significance testing and is defined as the probability to reject a certain hypothesis, if this hypothesis is factually wrong. As a general rule, a hypothesis test is only meaningful to the extent that statistical power is reasonably high, because otherwise a non-significant test outcome carries little information regarding the veracity of the tested hypothesis.
 
-For illustration, consider a simple two-factor CFA model and assume that the interest lies in detecting that the correlation between the factors differs from zero. Further assume that the correlation between the factors is $r = .20$ in the population. To test the hypothesis that the factors are uncorrelated, one could fit a model that restricts the correlation between these factors to zero. If the model test turns out significant, the hypothesis of a zero correlation between the factors is rejected, in turn informing the conclusion that the correlation between the factors differs from zero. Statistical power now gives the probability that the outcome of the model test associated with this hypothesized model is significant on a certain alpha error level with a certain sample size. Suppose that $\alpha = .05$ and that the hypothesis of a zero correlation is tested based on a sample size of $N = 125$. Then, the probability of obtaining a significant test outcome to detect a correlation of $r \geq .20$ is just 20%. Stated differently, in 4 out of 5 random samples (each of size $N = 125$) one will *not* detect that the factors are actually correlated. Correspondingly, statistical power is an integral part in planning the required sample size and statistical hypothesis testing more generally. 
+For illustration, consider a simple two-factor CFA model and assume that the interest lies in detecting that the correlation between the factors differs from zero. To test the hypothesis that the factors are uncorrelated, one could fit a model that restricts the correlation between these factors to zero. If the model test turns out significant, the hypothesis of a zero correlation between the factors is rejected, in turn informing the conclusion that the correlation between the factors differs from zero. Statistical power now gives the probability that the outcome of the model test associated with this hypothesized model is significant on a certain alpha error level with a certain sample size. Suppose that the correlation between the factors is $r = .20$ in the population, $\alpha = .05$ and that the hypothesis of a zero correlation is tested based on a sample size of $N = 125$. Then, the probability of obtaining a significant test outcome to detect a correlation of $r \geq .20$ is just 20%. Stated differently, in 4 out of 5 random samples (each of size $N = 125$) one will *not* detect that the factors are actually correlated. Correspondingly, statistical power is an integral part in planning the required sample size and statistical hypothesis testing more generally. 
 
 ## Types of power analyses
 
@@ -120,7 +120,7 @@ Next to defining a relevant hypothesis, performing a power analysis (obviously) 
 * [semPower.postHoc](#ph) to perform a post-hoc power analysis (i. e., determine the achieved power).
 * [semPower.compromise](#cp) to perform a compromise power analysis (i. e., determine a reasonable decision rule).
 
-Any power analysis requires to specify the magnitude of effect that is to be detected in a certain metric. The functions stated above understand the following [effect-size measures](#effects): F0, RMSEA, Mc, GFI, and AGFI. Because any of these effect-measures apply equally regardless of the particular type of model considered, the function above are also referred to as [model free power analyses](#modelFreePower). For example, the statement that power to reject a model involving 100 df exhibiting misspecifications corresponding to $RMSEA \geq .05$ on alpha = .05 with a sample size of 250 is 1 - beta = 97% is always true, regardless of whether the model under scrutiny is a CFA model, a CLPM, a multigroup model, or any other SEM model. It is the very nature of effect-sizes that they are agnostic with respect to how a particular model looks like. 
+Any power analysis requires to specify the magnitude of effect that is to be detected in a certain metric. The functions stated above understand the following [effect-size measures](#effects): F0, RMSEA, Mc, GFI, and AGFI. Because any of these effect-measures apply equally regardless of the particular type of model considered, the function above are also referred to as [model free power analyses](#modelFreePower). For example, the statement that power to reject a model involving 100 df exhibiting misspecifications corresponding to RMSEA $\geq .05$ on alpha = .05 with a sample size of 250 is 1 - beta = 97% is always true, regardless of whether the model under scrutiny is a CFA model, a CLPM, a multigroup model, or any other SEM model. It is the very nature of effect-sizes that they are agnostic with respect to how a particular model looks like. 
 
 However, a common problem in performing a power analysis is that it is often difficult to translate a specific hypothesis into a specific value for a specific effect size (such as a specific value for the RMSEA). Consider the situation that one is interested in determining whether two factors in a CFA model are correlated. A suitable model to test this hypothesis would constrain the correlation between these factors to zero. When this constrained model fits the data as well as the unconstrained model (freely estimating the correlation), both factors can be assumed to be orthogonal. Otherwise, one would conclude that the factors are correlated. Suppose that a correlation between these factors of $r \geq .1$ is considered a meaningful deviation of orthogonality. In terms of power analyses, we thus want sufficient power to identify whether the correlation between the factors is at least $r = .1$. The misfit associated with a model assuming a correlation of 0 when, in reality, the true correlation is at least $r = .1$ is supposed to define the magnitude of effect. The problem is now that one cannot immediately say how this difference in a certain model parameter (the correlation between the factors) translates to an effect size such as the RMSEA. 
 
@@ -128,19 +128,19 @@ For this reason, `semPower` also provides various convenience functions that all
 
 * Hypotheses arising in a [standard CFA model](#powerCFA).
 * Hypotheses arising in models involving a [bifactor structure](#powerBifactor).
-* Hypotheses related to [latent regressions](#powerRegression)
-* Hypotheses related to [mediation models](#powerMediation)
-* Hypotheses related to [generic path models](#powerPath)
-* Hypotheses related to [measurement invariance across groups](#powerMI)
-* Hypotheses arising in a [cross-lagged panel model](#powerCLPM)
-* Hypotheses arising in a [random intercept cross-lagged panel model](#powerRICLPM)
-* Hypotheses arising in a [generic structural equation model](#powerLav)
+* Hypotheses related to [latent regressions](#powerRegression).
+* Hypotheses related to [mediation models](#powerMediation).
+* Hypotheses related to [generic path models](#powerPath).
+* Hypotheses related to [measurement invariance across groups](#powerMI).
+* Hypotheses arising in a [cross-lagged panel model](#powerCLPM).
+* Hypotheses arising in a [random intercept cross-lagged panel model](#powerRICLPM).
+* Hypotheses arising in a [generic structural equation model](#powerLav).
 
 The remainder of this document provides some notes on the statistical background, a formal definition of decision errors in hypothesis testing, statistical power, and various effect-sizes, and a detailed description of the functions contained in this package.
 
 # Statistical Background
 
-This chapter provides a brief statistical background on hypothesis testing as well as model estimation, and effect sizes in SEM.
+This chapter provides a brief statistical background on hypothesis testing,  model estimation, and effect sizes in SEM.
 
 ## Hypothesis Testing and Statistical Power
 
@@ -159,12 +159,13 @@ Correspondingly, statistical power is the area of the non-central $\chi^2$(df, $
 semPower.showPlot(chiCrit = 124.3421, ncp = 40.75, df = 100)
 ```
 
-The figure depicts a central (solid)  $\chi^2$(df) and a non-central (dashed)  $\chi^2$(df, $\lambda$) distribution with df = 100 and $\lambda = 40.75$. The area of the central distribution $\chi^2$(df) to the right of the critical value reflects the alpha error. The dotted line indicates a critical value of 124, which corresponds to alpha = .05. The area of $\chi^2$(df, $\lambda$) distribution to the left of the critical value is the beta-error probability, which in this example  takes a value of beta = .20. Statistical power is defined as 1 - beta, that is, the area under the noncentral $\chi^2$(df, $\lambda$) distribution to the right of the critical value.
+The figure depicts a central (solid)  $\chi^2$(df = 100) and a non-central (dashed)  $\chi^2$(df = 100, $\lambda = 40.75$). The area of the central distribution $\chi^2$(df) to the right of the critical value reflects the alpha error. The dotted line indicates a critical value of 124, which corresponds to alpha = .05. The area of $\chi^2$(df, $\lambda$) distribution to the left of the critical value is the beta-error probability, which in this example  takes a value of beta = .20. Statistical power is defined as 1 - beta, that is, the area under the noncentral $\chi^2$(df, $\lambda$) distribution to the right of the critical value.
 
 
 ## Measures of Effect {#effects}
+As evident from the above, power depends on the applied critical value corresponding to a certain alpha error probability and on the distance between the central and the non-central $\chi^2(df)$ distributions as quantified by the non-centrality parameter $\lambda$. The non-centrality parameter $\lambda$, in turn, depends on the number of observations $N$ and on the degree to which the the tested H0 is factually wrong, i. e., on the discrepancy between the H0 and the H1 model (the effect size). 
 
-To define the discrepancy between the H0 and the H1 model, any non-centrality based measure of effect can be used. For [model-free power analyses](#modelFreePower), `semPower` understands the measures detailed below. Any [model-based power analysis](#modelBasedPower) is eventually converted into the [population minimum of the fit function](#effectsF0) as effect-size.
+To define the discrepancy between the H0 and the H1 model for power analysis, any non-centrality based measure of effect can be used. For [model-free power analyses](#modelFreePower), `semPower` understands the measures detailed below. Any [model-based power analysis](#modelBasedPower) is eventually converted into the [population minimum of the fit function](#effectsF0) as effect-size.
 
 ### F0  {#effectsF0}
 
@@ -178,8 +179,10 @@ If the model is correct, $\hat{\Sigma} = \Sigma$, $\hat{\mu} = \mu$, and thus $F
 If fitting a model to some sample data of size $N$, the estimated minimum of the fit-function, $\hat{F}$, is used to construct an asymptotically $\chi^2$-distributed model test-statistic, commonly simply called the chi-squared model test: 
 
 $$\chi^2 = \hat{F}(N-1)$$
-Note that $\hat{F}$ is a biased estimate of $F_0$. If $F_0=0$, the  expected value of $\hat{F}$ is $df$, i. e. the model degree of freedom. For a model with $q$ free parameters, the $df$ are given by
+Note that $\hat{F}$ is a biased estimate of $F_0$. If $F_0 = 0$, the  expected value of $\hat{F}$ is df, i. e. the model degree of freedom. For a model with $q$ free parameters, the df are given by
 $$ df = \dfrac{p(p+1)}{2} - q  $$
+
+Whereas $F_0$ is the genuine measure of effect in SEM, the main disadvantage is that specific values are difficult to interpret, because of its logarithmic scaling and because specific values also depends on features unrelated to model fit such as a the number of manifest variables comprised on the model. For these reasons, various transformations of $F_0$ exist that are described in the following.
 
 &nbsp;
 
@@ -190,15 +193,16 @@ The Root-Mean-Squared Error of Approximation (RMSEA; Browne & Cudeck, 1992; Stei
 $$RMSEA = \sqrt{(F_0/df)}$$
 so that the RMSEA is bounded by zero and lower values indicate better fit. The implied $F_0$ is:
 $$F_0 = df \cdot RMSEA^2$$
-Given that $F0$ is scaled by the $df$, defining an effect in terms of the RMSEA requires specification of the degrees of freedom. 
+Given that $F_0$ is scaled by the df, defining an effect in terms of the RMSEA requires specification of the degrees of freedom. 
 
 &nbsp;
 
 ### Mc 
 
-Mc (McDonald, 1989) is a transformation of $F_0$ on the interval 0-1 with higher values indicating better fit.
+McDonald's (1989) measure of non-centrality (Mc) is a transformation of $F_0$ on the interval 0-1 with higher values indicating better fit.
 
 $$Mc = e^{-.5F_0}$$
+so that
 $$F_0 = -2\ln{Mc}$$
 
 &nbsp;
@@ -216,7 +220,7 @@ As the GFI depends on the number of observed variables ($p$), this number need t
 
 ### AGFI 
 
-The Adjusted Goodness-of-Fit Index (AGFI; Jöreskog & Sörbom, 1984; Steiger, 1990) modifies the GFI by including a penalty for the number pf free parameters, as measured (somewhat indirectly) by the model degrees of freedom: 
+The Adjusted Goodness-of-Fit Index (AGFI; Jöreskog & Sörbom, 1984; Steiger, 1990) modifies the GFI by including a penalty for the number of free parameters, as measured by the model degrees of freedom: 
 
 $$AGFI = 1 - \dfrac{p(p+1)}{2df} \left(1 - \dfrac{p}{p+2F_0} \right)$$
 $$F_0 = \dfrac{p (1-AGFI) df}{p(p+1) -2df(1-AGFI)}$$
@@ -227,7 +231,7 @@ Specifying an effect in terms of the AGFI requires specification of both the num
 
 ### Measures not based on non-centrality 
 
-Fit-indices that are not based on non-centrality have no straightforward relation to F0 and are thus not well suited for power-analyses. However, when the input parameters include covariance matrices, `semPower` also reports the following measures.
+Fit-indices that are not based on non-centrality have no straightforward relation to $F_0$ and are thus not well suited for power-analyses. However, when the input parameters include covariance matrices, `semPower` also reports the following measures.
 
 #### SRMR
 The Standardized-Root-Mean-Square Residual (SRMR) is a measure of the (root of the) average (squared) difference between the (standardized) model-implied and population covariance matrices, so that it ranges from 0 to 1 with lower values indicating better fit. Let $E_0$ be the difference between the model-implied and the population covariance matrix, $E_0 = \Sigma - \hat{\Sigma}$, $vech$ denote the vectorization transformation, and $Q$ be a diagonal matrix of dimension $.5p(p+1)$ containing the inverse of the product of standard deviations of observed variables $i$ and $j$. Then, the SRMR can be defined as
@@ -239,7 +243,7 @@ $$F_0 = -\ln|I + \hat{\Sigma}^{-.5} E_0 \hat{\Sigma}^{-.5}|$$
 
 
 #### CFI
-The Comparative Fit Index (CFI) is an incremental index expressing the proportionate reduction of misfit associated with the hypothesized model ($F_{0H}$) in relation to the null-model ($F_{0N}$), defined as a model that constraints all covariances to zero. In the population, the CFI ranges from 0 to 1 with higher values indicating better fit.
+The Comparative Fit Index (CFI) is an incremental index expressing the proportionate reduction of misfit associated with the hypothesized model ($F_{0H}$) in relation to the null-model ($F_{0N}$), defined as a model that constrains all covariances to zero. In the population, the CFI ranges from 0 to 1 with higher values indicating better fit.
 
 $$CFI = \dfrac{F_{0N}-F_{0H}}{F_{0N}}$$
 
@@ -254,7 +258,7 @@ $$F_0 = F_{0N} - CFI \cdot F_{0N} $$
 
 Performing a power analysis generally requires the specification of a measure and magnitude of effect that is to be detected and a provision of the model degrees of freedom (df). Further arguments are required depending on the type of power analysis.
 
-The functions described in this chapter are "model-free" in the sense that the results depend on the df of a model, but are otherwise agnostic with respect to how a particular model looks like. For instance, the power to reject a model with df = 100 exhibiting an RMSEA >= .05 with N = 500 on alpha = .05 is always the same, regardless of whether the model is a CFA model, a mediation model, a CLPM, or a multigroup model.
+The functions described in this chapter are "model-free" in the sense that the results depend on the df of a model, but are otherwise agnostic with respect to how a particular model looks like. For instance, the power to reject a model with df = 100 exhibiting an RMSEA $\geq$ .05 with N = 500 on alpha = .05 is always the same, regardless of whether the model is a CFA model, a mediation model, a CLPM, or a multigroup model.
 
 By contrast, [model-based power analyses](#modelBasedPower) define the effect of interest in terms of particular model parameters, so different functions are required for different types of models. However, the functions performing model-based power analysis are actually only a high level interface and eventually transform a particular hypothesis concerning the model parameters into an effect size understood by model-free power analyses.
 
@@ -263,7 +267,7 @@ Thus, regardless of whether the effect of interest is directly defined in terms 
 
 ## A-priori power analysis: Determine N{#ap}
 
-The purpose of a-priori power analyses is to determine the required sample size to detect an effect with a certain probability on a specified alpha error. In the language of structural equation modeling, an a-priori power analysis asks: How many observations do I need to detect the effect of interest (i. e., falsify the model under scrutiny) with a probability of XX% (statistical power)?
+The purpose of a-priori power analyses is to determine the required sample size to detect an effect with a certain probability on a specified alpha error. In the language of structural equation modeling, an a-priori power analysis asks: How many observations do I need to detect the effect of interest (i. e., falsify the model under scrutiny) with a certain probability (statistical power)?
 
 Performing an a-priori power analyses requires the specification of:
 
@@ -296,9 +300,9 @@ Calling the `summary` method on `ap` prints the results and a figure of the asso
 summary(ap)
 ```
 
-This shows that $N = 164$ yields a power of approximately 80% to detect the specified effect. The output further shows the `Critical Chi-Square`, the non-centrality parameter (`NCP`), and the ratio between the error probabilities (`Implied Alpha/Beta ratio`). In this example, the ratio between alpha and beta is 0.25, showing that committing an beta error is four-times as likely as committing an alpha error. This is obviously a consequence of the chosen input parameters, since a power (1 - beta) of .80 implies an beta error of .20, which is four times the chosen alpha error of .05.
+This shows that N = 164 yields a power of approximately 80% to detect the specified effect. The output further shows the `Critical Chi-Square`, the non-centrality parameter (`NCP`), and the ratio between the error probabilities (`Implied Alpha/Beta ratio`). In this example, the ratio between alpha and beta is 0.25, showing that committing an beta error is four-times as likely as committing an alpha error. This is obviously a consequence of the chosen input parameters, since a power (1 - beta) of .80 implies an beta error of .20, which is four times the chosen alpha error of .05.
 
-`semPower` also converts the chosen effect into other effect size measures: An RMSEA of .05 (based on df = 100) corresponds to $F_0 = 0.250$ and $Mc = .882$. If we are also interested in obtaining the associated $GFI$ and $AGFI$, the number of variables needs to be provided. Let's assume our model involves 20 observed variables. We repeat the call above, this time including the argument `p = 20`:
+`semPower` also converts the chosen effect into other effect size measures: An RMSEA of .05 (based on df = 100) corresponds to $F_0$ = 0.250 and Mc = .882. If we are also interested in obtaining the associated GFI and AGFI, the number of variables needs to be provided. Let's assume our model involves 20 observed variables. We repeat the call above, this time including the argument `p = 20`:
 
 ```{r eval=FALSE}
 ap <- semPower.aPriori(effect = .05, effect.measure = 'RMSEA', 
@@ -324,7 +328,7 @@ Performing a post-hoc power analyses requires the specification of:
 
 Depending on the chosen effect-size measure, it may also be required to define the number of observed variables (`p`). 
 
-Suppose, we want the achieved power with a sample size of $N = 1000$ to detect misspecifications of a model (involving $df = 100$ degrees of freedom) on an alpha error of .05, where the amount of misfit corresponds to RMSEA >= .05. We call the function `semPower.postHoc` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `alpha = .05`, `N = 1000`, and `df = 100`, and store the results in a list called `ph`. 
+Suppose, we want the achieved power with a sample size of N = 1000 to detect misspecifications of a model (involving df = 100 degrees of freedom) on an alpha error of .05, where the amount of misfit corresponds to RMSEA >= .05. We call the function `semPower.postHoc` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `alpha = .05`, `N = 1000`, and `df = 100`, and store the results in a list called `ph`. 
 
 ```{r}
 ph <- semPower.postHoc(effect = .05, effect.measure = 'RMSEA', 
@@ -335,12 +339,13 @@ summary(ph)
 Equivalently, instead of calling the `semPower.aPriori`, one may also use the generic `semPower` function with the additional `type = 'post-hoc'` argument: 
 
 ```{r eval=FALSE}
-ph <- semPower(type = 'post-hoc', effect = .05, effect.measure = 'RMSEA',
+ph <- semPower(type = 'post-hoc', 
+               effect = .05, effect.measure = 'RMSEA',
                alpha = .05, N = 1000, df = 100)
 summary(ph)
 ```
 
-Calling the `summary` method on `ph` provides an output identical to those produced by [`semPower.aPriori`](#ap) and shows that the power is very high (`power > .9999`). The associated error probabilities are provided in higher precision. Specifically, the beta error is `beta = 2.903302e-17` which translates into $2.9 \cdot 10^{-17} = 0.000000000000000029$. In practice, you would almost never miss a model with an actual RMSEA >= .05 (or F0 >= 0.25 or Mc <= .882) under these conditions. The implied alpha/beta ratio is 1.722177e+15, showing that committing an alpha error is about two quadrillion ($10^{15}$) times as likely as committing a beta error.
+Calling the `summary` method on `ph` provides an output identical to the one produced by [`semPower.aPriori`](#ap) and shows that the power is very high (`power > .9999`). The associated error probabilities are provided in higher precision. Specifically, the beta error is `beta = 2.903302e-17` which translates into $2.9 \cdot 10^{-17} = 0.000000000000000029$. In practice, you would almost never miss a model with an actual RMSEA $\geq$ .05 (or F0 $\geq$ 0.25 or Mc $\leq$ .882) under these conditions. The implied alpha/beta ratio is 1.722177e+15, showing that committing an alpha error is about two quadrillion ($10^{15}$) times as likely as committing a beta error.
 
 If you are interested in how power changes for a range of different magnitudes of effect (say, for RMSEAs ranging from .01 to .15), it is useful to request a [power plot](#plots), as described in detail [below](#plotByEffect).
 
@@ -359,7 +364,7 @@ Performing a compromise power analyses requires the specification of:
 
 Depending on the chosen effect-size measure, it may also be required to define the number of observed variables (`p`). 
 
-Suppose, we want to determine the critical chi-square and the associated alpha and beta errors, forcing them to be equal (i. e., an ratio of 1). Our model involves 100 $df$, our sample size is $N = 1000$, and we define the H1 model representing an unacceptable degree of misfit as a model associated with an RMSEA of at least .08. Thus, we call the function `semPower.compromise` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`, store the results in a list called `cp`, and call the `summary` method. 
+Suppose, we want to determine the critical chi-square and the associated alpha and beta errors, forcing them to be equal (i. e., an ratio of 1). Our model involves 100 df, our sample size is N = 1000, and we define the H1 model representing an unacceptable degree of misfit as a model associated with an RMSEA of at least .08. Thus, we call the function `semPower.compromise` with arguments `effect = .08`, `effect.measure = 'RMSEA'`, `abratio = 1`, `N = 1000`, and `df = 100`, store the results in a list called `cp`, and call the `summary` method. 
 
 
 ```{r}
@@ -371,12 +376,13 @@ summary(cp)
 Equivalently, instead of calling `semPower.compromise`, one may also use the generic `semPower` function with the additional `type = 'post-hoc'` argument: 
 
 ```{r eval=FALSE}
-cp <- semPower(type = 'compromise', effect = .05, effect.measure = 'RMSEA', 
+cp <- semPower(type = 'compromise', 
+               effect = .05, effect.measure = 'RMSEA', 
                abratio = 1, N = 1000, df = 100)
 summary(cp)
 ```
 
-The output is identical to those produced by [`semPower.aPriori`](#ap) and shows that choosing a `Critical Chi-Square = 312` is associated with balanced error probabilities, `alpha = 1.212986e-23` and `beta = 1.212986e-23`. As requested, both error probabilities as just as large. In addition, committing either error is highly unlikely: an error of `1.212986e-23` translates into $1.2 \cdot 10^{-23} = 0.000000000000000000000012$. In practice, one almost never would make a wrong decision.   
+The output is identical to the one produced by [`semPower.aPriori`](#ap) and shows that choosing a `Critical Chi-Square = 312` is associated with balanced error probabilities, `alpha = 1.212986e-23` and `beta = 1.212986e-23`. As requested, both error probabilities as just as large. In addition, committing either error is highly unlikely: an error of `1.212986e-23` translates into $1.2 \cdot 10^{-23} = 0.000000000000000000000012$. In practice, one almost never would make a wrong decision.   
 
 If one rather prefers the error probabilities to differ (for example because one  considers falsely accepting an incorrect model to be 100 times as bad as falsely rejecting an correct model), this can be achieved by changing the `abratio` argument accordingly. For example, requesting the alpha error to be 100 times as large as the beta error proceeds by setting `abratio = 100`. 
 
@@ -390,7 +396,7 @@ cp <- semPower.compromise(effect = .08, effect.measure = 'RMSEA',
 
 A common scenario is to test two competing models against each other, where a more restrictive model (involving more df) is compared against a less restrictive model (involving less df). When the difference between these models lies just in a single (or few) particular parameter(s), the effect should be determined [in terms of the model parameters](#modelBasedPower). If, however, the difference between the models potentially spreads across multiple parameters (as, say, when comparing a 3-factor with a 5-factor model), one approach to power analysis it to define the models in terms of overall fit. 
 
-For example, to obtain the required sample size to yield a power of 80% to discriminate a model with an associated RMSEA of .04 and 44 df from a model with an associated RMSEA of .05 and 41 df, define both the `effect` and `df` arguments as vectors (do not define lists!) comprising two elements:
+For example, to obtain the required sample size to yield a power of 80% to discriminate a model with an associated RMSEA of .04 on 44 df from a model with an associated RMSEA of .05 on 41 df, define both the `effect` and `df` arguments as vectors (do not define lists!) comprising two elements:
 ```{r eval=FALSE}
 ap <- semPower.aPriori(effect = c(.04, .05), effect.measure = 'RMSEA', 
                        alpha = .05, power = .80, df = c(44, 41))
@@ -398,7 +404,7 @@ summary(ap)
 ```
 which shows that 340 observations are required to discriminate these models. Post-hoc and compromise power analyses are performed accordingly.
 
-A similar situation often occurs in tests of measurement invariance, where one wants sufficient power to detect whether certain cross-group constraints on the model parameters (such as equal loadings across groups) are violated. Again, the difference between such models can be defined through [particular parameters](#powerMI), for instance by assuming a single loading differs by .1 across groups. However, it is also reasonable to assume that non-invariance spreads across multiple parameters (say, across all loadings), so that one approach to power analysis it to define the models in terms of overall fit. 
+A similar situation often occurs in tests of measurement invariance, where one wants sufficient power to detect whether certain cross-group or cross-time constraints on the model parameters (such as equal loadings across groups) are violated. Again, the difference between such models can be defined through [particular parameters](#powerMI), for instance by assuming a single loading differs by .1 across groups. However, it is also reasonable to assume that non-invariance spreads across multiple parameters (say, across all loadings), so that one approach to power analysis it to define the models in terms of overall fit. 
 
 The general syntax is the same as above, but we now also need to set the `N` argument, which gives the number of observations by group in compromise and post-hoc power analysis, and the group weights in a-priori power analysis. For example, the following asks for the required sample size to detect a change in the Mc of .01 in a three-group model, where all groups are equal-sized: 
 ```{r eval=FALSE}
@@ -411,7 +417,7 @@ This shows that 858 observations (286 by group) are required for a power of 80%.
 
 ## Define the effect through covariance matrices {#InputCovMatrix}
 
-The previous sections assumed that the magnitude of effect is determined by defining a certain effect size metric (such as F0 or RMSEA) and a certain magnitude of effect. Alternatively, the effect can also be determined by specifying the population ($\Sigma$) and the model-implied ($\hat{\Sigma}$) covariance matrices (and, if means are part of the model, $\mu$ and $\hat{\mu}$) directly. To determine the associated effect in terms of F0, `semPower` just plugs these matrices in the ML-fitting function: 
+The previous sections assumed that the magnitude of effect is determined by defining a certain effect size metric (such as $F_0$ or RMSEA) and a certain magnitude of effect. Alternatively, the effect can also be determined by specifying the population ($\Sigma$) and the model-implied ($\hat{\Sigma}$) covariance matrices (and, if means are part of the model, $\mu$ and $\hat{\mu}$) directly. To determine the associated effect in terms of F0, `semPower` just plugs these matrices in the ML-fitting function: 
 
 $$F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\hat{\Sigma}\Sigma) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
 
@@ -434,7 +440,7 @@ This feature is particularly useful when used in conjunction with other function
 
 
 # Model-based power analyses {#modelBasedPower}
-A general difficulty in [model-free power analysis](#modelFreePower) is that the relation between constrains on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect >= .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is hardly feasible. `semPower` therefore provides various convenience function to simplify this process, which are described in this chapter.
+A general difficulty in [model-free power analysis](#modelFreePower) is that the relation between constrains on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect $\geq$ .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is hardly feasible. `semPower` therefore provides various convenience function to simplify this process, which are described in this chapter.
 
 The purpose of all convenience functions is to provide high-level interfaces that allow to specify the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a crossed-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the `lavaan` package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the [desired power analysis](#modelFreePower).
 
@@ -476,7 +482,7 @@ loadings <- list(
   c(.5, .5, .5, .5)
   )
 ```
-`loadings` must be a list of vectors, where each vector defines the loading of the indicators on the respective factor. In the example above, one vector is needed for each factor, with the first vector comprising 3 and the second 4 elements, reflecting the desired loading matrix above. Note that the `loadings` argument assumes the absence of any secondary loading, so that each loading defined in the vectors refers to a single indicator. As another example, the following are two equivalent ways to define three factors with 3, 4, and 5 indicators loading by the specified values: 
+`loadings` must be a list of vectors, where each vector defines the loading of the indicators on the respective factor. One vector is needed for each factor, so in the example above the first vector comprises 3 and the second 4 elements, reflecting the desired loading matrix above. Note that the `loadings` argument assumes the absence of any secondary loading, so that each loading defined in the vectors refers to a single indicator. As another example, the following are two equivalent ways to define three factors with 3, 4, and 5 indicators loading by the specified values: 
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
@@ -492,7 +498,7 @@ Lambda <- matrix(c(
   c(0, 0, .7),
   c(0, 0, .4),
   c(0, 0, .6)
-  ), ncol = 2, byrow = TRUE)
+  ), ncol = 3, byrow = TRUE)
 
 loadings <- list(
   c(.7, .6, .5),
@@ -675,7 +681,7 @@ ap <- semPower.powerLav(type = 'a-priori',
 summary(ap$power)
 ```
 
-This approach has the benefit that the result variable `pcfta` also contains generated model strings, which could be modified to reflect the actual hypothesis of interest. Instead of writing the complete H0 and H1 model strings, the above may also be achieved through
+This approach has the benefit that the result variable `pcfa` also contains generated model strings, which could be modified to reflect the actual hypothesis of interest. Instead of writing the complete H0 and H1 model strings as tediously done in full detail above, the very same may also be achieved through
 
 ```{r eval=FALSE}
 pcfa <- semPower.powerCFA(type = 'post-hoc',
@@ -701,19 +707,19 @@ ap <- semPower.powerLav(type = 'a-priori',
 Power plots show the implied power as function of some other variable. `semPower` provides two different types of power plots. You can either plot the achieved power to detect a certain effect over a range of different sample sizes (`semPower.powerPlot.byN`). Alternatively, you can plot the achieved power with a given $N$ to detect a range of different effect size magnitudes (`semPower.powerPlot.byEffect`).   
 
 ## Power by N for a given effect {#plotByN}
-The function `semPower.powerPlot.byN` creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose we are interested in how the power to detect an effect corresponding to RMSEA = .05 changes as function of $N$. We are interested in a power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the $df$, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
+The function `semPower.powerPlot.byN` creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose we are interested in how the power to detect an effect corresponding to RMSEA = .05 changes as function of the number of observations N. We are interested in a power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
 
 ```{r figurePowerPlotByN, fig.cap = "Power as function of the N to detect RMSEA >= .05"}
 semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', 
                        alpha = .05, df = 100, power.min = .05, power.max = .99)
 ```
 
-This shows that a model with an associated RMSEA = .05 is rejected with a very high power when $N >250$, whereas power is small when $N < 100$. 
+This shows that a model with an associated RMSEA = .05 is rejected with a very high power when N > 250, whereas power is small when N < 100. 
 
 &nbsp;
 
 ## Power by the magnitude of effect for a given N {#plotByEffect}
-The function `semPower.powerPlot.byEffect` creates a plot showing the achieved power at a given sample size over a range of effect sizes. For example, suppose we are interested in how the power at $N = 500$ changes as function of effect size magnitude, corresponding to an RMSEA ranging from .001 to .10. This is achieved by setting the arguments `effect.measure = 'RMSEA'`, `effect.min = .001` and `effect.max = .10`. In addition, as in any post-hoc power analysis, the sample size, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `df = 100`.
+The function `semPower.powerPlot.byEffect` creates a plot showing the achieved power at a given sample size over a range of effect sizes. For example, suppose we are interested in how the power at N = 500 changes as function of effect size magnitude, corresponding to an RMSEA ranging from .001 to .10. This is achieved by setting the arguments `effect.measure = 'RMSEA'`, `effect.min = .001` and `effect.max = .10`. In addition, as in any post-hoc power analysis, the sample size, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`, `alpha = .05`, `df = 100`.
 
 
 ```{r figurePowerPlotByEffect, fig.cap = "Power as function of the RMSEA with N = 500."}
@@ -721,7 +727,7 @@ semPower.powerPlot.byEffect(effect.measure = 'RMSEA', alpha = .05, N = 500,
                             df = 100, effect.min = .001, effect.max = .10)
 ```
 
-This shows that with $N = 500$, a model with an associated RMSEA > .04 is detected with a very high power, whereas power for RMSEA < .03 is rather modest. 
+This shows that with N = 500, a model with an associated RMSEA > .04 is detected with a very high power, whereas power for RMSEA < .03 is rather modest. 
 
 &nbsp;
 
@@ -826,16 +832,16 @@ covH0 <- fitted(fitH0)$cov
 
 `covPop` is now the covariance matrix in the population ($\Sigma$). To obtain the model implied covariance matrix ($\hat{\Sigma}$), we need to fit our hypothesized, wrong, H0 model (`modelH0`) to the population data (`covPop`). The model-implied covariance matrix then can be obtained by calling `covH0 <- fitted(fitH0)$cov`.
 
-We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming $N = 1000$ and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = covH0` and `Sigma = covPop`.
+We are now in the position to use the obtained covariance matrix in power analyses. Let's do a post-hoc power-analysis assuming N = 1000 and alpha =.05 by calling `semPower.postHoc` with the arguments `SigmaHat = covH0` and `Sigma = covPop`.
 
 ```{r eval=FALSE}
 ph <- semPower.postHoc(SigmaHat = covH0, Sigma = covPop, alpha = .05, N = 250, df = df)
 summary(ph)
 ```
 
-The output (which is omitted here) indicates that fitting the hypothesized model to the population data is  associated with a discrepancy of F0 = 0.133 (or RMSEA = .121 or SRMR = .140 or ...) and that the power to reject the H0 model is very high, 1 - beta = .993. 
+The output (which is omitted here) indicates that fitting the hypothesized model to the population data is  associated with a discrepancy of $F_0$ = 0.133 (or RMSEA = .121 or SRMR = .140 or ...) and that the power to reject the H0 model is very high, 1 - beta = .993. 
 
-It is instructive to compare the expected chi-square (calculated via the obtained F0) with the chi-square model test statistics as reported by `lavaan` when fitting the H0 model using the same number of observations as requested in the power analysis:
+It is instructive to compare the expected chi-square (computed via the obtained $F_0$) with the chi-square model test statistics as reported by `lavaan` when fitting the H0 model using the same number of observations as requested in the power analysis:
 
 ```{r eval=FALSE}
 fitmeasures(fitH0, 'chisq')
@@ -872,8 +878,6 @@ ph <- semPower.powerLav(type = 'post-hoc',
 summary(ph$power)
 ```
 
-which - of course - yields the same results.
-
 ##### Using semPower.powerCFA {-}
 
 As the scenario above involves a model and a hypothesis that can be immediately handled by the [`semPower.powerCFA`](#powerCFA) convenience function, actually none of the above is required and could be achieved by a simple call to `semPower.powerCFA`:
@@ -892,11 +896,13 @@ summary(ph$power)
 In the background, `semPower.powerCFA` performs all the necessary steps outlined above, so the results will - of course - be the same. Note the argument `comparison = 'saturated'` was set so to obtain power to reject the H0 model when compared against the saturated model, which was also done in all examples above.
 
 
-
-
-
 ## Generate a covariance matrix and lavaan model strings {#generateCov}
-to be written...`semPower.genSigma` (#generateCov)
+Internally, all convenience functions performing a [model-based power analysis](#modelBasedPower) generate a population variance-covariance matrix and plug it along with proper model strings into the [`semPower.powerLav`](#powerLav) function, which in turn transforms a model-based power analysis into a [model-free power analyses](#modelFreePower) power analysis providing [population and model-implied covariance matrices](#InputCovMatrix) as input. 
+
+For situations not covered in one of the `semPower` convenience functions, greater flexibility is offered when calling either [`semPower.powerLav`](#powerLav) or a model free power analysis providing [using population and model-implied means and covariance matrices](#InputCovMatrix) directly. An useful utility function described in this section is `semPower.genSigma`, which offers several ways to generate a population variance-covariance matrix (and means) based on the model matrices or model features, respectively.
+
+...to be written...
+
 
 In the CFA model,
 $$\Sigma = \Lambda \Phi \Lambda' + \Theta$$
