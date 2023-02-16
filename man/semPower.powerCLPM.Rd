@@ -26,9 +26,9 @@ semPower.powerCLPM(
 
 \item{nWaves}{number of waves, must be >= 2.}
 
-\item{autoregEffects}{vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. \code{list(c(.7, .6), c(.5, .5))} for a autoregressive effect of .7 for x1->x2 and .6 for x2->x3}
+\item{autoregEffects}{vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. \code{list(c(.7, .6), c(.5, .5))} for a autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3.}
 
-\item{crossedEffects}{vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e. g. \code{list(c(.2, .3), c(.1, .1))} for x1->y2 = .2 and x2->y3 = .3.}
+\item{crossedEffects}{vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. \code{list(c(.2, .3), c(.1, .1))} for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.}
 
 \item{rXY}{vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero.}
 
@@ -185,7 +185,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 alpha = .05, beta = .05)
 
 # same as above, but provide reduced loadings matrix to define that
-# X1 and X2 are measured by 5 indicators each loading by .4, .5, .6, .5, .4, .6 
+# X1 and X2 are measured by 5 indicators each loading by .4, .5, .6, .5, .4 
 # Y1 and Y2 are measured by 3 indicators each loading by .8, .6, .7
 powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 2,
@@ -194,10 +194,10 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 rXY = NULL,
                                 nullEffect = 'crossedX = 0',
                                 loadings = list(
-                                  c(.4, .5, .6, .5, .4, .6),    # X1
-                                  c(.8, .6, .7),                # Y1
-                                  c(.4, .5, .6, .5, .4, .6),    # X2
-                                  c(.8, .6, .7)                 # Y2
+                                  c(.4, .5, .6, .5, .4),    # X1
+                                  c(.8, .6, .7),            # Y1
+                                  c(.4, .5, .6, .5, .4),    # X2
+                                  c(.8, .6, .7)             # Y2
                                 ),
                                 alpha = .05, beta = .05)
 
@@ -290,7 +290,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 # with a power of 95\% on alpha = 5\%, where
 # the crossed, autoregressive, and synchronous effects of X and Y are equal over waves,
 # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
-# Y1, Y2, and X3 are measured by 3 indicators loading by .6 each, and
+# Y1, Y2, and Y3 are measured by 3 indicators loading by .6 each, and
 # the synchronous correlation between X and Y are .2 across all three waves, and
 # the stability of X is .8 across all three waves,
 # the stability of Y is .7 across all three waves, and
@@ -312,7 +312,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 # with a power of 95\% on alpha = 5\%, where
 # the autoregressive effects of X and Y are equal over waves,
 # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
-# Y1, Y2, and X3 are measured by 3 indicators loading by .6 each, and
+# Y1, Y2, and Y3 are measured by 3 indicators loading by .6 each, and
 # the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, and
 # the stability of X is .8 across all three waves,
 # the stability of Y is .7 across all three waves, and
@@ -332,7 +332,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 alpha = .05, beta = .05)
 
 # same as above, but determine N to detect that 
-# the crossed-effect of X at wave 2 is >= .1.
+# the crossed-effect of X at wave 2 is >= .05.
 powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
@@ -350,7 +350,7 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 
 # same as above, but determine N to detect that 
 # the residual correlation between X and Y at wave 2 (of .3) differs from 
-# the residual correlation between X and Y at wave 3 (of .4) differs
+# the residual correlation between X and Y at wave 3 (of .4)
 # and define unstandardized parameters
 powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,

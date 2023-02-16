@@ -68,6 +68,8 @@ semPower.aPriori(
 \item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
 
 \item{seed}{for simulated power: the seed.}
+
+\item{...}{other parameters related to plots, notably \code{plotShow}, \code{plotShowLabels}, and \code{plotLinewidth}.}
 }
 \value{
 Returns a list. Use \code{summary()} to obtain formatted results.

@@ -38,6 +38,8 @@ semPower.compromise(
 \item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
 
 \item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
+
+\item{...}{other parameters related to plots, notably \code{plotShow}, \code{plotShowLabels}, and \code{plotLinewidth}.}
 }
 \value{
 Returns a list. Use \code{summary()} to obtain formatted results.
