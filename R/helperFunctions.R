@@ -625,7 +625,12 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
         dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE))
       }
     }
-    dummyFit@test[['standard']][['df']]
+    df <- dummyFit@test[['standard']][['df']]
+    # the above can be NULL if lav encounters issues, so fall back in this case
+    if(is.null(df)){
+      df <- (params@Model@nvar*(params@Model@nvar + 1) / 2) - dummyFit@loglik$npar
+    }
+    df
   }, 
   warning = function(w){
     warning(w)
