@@ -3,6 +3,7 @@ title: "Power Analysis for Structural Equation Models: semPower 2 Manual"
 author: "Morten Moshagen & Martina Bader"
 date: "`r Sys.Date()`"
 output:
+#   bookdown::pdf_book
    bookdown::gitbook:
      config:
        toc:
@@ -10,6 +11,12 @@ output:
          scroll_highlight: yes
      split_by: none
      self_contained: true
+     search:
+       engine: lunr
+       options: null
+     sharing:
+       facebook: false
+       twitter: false
      base_format: rmarkdown::html_vignette
 
 vignette: >
@@ -61,7 +68,7 @@ The `semPower` package can be installed via [CRAN](https://cran.r-project.org/pa
 devtools::install_github("moshagen/semPower")
 ```
 
-Basic functionality is also provided as a shiny app, which can be used online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower).
+(Very) basic functionality is also provided as a shiny app, which can be used online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower).
 
 
 # Introduction
@@ -91,7 +98,7 @@ Each type of power analysis has different aims. A priori power analyses are perf
 
 Statistical power is always tied to a particular hypothesis, so power will typically differ even for the same (base-)model depending on which hypothesis is considered. A general statement such as "power was 80%" is meaningless, unless the hypothesis for which power was determined is also stated (such as "power to detect a correlation $\geq .2$ between the first and the second factor was 80%."). Moreover, power can be high for one hypothesis, but low for other hypotheses, so a power analysis should always be performed concerning (a) the focal hypotheses and (b) the hypothesis where the smallest effect is expected.
 
-In SEM, the typical types of hypotheses that occur either implement equality constraints on two or more parameters (such as cross-group constraints) or assign a particular parameter a specific value (such as zero).^[A third type implements order constraints on parameters, but this is a  intricate issue.] For instance, consider a cross-lagged panel model (CLPM) with two constructs *X* and *Y* measured by three indicators each at three different waves (so the full model comprises six factors). Relevant (non-exhaustive) hypotheses could be 
+In SEM, the typical types of hypotheses that occur either implement equality constraints on two or more parameters (such as cross-group constraints) or assign a particular parameter a specific value (such as zero).^[A third type implements order constraints on parameters, but this is associated with certain intricacies concerning the limiting distributions and not covered by `semPower`.] For instance, consider a cross-lagged panel model (CLPM) with two constructs *X* and *Y* measured by three indicators each at three different waves (so the full model comprises six factors). Relevant (non-exhaustive) hypotheses could be 
 
 * whether the model as a whole describes the data.
 * whether measurement invariance over time concerning the indicators holds.
@@ -435,7 +442,7 @@ A general difficulty in [model-free power analysis](#modelFreePower) is that the
 
 The purpose of all convenience functions is to provide high-level interfaces that allow to specify the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a crossed-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the `lavaan` package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the [desired power analysis](#modelFreePower).
 
-More precisely, all convenience functions internally obtain the population covariance matrix (and mean vector, if necessary) via [`semPower.genSigma`](#generateCov), define the H0 model (and optionally the H1 model), call [`semPower.powerLav`](#powerLav) to fit the models to the population values, which, in turn, obtains the model-implied covariance matrix (and mean vector), and plugs the population and model-implied matrices into one of the [model-free power analyses](#modelFreePower) functions. Since all of these low level functions are also exposed, an even higher level of flexibility can be achieved by calling these functions directly (see [this](#powerLav) and [this](#powerCov) chapter for illustrations).
+More precisely, all convenience functions internally obtain the population covariance matrix (and mean vector, if necessary) via [`semPower.genSigma`](#genSigma), define the H0 model (and optionally the H1 model), call [`semPower.powerLav`](#powerLav) to fit the models to the population values, which, in turn, obtains the model-implied covariance matrix (and mean vector), and plugs the population and model-implied matrices into one of the [model-free power analyses](#modelFreePower) functions. Since all of these low level functions are also exposed, an even higher level of flexibility can be achieved by calling these functions directly (see [this](#powerLav) and [this](#powerCov) chapter for illustrations).
 
 Given that the functions performing a model-based power analysis operate on a factor model, it is always required to specify the factor model in terms of the number of factors, number of indicators, and loadings. For this reason, the chapter begins with a primer on how to [define the factor model](#factorDefinition).
  
@@ -443,7 +450,7 @@ Given that the functions performing a model-based power analysis operate on a fa
 
 Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also need to be specified if the model does not include any factor, but operates on observed variables (such as a CLPM based on observed scores, rather than on latent factors). There are several ways to achieve this, which are documented further below, for the impatient reader the easiest way is to add `Lambda = diag(p)`, where p is the number of variables contained in the model.
 
-The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings also affects power, although to a lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
+The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings also affects power, although to a (considerably) lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
 
 Any `semPower` convenience function expects one of the following arguments defining the factor model:
 
@@ -524,14 +531,14 @@ For many (but not all) convenience functions, it is important to define the fact
 
 ## Arguments common to all convenience functions {#commonArgs}
 
-Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to a specific function, a number of arguments are identical for all functions. In particular, any convenience function expects arguments [specifying the factor model](#factorDefinition) and arguments detailing the specific type of power analysis ([a-priori](#ap), [post-hoc](#ph), or [compromise](#cp)) requested. Additional common arguments are:
+Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to a specific function, a number of arguments are expected by all functions. In particular, any convenience function expects arguments [specifying the factor model](#factorDefinition) and arguments detailing the specific type of power analysis ([a-priori](#ap), [post-hoc](#ph), or [compromise](#cp)) requested. Additional shared arguments are:
 
-* `type`: The type of power analysis requested; one of `'a-priori'`, `'post-hoc'` or `'compromise'` (or shortcuts, i. e., `'ph'`, `'ap'`, `'cp'`). 
-* `comparison`: The relevant comparison model; one of `'saturated'`, or `'restricted'` (the default) 
+* `type`: The type of power analysis requested; one of `'a-priori'`, `'post-hoc'` or `'compromise'` (or shortcuts, i. e., `'ph'`, `'ap'`, `'cp'`), see also below. 
+* `comparison`: The relevant comparison model; one of `'saturated'`, or `'restricted'` (the default). See below for details. 
 * `nullEffect`: Defines the relevant hypothesis depending on the specific convenience function.
 * `nullWhich`: Defines which parameters are targeted by the hypothesis specified in `nullEffect`.
 * `nullWhichGroups`: Defines which groups are targeted when `nullEffect` refers to cross-group constrains.
-* `simulatedPower`: Whether to perform a simulated (`TRUE`) rather than an analytical (`FALSE`; the default) power analysis.
+* `simulatedPower`: Whether to perform a simulated (`TRUE`) rather than an analytical (`FALSE`; the default) power analysis. See the [chapter on simulated power](simulatedPower) for details.
 
 Thus, a typical call could look as follows (here taking a CFA model as an example):
 
@@ -546,12 +553,11 @@ powerCFA <- semPower.powerCFA(
   nullEffect = 'cor = 0',
   nullWhich = c(1, 2),
   # define factor model
-  nIndicator = c(4, 3), loadM = c(.5, .6),
-  # request analytical power
-  simulatedPower = FALSE)
+  nIndicator = c(4, 3), loadM = c(.5, .6)
+  )
 ```
 
-Whereas `nullEffect` and `nullWhich` need to be defined in any convenience function, the specifics depend on the model and hypothesis at hand, so these arguments are discussed in the relevant chapters. The [definition of the factor model]() was described previously. In the following,the `type`, `comparison`, and `simulatedPower` arguments are described.
+Whereas `nullEffect` and `nullWhich` need to be defined in any convenience function, the specifics depend on the model and hypothesis at hand, so these arguments are discussed in the relevant chapters. The following gives more details on the `type` and `comparison` arguments.
 
 
 ##### `type` {-}
@@ -571,30 +577,6 @@ For instance, consider a two factor CFA model, where each factor is measured by 
 Either approach is valid. Usually, however, it is more sensible to compare the H0 model against a less restricted H1 model that only differs in the parameter(s) relevant for the tested hypothesis, which has the added benefit of a generally higher power. Thus, `semPower` by default uses `comparison = 'restricted'`. Of note, the measures of effect given in the output of a power-analysis are based on the df provided to the respective power-analysis. Thus, in case of a restricted comparison model, these will generally differ from the ones obtained by just fitting the H0 model to some data, and will, in general, also not reflect the simple differences between the indices of the H0 and the H1 model.
 
 
-##### `simulatedPower` {-}
-
-By default, all power analyses are performed analytically (`simulatedPower = FALSE`). If a simulated power analysis is desired, set `simulatedPower = TRUE` and optionally define the number of replications (`nReplications`) as well as additional arguments. For instance, the following request a simulated a-priori power-analysis based on 500 replications:
-
-```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(
-  # define type of power analysis
-  type = 'a-priori', alpha = .05, beta = .20,
-  # set comparison model
-  comparison = 'restricted',
-  # arguments (and values) specific to semPower.powerCFA
-  Phi = .25,
-  nullEffect = 'cor = 0',
-  nullWhich = c(1, 2),
-  # define factor model
-  nIndicator = c(4, 3), loadM = c(.5, .6),
-  # request simulated power
-  simulatedPower = TRUE, 
-  nReplications = 500)
-```
-
-`semPower` supports a simulation approach for all model-based power analyses. For more details on customizing the simulations, see the chapter on [simulated power](simulatedPower).
-
-
 ## CFA models {#powerCFA}
 
 `semPower.powerCFA` is used to perform power analyses to reject hypotheses arising in a standard CFA model involving several factors or a single factor and additional observed covariates. `semPower.powerCFA` provides interfaces to perform power analyses concerning the following hypotheses:
@@ -603,7 +585,7 @@ powerCFA <- semPower.powerCFA(
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
 * whether a correlation differs across two or more groups (`nullEffect = 'corA = corB'`).
 
-Note that `semPower.powerCFA` only addresses hypotheses concerning correlation(s) involving one or more factors. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), models involving a [bifactor structure](#powerBifactor), [mediation models](#powerMediation), [generic path models](#powerPath), and [multigroup measurement invariance](#powerMI).
+Note that `semPower.powerCFA` only addresses hypotheses concerning correlation(s) involving one or more factors. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), models involving a [bifactor structure](#powerBifactor), [mediation models](#powerMediation), [generic path models](#powerPath), and [multigroup measurement invariance](#powerMI). For hypothesis regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 As for any model-based power analysis included in `semPower`, beyond arguments unique to the type of model and type of hypothesis considered (see below), `semPower.powerCFA` additionally expects arguments [specifying the factor model](#factorDefinition), arguments related to the specific type of power analysis requested, and some optional additional arguments, see [arguments common to all convenience functions](#commonArgs).
 
@@ -612,7 +594,7 @@ The arguments specific to `semPower.powerCFA` are:
 * `Phi`: Either a single number defining the correlation between exactly two factors or the factor correlation matrix. 
 * `nullEffect`: Defines the hypothesis of interest;  one of `'cor = 0'`, `'corX = corZ'`, or  `'corA = corB'`.
 * `nullWhich`: Defines which correlation(s) is targeted by the hypothesis defined in `nullEffect`.
-* `nullWhichGroups`: Defines which groups are targeted, when `nullEffect = corA = corB`.
+* `nullWhichGroups`: Defines which groups are targeted, when `nullEffect = 'corA = corB'`.
 
 `semPower.powerCFA` provides a list as result, which contains the following components:
 
@@ -626,7 +608,7 @@ The arguments specific to `semPower.powerCFA` are:
 
 To perform a power analysis to detect whether a correlation between factors differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
 
-In the simplest case, the model contains exactly two factors, so only the to-be detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`), where the two factors are measured by 4 and 3 indicators (`nIndicator = c(4, 3)`), respectively, and the loadings on the first and second factor are .5 and .6 (`loadM = c(.5, .6)`), respectively. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to specify the factors.
+In the simplest case, the model contains exactly two factors, so only the to-be detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The two factors are measured by 4 and 3 indicators (`nIndicator = c(4, 3)`), respectively, and all non-zero loadings on the first and second factor are equal to .5 and .6 (`loadM = c(.5, .6)`), respectively. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to specify the loadings on the factors.
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
@@ -668,7 +650,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
 
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'corX = corZ'`. 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between the first and second factor (of .20) differs from the correlation between the first and the third factor (of .30; `nullEffect = 'corX = corZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`), where all factors are measured by 3 indicators (`nIndicator = c(3, 3, 3)`), respectively, and the loadings on the first, second, and third factor are .5, .7, and .6 (`loadM = c(.5, .7, .6)`), respectively.
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between the first and second factor (of .20) differs from the correlation between the first and the third factor (of .30; `nullEffect = 'corX = corZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`), where all factors are measured by 3 indicators (`nIndicator = c(3, 3, 3)`), respectively, and all non-zero loadings on the first, second, and third factor are equal to .5, .7, and .6 (`loadM = c(.5, .7, .6)`), respectively (see [Definition of the factor model](#factorDefinition)).
 
 ```{r eval=FALSE}
 
@@ -704,7 +686,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
 
 To perform a power analysis to detect whether a correlation differs across two or more groups, use `nullEffect = 'corA = corB'`. 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between two factors in group 1 (of .20) differs from the one in group 2 (of .40; `nullEffect = 'corA = corB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The measurement model is identical in both groups: Both factors are measured by 5 indicators each (`nIndicator = c(5, 5)`), and the loadings on the first and second factor are .7 and .5 (`loadM = c(.7, .5)`), respectively, in both groups. However, `Phi = list(.2, .4)` is now a list comprising two elements, the first defining the factor correlation in the first group to be .2, the second defining the correlation in the second group to be .4. In addition, `N` must also be a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups.
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between two factors in group 1 (of .20) differs from the one in group 2 (of .40; `nullEffect = 'corA = corB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The measurement model is identical in both groups: Both factors are measured by 5 indicators each (`nIndicator = c(5, 5)`), and all non-zero loadings on the first and second factor are equal to .7 and .5 (`loadM = c(.7, .5)`), respectively, in both groups (see [Definition of the factor model](#factorDefinition)). However, `Phi = list(.2, .4)` is now a list comprising two elements, the first defining the factor correlation in the first group to be .2, the second defining the correlation in the second group to be .4. In addition, `N` must also be a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups.
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
@@ -714,7 +696,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
                               nIndicator = c(5, 5))
 ```
 
-If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. Instead of providing single numbers, `Phi` can also be a list of factor correlation matrices. 
+If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. `Phi` can also be a list of factor correlation matrices (instead of a list of single numbers). 
 
 For instance, the following defines different factor correlation matrices for two groups (`Phi1` and `Phi2`) with 300 and 400 observations (`N = list(300, 400)`), respectively, and requests the achieved power (`type = 'post-hoc'`) on alpha = .05 (`alpha = .05`) to detect that the correlation between factor 1 and 3 (`nullWhich = c(1, 3)`) differs across groups.
 
@@ -790,6 +772,8 @@ Suppose that a correlation between two factors of $r > .9$ is considered as impl
 * Define an (incorrect) analysis model that reflects the null hypothesis of interest.
 * Optionally define a (correct) analysis model that reflects the alternative hypothesis.
  
+##### Using a `lavaan` population model string {-}
+
 First, the true affairs in the population need to be specified. We need to define the value of each single (non-zero) parameter, so we need to specify each loading, each residual variance, the variance of the factors as well as their covariance. Note that the magnitude of effect (and thus power) does not only depend on the correlation between the factors, but also varies with other parameters of the model, such as the loading magnitude, so some reasonable guess concerning the latter required. Let us assume that the standardized loadings vary between .4 and .8. Importantly, we define that two factors exists that correlate by .9. 
 
 ```{r eval=FALSE}
@@ -865,7 +849,9 @@ summary(sem(modelH1, sample.cov = ap$Sigma,
         stand = TRUE, fit = TRUE)
 ```
 
-Instead of defining the true state in the population via a `lavaan` model string, it is also possible to provide the population covariance matrix directly. A useful utility function supporting this process is [semPower.generateSigma](#generateSigma). For instance, using 
+##### Providing a population covariance matrix  {-}
+
+Instead of defining the true state in the population via a `lavaan` model string, it is also possible to provide the population covariance matrix directly. A useful utility function supporting this process is [semPower.genSigma](#genSigma). For instance, using 
 ```{r eval=FALSE}
 generated <- semPower.genSigma(Phi = .90, 
                                loadings = list(
@@ -876,7 +862,10 @@ ap <- semPower.powerLav(type = 'a-priori',
                         alpha = .05, power = .80)
 summary(ap$power)
 ```
-gives exactly the same results as above. See [semPower.generateSigma](#generateSigma) for more information.
+gives exactly the same results as described in detail above. See [semPower.genSigma](#genSigma) for more information.
+
+
+##### Exploiting `semPower.powerCFA` to obtain model strings and the population covariance matrix {-}
 
 Finally, another alternative option is to rely on the [`semPower.powerCFA`](#powerCFA) function and to obtain the population covariance matrix and just to provide the H0 model of interest. Note that here we use `semPower.powerCFA` just to obtain Sigma (`pcfa$Sigma`), but otherwise ignore the power-related output.
 ```{r eval=FALSE}
@@ -946,7 +935,7 @@ This shows that with N = 500, a model with an associated RMSEA > .04 is detected
 # Further topics {#furtherTopics}
 to be written
 
-## Obtain the model degrees of freedom {#getdf}
+## Obtain the model degrees of freedom {#getDf}
 
 Knowledge of the degrees of freedom (df) is required to perform a power analysis. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by 
 
@@ -1112,7 +1101,7 @@ In the background, `semPower.powerCFA` performs all the necessary steps outlined
 ## Generate a covariance matrix and lavaan model strings {#generateCov}
 Internally, all convenience functions performing a [model-based power analysis](#modelBasedPower) generate a population variance-covariance matrix and plug it along with proper model strings into the [`semPower.powerLav`](#powerLav) function, which in turn transforms a model-based power analysis into a [model-free power analyses](#modelFreePower) providing [population and model-implied covariance matrices](#InputCovMatrix) as input. 
 
-For situations not covered in the `semPower` convenience functions, greater flexibility is offered when calling either [`semPower.powerLav`](#powerLav) or a model free power analysis providing [population and model-implied means and covariance matrices](#InputCovMatrix) directly. A useful utility function described in this section is `semPower.genSigma`, which offers several ways to generate a population variance-covariance matrix (and means) based on the model matrices or model features, respectively.
+For situations not covered in the `semPower` convenience functions, greater flexibility is offered when calling either [`semPower.powerLav`](#powerLav) or a model free power analysis providing [population and model-implied means and covariance matrices](#InputCovMatrix) directly. A useful utility function described in this section is [semPower.generateSigma](#genSigma), which offers several ways to generate a population variance-covariance matrix (and means) based on the model matrices or model features, respectively.
 
 `semPower.genSigma` expects model matrices as input parameters, so different matrices need to be provided depending on whether a CFA or a SEM model is specified. 
 
@@ -1187,7 +1176,7 @@ If the model-implied covariance-matrix is rather to be determined from a structu
 `Beta`, `Psi`, and `Lambda` (or respective  [shortcuts](#factorDefinition)). In the structural equation model, the model-implied covariance matrix is given by
 
 $$\Sigma = \Lambda (I - \mathbf{B})^{-1} \Psi [(\mathbf{I} - \mathbf{B})^{-1}]'  \Lambda' + \Theta$$
-where $\mathbf{B}$ is the $m \cdot m$ matrix containing the regression slopes and $\Psi$ is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
+where $\mathbf{B}$ is the $m \cdot m$ matrix containing the regression slopes and $\Psi$ is the (residual) variance-covariance matrix of the $m$ factors. The means are
 $$\mu = \tau + \Lambda (\mathbf{I} - \mathbf{B})^{-1} \alpha$$
 
 The structural part of the model is primarily defined through Beta ($\mathbf{B}$). As an example, suppose there are four factors ($X_1$, $X_2$, $X_3$, $X_4$), and Beta is defined as follows:
