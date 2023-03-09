@@ -209,13 +209,13 @@ semPower.genSigma <- function(Lambda = NULL,
     if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
     if(!is.null(Psi) && ncol(Psi) != nfac) stop('Psi must have the same number of rows/columns as the number of factors.')
     if(is.null(Psi)) Psi <- diag(ncol(Beta))
-    if(any(diag(Psi) < 0)) stop('Model implies negative residual variances for latent variables (Psi)')
+    if(any(diag(Psi) < 0)) stop('Model implies negative residual variances for latent variables (Psi). Make sure the sum of squared standardized regression coefficients in predicting a factor does not exceed 1.')
   }
   if(!is.null(tau)){
-    if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators')
+    if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators.')
   }
   if(!is.null(Alpha)){
-    if(length(Alpha) != nfac) stop('Latent means (Alpha) must be of same length as the number of factors')
+    if(length(Alpha) != nfac) stop('Latent means (Alpha) must be of same length as the number of factors.')
   }
   if(!is.null(tau) && is.null(Alpha)) Alpha <- rep(0, nfac)
   if(!is.null(Alpha) && is.null(tau)) tau <- rep(0, sum(nIndicator))
@@ -244,7 +244,8 @@ semPower.genSigma <- function(Lambda = NULL,
     }
   }
   # see whether there are negative variances
-  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta)')
+  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta). Make sure the sum of squared standardized 
+loadings by indicator does not exceed 1.')
   
   Sigma <- SigmaND + Theta
   colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
