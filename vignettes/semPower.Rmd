@@ -5,19 +5,19 @@ date: "`r Sys.Date()`"
 output:
 #   bookdown::pdf_book
    bookdown::gitbook:
+     base_format: rmarkdown::html_vignette
+     split_by: none
+     self_contained: true
      config:
        toc:
          collapse: none
          scroll_highlight: yes
-     split_by: none
-     self_contained: true
-     search:
-       engine: lunr
-       options: null
-     sharing:
-       facebook: false
-       twitter: false
-     base_format: rmarkdown::html_vignette
+       search:
+         engine: lunr
+       sharing:
+         facebook: false
+         twitter: false
+       info: false
 
 vignette: >
   %\VignetteIndexEntry{Power Analysis for Structural Equation Models: semPower 2 Manual}
@@ -458,7 +458,11 @@ Any `semPower` convenience function expects one of the following arguments defin
 * `loadings` to define a reduced loading matrix that only contains the primary loadings.
 *  `nIndicator` in conjunction with `loadM`  to define the number of indicators by factor along with a single loading for the indicators of each factor or a single loading to apply for all indicators. 
 
-For example, suppose two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5 shall be defined. The first option to define this factor model is to provide a loading matrix as value to the `Lambda` argument:
+In general, the `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loading magnitude within a factor. This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
+
+##### Provide the full loading matrix (`Lambda`)  {-}
+
+Suppose there are two factors measured by 3 and 4 indicators, respectively, and all loadings are equal to .5. The first option to define this factor model is to provide a loading matrix as value to the `Lambda` argument:
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
@@ -472,7 +476,9 @@ Lambda <- matrix(c(
   ), ncol = 2, byrow = TRUE)
 ```
 
-A second way to achieve this is to provide a list comprising two vectors as value to the `loadings` argument:
+##### Provide the primary factor loadings only (`loadings`)  {-}
+
+A second way to define the model above is to provide a list comprising two vectors as value to the `loadings` argument:
 
 ```{r eval=FALSE}
 loadings <- list(
@@ -506,6 +512,8 @@ loadings <- list(
 ```
 
 
+##### Provide a single loading to apply to indicator of a specific factor (`nIndicator` and `loadM`)  {-}
+
 A third way to define two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5, is to provide both the `nIndicator` and the `loadM` arguments:
 ```{r eval=FALSE}
 nIndicator <- c(3, 4)
@@ -513,32 +521,55 @@ loadM <- .5
 ```
 `nIndicator` is a vector providing the number of indicators separately for each factor. `loadM` can be a single number (as in the example above) to say that all loadings have the same value. Alternatively, `loadM` can be a vector specifying the loadings separately for each factor, where each indicator of a specific factor takes the defined value as loading. Thus, specifying `loadM <- c(.5, .5)` would achieve the same result, whereas `loadM <- c(.5, .6)` would assign all indicators of the second factor a loading of .6. 
 
-Which of these three ways to use to define the factor models (`Lambda`, `loadings` or `nIndicator` and `loadM`) in the example two factor model with equal loadings is of course arbitrary and ultimately a matter of taste. In general, the `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loadings within a factor. This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
+Which of these three ways to use to define the factor models (`Lambda`, `loadings` or `nIndicator` and `loadM`) in the example two factor model with equal loadings is of course arbitrary and ultimately a matter of taste. 
 
-To include an observed variable in a model, a dummy factor with a single indicator loading by 1 can be defined. For instance, the following defines an observed variable and a factor with 4 indicators loading by .5 each:
+##### Factor models involving observed variables {-}
+To include observed variables that do not act as factor indicator in a model, a dummy factor with a single indicator loading by 1 can be defined. For instance, each of the following options defines an observed variable and a factor with 4 indicators loading by .5 each:
 ```{r eval=FALSE}
 nIndicator <- c(1, 4)
 loadM <- c(1, .5)
+
+loadings <- list(
+  c(1),
+  c(.5, .5, .5, .5)
+  )
+
+Lambda <- matrix(c(
+  c(1, 0),
+  c(0, .5),
+  c(0, .5),
+  c(0, .5),
+  c(0, .5)
+  ), ncol = 2, byrow = TRUE)
 ```
 
+##### Models including observed variables only {-}
 The "factor" model also needs to be defined, when the model does not include any factor, but only contains observed variables. Consider a CLPM with two waves based on observed variables only, so there are 4 observed variables in total. Requesting an observed only model can be achieved by using either of the following:
 
 * `Lambda = diag(4)`
 * `loadings = as.list(rep(1, 4))`
 * `nIndicator = rep(1, 4)` and `loadM = 1`
 
+##### Ordering of factors {-}
 For many (but not all) convenience functions, it is important to define the factors in the expected order. For instance, [`semPower.powerRegression`](#powerRegression) treats the first factor as criterion (*Y*) and the remaining factors as predictors (*X*). Thus, `nIndicator <- c(10, 5, 5)` says that the criterion is measured by 10 indicators, whereas both predictors are measured by 5 indicators. Using `nIndicator <- c(5, 10, 5)` instead would imply a criterion measured by 5 indicators. Details on the expected order of factors are provided in each specific convenience function.
 
 ## Arguments common to all convenience functions {#commonArgs}
 
-Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to a specific function, a number of arguments are expected by all functions. In particular, any convenience function expects arguments [specifying the factor model](#factorDefinition) and arguments detailing the specific type of power analysis ([a-priori](#ap), [post-hoc](#ph), or [compromise](#cp)) requested. Additional shared arguments are:
+Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to a specific function, a number of arguments are expected by all functions:
 
-* `type`: The type of power analysis requested; one of `'a-priori'`, `'post-hoc'` or `'compromise'` (or shortcuts, i. e., `'ph'`, `'ap'`, `'cp'`), see also below. 
-* `comparison`: The relevant comparison model; one of `'saturated'`, or `'restricted'` (the default). See below for details. 
+* The type of power analysis requested (`type`):
+    + Use `type = 'a-priori'` (or `'ap'`) to request an [a-priori power analysis](#ap) and provide the alpha error (e. g., `alpha = .05`) and the desired beta error (e. g., `beta = .20`; or equivalently, the desired power, `power = .80`).  
+    + Use `type = 'post-hoc'` (or `'ph'`) to request a [post-hoc power analysis](#ph) and provide the alpha error (e. g.,`alpha = .05`) and the number of observations (e. g.,`N = 250`).  
+    + Use `type = 'compromise'` (or `'cp'`)  to request a [compromise hoc power analysis](#cp) and provide the desired ratio between alpha and beta error (e. g., `abratio = 1`) and the number of observations (e. g., `N = 250`). 
+* Arguments [defining the factor model](#factorDefinition), one of:
+    + `Lambda` to provide a loading matrix.
+    + `loadings` to provide a list of vectors defining the primary factor loadings.
+    + `nIndicator` and `loadM` to define the number of indicators by factor and a single loading to apply for all indicators of a specific factor.
+* `comparison`: The relevant comparison model; one of `'saturated'`, or `'restricted'` (the default). See the [chapter on the definition of a comparison model](#comparisonModel) for details. 
 * `nullEffect`: Defines the relevant hypothesis depending on the specific convenience function.
 * `nullWhich`: Defines which parameters are targeted by the hypothesis specified in `nullEffect`.
 * `nullWhichGroups`: Defines which groups are targeted when `nullEffect` refers to cross-group constrains.
-* `simulatedPower`: Whether to perform a simulated (`TRUE`) rather than an analytical (`FALSE`; the default) power analysis. See the [chapter on simulated power](simulatedPower) for details.
+* `simulatedPower`: Whether to perform a simulated (`TRUE`) rather than an analytical (`FALSE`; the default) power analysis. See the [chapter on simulated power](#simulatedPower) for details.
 
 Thus, a typical call could look as follows (here taking a CFA model as an example):
 
@@ -557,24 +588,8 @@ powerCFA <- semPower.powerCFA(
   )
 ```
 
-Whereas `nullEffect` and `nullWhich` need to be defined in any convenience function, the specifics depend on the model and hypothesis at hand, so these arguments are discussed in the relevant chapters. The following gives more details on the `type` and `comparison` arguments.
+Whereas `nullEffect` and `nullWhich` need to be defined in any convenience function, the specifics depend on the model and hypothesis at hand, so these arguments are discussed in the relevant chapters. 
 
-
-##### `type` {-}
-
-To request an  [a-priori power analysis](#ap), use `type = 'a-priori'` and provide the alpha error (e. g., `alpha = .05`) and the desired beta error (e. g., `beta = .20`; or equivalently, the desired power, `power = .80`).  
-
-To request a [post-hoc power analysis](#ph), use `type = 'post-hoc'` and provide the alpha error (e. g.,`alpha = .05`) and the number of observations (e. g.,`N = 250`).  
-
-To request a [compromise hoc power analysis](#cp), use `type = 'compromise'` and provide the desired ratio between alpha and beta error (e. g., `abratio = 1`) and the number of observations (e. g., `N = 250`).  
-
-
-##### `comparison` {-}
-Power analyses always refer to a certain hypothesis (H0) that is to be rejected, so that an (implicit) alternative hypothesis (H1) shall be accepted. The `comparison` argument is used to set the relevant comparison (H1) model, which can either refer to a saturated model (`comparison = 'saturated'`) or to a model (`comparison = 'restricted'`) that omits the H0 constraints reflecting the hypothesis of interest, but is otherwise identical to the H0 model. 
-
-For instance, consider a two factor CFA model, where each factor is measured by 4 indicators, and suppose power is to be determined to detect a factor correlation of $r \geq .20$. A standard CFA model freely estimating the factor correlation involves 19 df. The relevant H0 model, however, would constrain the factor correlation to zero, and thus involves 18 df. To determine power to reject the H0 model, there are now two relevant comparison models defining the H1. One option would be to compare the H0 model against the saturated model (`comparison = 'saturated'`), so power analysis is based on 18 df. Practically speaking, one would just ask whether the model $\chi^2$ test associated with H0 model turns out significant. Alternatively, one might want to compare the H0 model against a model that is identical to the H0, except that it freely estimates the factor correlation (`comparison = 'restricted'`). The difference in the df between these two models (and the difference in model fit) now enter power analyses, which then would be based on $19 - 18 = 1$ df.
-
-Either approach is valid. Usually, however, it is more sensible to compare the H0 model against a less restricted H1 model that only differs in the parameter(s) relevant for the tested hypothesis, which has the added benefit of a generally higher power. Thus, `semPower` by default uses `comparison = 'restricted'`. Of note, the measures of effect given in the output of a power-analysis are based on the df provided to the respective power-analysis. Thus, in case of a restricted comparison model, these will generally differ from the ones obtained by just fitting the H0 model to some data, and will, in general, also not reflect the simple differences between the indices of the H0 and the H1 model.
 
 
 ## CFA models {#powerCFA}
@@ -608,12 +623,16 @@ The arguments specific to `semPower.powerCFA` are:
 
 To perform a power analysis to detect whether a correlation between factors differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
 
-In the simplest case, the model contains exactly two factors, so only the to-be detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The two factors are measured by 4 and 3 indicators (`nIndicator = c(4, 3)`), respectively, and all non-zero loadings on the first and second factor are equal to .5 and .6 (`loadM = c(.5, .6)`), respectively. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to specify the loadings on the factors.
+In the simplest case, the model contains exactly two factors, so only the to-be detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The two factors are measured by 4 and 3 indicators (`nIndicator = c(4, 3)`), respectively, and all non-zero loadings on the first and second factor are equal to .5 and .6 (`loadM = c(.5, .6)`), respectively. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to define the factor loadings.
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'a-priori', alpha = .05, power = .80,
+                              # define hypotheses
                               Phi = .25,
                               nullEffect = 'cor = 0',
+                              # define factor model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
 summary(powerCFA$power)
 ```
@@ -941,7 +960,9 @@ Knowledge of the degrees of freedom (df) is required to perform a power analysis
 
 $$df = p\cdot(p+1)/2 - q$$
 
-where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.] For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
+where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. The [next chapter](#comparisonModel) discusses the difference between a saturated and less restricted H1 comparison model in greater detail.
+
+To obtain the df in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.^[Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning the number of free parameters, it does not matter whether factors are identified by fixing their variance or by fixing a loading.] For instance, consider a correlated two factor CFA model with each factor measured by 4 items and no secondary loadings or residual correlations. Thus, there are (a) $2\cdot4$ loadings, (b) 8 item-residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus $8\cdot9/2 - 17 = 19$.
 
 If you are unsure or have a more complicated model (or both), `semPower` also includes a utility function called `semPower.getDf` that determines the df for a model provided in the `lavaan` syntax (note that this function requires the `lavaan` package). For the model sketched above, running 
 
@@ -955,7 +976,21 @@ f2 =~ x5 + x6 + x7 + x8
 semPower.getDf(lavmodel)
 ```
 
-gives 19 as result, which matches what we calculated by hand. `semPower.getDf` can also be used to obtain the df in multigroup settings by setting the arguments `nGroups` (and `group.equal` for models involving equality constraints).
+gives 19 as result, which matches what we calculated by hand. Similarly, when adding the null hypothesis of a zero correlation between the factors (`f1 ~~ 0*f2`), one df is lost:
+
+```{r eval=FALSE}
+# define model using standard lavaan syntax
+lavmodel <- '
+f1 =~ x1 + x2 + x3 + x4
+f2 =~ x5 + x6 + x7 + x8
+f1 ~~ 0*f2
+'
+# obtain df
+semPower.getDf(lavmodel)
+```
+
+
+`semPower.getDf` can also be used to obtain the df in multigroup settings by setting the arguments `nGroups` (and `group.equal` for models involving equality constraints).
 
 ```{r eval=FALSE}
 # configural invariance
@@ -966,7 +1001,18 @@ semPower.getDf(lavmodel, nGroups = 3, group.equal = c('loadings'))
 semPower.getDf(lavmodel, nGroups = 3, group.equal = c('loadings', 'intercepts'))
 ```
 
-In determining the df, `semPower.getDf` also accounts for any additional restrictions on (defined) parameters and should generally match the df reported by `lavaan`, excempt the case that corrected model fit statistics are used that include a correction of the df (such as the third-moment adjustment by Lin and Bentler, 2012).
+In determining the df, `semPower.getDf` also accounts for any additional restrictions on (defined) parameters and should generally match the df reported by `lavaan`, excempt the case that a $\chi^2$ statistic is employed that include a correction of the df (such as the third-moment adjustment by Lin and Bentler, 2012).
+
+
+## Definition of the comparison (H1) model {#comparisonModel}
+Power analyses always refer to a certain hypothesis (H0) that is to be rejected, so that an (implicit) alternative hypothesis (H1) shall be accepted. All convenience functions performing a  [model-based power analysis](#modelBasedPower) accept the `comparison` argument which sets the relevant comparison (H1) model, which can either refer to a saturated model (`comparison = 'saturated'`) or to a model (`comparison = 'restricted'`) that omits the H0 constraints reflecting the hypothesis of interest, but is otherwise identical to the H0 model. 
+
+For instance, consider a two factor CFA model, where each factor is measured by 4 indicators, and suppose power is to be determined to detect a factor correlation of $r \geq .20$. A standard CFA model freely estimating the factor correlation involves 19 df. The relevant H0 model, however, would constrain the factor correlation to zero, and thus involves 18 df. 
+
+To determine power to reject the H0 model, there are now two relevant comparison models defining the H1. One option would be to compare the H0 model against the saturated model (`comparison = 'saturated'`), so power analysis is based on 18 df. Practically speaking, one would just ask whether the model $\chi^2$ test associated with H0 model turns out significant. Alternatively, one might want to compare the H0 model against a model that is identical to the H0, except that it freely estimates the factor correlation (`comparison = 'restricted'`). The difference in the df between these two models (and the difference in model fit) now enter power analyses, which then would be based on $19 - 18 = 1$ df.
+
+Either approach is valid. Usually, however, it is more sensible to compare the H0 model against a less restricted H1 model that only differs in the parameter(s) relevant for the tested hypothesis, which has the added benefit of a generally higher power. Thus, the functions performing [model-based power analyses](#modelBasedPower) by default use `comparison = 'restricted'`. Of note, the measures of effect given in the output of a power-analysis are based on the df provided to the respective power-analysis. Thus, in case of a restricted comparison model, these will generally differ from the ones obtained by just fitting the H0 model to some data, and will, in general, also not reflect the simple differences between the indices of the H0 and the H1 model.
+
 
 ## Multiple Group Models {#multipleGroups}
 All convenience methods described above also have support for hypothesis arising in multiple group settings.
