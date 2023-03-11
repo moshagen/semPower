@@ -494,7 +494,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
-#' @param slopes vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.
+#' @param slopes vector of slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.
 #' @param corXX correlation(s) between the k predictors (X). Either `NULL` for uncorrelated predictors, a single number (for k = 2 predictors), or a matrix. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are used in all groups). 
 #' @param nullEffect defines the hypothesis of interest, must be one of `'slope = 0'` (the default) to test whether a slope is zero, `'slopeX = slopeZ'` to test for the equality of slopes, or `'slopeA = slopeB'` to test for the equality of slopes across groups. Define the slopes to set to equality in `nullWhich`.
 #' @param nullWhich single number indicating which slope is hypothesized to equal zero when `nullEffect = 'slope = 0'`, or indicating which slope to restrict to equality across groups when `nullEffect = 'slopeA = slopeB'`, or vector defining the slopes to restrict to equality when `nullEffect = 'slopeX = slopeZ'`. Can also contain more than two slopes, e.g. `c(1, 2, 3)` to constrain the first three slopes to equality.
@@ -844,9 +844,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
-#' @param bYX the standardized slope (direct effect) for X -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
-#' @param bMX the standardized slope for X -> M. A list for multiple group models. Can be `NULL` if `Beta` is set.
-#' @param bYM the standardized slope for M -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param bYX the slope (direct effect) for X -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param bMX the slope for X -> M. A list for multiple group models. Can be `NULL` if `Beta` is set.
+#' @param bYM the slope for M -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
 #' @param Beta can be used instead of `bYX`, `bMX`, and `bYM`: matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. A list for multiple group models.
 #' @param indirect `NULL` unless `Beta` is set. Otherwise a list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect of interest, e.g. `list(c(2, 1), c(3, 2))`. See details.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'ind = 0'` (the default) to test whether the indirect effect is zero or `'indA = indB'` to test for the equality of indirect effects across groups. See details.
@@ -865,7 +865,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' This function performs a power analysis to reject various hypotheses arising
 #' in the context of mediation:
 #' * `nullEffect = 'ind = 0'`: Tests the hypothesis that an indirect effect is zero. 
-#' * `nullEffect = 'indA = indB'`: Tests the hypothesis that an indirect effect is equal in two or more groups (always assuming metric invariance). This is currently only possible for models without latent variables.
+#' * `nullEffect = 'indA = indB'`: Tests the hypothesis that an indirect effect is equal in two or more groups. This is currently only possible for models without latent variables.
 #' 
 #' The indirect effect of interest can be specified in two ways:
 #' * If a simple mediation involving three variables of the form `X -> M -> Y` is assumed, the arguments
@@ -1203,12 +1203,12 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nWaves number of waves, must be >= 2.
 #' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for a autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3.
 #' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.
-#' @param rXY vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero. 
+#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. 
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
-#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).
+#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -1229,11 +1229,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'  
 #' Relevant hypotheses in arising in a CLPM are:
 #' * `autoregX = 0` and `autoregY = 0`: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero. 
-#' * `crossedX = 0` and `crossedY = 0`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and Y on X (`crossedY`), respectively, is zero. 
+#' * `crossedX = 0` and `crossedY = 0`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and of Y on X (`crossedY`), respectively, is zero. 
 #' * `autoregX = autoregY`: Tests the hypothesis that the autoregressive effect of X and Y are equal.
-#' * `crossedX = crossedY`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and Y on X (`crossedY`) are equal.
+#' * `crossedX = crossedY`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and of Y on X (`crossedY`) are equal.
 #' * `autoregX` and `autoregY`: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves. 
-#' * `crossedX` and `crossedY`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and Y on X (`crossedY`), respectively, is equal across waves. 
+#' * `crossedX` and `crossedY`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and of Y on X (`crossedY`), respectively, is equal across waves. 
 #' * `corXY`: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves. 
 #' 
 #' For hypotheses regarding the random-intercept CLPM, see [semPower.powerRICLPM()].
@@ -2533,10 +2533,10 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'  
 #' The models defined in the `comparison` and the `nullEffect` arguments can be specified as follows:
 #' \itemize{
-#' \item `configural`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
-#' \item `metric`: all loadings are restricted to equality. 
-#' \item `scalar`: all loadings and (item-)intercepts are restricted to equality. 
-#' \item `residual`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+#' \item `'configural'`: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ. 
+#' \item `'metric'`: all loadings are restricted to equality. 
+#' \item `'scalar'`: all loadings and (indicator-)intercepts are restricted to equality. 
+#' \item `'residual'`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = 'metric'` and `nullEffect = 'scalar'` determines power 
@@ -2548,10 +2548,10 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' \itemize{
 #' \item `'none'`: no invariance constraints and thus representing a configural invariance model. Shows the same fit as the saturated model, so only the delta df differ. 
 #' \item `c('loadings')`: all loadings are restricted to equality. 
-#' \item `c('loadings', 'intercepts')`: all loadings and (item-)intercepts are restricted to equality. 
-#' \item `c('loadings', 'intercepts', 'residuals')`: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
-#' \item `c('loadings', 'residuals')`: all loadings and (item-)residuals are restricted to equality.
-#' \item `c('loadings', 'intercepts', 'means')`: all loadings, (item-)intercepts, and latent factor means are restricted to equality.
+#' \item `c('loadings', 'intercepts')`: all loadings and (indicator-)intercepts are restricted to equality. 
+#' \item `c('loadings', 'intercepts', 'residuals')`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
+#' \item `c('loadings', 'residuals')`: all loadings and (indicator-)residuals are restricted to equality.
+#' \item `c('loadings', 'intercepts', 'means')`: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = c('loadings')` and `nullEffect = 'c('loadings', 'intercepts')'` 
