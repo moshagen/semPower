@@ -88,8 +88,8 @@ loadings <- list(
 Phi <- matrix(c(
   c(1, .3, .2),   # bifactor
   c(.3, 1, .5),   # covariate 1
-  c(.2, .5, 1),   # covariate 2
-), ncol = 3, by.row = TRUE) 
+  c(.2, .5, 1)   # covariate 2
+), ncol = 3, byrow = TRUE) 
 }\if{html}{\out{</div>}}
 
 Beyond the arguments explicitly contained in the function call, additional arguments

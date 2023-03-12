@@ -23,11 +23,11 @@ semPower.powerMediation(
 
 \item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{bYX}{the standardized slope (direct effect) for X -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
+\item{bYX}{the slope (direct effect) for X -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
-\item{bMX}{the standardized slope for X -> M. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
+\item{bMX}{the slope for X -> M. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
-\item{bYM}{the standardized slope for M -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
+\item{bYM}{the slope for M -> Y. A list for multiple group models. Can be \code{NULL} if \code{Beta} is set.}
 
 \item{Beta}{can be used instead of \code{bYX}, \code{bMX}, and \code{bYM}: matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. A list for multiple group models.}
 
@@ -60,7 +60,7 @@ This function performs a power analysis to reject various hypotheses arising
 in the context of mediation:
 \itemize{
 \item \code{nullEffect = 'ind = 0'}: Tests the hypothesis that an indirect effect is zero.
-\item \code{nullEffect = 'indA = indB'}: Tests the hypothesis that an indirect effect is equal in two or more groups (always assuming metric invariance). This is currently only possible for models without latent variables.
+\item \code{nullEffect = 'indA = indB'}: Tests the hypothesis that an indirect effect is equal in two or more groups. This is currently only possible for models without latent variables.
 }
 
 The indirect effect of interest can be specified in two ways:

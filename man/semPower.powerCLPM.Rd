@@ -30,7 +30,7 @@ semPower.powerCLPM(
 
 \item{crossedEffects}{vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. \code{list(c(.2, .3), c(.1, .1))} for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.}
 
-\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If NULL, all (residual-)correlations are zero.}
+\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If \code{NULL}, all (residual-)correlations are zero.}
 
 \item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'autoregX'} and \code{'autoregY'} for autoregressive effects, \code{'crossedX'} and \code{'crossedY'} for crossed effects, \code{'corXY'} for residual correlations, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
 
@@ -40,7 +40,7 @@ semPower.powerCLPM(
 
 \item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
-\item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected  by invariance constraints).}
+\item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
 }
@@ -70,11 +70,11 @@ CLPM based on latent factors usually assume at least metric invariance of the fa
 Relevant hypotheses in arising in a CLPM are:
 \itemize{
 \item \code{autoregX = 0} and \code{autoregY = 0}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero.
-\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is zero.
+\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}), respectively, is zero.
 \item \code{autoregX = autoregY}: Tests the hypothesis that the autoregressive effect of X and Y are equal.
-\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}) are equal.
+\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}) are equal.
 \item \code{autoregX} and \code{autoregY}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves.
-\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is equal across waves.
+\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}), respectively, is equal across waves.
 \item \code{corXY}: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves.
 }
 

@@ -21,7 +21,7 @@ semPower.powerRegression(
 
 \item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{slopes}{vector of standardized slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.}
+\item{slopes}{vector of slopes (or a single number for a single slope) of the k predictors for Y. A list of slopes for multigroup models.}
 
 \item{corXX}{correlation(s) between the k predictors (X). Either \code{NULL} for uncorrelated predictors, a single number (for k = 2 predictors), or a matrix. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are used in all groups).}
 

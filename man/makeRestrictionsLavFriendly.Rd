@@ -15,7 +15,7 @@ model with  \code{lavaan}-friendly constrains
 \description{
 This function transforms a \code{lavaan} model string into a model string that works reliably
 when both equality constrains and value constrains are imposed on the same parameters.
-\code{lavaan} cannot reliably handle this case, e. g., "a == b \n a == 0" will not always work.
+\code{lavaan} cannot reliably handle this case, e. g., \code{"a == b \\\\n a == 0"} will not always work.
 The solution is to drop the equality constraint and rather apply
-the value constraint on each equality constrained parameter, e. g. "a == 0 \n b == 0" will work.
+the value constraint on each equality constrained parameter, e. g. \code{"a == 0 \\n b == 0"} will work.
 }

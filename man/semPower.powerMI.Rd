@@ -41,10 +41,10 @@ the power (or the required N) to reject a particular level of invariance.
 
 The models defined in the \code{comparison} and the \code{nullEffect} arguments can be specified as follows:
 \itemize{
-\item \code{configural}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
-\item \code{metric}: all loadings are restricted to equality.
-\item \code{scalar}: all loadings and (item-)intercepts are restricted to equality.
-\item \code{residual}: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
+\item \code{'configural'}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
+\item \code{'metric'}: all loadings are restricted to equality.
+\item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality.
+\item \code{'residual'}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 }
 
 For example, setting \code{comparison = 'metric'} and \code{nullEffect = 'scalar'} determines power
@@ -56,10 +56,10 @@ For greater flexibility, the models can also be defined using \code{lavaan} styl
 \itemize{
 \item \code{'none'}: no invariance constraints and thus representing a configural invariance model. Shows the same fit as the saturated model, so only the delta df differ.
 \item \code{c('loadings')}: all loadings are restricted to equality.
-\item \code{c('loadings', 'intercepts')}: all loadings and (item-)intercepts are restricted to equality.
-\item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (item-)intercepts, and (item-)residuals are restricted to equality.
-\item \code{c('loadings', 'residuals')}: all loadings and (item-)residuals are restricted to equality.
-\item \code{c('loadings', 'intercepts', 'means')}: all loadings, (item-)intercepts, and latent factor means are restricted to equality.
+\item \code{c('loadings', 'intercepts')}: all loadings and (indicator-)intercepts are restricted to equality.
+\item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
+\item \code{c('loadings', 'residuals')}: all loadings and (indicator-)residuals are restricted to equality.
+\item \code{c('loadings', 'intercepts', 'means')}: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
 }
 
 For example, setting \code{comparison = c('loadings')} and \verb{nullEffect = 'c('loadings', 'intercepts')'}

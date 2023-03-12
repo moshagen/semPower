@@ -61,8 +61,8 @@ This requires the lavaan package.
 \details{
 This function performs a power analysis to reject various hypotheses arising in a random intercept crossed-lagged panel model (RI-CLPM).
 In a standard RI-CLPM implemented here, two variables X and Y are repeatedly assessed at three or more different time points (\code{nWaves}),
-yielding autoregressive effects (X1 -> X2, X2 -> X3, Y1 -> Y2, Y2 -> Y3), synchronous effects (X1 <-> Y1, X2 <-> Y2, X3 <-> Y3, X4 <-> Y4), and cross-lagged effects (X1 -> Y2, X2 -> Y3, Y1 -> X2, Y2 -> X3).
-RI-CLPMs are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., X1 -> Y3).
+yielding autoregressive effects (\code{X1 -> X2}, \code{X2 -> X3}, \code{Y1 -> Y2}, \code{Y2 -> Y3}), synchronous effects (\verb{X1 <-> Y1}, \verb{X2 <-> Y2}, \verb{X3 <-> Y3}), and cross-lagged effects (\code{X1 -> Y2}, \code{X2 -> Y3}, \code{Y1 -> X2}, \code{Y2 -> X3}).
+RI-CLPMs are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., \code{X1 -> Y3}).
 RI-CLPMs based on latent factors usually assume at least metric invariance of the factors over waves (\code{metricInvariance}).
 
 Relevant hypotheses in arising in a RI-CLPM are:
