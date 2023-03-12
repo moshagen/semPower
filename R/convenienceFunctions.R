@@ -408,7 +408,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb'))
   if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
   if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to muligroup analysis, so Phi must be a list.')
-  if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, bound(1, length(Phi)))) 
+  if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, 'Each element in nullWhichGroups', bound = c(1, length(Phi)), inclusive = TRUE)) 
     
   # generate sigma 
   generated <- semPower.genSigma(Phi = Phi, ...)
@@ -453,7 +453,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     modelH0 <- paste(c(modelH0, tok), collapse = '\n')
   }else if(nullEffect == 'cora=corb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- 1:length(Phi)
-    lab <- rep('NA', length(Phi))
+    lab <- paste0('ff', 1:length(Phi))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(c(modelH0,
@@ -793,7 +793,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                      sep = '\n')
   }else if(nullEffect == 'slopea=slopeb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- seq_along(slopes)
-    lab <- paste0('ff', 1:length(slopes))
+    lab <- paste0('ff', seq_along(slopes))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(model, 
