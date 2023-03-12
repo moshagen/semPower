@@ -981,7 +981,7 @@ powerReg <- semPower.powerRegression(
                                      nIndicator = c(1, 5, 4), 
                                      loadM = c(1, .6, .7))
 ```
-Similarly, using `nIndicator = c(6, 1, 4)` and `loadM = c(.5, 1, .7)` would make the first predictor ($X_1$) an observed variable, and a regression involving observed variables only could be defined using `nIndicator = c(1, 1, 1)` and `loadM = c(1, 1, 1)`. A MIMIC model with a factor measured by 5 indicators all loading by .7 would thus correspond to `nIndicator = c(5, 1, 1)` and `loadM = c(.7, 1, 1)`.
+Similarly, using `nIndicator = c(6, 1, 4)` and `loadM = c(.5, 1, .7)` would make the first predictor ($X_1$) an observed variable, and a regression involving observed variables only could be defined using `nIndicator = c(1, 1, 1)` and `loadM = c(1, 1, 1)` or, more simply, by just providing `Lambda = diag(3)` instead of `nIndicator` and `loadM`. A MIMIC model with a factor measured by 5 indicators all loading by .7 would thus correspond to `nIndicator = c(5, 1, 1)` and `loadM = c(.7, 1, 1)`.
 
 
 ##### Detect whether two slopes differ from each other {-}
@@ -1068,7 +1068,7 @@ powerReg <- semPower.powerRegression(
 
 ## Mediation models  {#powerMediation}
 
-`semPower.powerMediation` is used to perform power analyses to reject hypotheses arising in a mediation context involving factors and/or observed variables. This includes the simple case or a single variable $M$ mediating the relation between $X$ and $Y$ (`X -> M -> Y`), but may also refer to more complex mediation chains involving several mediators. `semPower.powerMediation` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerMediation` is used to perform power analyses to reject hypotheses arising in a mediation context involving factors and/or observed variables. This includes the simple case or a single variable $M$ mediating the relation between $X$ and $Y$ (`X -> M -> Y`), but may also refer to more complex mediation chains involving several mediators. Note that power for mediation effects involving latent variables is only approximated. `semPower.powerMediation` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether an indirect effect differs from zero (`nullEffect = 'ind = 0'`). 
 * whether an indirect effect differs across two or more groups (`nullEffect = 'indA = indB'`). This is currently only possible for models without latent variables.
@@ -1082,7 +1082,7 @@ Note that `semPower.powerMediation` only addresses hypotheses in a mediation con
     +  `bMX`: the slope for $X$ in the prediction of $M$ (`X -> M`).
     +  `bYM`: the slope for $M$ in the prediction of $Y$ (`M -> Y`).
 * or (for more complex mediation mechanisms):
-    + `Beta`: Matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. See [this chapter](semDefinition) for examples.
+    + `Beta`: Matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. See [this chapter](semDefinition) for details.
     + `indirect`: A list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect.
 * `nullEffect`: Defines the hypothesis of interest; one of `'ind = 0'` or `'indA = indB'`.
 * `nullWhichGroups`: Defines which groups are targeted when `nullEffect = 'indA = indB'`.
@@ -1099,13 +1099,124 @@ Note that `semPower.powerMediation` only addresses hypotheses in a mediation con
 
 
 ##### Detect whether an indirect effect differs from zero {-}
-to be written `'ind = 0'` 
+To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and thus could be omitted. 
 
-* contrast standardized and unstandardized
-* show simple and Beta
+In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y` (`bYX = .25`), `X -> M` (`bMX = .3`), `M -> Y` (`bYM = .4`) are defined to be .25, .3, and .4, respectively. Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the indirect effect differs from zero  (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+```{r eval=FALSE}
+powerMed <- semPower.powerMediation(
+                                     # define type of power analysis
+                                     type = 'a-priori', alpha = .05, power = .80,
+                                     # define hypothesis
+                                     bYX = .25, 
+                                     bMX = .3, 
+                                     bYM = .4,
+                                     nullEffect = 'ind = 0',
+                                     # define factor model
+                                     nIndicator = c(3, 4, 5),
+                                     loadM = c(.5, .6, .7)
+                                     )
+summary(powerMed$power)
+```
+The results of the power analysis are printed by calling the `summary` method on `powerMed$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+
+If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
+```{r eval=FALSE}
+powerMed <- semPower.powerMediation(
+                                     # define type of power analysis
+                                     type = 'post-hoc', alpha = .05, N = 300,
+                                     # define hypothesis
+                                     bYX = .25, 
+                                     bMX = .3, 
+                                     bYM = .4,
+                                     nullEffect = 'ind = 0',
+                                     # define factor model
+                                     nIndicator = c(3, 4, 5),
+                                     loadM = c(.5, .6, .7)
+                                     )
+```
+Now, `summary(powerMed$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+
+In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
+If one or all of the involved variables are observed variables (instead of factors), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first "factor", which is treated as the predictor $X$, as a dummy factor with a single indicator (`nIndicator = c(1, 4, 5)`) and a loading of 1 (`loadM = c(1, .6, .7)`), so it becomes equivalent to an observed variable:
+```{r eval=FALSE}
+powerMed <- semPower.powerMediation(
+                                     # define type of power analysis
+                                     type = 'a-priori', alpha = .05, power = .80,
+                                     # define hypothesis
+                                     bYX = .25, 
+                                     bMX = .3, 
+                                     bYM = .4,
+                                     nullEffect = 'ind = 0',
+                                     # define factor model
+                                     nIndicator = c(1, 4, 5),
+                                     loadM = c(1, .6, .7)
+                                     )
+```
+Similarly, using `nIndicator = c(3, 1, 5)` and `loadM = c(.5, 1, .7)` would make the mediator  ($M$) an observed variable, and a mediation model involving observed variables only could be defined using `nIndicator = c(1, 1, 1)` and `loadM = c(1, 1, 1)` or, more simply, by just providing `Lambda = diag(3)` instead of `nIndicator` and `loadM`.
+
+`semPower.powerMediation` provides an alternative way to specify mediation structures that go beyond the simple case of a `X -> M -> Y` mediation. For illustration, suppose there are four variables, the hypothesized structure is `X -> M1 -> M2 -> Y`, and that the indirect effect of interest is given by the slopes connecting `X -> M1`, `M1 -> M2`, and `M2 -> Y`. To reflect this type of mediation, the `Beta` and `indirect` arguments need to be set. Below, the regression relations between the factors are defined in `Beta` (see [this chapter](semDefinition) for details), implying a slope for `X -> M1` of .2, for `M1 -> M2` of .3, and for `M2 -> Y` of .4 (and all other slopes being equal to zero). `indirect` is a list of vectors of size two indicating the elements of `Beta` that define the indirect effect, so in this example, the indirect effect of interest comprise `X -> M1` (`c(2, 1)`),  `M1 -> M2` (`c(3, 2)`),  `Y -> M2` (`c(4, 3)`). Further, the assumed order of the factors mirrors the order given in `Beta`, so $X$ and $Y$ are defined as factors involving 5 indicators that all load by .5, and $M_1$ and $M_2$ as factors that are indicated by 6 indicators loading by .6 (`nIndicator = c(5, 6, 6, 5)` and `loadM = c(.5, .6, .6, .5)`).   
+
+```{r eval=FALSE}
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # X
+  c(.20, .00, .00, .00),       # M1
+  c(.00, .30, .00, .00),       # M2
+  c(.00, .00, .40, .00)        # Y
+), byrow = TRUE, ncol = 4)
+powerMed <- semPower.powerMediation(
+                                     # define type of power analysis
+                                     type = 'a-priori', alpha = .05, power = .80,
+                                     # define hypothesis
+                                     Beta = Beta, 
+                                     indirect = list(c(2, 1), c(3, 2), c(4, 3)),
+                                     nullEffect = 'ind = 0',
+                                     # define factor model
+                                     nIndicator = c(5, 6, 6, 5),
+                                     loadM = c(.5, .6, .6, .5)
+                                     )
+```
+
+In all previous examples (regardless of using `Beta` or `bYX`), the slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
+
 
 ##### Detect whether an indirect differs across groups {-}
-to be written `'indA = indB'`
+To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs across groups, use `nullEffect = 'indA = indB'`. This is currently only possible for models involving observed variables only.
+
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the indirect effect in group 1 differs from the one in group 2 (`nullEffect = 'indA = indB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `bYX`, `bMX`, and `bYM` are now lists comprising two elements, the first defining the respective slope in the first group, the second the respective slope in the second group. Thus, the slopes in the first and second group for `X -> M` are .2 and .4, for `M -> Y` .3 and .5, and for `X -> M` .25 and .25, respectively. `Lambda = diag(3)` implies that all variables are observed. Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+
+```{r eval=FALSE}
+powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+                                    nullEffect = 'indA = indB',
+                                    bYX = list(.25, .25),
+                                    bMX = list(.2, .4),
+                                    bYM = list(.3, .5),
+                                    Lambda = diag(3)
+                                   )
+```
+
+The same as above can also be achieved using the `Beta` and `indirect` arguments, which generally offer greater flexibility. Key is to provide `Beta` as a list, where each component reflects the regression relationships for each group. 
+
+```{r eval=FALSE}
+# Beta for group 1
+Beta1 <- matrix(c(
+  c(.00, .00, .00),    # X
+  c(.20, .00, .00),    # M
+  c(.25, .30, .00)     # Y
+), byrow = TRUE, ncol = 3)
+# Beta for group 2
+Beta2 <- matrix(c(
+  c(.00, .00, .00),    # X
+  c(.40, .00, .00),    # M
+  c(.25, .50, .00)     # Y
+), byrow = TRUE, ncol = 3)
+powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+                                    nullEffect = 'indA = indB',
+                                    Beta = list(Beta1, Beta2),
+                                    indirect = list(c(2, 1), c(3, 2)),
+                                    Lambda = diag(3)
+                                    )
+```
 
 
 ## Generic path models {#powerPath}
