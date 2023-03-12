@@ -702,7 +702,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   isMultigroup <- length(slopes) > 1
 
   if(is.null(corXX)) corXX <- lapply(slopes, function(x) diag(nrow(x))) 
-  if(any(unlist(lapply(corXX, is.vector)) && unlist(lapply(corXX, length)) > 1)) stop('corXX must be a single number or a matrix') 
+  if(any(unlist(lapply(corXX, is.vector))) && length(unique(unlist(lapply(corXX, length)))) > 1) stop('corXX must be a single number or a matrix') 
   if(isMultigroup && length(corXX) == 1) corXX <- rep(corXX, length(slopes)) # assume same corXX for all groups
   corXX <- lapply(corXX, function(x) {
     if(!is.matrix(x)){
@@ -721,7 +721,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if(nullEffect == 'slopex=slopez'){
     if(length(nullWhich) < 2 || length(nullWhich) > nrow(slopes[[1]])) stop('nullWhich must contain at least two slopes when nullEffect is slopex=slopez, but not more slopes than available')
   }else{
-    if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0')
+    if(length(nullWhich) > 1) stop('nullWhich must be a single number when nullEffect is slope=0 or slopeA=slopeB')
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
@@ -793,7 +793,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                      sep = '\n')
   }else if(nullEffect == 'slopea=slopeb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- seq_along(slopes)
-    lab <- rep('NA', length(slopes))
+    lab <- paste0('ff', 1:length(slopes))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(model, 
