@@ -303,7 +303,7 @@ genLambda <- function(loadings = NULL,
 
   # validate input  
   if(!is.null(nIndicator) && !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
-  if(is.null(nIndicator) && !(is.null(loadM) || is.null(loadMinMax))) stop('Provide loadings and number of indicators by factor.')
+  if(is.null(nIndicator) && !(is.null(loadM) || is.null(loadMinMax))) stop('Provide both loadings (loadM) and number of indicators (nIndicator) by factor.')
   if(is.null(nIndicator) && !is.list(loadings)) stop('loadings must be a list')
   nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
   if(is.null(loadings)){
@@ -741,13 +741,11 @@ makeRestrictionsLavFriendly <- function(model){
         names(cl) <- cp[which(is.na(ncp))]
         parZero <- append(parZero, cl)
       }else{
-        #parPresent <- unlist(lapply(parEqual, function(x) cp %in% x))
         parPresent <- lapply(parEqual, function(x) cp %in% x)
         if(length(parPresent) > 0) parPresent <- apply(do.call(rbind, parPresent), 2, any)
         if(!any(parPresent)){
           parEqual <- append(parEqual, list(cp))
         }else{
-          #idx <- which(unlist(lapply(parEqual, function(x) cp[parPresent] %in% x)))
           idx <- lapply(parEqual, function(x) cp[parPresent] %in% x)
           idx <- which(apply(do.call(cbind, idx), 2, any))
           parEqual[[idx]] <- c(cp[!parPresent], parEqual[[idx]])
