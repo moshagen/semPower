@@ -2827,8 +2827,8 @@ semPower.powerMI <- function(type,
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
-#' @param Beta matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. Exogenous variables must occupy the first rows in `Beta` when `standardized = TRUE`.  See details. 
-#' @param Psi variance-covariance matrix of latent (residual) factors. If `NULL`, a diagonal matrix is assumed. A list for multiple group models. See details.
+#' @param Beta matrix of regression slopes between latent variables (all-Y notation). A list for multiple group models. Exogenous variables must occupy the first rows in `Beta` when `standardized = TRUE`. See details. 
+#' @param Psi variance-covariance matrix of latent (residual) factors. If `standardized = TRUE`, the diagonal is ignored and all off-diagonal elements are treated as correlations. If `NULL`, a diagonal matrix is assumed. A list for multiple group models. See details.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'beta = 0'` (the default) to test whether a regression slope is zero, `'betaX = betaZ'` to test for the equality of slopes, and `'betaX = betaZ'` to test for the equality of a slope across groups. Define the slopes to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
 #' @param nullWhich vector of size 2 indicating which slope in `Beta` is hypothesized to equal zero when `nullEffect = 'beta = 0'`, or to restrict to equality across groups when `nullEffect = 'betaA = betaB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'betaX = betaZ'`. Can also contain more than two slopes, e.g., `list(c(2, 1), c(3, 1), c(3, 2))` to set `Beta[2, 1] = Beta[3, 1] = Beta[3, 2]`.
 #' @param nullWhichGroups for `nullEffect = 'betaA = betaB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
@@ -2974,7 +2974,7 @@ semPower.powerMI <- function(type,
 #' # same as above, but consider a multiple group model with equally sized groups, 
 #' # and obtain the required N to detect that the slope 
 #' # in group 1 (of .20) differs from the one in group 2 (of .40)
-#' Beta1 <- matrix(c(
+#' Beta1 <- Beta2 <- matrix(c(
 #'   c(.00, .00, .00, .00),       # f1
 #'   c(.20, .00, .00, .00),       # f2
 #'   c(.00, .30, .00, .00),       # f3
@@ -3031,7 +3031,10 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   if(nullEffect == 'betaa=betab' && !isMultigroup) stop('Beta must be a list for multiple group comparisons.')
   if(nullEffect != 'betaa=betab' && isMultigroup) stop('Multiple group models are only valid for nullEffect = "betaA=betaB".')
   if(nullEffect == 'beta=0' && any(unlist(lapply(Beta, function(x) x[nullWhich[1], nullWhich[2]] == 0)))) stop('nullWhich must not refer to a slope with a population value of zero.')
-  if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups'), bound = c(1, length(Beta)), inclusive = TRUE)
+  if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups', bound = c(1, length(Beta)), inclusive = TRUE))
+  if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
+  if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq_along(Beta)
+
   
   ### get Sigma
   if(standardized){
@@ -3045,59 +3048,45 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   }
   
   ### create model strings
-  # we need labels, so we use modelTrueCFA and define regression relations here
+  # we need to use modelTrueCFA and define regression relations here,
+  # because we need labels for the H0 model and because standardized based on phi yields no regression structure 
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   tok <- list()
-  for(f in 1:ncol(Beta[[1]])){
-    if(!isMultigroup){
-      idx <- which(Beta[[1]][f, ] != 0)
-      if(length(idx) > 0){
+  tokH1 <- list()
+  for(f in seq(ncol(Beta[[1]]))){
+    ifelse(isMultigroup, idx <- unique(unlist(lapply(Beta, function(x) which(x[f, ] != 0)))), idx <- which(Beta[[1]][f, ] != 0))
+    if(length(idx) > 0){
+      # cIdx <- lapply(idx, function(x) c(f, x)) %in% nullWhich   ## not sure why this does not work when looping over f?
+      cIdx <- unlist(lapply(lapply(idx, function(x) c(f, x)), function(y) any(unlist(lapply(nullWhich, function(z) all(y == z))))))
+      if(nullEffect == 'beta=0'){
+        prefix <- rep('', length(idx))
+        prefix[cIdx] <- '0*'
+      }else if(nullEffect == 'betax=betaz'){
+        prefix <- rep('', length(idx))
+        prefix[cIdx] <- 'pc*'
+      }else if(nullEffect == 'betaa=betab'){
         clab <- paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(idx, width = 2, flag = 0)))
-        tok <- append(tok, paste0('f', f, ' ~ ', paste(clab, paste0('*f', idx), sep = '', collapse = ' + ')))
+        prefix <- lapply(clab, function(x) paste0(x, '_g', seq_along(Beta)))
+        prefix[cIdx] <- lapply(prefix[cIdx], function(x) unlist(lapply(x, function(y) gsub(paste0('_g', nullWhichGroups, collapse = '|'), '_gc', y))))
+        prefix <- unlist(lapply(prefix, function(x) paste0('c(', paste(x, collapse = ', ') ,')*')))
       }
-    }else{
-      idx <- unique(unlist(lapply(Beta, function(x) which(x[f, ] != 0))))
-      if(length(idx) > 0){
-        clab <- paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(idx, width = 2, flag = 0)))
-        clab <- unlist(lapply(clab, function(x) paste0('c(', paste0(x, 'g', seq_along(Beta), collapse = ', '),')')))
-        tok <- append(tok, paste0('f', f, ' ~ ', paste(clab, paste0('*f', idx), sep = '', collapse = ' + ')))
-      }
+      tok <- append(tok, paste0('f', f, ' ~ ', paste(prefix, paste0('f', idx), sep = '', collapse = ' + ')))
+      tokH1 <- append(tokH1, paste0('f', f, ' ~ ', paste(paste0('f', idx), sep = '', collapse = ' + ')))
     }
   }
   # (residual) correlations, assuming the same Psi across groups
   if(is.null(Psi)) Psi <- list(diag(ncol(Beta[[1]])))
   for(f in 1:(ncol(Beta[[1]]) - 1)){
     for(ff in (f + 1):ncol(Beta[[1]])){
-      if(Psi[[1]][f, ff] != 0)
+      if(Psi[[1]][f, ff] != 0){
         tok <- append(tok, paste0('f', f, ' ~~ f', ff))
-    }
-  }
-  modelH1 <- paste(c(model, unlist(tok)), collapse = '\n')
-  
-  # define H0 model
-  if(nullEffect == 'beta=0'){
-    modelH0 <- paste(modelH1, 
-                     paste0('pf', paste0(formatC(nullWhich[1], width = 2, flag = 0), formatC(nullWhich[2], width = 2, flag = 0)), ' == 0'),
-                     sep = '\n')
-  }else if(nullEffect == 'betax=betaz'){
-    tok <- paste0('pf', paste0(formatC(nullWhich[[1]][1], width = 2, flag = 0), formatC(nullWhich[[1]][2], width = 2, flag = 0)))
-    tok <- paste0(tok, ' == ','pf', paste0(formatC(nullWhich[[2]][1], width = 2, flag = 0), formatC(nullWhich[[2]][2], width = 2, flag = 0)))
-    modelH0 <- paste(modelH1, tok, sep = '\n')
-  }else if(nullEffect == 'betaa=betab'){
-    if(is.null(nullWhichGroups)) nullWhichGroups <- seq_along(Beta)
-    clab <- paste0('pf', paste0(formatC(nullWhich[1], width = 2, flag = 0), formatC(nullWhich[2], width = 2, flag = 0)))
-    clab <- lapply(seq_along(nullWhichGroups), function(x) paste0(clab, 'g', nullWhichGroups[x]))
-    tok <- list()
-    for(i in 1:(length(clab) - 1)){
-      for(j in (i + 1):length(clab)){
-        tok <- append(tok, paste0(clab[i], ' == ', clab[j]))
+        tokH1 <- append(tokH1, paste0('f', f, ' ~~ f', ff))
       }
     }
-    modelH0 <- paste(modelH1, tok, sep = '\n')
-  }else{
-    stop('nullEffect not defined.')
   }
-  
+  modelH0 <- paste(c(model, unlist(tok)), collapse = '\n')
+  modelH1 <- paste(c(model, unlist(tokH1)), collapse = '\n')
+
   # always enforce invariance constraints in the multigroup case
   lavOptions <- NULL
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))

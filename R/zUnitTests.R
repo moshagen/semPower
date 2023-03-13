@@ -2395,7 +2395,7 @@ test_powerPath <- function(){
     2*lavres4b$fit['fmin'] - ph4$power$fmin < 1e-6 &&
     sum(preg$Sigma[c(4:9, 1:3), c(4:9, 1:3)] - ph2$Sigma) == 0
   
-  if(valid){
+  if(valid2){
     print('test_powerPath: OK')
   }else{
     warning('Invalid')
