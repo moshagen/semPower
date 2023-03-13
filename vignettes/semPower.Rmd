@@ -652,9 +652,6 @@ powerCFA <- semPower.powerCFA(
   )
 ```
 
-Whereas `nullEffect` and `nullWhich` need to be defined in any convenience function, the specifics depend on the model and hypothesis at hand, so these arguments are discussed in the relevant chapters. 
-
-
 
 ## CFA models {#powerCFA}
 
@@ -664,7 +661,7 @@ Whereas `nullEffect` and `nullWhich` need to be defined in any convenience funct
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
 * whether a correlation differs across two or more groups (`nullEffect = 'corA = corB'`).
 
-Note that `semPower.powerCFA` only addresses hypotheses concerning correlation(s) involving one or more factors. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), models involving a [bifactor structure](#powerBifactor), [mediation models](#powerMediation), [generic path models](#powerPath), and [multigroup measurement invariance](#powerMI). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerCFA` only addresses hypotheses concerning correlation(s) involving one or more factors. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), models involving a [bifactor structure](#powerBifactor), [mediation models](#powerMediation), [generic path models](#powerPath), and [multigroup measurement invariance](#powerMI). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerCFA` expects the following arguments:
 
@@ -696,7 +693,7 @@ powerCFA <- semPower.powerCFA(
                               # define hypothesis
                               Phi = .25,
                               nullEffect = 'cor = 0',
-                              # define factor model
+                              # define measurement model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
 summary(powerCFA$power)
 ```
@@ -710,7 +707,7 @@ powerCFA <- semPower.powerCFA(
                               # define hypothesis
                               Phi = .25,
                               nullEffect = 'cor = 0',
-                              # define factor model
+                              # define measurement model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
 ```
 Now, `summary(powerCFA$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
@@ -836,7 +833,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
 * whether a correlation differs across two or more groups (`nullEffect = 'corA = corB'`).
 
-Note that `semPower.powerBifactor` only addresses hypotheses concerning correlation(s) involving one or more bifactors. `semPower` provides other convenience functions for hypothesis arising in [standard CFA models](#powerCFA). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerBifactor` only addresses hypotheses concerning correlation(s) involving one or more bifactors. `semPower` provides other convenience functions for hypothesis arising in [standard CFA models](#powerCFA). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerBifactor` expects the following arguments:
 
@@ -863,6 +860,10 @@ To perform a power analysis to detect whether a correlation between factors diff
 
 to be written
 
+
+In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
+
 ##### Detect whether two correlations differ from each other {-}
 
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'corX = corZ'`. 
@@ -883,7 +884,7 @@ to be written
 * whether two slopes ($\beta_i$, $\beta_j$) differ from each other (`nullEffect = 'slopeX = slopeZ'`).
 * whether a slope ($\beta_{i,m}$, $\beta_{i,n}$) differs across two or more groups (`nullEffect = 'slopeA = slopeB'`).
 
-Note that `semPower.powerRegression` only addresses hypotheses concerning slope(s) in a latent regression. `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerRegression` only addresses hypotheses concerning slope(s) in a latent regression. `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerRegression` expects the following arguments:
 
@@ -907,7 +908,7 @@ Note that `semPower.powerRegression` only addresses hypotheses concerning slope(
 ##### Detect whether a slope differs from zero {-}
 To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'slope = 0'` (which is also the default and thus could be omitted). 
 
-For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerRegression` always treats the first factor as criterion ($Y$) and the remaining factors as predictors ($X_1$ and $X_2$), so in the present example the criterion is measured by 3 indicators loading by .5 each. Having defined the criterion and the predictors, the slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .2 and .3, respectively (`slopes = c(.2, .3)`) and the correlation between the predictors is defined to be .4 (`corXX = .4`). Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the first slope (`nullWhich = 1`) differs from zero (`nullEffect = 'slope = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerRegression` treats the first defined factor as criterion ($Y$) and the remaining factors as predictors (here: $X_1$ and $X_2$), so in the present example the criterion is measured by 3 indicators loading by .5 each. The slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .2 and .3, respectively (`slopes = c(.2, .3)`) and the correlation between the predictors is defined to be .4 (`corXX = .4`). Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the first slope (`nullWhich = 1`) differs from zero (`nullEffect = 'slope = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
                                      # define type of power analysis
@@ -917,7 +918,7 @@ powerReg <- semPower.powerRegression(
                                      corXX = .4, 
                                      nullEffect = 'slope = 0',
                                      nullWhich = 1,
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 5, 4), 
                                      loadM = c(.5, .6, .7))
 summary(powerReg$power)
@@ -934,13 +935,15 @@ powerReg <- semPower.powerRegression(
                                      corXX = .4, 
                                      nullEffect = 'slope = 0',
                                      nullWhich = 1,
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 5, 4), 
                                      loadM = c(.5, .6, .7))
 ```
 Now, `summary(powerReg$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
+Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
 
 If there are more than two predictors, the predictor intercorrelation matrix must be provided as argument to `corXX`. For instance, consider the regression $\hat{Y} = .3 \cdot X_1 + .2 \cdot X_2 + .1 \cdot X_3$, where all factors are measured by 3 indicators, all loadings equal .5, the interest lies in detecting that the slope for $X_2$ differs from zero (`nullWhich = 2`), and the predictors are correlated according to `corXX`:
 
@@ -959,13 +962,11 @@ powerReg <- semPower.powerRegression(
                                      corXX = corXX, 
                                      nullEffect = 'slope = 0',
                                      nullWhich = 2,
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 3, 3, 3), 
                                      loadM = c(.5, .5, .5, .5))
 ```
 If `corXX` is omitted or `NULL`, all predictors are assumed to be uncorrelated.
-
-In the previous examples, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
 
 If the criterion or (one of) the predictors is an observed variable (instead of a factor), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first "factor", which is always treated as the criterion $Y$, as a dummy factor with a single indicator (`nIndicator = c(1, 5, 4)`) and a loading of 1 (`loadM = c(1, .6, .7)`), so it becomes equivalent to an observed variable:
 
@@ -977,7 +978,7 @@ powerReg <- semPower.powerRegression(
                                      slopes = c(.2, .3), 
                                      corXX = .4, 
                                      nullWhich = 1,
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(1, 5, 4), 
                                      loadM = c(1, .6, .7))
 ```
@@ -998,7 +999,7 @@ powerReg <- semPower.powerRegression(
                                      corXX = .25, 
                                      nullEffect = 'slopeX = slopeZ',
                                      nullWhich = c(1, 2),
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 5, 4), 
                                      loadM = c(.5, .6, .7))
 ```
@@ -1033,7 +1034,7 @@ powerReg <- semPower.powerRegression(
                                      corXX = corXX,
                                      nullEffect = 'slopeA = slopeB',
                                      nullWhich = 2,
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(4, 5, 3, 6),
                                      loadM = c(.5, .6, .7, .6)
                                      )
@@ -1059,7 +1060,7 @@ powerReg <- semPower.powerRegression(
                                      nullEffect = 'slopeA = slopeB',
                                      nullWhich = 2,
                                      nullWhichGroups = c(1, 3),
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(4, 5, 3, 6),
                                      loadM = c(.5, .6, .7, .6)
                                      )
@@ -1073,7 +1074,7 @@ powerReg <- semPower.powerRegression(
 * whether an indirect effect differs from zero (`nullEffect = 'ind = 0'`). 
 * whether an indirect effect differs across two or more groups (`nullEffect = 'indA = indB'`). This is currently only possible for models without latent variables.
 
-Note that `semPower.powerMediation` only addresses hypotheses in a mediation context. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerMediation` only addresses hypotheses in a mediation context. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerMediation` expects the following arguments:
 
@@ -1101,7 +1102,7 @@ Note that `semPower.powerMediation` only addresses hypotheses in a mediation con
 ##### Detect whether an indirect effect differs from zero {-}
 To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and thus could be omitted. 
 
-In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y` (`bYX = .25`), `X -> M` (`bMX = .3`), `M -> Y` (`bYM = .4`) are defined to be .25, .3, and .4, respectively. Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the indirect effect differs from zero  (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y`, `X -> M`, `M -> Y`are defined to be .25 (`bYX = .25`), .3  (`bMX = .3`), and .4 (`bYM = .4`), respectively. Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the indirect effect differs from zero  (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(
                                      # define type of power analysis
@@ -1111,7 +1112,7 @@ powerMed <- semPower.powerMediation(
                                      bMX = .3, 
                                      bYM = .4,
                                      nullEffect = 'ind = 0',
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 4, 5),
                                      loadM = c(.5, .6, .7)
                                      )
@@ -1129,7 +1130,7 @@ powerMed <- semPower.powerMediation(
                                      bMX = .3, 
                                      bYM = .4,
                                      nullEffect = 'ind = 0',
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(3, 4, 5),
                                      loadM = c(.5, .6, .7)
                                      )
@@ -1137,6 +1138,8 @@ powerMed <- semPower.powerMediation(
 Now, `summary(powerMed$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
+Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
 
 If one or all of the involved variables are observed variables (instead of factors), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first "factor", which is treated as the predictor $X$, as a dummy factor with a single indicator (`nIndicator = c(1, 4, 5)`) and a loading of 1 (`loadM = c(1, .6, .7)`), so it becomes equivalent to an observed variable:
 ```{r eval=FALSE}
@@ -1148,7 +1151,7 @@ powerMed <- semPower.powerMediation(
                                      bMX = .3, 
                                      bYM = .4,
                                      nullEffect = 'ind = 0',
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(1, 4, 5),
                                      loadM = c(1, .6, .7)
                                      )
@@ -1159,10 +1162,10 @@ Similarly, using `nIndicator = c(3, 1, 5)` and `loadM = c(.5, 1, .7)` would make
 
 ```{r eval=FALSE}
 Beta <- matrix(c(
-  c(.00, .00, .00, .00),       # X
-  c(.20, .00, .00, .00),       # M1
-  c(.00, .30, .00, .00),       # M2
-  c(.00, .00, .40, .00)        # Y
+  c(.00, .00, .00, .00),       # X  = .00*X + .00*M1 + .00*M1 + .00*Y 
+  c(.20, .00, .00, .00),       # M1 = .20*X + .00*M1 + .00*M1 + .00*Y 
+  c(.00, .30, .00, .00),       # M2 = .00*X + .30*M1 + .00*M1 + .00*Y 
+  c(.00, .00, .40, .00)        # Y  = .00*X + .00*M1 + .40*M1 + .00*Y 
 ), byrow = TRUE, ncol = 4)
 powerMed <- semPower.powerMediation(
                                      # define type of power analysis
@@ -1171,13 +1174,12 @@ powerMed <- semPower.powerMediation(
                                      Beta = Beta, 
                                      indirect = list(c(2, 1), c(3, 2), c(4, 3)),
                                      nullEffect = 'ind = 0',
-                                     # define factor model
+                                     # define measurement model
                                      nIndicator = c(5, 6, 6, 5),
                                      loadM = c(.5, .6, .6, .5)
                                      )
 ```
 
-In all previous examples (regardless of using `Beta` or `bYX`), the slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
 
 
 ##### Detect whether an indirect differs across groups {-}
@@ -1200,15 +1202,15 @@ The same as above can also be achieved using the `Beta` and `indirect` arguments
 ```{r eval=FALSE}
 # Beta for group 1
 Beta1 <- matrix(c(
-  c(.00, .00, .00),    # X
-  c(.20, .00, .00),    # M
-  c(.25, .30, .00)     # Y
+  c(.00, .00, .00),    # X = .00*X + .00*M + .00*Y 
+  c(.20, .00, .00),    # M = .20*X + .00*M + .00*Y 
+  c(.25, .30, .00)     # Y = .25*X + .30*M + .00*Y 
 ), byrow = TRUE, ncol = 3)
 # Beta for group 2
 Beta2 <- matrix(c(
-  c(.00, .00, .00),    # X
-  c(.40, .00, .00),    # M
-  c(.25, .50, .00)     # Y
+  c(.00, .00, .00),    # X = .00*X + .00*M + .00*Y 
+  c(.40, .00, .00),    # M = .40*X + .00*M + .00*Y 
+  c(.25, .50, .00)     # Y = .25*X + .50*M + .00*Y 
 ), byrow = TRUE, ncol = 3)
 powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
                                     nullEffect = 'indA = indB',
@@ -1220,7 +1222,7 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 
 
 ## Generic path models {#powerPath}
-`semPower.powerPath` is used to perform power analyses to reject hypotheses arising in a generic structural equation model specifying regression relations between the factors or between factors and observed covariates. `semPower.powerPath` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerPath` is used to perform power analyses to reject hypotheses arising in a generic structural equation model specifying regression relations between the factors or between factors and observed covariates via the `Beta` and `Psi` matrices (see [this chapter](semDefinition) for details). `semPower.powerPath` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a slope differs from zero (`nullEffect = 'beta = 0'`). 
 * whether two slopes differ from each other (`nullEffect = 'betaX = betaZ'`).
@@ -1247,13 +1249,192 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 
 
 ##### Detect whether a slope differs from zero {-}
-to be written
+To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'beta = 0'` (which is also the default and thus could be omitted). 
+
+`semPower.powerRegression` requires to specify the regression relations between the factors via the `Beta` argument ([see this chapter for details](semDefinition)). For instance, in the example below, there are four factors (equal to number of columns/rows of `Beta`). The structure of `Beta` implies the relations $F_2 = .2 \cdot F_1$, $F_3 = .3 \cdot F_2$, and $F_4 = .1 \cdot F_1 + .4 \cdot F_3$. `nullWhich` is a vector of size two indicating the element of `Beta` (i.e. the specific slope) that is targeted by the null hypothesis. Below, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_4$ (`nullWhich = c(4, 1)`) differs from zero (`nullEffect = 'beta = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Finally, the measurement model for the factors needs to be defined. The order of factors matches the order in `Beta`: The first factors is measured by 3 indicators, the second factor by 4 indicators, the third by 5, and the fourth by 6 indicators (`nIndicator = c(3, 4, 5, 6)`). The respective indicators of the first factor load by .7, on the second by .5, on the third by .6, and on the fourth factor by .8  (`loadM = c(.7, .5, .6, .8)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
+
+
+```{r eval=FALSE}
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.20, .00, .00, .00),       # f2 = .20*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.00, .30, .00, .00),       # f3 = .00*f1 + .30*f2 + .00*f3 + .00*f4
+  c(.10, .00, .40, .00)        # f4 = .10*f1 + .00*f2 + .40*f3 + .00*f4
+), byrow = TRUE, ncol = 4)
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80,
+                                # define hypothesis
+                                Beta = Beta,
+                                nullWhich = c(4, 1),
+                                # define measurement model
+                                nIndicator = c(3, 4, 5, 6),
+                                loadM = c(.7, .5, .6, .8),
+                                )
+summary(powerPath$power)
+```
+The results of the power analysis are printed by calling the `summary` method on `powerPath$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+
+If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
+```{r eval=FALSE}
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'post-hoc', alpha = .05, N = 300,
+                                # define hypothesis
+                                Beta = Beta,
+                                nullEffect = 'beta = 0',
+                                nullWhich = c(4, 1),
+                                # define measurement model
+                                nIndicator = c(3, 4, 5, 6),
+                                loadM = c(.7, .5, .6, .8),
+                                )
+```
+Now, `summary(powerPath$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+
+In the example above, there were no correlations between the factors beyond those implied by the regression relations. The `Psi` argument can be used to add additional sources of covariation. For instance, the following defines four factors with a regression structure (`Beta`) corresponding to $F_3 = .2 \cdot F_1 + .3 \cdot F_2$ and $F_4 = .3 \cdot F_1 + .4 \cdot F_2$. In addition, `Psi` defines a correlation between $F_1$ and $F_2$ of .25 and a (residual) correlation between $F_3$ and $F_4$ of .3.
+```{r eval=FALSE}
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.00, .00, .00, .00),       # f2 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.20, .30, .00, .00),       # f3 = .20*f1 + .30*f2 + .00*f3 + .00*f4
+  c(.30, .40, .00, .00)        # f4 = .30*f1 + .40*f2 + .00*f3 + .00*f4
+), byrow = TRUE, ncol = 4)
+Psi <- matrix(c(
+  c(1.0, .25, .00, .00),       # f1
+  c(.25, 1.0, .00, .00),       # f2
+  c(.00, .00, 1.0, .30),       # f3
+  c(.00, .00, .30, 1.0)        # f4
+), byrow = TRUE, ncol = 4)
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80,
+                                # define hypothesis
+                                Beta = Beta,
+                                Psi = Psi,
+                                nullEffect = 'beta = 0',
+                                nullWhich = c(4, 1),
+                                # define measurement model
+                                nIndicator = c(3, 4, 5, 6),
+                                loadM = c(.7, .5, .6, .8),
+                                )
+```
+
+Note that all examples above treated all parameters as completely standardized (by omitting the `standardized` argument, which defaults to `TRUE`). When `standardized = TRUE`, `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `Psi` is provided, the diagonal elements are ignored and all off-diagonal elements are treated as (residual-) correlations. When `standardized = FALSE`, `Psi` is unaltered (or replaced by a diagonal matrix, when `Psi = NULL`).
+
+Further, all examples above performed a power analysis by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
+If one (or all) of the involved variables is an observed variable (instead of a factor), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first and the third "factor" as dummy factors with a single indicator (`nIndicator = c(1, 4, 1, 6)`) and a loading of 1 (`loadM = c(1, .5, 1, .8)`), so these become equivalent to observed variables:
+
+```{r eval=FALSE}
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80,
+                                # define hypothesis
+                                Beta = Beta,
+                                nullWhich = c(4, 1),
+                                # define measurement model
+                                nIndicator = c(1, 4, 1, 6),
+                                loadM = c(1, .5, 1, .8),
+                                )
+```
+Similarly, a path model involving observed variables only could be defined using `nIndicator = c(1, 1, 1, 1)` and `loadM = c(1, 1, 1, 1)` or, more simply, by just providing `Lambda = diag(4)` instead of `nIndicator` and `loadM`.
+
 
 ##### Detect whether two slopes differ from each other {-}
-to be written
+To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'betaX = betaZ'`.
+
+For instance, the following defines the regression relationships (`Beta`) between four factors in the same way as described in detail above to be $F_3 = .2 \cdot F_1 + .3 \cdot F_2$ and $F_4 = .3 \cdot F_1 + .4 \cdot F_2$. The four factors are measured by 3, 4, 5, and 6 indicators (`nIndicator = c(3, 4, 5, 6)`), which load by .7, .5, .6, and .8, respectively (`loadM = c(.7, .5, .6, .8)`, see [definition of the factor model](#factorDefinition)). The the required sample (`type = 'a-priori'`) is requested to detect that the slopes for $F1$ and $F_2$ in the prediction of $F_4$ (`nullWhich = list(c(4, 1), c(4, 2))`) differ (`nullEffect = 'betaX = betaZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+
+```{r eval=FALSE}
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.00, .00, .00, .00),       # f2 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.20, .30, .00, .00),       # f3 = .20*f1 + .30*f2 + .00*f3 + .00*f4
+  c(.30, .40, .00, .00)        # f4 = .30*f1 + .40*f2 + .00*f3 + .00*f4
+), byrow = TRUE, ncol = 4)
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80,
+                                # define hypothesis
+                                Beta = Beta,
+                                nullEffect = 'betaX = betaZ',
+                                nullWhich = list(c(4, 1), c(4, 2)),
+                                # define measurement model
+                                nIndicator = c(3, 4, 5, 6),
+                                loadM = c(.7, .5, .6, .8),
+                                )
+```
+
+Note that `nullWhich` is now a list of vectors defining which slopes should be set to equality. `nullWhich = list(c(4, 1), c(4, 2))` says that the slopes for $F1$ and $F_2$ in the prediction of $F_4$ shall be equal.
+
+`nullWhich` can also comprise more than two elements to test for the equality of more than two slopes For instance, when there are 4 predictors, using `nullWhich = list(c(4, 1), c(4, 2), c(3, 1))` would constrain the slopes for for $F1$ and $F_2$ in the prediction of $F_4$ and the slope for $F1$ in the prediction of $F_3$ to equality.
+
+
 
 ##### Detect whether a slope differs across two or more groups {-}
-to be written
+
+To perform a power analysis to detect whether a slope differs across two or more groups, use `nullEffect = 'betaA = betaB'`. 
+
+For instance, the following defines the regression relationships between three factors in the same way as described in detail above separately for two groups. In  the first group (`Beta1`), the relations are $F_2 = .2 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$, whereas in the second group (`Beta2`) these are $F_2 = .4 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$. In multiple group models, `Beta` must be provided as a list, where each component defines the regression relations for a  specific group (`Beta = list(Beta1, Beta2)`). The measurement model is identical across groups: All factors are measured by 5 indicators (`nIndicator =  c(5, 5, 5)`) which load by .7 on the first, by .5 on the second, and by .6 on the third factor (`loadM =  c(.7, .5, .6)`). Then, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_2$ (`nullWhich = c(2, 1)`) differs across groups (`nullEffect = 'betaA = betaB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+
+```{r eval=FALSE}
+# beta in group 1
+Beta1 <- matrix(c(
+  c(.00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.20, .00, .00),       # f2 = .20*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.30, .50, .00)        # f3 = .30*f1 + .30*f2 + .00*f3 + .00*f4
+), byrow = TRUE, ncol = 3)
+# beta in group 2
+Beta2 <- matrix(c(
+  c(.00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.40, .00, .00),       # f2 = .40*f1 + .00*f2 + .00*f3 + .00*f4
+  c(.30, .50, .00)        # f3 = .30*f1 + .30*f2 + .00*f3 + .00*f4
+), byrow = TRUE, ncol = 3)
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+                                # define hypothesis
+                                Beta = list(Beta1, Beta2),
+                                nullEffect = 'betaA = betaB',
+                                nullWhich = c(2, 1),
+                                # define measurement model
+                                nIndicator =  c(5, 5, 5),
+                                loadM =  c(.7, .5, .6)
+                                )
+```
+
+
+If there are more than two groups, the targeted slope is held equal across all groups by default. If the slope should only be constrained to equality in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, the following defines three equally sized groups with a distinct slope for $F_1$ in the prediction of $F_2$, but only asks for the required sample to detect that this slope (`nullWhich = c(2, 1)`) in group 1 (of .20) differs from the second slope in group 3 (of .40; `nullWhichGroups = c(1, 3)`). 
+
+```{r eval=FALSE}
+# beta in group 1
+Beta1 <- matrix(c(
+  c(.00, .00),      # f1 = .00*f1 + .00*f2
+  c(.20, .00)       # f2 = .20*f1 + .00*f2
+), byrow = TRUE, ncol = 2)
+# beta in group 2
+Beta2 <- matrix(c(
+  c(.00, .00),      # f1 = .00*f1 + .00*f2
+  c(.30, .00)       # f2 = .30*f1 + .00*f2
+), byrow = TRUE, ncol = 2)
+# beta in group 3
+Beta3 <- matrix(c(
+  c(.00, .00),      # f1 = .00*f1 + .00*f2
+  c(.40, .00)       # f2 = .40*f1 + .00*f2
+), byrow = TRUE, ncol =2)
+powerPath <- semPower.powerPath(
+                                # define type of power analysis
+                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
+                                # define hypothesis
+                                Beta = list(Beta1, Beta2, Beta3),
+                                nullEffect = 'betaA = betaB',
+                                nullWhich = c(2, 1),
+                                nullWhichGroups =  c(1, 3),
+                                # define measurement model
+                                nIndicator =  c(5, 5),
+                                loadM =  c(.7, .5)
+                                )
+```
 
 
 
@@ -1261,7 +1442,7 @@ to be written
 `semPower.powerMI` is used to perform power analyses for hypothesis arising in multigroup measurement invariance models. The typical - but not in all parts necessary -
 sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance, where each level of invariance is usually compared against the previous level (e.g., scalar vs. metric). `semPower.powerMI` provides interfaces to perform power analyses concerning the hypothesis whether a particular level of invariance is tenable, implementing a model-based approach, so that non-invariant parameters need to be specified. When one does not expect (or is not interested in or does not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assumes that non-invariance spreads across multiple parameters (say, across most or all loadings), one should consider to perform model-free power analysis concerning the [overall difference](#diffPower) between two models.
 
-Note that `semPower.powerMI` only addresses hypotheses concerning multigroup measurement invariance. See the corresponding chapter for [other hypothesis arising in multigroup settings](#multipleGroups).
+`semPower.powerMI` only addresses hypotheses concerning multigroup measurement invariance. See the corresponding chapter for [other hypothesis arising in multigroup settings](#multipleGroups).
 
 `semPower.powerMI` expects the following arguments:
 
@@ -1309,7 +1490,7 @@ powerMI <- semPower.powerMI(
                            # define hypothesis
                            comparison = 'configural', 
                            nullEffect = 'metric',
-                           # define factor model
+                           # define measurement model
                            nIndicator = list(5, 5),
                            loadM = list(.5, .6))
 summary(powerMI$power)
@@ -1375,7 +1556,7 @@ powerMI <- semPower.powerMI(
                            type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
                            comparison = 'configural', 
                            nullEffect = 'metric',
-                           # define two factors 
+                           # define measurement model 
                            loadings = list(
                              # loadings on the first and second factor in the first group
                              list(c(.7, .6, .5), 
@@ -1401,7 +1582,7 @@ powerMI <- semPower.powerMI(
                            # define hypothesis
                            comparison = 'metric', 
                            nullEffect = 'scalar',
-                           # define factor model (same for all groups)
+                           # define measurement model (same for all groups)
                            nIndicator = 5,
                            loadM = .5,
                            # define indicator intercepts
@@ -1420,7 +1601,7 @@ powerMI <- semPower.powerMI(
                            # define hypothesis
                            comparison = c('loadings'), 
                            nullEffect = c('loadings', 'intercepts'),
-                           # define factor model
+                           # define measurement model
                            nIndicator = 5,
                            loadM = .5,
                            tau = list(
@@ -1443,7 +1624,7 @@ powerMI <- semPower.powerMI(
                            # define hypothesis
                            comparison = c('loadings', 'intercepts'), 
                            nullEffect = c('loadings', 'intercepts', 'means'),
-                           # define factor model (same for all groups)
+                           # define measurement model (same for all groups)
                            nIndicator = 5,
                            loadM = .5,
                            # define indicator intercepts
@@ -1471,7 +1652,7 @@ powerMI <- semPower.powerMI(
 * whether the crossed effect of $X$ on $Y$ (`crossedX`) or the crossed effect of $Y$ on $X$ (`crossedY`) are equal across waves. 
 * whether the (residual-)correlations between $X$ and $Y$ are equal across waves (`corXY`). 
 
-Note that `semPower.powerCLPM` only addresses hypotheses arising in a CLPM structure. `semPower` provides other convenience functions for hypothesis arising in  [random intercep cross-lagged panel models](#powerRICLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerCLPM` only addresses hypotheses arising in a CLPM structure. `semPower` provides other convenience functions for hypothesis arising in  [random intercep cross-lagged panel models](#powerRICLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerCLPM` expects the following arguments:
 
@@ -1497,6 +1678,10 @@ Note that `semPower.powerCLPM` only addresses hypotheses arising in a CLPM struc
 
 ##### Detect whether an autoregressive effect differs from zero {-}
 to be written
+
+
+In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
 
 ##### Detect whether a crossed effect differs from zero {-}
 to be written
@@ -1529,7 +1714,7 @@ to be written
 * whether the (residual-)correlations between $X$ and $Y$ are equal across waves (`corXY`). 
 * whether the correlation between the random intercept factors of X and Y differs from zero (`corBXBY = 0`).
 
-Note that `semPower.powerRICLPM` only addresses hypotheses arising in a RI-CLPM structure. `semPower` provides other convenience functions for hypothesis arising in standard [cross-lagged panel models](#powerCLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerRICLPM` only addresses hypotheses arising in a RI-CLPM structure. `semPower` provides other convenience functions for hypothesis arising in standard [cross-lagged panel models](#powerCLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerRICLPM` expects the following arguments:
 
@@ -1556,6 +1741,10 @@ Note that `semPower.powerRICLPM` only addresses hypotheses arising in a RI-CLPM 
 
 ##### Detect whether an autoregressive effect differs from zero {-}
 to be written
+
+
+In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
+
 
 ##### Detect whether a crossed effect differs from zero {-}
 to be written
