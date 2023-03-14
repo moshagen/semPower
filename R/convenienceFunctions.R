@@ -3450,16 +3450,20 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   sPhi <- Phi
   nf <- 1:ncol(Lambda[[1]])
   posCov <- nf[!nf %in% c(1 : numBifactors, (numBifactors + unlist(bfWhichFactors[[1]])))]
+  numCov <- length(posCov)
   Phi <- lapply(seq(nGroups), function(g){
     csPhi <- sPhi[[g]]
+    if(ncol(csPhi) != (numCov + numBifactors)) stop('Incorrect dimensions for Phi. Remember that Phi may only refer to the bifactor(s) and the covariate(s), but must omit all specific factors.')
     cPhi <- diag(ncol(Lambda[[g]]))
     # bf-bf
     cPhi[1:numBifactors, 1:numBifactors] <-  csPhi[1:numBifactors, 1:numBifactors]
     # bf-cov
-    cPhi[posCov, 1:numBifactors] <- csPhi[(numBifactors + 1) : ncol(csPhi), 1 : numBifactors]
-    cPhi[1:numBifactors, posCov] <- csPhi[1 : numBifactors, (numBifactors + 1) : ncol(csPhi)]
-    # cov-cov
-    cPhi[posCov, posCov] <- csPhi[(numBifactors + 1) : ncol(csPhi), (numBifactors + 1) : ncol(csPhi)]
+    if(numCov > 0){
+      cPhi[posCov, 1:numBifactors] <- csPhi[(numBifactors + 1) : ncol(csPhi), 1 : numBifactors]
+      cPhi[1:numBifactors, posCov] <- csPhi[1 : numBifactors, (numBifactors + 1) : ncol(csPhi)]
+      # cov-cov
+      cPhi[posCov, posCov] <- csPhi[(numBifactors + 1) : ncol(csPhi), (numBifactors + 1) : ncol(csPhi)]
+    }
     cPhi
   })
   
@@ -3514,7 +3518,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
     modelH0 <- paste(c(model, tok), collapse = '\n')
   }else if(nullEffect == 'cora=corb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
-    lab <- rep('NA', nGroups)
+    lab <- paste0('ff', seq(nGroups))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
     modelH0 <- paste(c(model,
