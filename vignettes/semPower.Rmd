@@ -839,12 +839,12 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 
 * `bfLoadings`: A single vector or a list containing one or more vectors giving the loadings on each bifactor. 
 * `bfWhichFactors`: A list containing one or more vectors defining which (specific) factors are part of the bifactor structure.
-* `Phi`: Either a single number defining the correlation between exactly two factors or the factor correlation matrix. Must only contain the bifactor(s) and covariate(s), but not any specific factor. `Phi` assumes the following order (bifactor_1, bifactor_2, ..., bifactor_j, covariate_1,  covariate_2, ...,  covariate_k).
+* `Phi`: Either a single number defining the correlation between exactly two factors or the factor correlation matrix. Must only contain the bifactor(s) and covariate(s), but not any specific factor. `Phi` assumes the following order $(BF_1, \cdots, BF_k, COV_1, \cdots, COV_k)$.
 * `nullEffect`: Defines the hypothesis of interest; one of `'cor = 0'`, `'corX = corZ'`, or `'corA = corB'`.
 * `nullWhich`: Defines which correlation(s) is targeted by the hypothesis defined in `nullEffect`.
 * `nullWhichGroups`: Defines which groups are targeted when `nullEffect = 'corA = corB'`.
 * additional arguments [specifying the type of power analysis](#commonArgs).
-* additional arguments [defining the factor model](#factorDefinition), which may only refer to specific factors (that are part of the bifactor) and additional covariate(s).
+* additional arguments [defining the factor model](#factorDefinition), which may only refer to specific factors (that are part of the bifactor) and additional covariate(s). The loadings on the bifactor are defined in `bfLoadings`.
 
 `semPower.powerBifactor` provides a list as result, which contains the following components:
 
@@ -854,12 +854,206 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
 
 
+##### Definition of the bifactor structure {-}
+A model involving a bifactor structure implies that each indicator that is part of the structure loads on both a general factor (the bifactor) and on a specific factor. In orthogonal bifactor models, the general and the specific factor are independent. A bifactor is defined by specifying the number of indicators and the respective loadings on the bifactor in the argument `bfLoadings`. The specific factors comprised in the bifactor structure are defined in `bfWhichFactors`, and the number of indicators and loadings on the specific factors in either `Lambda`, `loadings`, or `nIndicator` and `loadM` (see the chapter on [specifying a factor model](#factorDefinition)). The latter arguments also include the number of indicators and loadings defining the covariate(s).
+
+Note that identifying and estimating models involving a bifactor can be rather tricky, in particular when there is more than a single bifactor structure. Be prepared to receive warnings about non-convergence and adapt your model accordingly. Indeed, a common warning is `lavaan` complaining about a non-positive definite covariance matrix between the latent variables, which can be safely ignored. Concerning identification, it is generally recommended to define at least one indicator that only loads on the bifactor, but not on any of the specific factors.
+
+For example, the following defines a single bifactor with 10 indicators loading by .5 each (`bfLoadings <- rep(.5, 10)`) on the bifactor. The bifactor structure involves 3 specific factors, namely the factors 1, 2, and 3 (`bfWhichFactors <- c(1, 2, 3)`) defined in the argument defining the measurement model (`loadings`). The loadings on the first specific factor are .30, .20, and .10 (`c(.30, .20, .10)`), the loadings on the second .05, .10, and .15 (`c(.05, .10, .15)`), and the loadings on the third are .20, .05, and .15 (`c(.20, .05, .15)`). Furthermore, the fourth factor defined in the `loadings` argument acts as an additional covariate (which is not part of the bifactor structure). The covariate is a factor with 4 indicators, loading by .70, .75, .80, and .85 (`c(.70, .75, .80, .85)`).
+
+```{r eval=FALSE}
+bfLoadings <- rep(.5, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  c(.30, .20, .10),       # specific factor 1
+  c(.05, .10, .15),       # specific factor 2
+  c(.20, .05, .15),       # specific factor 3
+  c(.70, .75, .80, .85)   # covariate
+)
+```
+The above implies the following loading matrix:
+$$\Lambda = \begin{pmatrix} 
+BF & S_1 & S_2 & S_3 & COV\\
+.50 & 0 & 0 & 0 & 0\\
+.50 & .30 & 0 & 0 & 0\\
+.50 & .20 & 0 & 0 & 0\\
+.50 & .10 & 0 & 0 & 0\\
+.50 & 0 & .05 & 0 & 0\\
+.50 & 0 & .10 & 0 & 0\\
+.50 & 0 & .15 & 0 & 0\\
+.50 & 0 & 0 & .20 & 0\\
+.50 & 0 & 0 & .05 & 0\\
+.50 & 0 & 0 & .15 & 0\\
+0 & 0 & 0 & 0 & .70\\
+0 & 0 & 0 & 0 & .75\\
+0 & 0 & 0 & 0 & .80\\
+0 & 0 & 0 & 0 & .85
+\end{pmatrix}$$
+
+Note that the bifactor comprises 10 indicators, whereas the specific factors jointly comprise only 9 indicators, so that one indicator solely loads on the bifactor. This is in fact desired and recommended to ensure that the model is identified. Any indicator that is exclusive for the bifactor is not part of the `loadings` argument, so that in the example above the first indicator loads on the bifactor only, and the second indicator is the first indicator of the first specific factor.
+
+If a certain indicator should only load on the specific factor, but not on the bifactor, define the respective loading on the bifactor to equal zero. In the following example, the first indicator of the specific factor (and thus the second indicator of the bifactor) only loads in the specific factor:
+
+```{r eval=FALSE}
+bfLoadings <- c(.5, 0, .5, .5, .5, .5, .5, .5, .5, .5)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  c(.30, .20, .10),       # specific factor 1
+  c(.05, .10, .15),       # specific factor 2
+  c(.20, .05, .15),       # specific factor 3
+  c(.70, .75, .80, .85)   # covariate
+)
+```
+
+The correlations betwen the bifactor(s) and the covariate(s) are defined in `Phi`. However, given that orthogonal bifactor models require all correlations between the bifactor and the specific factors to be zero, `Phi` *must* omit the specific factors and only include the bifactor(s) and the covariate(s) assuming the following order: $(BF_1, \cdots, BF_k, COV_1, \cdots, COV_k)$. For instance, to define the correlation between the bifactor and the covariate in the example above to be .30, `Phi` becomes a matrix with 2 rows and 2 columns:
+
+```{r eval=FALSE}
+Phi <- matrix(c(
+  c(1, .3),   # bifactor
+  c(.3, 1)    # covariate
+), ncol = 2, byrow = TRUE)
+```
+
+The same approach is used for more complex structures involving more than one bifactor and more than one covariate. If more than one bifactor is to be defined, `bfLoadings` and `bfWhichFactors` become lists, where each component refers to a particular bifactor. For instance, the following defines two bifactors. The first involves 10 indicators all loadings by .6 (`rep(.6, 10)`), the second involves 11 indicators all loadings by .6 (`rep(.6, 11)`). Both bifactors comprise 3 specific factors (`bfWhichFactors`), the first factors 1-3 (`c(1, 2, 3)`) and the second factors 4-6 (`c(4, 5, 6)`). The `loadings` argument shows that the specific factors 1-3 (that are part of the first bifactor) all involve three indicators, whereas the specific factors 4-6 (that are part of the second bifactor) involve 4, 3, and 3 indicators, respectively. Further, `loadings` also defines a factor that is not part of any of the bifactors and thus act as a covariate. The covariate is a factor with 4 indicators, all loading by .6 (`c(.6, .6, .6, .6)`). As there are now two bifactors and one additional covariate, `Phi`, defining their intercorrelations, must be a $3 \cdot 3$ matrix, where the columns 1-2 refer to the bifactors, and the third column to the covariate. The correlations in `Phi` imply that the correlations between the bifactors is .3. The covariate correlates by .5 and .1 to the first and second bifactor, respectively.
+
+```{r eval=FALSE}
+bfLoadings <- list(rep(.6, 10),
+                   rep(.6, 11))
+bfWhichFactors <- list(c(1, 2, 3),
+                       c(4, 5, 6))
+loadings <- list(
+  # specific factors for bf1
+  c(.2, .2, .2),
+  c(.15, .15, .15),
+  c(.25, .25, .25),
+  # specific factors bf2
+  c(.10, .15, .15, .20),
+  c(.15, .10, .20),
+  c(.20, .15, .25),
+  # covariate
+  c(.6, .6, .6, .6)
+)
+
+Phi <- matrix(c(
+  c(1.0, 0.3, 0.5),  # bifactor 1
+  c(0.3, 1.0, 0.1),  # bifactor 2
+  c(0.5, 0.1, 1.0)   # covariate 1
+), ncol = 3, byrow = TRUE)
+```
+
 ##### Detect whether a correlation differs from zero {-}
 
-To perform a power analysis to detect whether a correlation between factors differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
+To perform a power analysis to detect whether a correlation between a bifactor and another factor or observed covariate differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
 
-to be written
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the covariate of at least .30 (`Phi`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `nullWhich = c(1, 2)` defines which correlation between the factors should be restricted to zero. In this example, there is only a single correlation in `Phi`, so `nullWhich` must be `c(1, 2)`. The arguments related to the definition of the bifactor structure were described in detail in the previous section, implying a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and a covariate not part of the bifactor structure with 4 indicators. 
 
+```{r eval=FALSE}
+bfLoadings <- rep(.5, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  c(.30, .20, .10),       # specific factor 1
+  c(.05, .10, .15),       # specific factor 2
+  c(.20, .05, .15),       # specific factor 3
+  c(.70, .75, .80, .85)   # covariate
+)
+Phi <- matrix(c(
+  c(1, .3),   # bifactor
+  c(.3, 1)    # covariate
+), ncol = 2, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80,
+                                  # define hypothesis
+                                  nullEffect = 'cor = 0',
+                                  nullWhich = c(1, 2),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = Phi,
+                                  loadings = loadings
+                                  )
+summary(powerBF$power)
+```
+The results of the power analysis are printed by calling the `summary` method on `powerBF$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+
+If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
+```{r eval=FALSE}
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'post-hoc', alpha = .05, N = 350,
+                                  # define hypothesis
+                                  nullEffect = 'cor = 0',
+                                  nullWhich = c(1, 2),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = Phi,
+                                  loadings = loadings
+                                  )
+```
+Now, `summary(powerBF$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+
+If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, the fourth factor defined in  `loadings` comprises a single indicator loading by 1 `c(1)`, which is then simply an observed variable:
+```{r eval=FALSE}
+bfLoadings <- rep(.5, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  c(.30, .20, .10),       # specific factor 1
+  c(.05, .10, .15),       # specific factor 2
+  c(.20, .05, .15),       # specific factor 3
+  c(1)                    # observed covariate
+)
+Phi <- matrix(c(
+  c(1, .2),   # bifactor
+  c(.2, 1)    # covariate
+), ncol = 2, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80,
+                                  # define hypothesis
+                                  nullEffect = 'cor = 0',
+                                  nullWhich = c(1, 2),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = Phi,
+                                  loadings = loadings
+                                  )
+```
+
+Similarly, the model can also define two bifactors. In the following, two bifactors comprising 10 and 11 indicators (`bfLoadings`), respectively, and spanning the specific factors 1-3 and 4-6, respectively, (`bfWhichFactors`) are defined, and the required sample size to detect that a correlation between the bifactors of at least .3 is detected with a power of 80% on alpha = .05: 
+```{r eval=FALSE}
+bfLoadings <- list(rep(.6, 10),
+                   rep(.6, 11))
+bfWhichFactors <- list(c(1, 2, 3),
+                       c(4, 5, 6))
+loadings <- list(
+  # specific factors for bf1
+  c(.2, .2, .2),
+  c(.15, .15, .15),
+  c(.25, .25, .25),
+  # specific factors bf2
+  c(.10, .15, .15, .20),
+  c(.15, .10, .20),
+  c(.20, .15, .25)
+)
+Phi <- matrix(c(
+  c(1.0, 0.3),  # bifactor 1
+  c(0.3, 1.0)   # bifactor 2
+), ncol = 2, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80,
+                                  # define hypothesis
+                                  nullEffect = 'cor = 0',
+                                  nullWhich = c(1, 2),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = Phi,
+                                  loadings = loadings
+                                  )
+```
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
@@ -868,13 +1062,106 @@ In the examples above, a power analysis was performed by comparing the implied H
 
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'corX = corZ'`. 
 
-to be written
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the first covariate (of .30) differs from the correlation of between the bifactor and the second covariate (of .50; `nullEffect = 'corX = corZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The arguments related to the definition of the bifactor structure were described in detail in one of the previous sections, implying a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and two covariates that are not part of the bifactor structure with 4 and 5 indicators, respectively. 
+
+```{r eval=FALSE}
+bfLoadings <- rep(.5, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  c(.30, .20, .10),             # specific factor 1
+  c(.05, .10, .15),             # specific factor 2
+  c(.20, .05, .15),             # specific factor 3
+  c(.70, .75, .80, .85),        # covariate 1
+  c(.80, .50, .40, .55, .60)    # covariate 2
+)
+Phi <- matrix(c(
+  c(1, .3, .5),   # bifactor
+  c(.3, 1, .2),   # covariate 1
+  c(.5, .2, 1)    # covariate 2
+), ncol = 3, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80,
+                                  # define hypothesis
+                                  nullEffect = 'corX = corZ',
+                                  nullWhich = list(c(1, 2), c(1, 3)),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = Phi,
+                                  loadings = loadings
+                                  )
+```
+
+Note that `nullWhich` is now a list comprising two vectors, jointly defining which correlations defined in `Phi` to set to equality. `nullWhich = list(c(1, 2), c(1, 3))` says that the correlation between the first and the second factor (`c(1, 2)`) and the correlation between the first and the third (`c(1, 3)`) factor are restricted to be equal. Since the first factor in `Phi` refers to the bifactor, this means that the correlation of the bifactor to the two covariates is targeted by the null hypothesis.
+
 
 ##### Detect whether a correlation differs across two or more groups {-}
 
 To perform a power analysis to detect whether a correlation differs across two or more groups, use `nullEffect = 'corA = corB'`. 
 
-to be written
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between the bifactor and the covarite in group 1 (of .30) differs from the one in group 2 (of .10; `nullEffect = 'corA = corB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The measurement model is identical in both groups and implies a bifactor measured by 10 indicators (`bfLoadings`) spanning three specific factors (`bfWhichFactors`) measured by 3 indicators each, and an additional covariate (that not part of the bifactor structure) measured by 4 indicators (`loadings`). See above for details. `Phi` is now a list comprising two elements, the first defining the correlation between the bifactor and the covariate in the first group (`Phi1`), the second defining the corresponding correlation in the second group (`Phi2`). In addition, `N` must also be a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+
+```{r eval=FALSE}
+bfLoadings <- rep(.6, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  # specific factors
+  c(.20, .20, .20),
+  c(.15, .15, .15),
+  c(.25, .25, .25),
+  # covariate
+  c(.70, .60, .80, .70)
+)
+# correlations in group 1
+Phi1 <- matrix(c(
+  c(1.0, 0.3),  # bifactor
+  c(0.3, 1.0)   # covariate
+), ncol = 2, byrow = TRUE)
+# correlations in group 2
+Phi2 <- matrix(c(
+  c(1.0, 0.1),  # bifactor
+  c(0.1, 1.0)   # covariate
+), ncol = 2, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1),
+                                  # define hypothesis
+                                  nullEffect = 'corA = corB',
+                                  nullWhich = c(1, 2),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = list(Phi1, Phi2),
+                                  loadings = loadings
+                                  )
+```
+
+
+If there are more than two groups, the targeted correlation is held equal across all groups by default. If the correlation should only be constrained to equality in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, the following expands the previous example by defining another `Phi` for a third group and then asks for the required sample to detect that the correlation in group 1 differs from the one in group 3 (`nullWhichGroups = c(1, 3)`). 
+
+```{r eval=FALSE}
+# correlations in group 3
+Phi3 <- matrix(c(
+  c(1.0, 0.5),  # bifactor
+  c(0.5, 1.0)   # covariate
+), ncol = 2, byrow = TRUE)
+powerBF <- semPower.powerBifactor(
+                                  # define type of power analysis
+                                  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1, 1),
+                                  # define hypothesis
+                                  nullEffect = 'corA = corB',
+                                  nullWhich = c(1, 2),
+                                  nullWhichGroups = c(1, 3),
+                                  # define factor model
+                                  bfLoadings = bfLoadings,
+                                  bfWhichFactors = bfWhichFactors,
+                                  Phi = list(Phi1, Phi2, Phi3),
+                                  loadings = loadings
+                                  )
+```
+
+
 
 
 ## Latent regression models {#powerRegression}
