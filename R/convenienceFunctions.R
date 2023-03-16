@@ -1581,13 +1581,13 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                  'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0')
   nullEffect <- checkNullEffect(nullEffect, nullValid)
 
-  if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect')
-  if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual')
-  if(nWaves == 2 && nullEffect %in% c('autoregx', 'autoregy','crossedx', 'crossedy', 'corxy')) stop('for two waves, there is only one crossedX and crossedY effect, only one autoregressive effect each, and only one X-Y residual correlation. Did you mean crossedX = 0 or autoregX = 0?')
+  if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect.')
+  if(any(nullEffect %in% waveEqual)) stop('You cannot set the same parameters in nullEffect and waveEqual.')
+  if(nWaves == 2 && nullEffect %in% c('autoregx', 'autoregy','crossedx', 'crossedy', 'corxy')) stop('For two waves, there is only one crossedX and crossedY effect, only one autoregressive effect each, and only one X-Y residual correlation. Did you mean crossedX = 0 or autoregX = 0?')
   
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
   if(is.null(nullWhich) && nWaves > 2){
-    msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
+    msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves.'
     if(is.null(waveEqual) && !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
     if(!'autoregx' %in% waveEqual && nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
     if(!'autoregy' %in% waveEqual && nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
@@ -1666,36 +1666,59 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### define H1 and H0 model
   
-  # first get parameters that are subject to waveEqual or nullEffect constraints 
-  if('autoregx' %in% waveEqual || nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
-    xw <- seq(2*nWaves - 1, 2, -2)
-    pAutoregX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
-    pAutoregX <- pAutoregX[order(pAutoregX)]
-  }
-  if('autoregy' %in% waveEqual || nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
-    yw <- seq(2*nWaves, 3, -2)
-    pAutoregY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
-    pAutoregY <- pAutoregY[order(pAutoregY)]
-  }
-  if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
-    xw <- seq(2*nWaves - 3, 0, -2)
-    yw <- seq(2*nWaves, 3, -2)
-    pCrossedX <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    pCrossedX <- pCrossedX[order(pCrossedX)]
-  }
-  if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
-    xw <- seq(2*nWaves - 1, 2, -2)
-    yw <- seq(2*nWaves - 2, 1, -2)
-    pCrossedY <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
-    pCrossedY <- pCrossedY[order(pCrossedY)]
-  }
-  if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
-    xw <- seq(2*nWaves - 1, 2, -2)
-    yw <- seq(2*nWaves, 3, -2)
-    pCorXY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    pCorXY <- pCorXY[order(pCorXY)]
-  }
+  # first get relevant parameter labels that may be subject to waveEqual or nullEffect constraints 
+  xw <- seq(2*nWaves - 1, 2, -2)
+  pAutoregX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
+  pAutoregX <- pAutoregX[order(pAutoregX)]
   
+  yw <- seq(2*nWaves, 3, -2)
+  pAutoregY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
+  pAutoregY <- pAutoregY[order(pAutoregY)]
+  
+  xw <- seq(2*nWaves - 3, 0, -2)
+  yw <- seq(2*nWaves, 3, -2)
+  pCrossedX <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+  pCrossedX <- pCrossedX[order(pCrossedX)]
+  
+  xw <- seq(2*nWaves - 1, 2, -2)
+  yw <- seq(2*nWaves - 2, 1, -2)
+  pCrossedY <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
+  pCrossedY <- pCrossedY[order(pCrossedY)]
+  
+  xw <- seq(2*nWaves - 1, 2, -2)
+  yw <- seq(2*nWaves, 3, -2)
+  pCorXY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
+  pCorXY <- pCorXY[order(pCorXY)]
+
+  ### TODO multigroup support
+  ### adapted model strings should work
+  # isMultigroup <- FALSE
+  # nGroups <- 2
+  # nullWhichGroups <- seq(nGroups)
+  # if(isMultigroup){
+  #   # assign group labels to all structural parameters (measurement part is held equal across groups)
+  #   patt <- 'pf0201'
+  #   repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #   model <- gsub(patt, repl, model)
+  #   for(pp in seq(nWaves - 1)){
+  #     patt <- pAutoregX[pp]
+  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #     model <- gsub(patt, repl, model)
+  #     patt <- pAutoregY[pp]
+  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #     model <- gsub(patt, repl, model)
+  #     patt <- pCrossedX[pp]
+  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #     model <- gsub(patt, repl, model)
+  #     patt <- pCrossedY[pp]
+  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #     model <- gsub(patt, repl, model)
+  #     patt <- pCorXY[pp]
+  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+  #     model <- gsub(patt, repl, model)
+  #   }
+  # }
+
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
@@ -1779,6 +1802,50 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
       modelH0 <- gsub(pCorXY[nullWhich], '0', modelH0)
     }
   }
+  
+  ### TODO multigroup support
+  if('autoregxa=autoregxb' %in% nullEffect){
+    if('autoregx' %in% waveEqual){
+      patt <- paste0(paste(pAutoregX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pAutoregX, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pAutoregX[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pAutoregX[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('autoregya=autoregyb' %in% nullEffect){
+    if('autoregy' %in% waveEqual){
+      patt <- paste0(paste(pAutoregY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pAutoregY, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pAutoregY[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pAutoregY[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('crossedxa=crossedxb' %in% nullEffect){
+    if('crossedx' %in% waveEqual){
+      patt <- paste0(paste(pCrossedX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pCrossedX, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pCrossedX[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pCrossedX[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('crossedya=crossedyb' %in% nullEffect){
+    if('crossedy' %in% waveEqual){
+      patt <- paste0(paste(pCrossedY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pCrossedY, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pCrossedY[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pCrossedY[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  
+  
 
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
