@@ -1544,8 +1544,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   # TODO: lagged effects would be nice
   # TODO: do we need autocorrelated residuals?
-  # TODO: change the way combined equality and value restrictions are applied
-  
+
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
   
@@ -1666,112 +1665,121 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   
   ### define H1 and H0 model
-  # first get constraints that may be part of either model
-  tokAutoregX <- tokAutoregY <- tokCrossedX <- tokCrossedY <- tokCorXY <- ''
-  # we also do this for autoregx=0 and autoregx=autoregy, because we need pAutoregX later; tokAutoregX is only used for autoregx 
+  
+  # first get parameters that are subject to waveEqual or nullEffect constraints 
   if('autoregx' %in% waveEqual || nullEffect %in% c('autoregx', 'autoregx=0', 'autoregx=autoregy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     pAutoregX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
-    for(i in 1:(length(pAutoregX) - 1)){
-      for(j in (i + 1):length(pAutoregX)){
-        tokAutoregX <- paste(tokAutoregX, paste0(pAutoregX[i], '==', pAutoregX[j]), sep = '\n')
-      }  
-    }
     pAutoregX <- pAutoregX[order(pAutoregX)]
   }
   if('autoregy' %in% waveEqual || nullEffect %in% c('autoregy', 'autoregy=0', 'autoregx=autoregy')){
     yw <- seq(2*nWaves, 3, -2)
     pAutoregY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(yw - 2, width = 2, flag = 0))
-    for(i in 1:(length(pAutoregY) - 1)){
-      for(j in (i + 1):length(pAutoregY)){
-        tokAutoregY <- paste(tokAutoregY, paste0(pAutoregY[i], '==', pAutoregY[j]), sep = '\n')
-      }  
-    }
     pAutoregY <- pAutoregY[order(pAutoregY)]
   }
-  # we also do this for crossedx=0 and crossedx=crossedy, because we need pCrossedX later; tokCrossedX is only used for crossedx 
   if('crossedx' %in% waveEqual || nullEffect %in% c('crossedx', 'crossedx=0', 'crossedx=crossedy')){  
     xw <- seq(2*nWaves - 3, 0, -2)
     yw <- seq(2*nWaves, 3, -2)
     pCrossedX <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    for(i in 1:(length(pCrossedX) - 1)){
-      for(j in (i + 1):length(pCrossedX)){
-        tokCrossedX <- paste(tokCrossedX, paste0(pCrossedX[i], '==', pCrossedX[j]), sep = '\n')
-      }  
-    }
     pCrossedX <- pCrossedX[order(pCrossedX)]
   }
   if('crossedy' %in% waveEqual || nullEffect %in% c('crossedy', 'crossedy=0', 'crossedx=crossedy')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves - 2, 1, -2)
     pCrossedY <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(yw, width = 2, flag = 0))
-    for(i in 1:(length(pCrossedY) - 1)){
-      for(j in (i + 1):length(pCrossedY)){
-        tokCrossedY <- paste(tokCrossedY, paste0(pCrossedY[i], '==', pCrossedY[j]), sep = '\n')
-      }  
-    }
     pCrossedY <- pCrossedY[order(pCrossedY)]
   }
   if('corxy' %in% waveEqual || nullEffect %in% c('corxy', 'corxy=0')){
     xw <- seq(2*nWaves - 1, 2, -2)
     yw <- seq(2*nWaves, 3, -2)
     pCorXY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
-    for(i in 1:(length(pCorXY) - 1)){
-      for(j in (i + 1):length(pCorXY)){
-        tokCorXY <- paste(tokCorXY, paste0(pCorXY[i], '==', pCorXY[j]), sep = '\n')
-      }  
-    }
     pCorXY <- pCorXY[order(pCorXY)]
   }
   
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
-    if('autoregx' %in% waveEqual) modelH1 <- paste(modelH1, tokAutoregX, sep = '\n')
-    if('autoregy' %in% waveEqual) modelH1 <- paste(modelH1, tokAutoregY, sep = '\n')
-    if('crossedx' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedX, sep = '\n')
-    if('crossedy' %in% waveEqual) modelH1 <- paste(modelH1, tokCrossedY, sep = '\n')
-    if('corxy' %in% waveEqual) modelH1 <- paste(modelH1, tokCorXY, sep = '\n')
+    if('autoregx' %in% waveEqual) modelH1 <- gsub(paste(pAutoregX, collapse = '|'), paste(pAutoregX, collapse = ''), modelH1)
+    if('autoregy' %in% waveEqual) modelH1 <- gsub(paste(pAutoregY, collapse = '|'), paste(pAutoregY, collapse = ''), modelH1)
+    if('crossedx' %in% waveEqual) modelH1 <- gsub(paste(pCrossedX, collapse = '|'), paste(pCrossedX, collapse = ''), modelH1)
+    if('crossedy' %in% waveEqual) modelH1 <- gsub(paste(pCrossedY, collapse = '|'), paste(pCrossedY, collapse = ''), modelH1)
+    if('corxy' %in% waveEqual) modelH1 <- gsub(paste(pCorXY, collapse = '|'), paste(pCorXY, collapse = ''), modelH1)
   }
+
+  # add additional constraints to H0 model
+  modelH0 <- modelH1
   
-  ## add constraints to H0 model
-  modelH0 <- modelH1  
-  # modelH1 constraints are not in nullEffect, so ask again for each type: 
-  if('autoregx' %in% nullEffect) modelH0 <- paste(modelH0, tokAutoregX, sep = '\n')
-  if('autoregy' %in% nullEffect) modelH0 <- paste(modelH0, tokAutoregY, sep = '\n')
-  if('crossedx' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedX, sep = '\n')
-  if('crossedy' %in% nullEffect) modelH0 <- paste(modelH0, tokCrossedY, sep = '\n')
-  if('corxy' %in% nullEffect) modelH0 <- paste(modelH0, tokCorXY, sep = '\n')
+  # wave equal constraints not included in modelH1:
+  if('autoregx' %in% nullEffect) modelH0 <- gsub(paste(pAutoregX, collapse = '|'), paste(pAutoregX, collapse = ''), modelH0)
+  if('autoregy' %in% nullEffect) modelH0 <- gsub(paste(pAutoregY, collapse = '|'), paste(pAutoregY, collapse = ''), modelH0)
+  if('crossedx' %in% nullEffect) modelH0 <- gsub(paste(pCrossedX, collapse = '|'), paste(pCrossedX, collapse = ''), modelH0)
+  if('crossedy' %in% nullEffect) modelH0 <- gsub(paste(pCrossedY, collapse = '|'), paste(pCrossedY, collapse = ''), modelH0)
+  if('corxy' %in% nullEffect) modelH0 <- gsub(paste(pCorXY, collapse = '|'), paste(pCorXY, collapse = ''), modelH0)
+
+  # zero and equality constraints:
   if('autoregx=0' %in% nullEffect){
-    tok <- paste0(pAutoregX[nullWhich], ' == 0')
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('autoregx' %in% waveEqual){
+      modelH0 <- gsub(paste(pAutoregX, collapse = ''), '0', modelH0)
+    }else{
+      modelH0 <- gsub(pAutoregX[nullWhich], '0', modelH0)
+    }
+  }
   if('autoregy=0' %in% nullEffect){
-    tok <- paste0(pAutoregY[nullWhich], ' == 0')
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('autoregy' %in% waveEqual){
+      modelH0 <- gsub(paste(pAutoregY, collapse = ''), '0', modelH0)
+    }else{
+      modelH0 <- gsub(pAutoregY[nullWhich], '0', modelH0)
+    }
+  }
   if('crossedx=0' %in% nullEffect){
-    tok <- paste0(pCrossedX[nullWhich], ' == 0')
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('crossedx' %in% waveEqual){
+      modelH0 <- gsub(paste(pCrossedX, collapse = ''), '0', modelH0)
+    }else{
+      modelH0 <- gsub(pCrossedX[nullWhich], '0', modelH0)
+    }
+  }
   if('crossedy=0' %in% nullEffect){
-    tok <- paste0(pCrossedY[nullWhich], ' == 0')
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('crossedy' %in% waveEqual){
+      modelH0 <- gsub(paste(pCrossedY, collapse = ''), '0', modelH0)
+    }else{
+      modelH0 <- gsub(pCrossedY[nullWhich], '0', modelH0)
+    }
+  }
   if('autoregx=autoregy' %in% nullEffect){
-    tok <- paste0(pAutoregX[nullWhich], ' == ', pAutoregY[nullWhich])
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('autoregx' %in% waveEqual && 'autoregy' %in% waveEqual){
+      pattern <- paste(c(paste(pAutoregX, collapse = ''), paste(pAutoregY, collapse = '')), collapse = '|')
+    }else if('autoregx' %in% waveEqual){
+      pattern <- paste(c(paste(pAutoregX, collapse = ''), pAutoregY[nullWhich]), collapse = '|')
+    }else if('autoregy' %in% waveEqual){
+      pattern <- paste(c(pAutoregX[nullWhich], paste(pAutoregY, collapse = '')), collapse = '|')
+    }else{
+      pattern <- paste(c(pAutoregX[nullWhich], pAutoregY[nullWhich]), collapse = '|')
+    }
+    repl <-  gsub('\\|', '', pattern)
+    modelH0 <- gsub(pattern, repl, modelH0)
+  }
   if('crossedx=crossedy' %in% nullEffect){
-    tok <- paste0(pCrossedX[nullWhich], ' == ', pCrossedY[nullWhich])
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
+    if('crossedx' %in% waveEqual && 'crossedy' %in% waveEqual){
+      pattern <- paste(c(paste(pCrossedX, collapse = ''), paste(pCrossedY, collapse = '')), collapse = '|')
+    }else if('crossedx' %in% waveEqual){
+      pattern <- paste(c(paste(pCrossedX, collapse = ''), pCrossedY[nullWhich]), collapse = '|')
+    }else if('crossedy' %in% waveEqual){
+      pattern <- paste(c(pCrossedX[nullWhich], paste(pCrossedY, collapse = '')), collapse = '|')
+    }else{
+      pattern <- paste(c(pCrossedX[nullWhich], pCrossedY[nullWhich]), collapse = '|')
+    }
+    repl <-  gsub('\\|', '', pattern)
+    modelH0 <- gsub(pattern, repl, modelH0)
+  }
   if('corxy=0' %in% nullEffect){
-    pCorXY <- c('pf0201', pCorXY)   # add exog cor
-    tok <- paste0(pCorXY[nullWhich], ' == 0')
-    modelH0 <- paste(modelH0, tok, sep = '\n')
-  } 
-  
+    if('corxy' %in% waveEqual){
+      modelH0 <- gsub(paste(pCorXY, collapse = ''), '0', modelH0)
+    }else{
+      pCorXY <- c('pf0201', pCorXY)   # add exog cor
+      modelH0 <- gsub(pCorXY[nullWhich], '0', modelH0)
+    }
+  }
+
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
