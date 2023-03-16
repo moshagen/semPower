@@ -1552,24 +1552,58 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
-  ### TODO add multigroup support
-  # - determine ngroups from list size of either autoreg, crossed, and corxy (see bifactor for handling of triple list structures)
-  # - always create list structure for autoreg, crossed, and corxy
-  # - do validation on lists
-  nGroups <- 1
-  isMultigroup <- nGroups > 1
-  if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
-
   # validate input
   if(is.null(autoregEffects) || is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.')
+  
+  ### TODO add multigroup support
+  # - do validation on lists
+  # - feed lists later
+  isMultigroup <- FALSE
+  nGroups <- 1
+  
+  ###### 
+  # # create list structure for autoregEffects, crossedEffects, and corXY
+  # # assume multigroup when list structure is present for either autoreg or crossed effects 
+  # ngA <- ifelse(is.list(autoregEffects[[1]]), length(autoregEffects), 1)
+  # ngX <- ifelse(is.list(crossedEffects[[1]]), length(autoregEffects), 1)
+  # if(sum(c(ngA, ngX) > 1) > 1  && ngA != ngX) stop('Specify the same number of groups for both autoregEffects and crossedEffects.')
+  # nGroups <- max(c(ngA, ngX))
+  # 
+  # isMultigroup <- nGroups > 1
+  # if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
+  # 
+  # if(!is.list(autoregEffects)) autoregEffects <- list(rep(autoregEffects[1], (nWaves - 1)), rep(autoregEffects[2], (nWaves - 1)))
+  # if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
+  # if(!is.list(autoregEffects[[1]])) autoregEffects <- rep(list(autoregEffects), nGroups)
+  # if(!is.list(crossedEffects[[1]])) crossedEffects <- rep(list(crossedEffects), nGroups)
+  # 
+  # if(is.null(rXY)) rXY <- rep(0, nWaves)
+  # if(is.list(rXY) && length(rXY) != nGroups) stop('corXY implies a different number of groups as autoregEffects or crossedEffects.')
+  # if(!is.list(rXY)) rXY <- rep(list(rXY), nGroups)
+  #
+  # # do input validation
+  # if(any(unlist(lapply(rXY, function(x) length(x) != nWaves)))) stop('rXY must be of length nWaves') 
+  # invisible(lapply(rXY, function(y) lapply(y, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE))))
+  # 
+  # if(any(unlist(lapply(autoregEffects, function(x) length(x[[1]]) != length(x[[2]]))))) stop('autoregEffects for X and Y must be of equal length.')
+  # if(any(unlist(lapply(crossedEffects, function(x) length(x[[1]]) != length(x[[2]]))))) stop('crossedEffects for X and Y must be of equal length.')
+  # if(any(unlist(lapply(autoregEffects, function(x) length(x[[1]]) != (nWaves - 1))))) stop('autoregEffects must be of length nWaves - 1.')
+  # if(any(unlist(lapply(crossedEffects, function(x) length(x[[1]]) != (nWaves - 1))))) stop('crossedEffects must be of length nWaves - 1.')
+  # invisible(lapply(autoregEffects, function(y) lapply(y, function(x) lapply(x, function(x) checkBounded(x, 'All autoregressive effects ', bound = c(-1, 1), inclusive = FALSE)))))
+  # invisible(lapply(crossedEffects, function(y) lapply(y, function(x) lapply(x, function(x) checkBounded(x, 'All crossed effects ', bound = c(-1, 1), inclusive = FALSE)))))
+
+  ###### 
+    
   if(is.null(rXY)) rXY <- rep(0, nWaves)
   if(length(rXY) != nWaves) stop('rXY must be of length nWaves')
   invisible(lapply(rXY, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE)))
+  
   if(!is.list(autoregEffects)) autoregEffects <- list(rep(autoregEffects[1], (nWaves - 1)), rep(autoregEffects[2], (nWaves - 1)))
   if(!is.list(crossedEffects)) crossedEffects <- list(rep(crossedEffects[1], (nWaves - 1)), rep(crossedEffects[2], (nWaves - 1)))
   invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
   invisible(lapply(crossedEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregEffects ', bound = c(-1, 1), inclusive = FALSE))))
+  
   if(length(autoregEffects) != length(crossedEffects) || (length(crossedEffects) != 2 && length(crossedEffects) != (nWaves - 1))) stop('autoregEffects and crossedEffects must be of length nWaves - 1 or be of length 2.')
   if(is.list(autoregEffects)) if(length(autoregEffects[[1]]) != length(autoregEffects[[2]])) stop('autoregEffects for X and Y must be of equal length.')
   if(is.list(autoregEffects)) if(length(crossedEffects[[1]]) != length(crossedEffects[[2]])) stop('CrossedEffects for X and Y must be of equal length.')
@@ -1866,9 +1900,11 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # when there are additional constraints (waveequal or invariance)
   # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
+
+  if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
   semPower.powerLav(type, 
-                    Sigma = generated[['Sigma']],
+                    Sigma = Sigma,
                     modelH0 = modelH0, 
                     modelH1 = modelH1, 
                     ...)
