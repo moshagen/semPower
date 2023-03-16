@@ -1552,7 +1552,15 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('Beta' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Beta.')
   if('Sigma' %in% names(match.call(expand.dots = FALSE)$...)) stop('Cannot set Sigma.')
   
-  #validate input
+  ### TODO add multigroup support
+  # - determine ngroups from list size of either autoreg, crossed, and corxy (see bifactor for handling of triple list structures)
+  # - always create list structure for autoreg, crossed, and corxy
+  # - do validation on lists
+  nGroups <- 1
+  isMultigroup <- nGroups > 1
+  if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
+
+  # validate input
   if(is.null(autoregEffects) || is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.')
   if(is.null(rXY)) rXY <- rep(0, nWaves)
@@ -1578,7 +1586,10 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # but this would complicate defining the relevant parameter when these vary across waves. 
   nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
                  'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
-                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0')
+                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0'
+                 # TODO multigroup support
+                 # , 'autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb'
+                 )
   nullEffect <- checkNullEffect(nullEffect, nullValid)
 
   if(any(unlist(lapply(nullEffect, function(x) !x %in% nullValid)))) stop('Unknown value for nullEffect.')
@@ -1602,27 +1613,34 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   if('corxy' %in% nullEffect && standardized) stop('Power analysis for nullEffect == "corxy" can only be performed on unstandardized parameters. Repeat with standardized = FALSE.') 
   
+  
   ### create B
-  B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
-  # add autoregEffects and crossed-effects
-  for(i in 1:(nWaves - 1)){
-    xidx <- 2 + 2*(i - 1) + 1
-    yidx <- xidx + 1
-    # autoregEffects
-    B[xidx, (xidx - 2)] <- autoregEffects[[1]][i]
-    B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
-    # crossed effects
-    B[yidx, (xidx - 2)] <- crossedEffects[[1]][i]
-    B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
-  }
+  Beta <- lapply(seq(nGroups), function(x){
+    B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
+    # add autoregEffects and crossed-effects
+    for(i in 1:(nWaves - 1)){
+      xidx <- 2 + 2*(i - 1) + 1
+      yidx <- xidx + 1
+      # autoregEffects
+      B[xidx, (xidx - 2)] <- autoregEffects[[1]][i] # TODO must be autoregEffects[[x]][[1]][i]
+      B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
+      # crossed effects
+      B[yidx, (xidx - 2)] <- crossedEffects[[1]][i] # TODO must be crossedEffects[[x]][[1]][i]
+      B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
+    }
+    B
+  })
   
   ### create Psi
-  Psi <- diag(ncol(B))
-  if(any(rXY != 0)){
-    for(i in 1:nWaves){
-      Psi[2*i, (2*i - 1)] <- Psi[(2*i - 1), 2*i] <- rXY[i]
+  Psi <- lapply(seq(nGroups), function(x){
+    P <- diag(ncol(Beta[[1]]))
+    if(any(rXY != 0)){
+      for(i in 1:nWaves){
+        P[2*i, (2*i - 1)] <- P[(2*i - 1), 2*i] <- rXY[i] # TODO must be rXY[[x]][i]
+      }
     }
-  }
+    P
+  })
   
   # add metric invariance constrains to analysis model
   metricInvarianceList <- NULL
@@ -1635,23 +1653,25 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   ### get Sigma
   if(standardized){
-    generated <- semPower.genSigma(Phi = getPhi.B(B, Psi), 
-                                   useReferenceIndicator = TRUE, 
+    Phi <- lapply(seq_along(Beta), function(x) getPhi.B(Beta[[x]], Psi[[x]]))
+    generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
+                                   useReferenceIndicator = TRUE,
                                    metricInvariance = metricInvarianceList, 
                                    ...)
-  }else{
-    generated <- semPower.genSigma(Beta = B, Psi = Psi, 
-                                   useReferenceIndicator = TRUE, 
+  }else{  
+    generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
+                                   Psi = if(!isMultigroup) Psi[[1]] else Psi, 
+                                   useReferenceIndicator = TRUE,
                                    metricInvariance = metricInvarianceList, 
                                    ...)
   }
 
   ### create model strings
-  model <- generated[['modelTrueCFA']]
+  if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   
   # add CLPM structure 
-  for(f in 3:ncol(B)){     # omit rows 1:2
-    fidx <- which(B[f, ] != 0)
+  for(f in 3:ncol(Beta[[1]])){     # omit rows 1:2
+    fidx <- which(Beta[[1]][f, ] != 0)
     if(length(fidx) != 0){
       tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
@@ -1691,33 +1711,29 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   pCorXY <- pCorXY[order(pCorXY)]
 
   ### TODO multigroup support
-  ### adapted model strings should work
-  # isMultigroup <- FALSE
-  # nGroups <- 2
-  # nullWhichGroups <- seq(nGroups)
-  # if(isMultigroup){
-  #   # assign group labels to all structural parameters (measurement part is held equal across groups)
-  #   patt <- 'pf0201'
-  #   repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #   model <- gsub(patt, repl, model)
-  #   for(pp in seq(nWaves - 1)){
-  #     patt <- pAutoregX[pp]
-  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #     model <- gsub(patt, repl, model)
-  #     patt <- pAutoregY[pp]
-  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #     model <- gsub(patt, repl, model)
-  #     patt <- pCrossedX[pp]
-  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #     model <- gsub(patt, repl, model)
-  #     patt <- pCrossedY[pp]
-  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #     model <- gsub(patt, repl, model)
-  #     patt <- pCorXY[pp]
-  #     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
-  #     model <- gsub(patt, repl, model)
-  #   }
-  # }
+  if(isMultigroup){
+    # assign group labels to all structural parameters (measurement part is held equal across groups)
+    patt <- 'pf0201'
+    repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+    model <- gsub(patt, repl, model)
+    for(pp in seq(nWaves - 1)){
+      patt <- pAutoregX[pp]
+      repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+      model <- gsub(patt, repl, model)
+      patt <- pAutoregY[pp]
+      repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+      model <- gsub(patt, repl, model)
+      patt <- pCrossedX[pp]
+      repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+      model <- gsub(patt, repl, model)
+      patt <- pCrossedY[pp]
+      repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+      model <- gsub(patt, repl, model)
+      patt <- pCorXY[pp]
+      repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
+      model <- gsub(patt, repl, model)
+    }
+  }
 
   # add constraints to H1 model
   modelH1 <- model
@@ -1844,8 +1860,6 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     modelH0 <- gsub(patt, repl, modelH0)
   }
-  
-  
 
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
