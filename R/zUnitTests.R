@@ -1222,7 +1222,8 @@ test_powerCLPM <- function(doTest = TRUE){
                            crossedEffects = c(.2, .1),
                            rXY = NULL, # diagonal
                            nullEffect = 'crossedx=0',
-                           nIndicator = rep(3, 4), loadM = c(.5, .6, .5, .6),
+                           nIndicator = rep(3, 4), 
+                           loadM = c(.5, .6, .5, .6),
                            metricInvariance = TRUE,
                            waveEqual = NULL,
                            alpha = .05, N = 250)
@@ -1521,7 +1522,7 @@ test_powerCLPM <- function(doTest = TRUE){
     round(sum((par18[par18$lhs == 'f3' & par18$rhs == 'f4', 'est'] - par18[par18$lhs == 'f5' & par18$rhs == 'f6', 'est'])^2), 4) == 0  
   
   
-  # # zero constraints on wave equal param
+  # zero constraints on wave equal param
   ph20 <- semPower.powerCLPM(type = 'a-priori',
                              nWaves = 3,
                              autoregEffects = c(.8, .7),
@@ -1532,14 +1533,73 @@ test_powerCLPM <- function(doTest = TRUE){
                              nIndicator = c(5, 3, 5, 3, 5, 3),
                              loadM = c(.5, .4, .5, .4, .5, .4),
                              alpha = .05, beta = .05)
-
+  
   lavres20 <- helper_lav(ph20$modelH0, ph20$Sigma)
   par20 <- lavres20$par
-
+  
   valid5 <- valid4 && 
     sum(abs(par20[par20$lhs %in% c('f6', 'f4') & par20$rhs %in% c('f4', 'f2') & par20$op == '~', 'est'])) < 1e-8
+  
+  
+  # multigroup
+  ph21 <- semPower.powerCLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
+                             nWaves = 3,
+                             autoregEffects = list(
+                               # group 1
+                               list(c(.8, .8),    # x 
+                                    c(.7, .7)),   # y
+                               # group 2
+                               list(c(.6, .6),    # x 
+                                    c(.7, .7))   # y
+                             ),
+                             crossedEffects = c(.2, .1),
+                             waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                             rXY = NULL,
+                             nullEffect = 'autoregxa=autoregxb',
+                             nIndicator = c(5, 3, 5, 3, 5, 3),
+                             loadM = c(.5, .4, .5, .4, .5, .4))
+  
+  lavres21 <- helper_lav(ph21$modelH0, ph21$Sigma, sample.nobs = list(1000, 1000))
+  par21 <- lavres21$par
+  lavres22 <- helper_lav(ph21$modelH1, ph21$Sigma, sample.nobs = list(1000, 1000))
+  par22 <- lavres22$par
 
-  if(valid5){
+  ph23 <- semPower.powerCLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
+                             nWaves = 3,
+                             autoregEffects = list(
+                               # group 1
+                               list(.8, .7),   # x / y
+                               # group 2
+                               list(.6, .7)   # x / y
+                             ),
+                             crossedEffects = c(.2, .1),
+                             waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                             rXY = NULL,
+                             nullEffect = 'autoregxa=autoregxb',
+                             nIndicator = c(5, 3, 5, 3, 5, 3),
+                             loadM = c(.5, .4, .5, .4, .5, .4))
+  
+
+  
+  valid6 <- valid5 && 
+    length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
+    length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
+    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 1, 'est']) -  (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 2, 'est'])) < 1e-8 &&
+    length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
+    length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
+    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'])) < 1e-8 &&
+    length(unique(round(par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
+    length(unique(round(par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
+    sum((par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'])) > .1 &&
+    length(unique(round(par21[par21$lhs %in% c('f3','f5') & par21$op == '~' & par21$rhs %in% c('f3','f1'), 'est'], 4))) == 1 &&
+    lavres21$fit['df'] - lavres22$fit['df'] == 1 &&
+    ph21$power$fmin - 2*lavres21$fit['fmin'] < 1e-6 &&
+    ph23$power$fmin - ph21$power$fmin < 1e-8
+
+
+  
+  
+  if(valid6){
     print('test_powerCLPM: OK')
   }else{
     warning('Invalid')
