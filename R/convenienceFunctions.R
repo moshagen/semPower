@@ -727,6 +727,15 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   }
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
+  # get temporary Lambda so that we can check whether number of factors matches slopes + 1
+  args <- list(...)
+  tLambda  <- args$Lambda
+  if(is.null(tLambda)){
+    tLambda <- genLambda(args[['loadings']], args[['nIndicator']],
+                        args[['loadM']], args[['loadSD']], args[['loadMinMax']])
+    }
+  if(ncol(tLambda) != (1 + nrow(slopes[[1]]))) stop('The number of factors does not match the number of slopes + 1. Remember to define a measurement model including both the criterion (Y) and all predictors (X).')
+  
   ### calc implied sigma. 
   # standardized case: transform B and Psi to Phi
   if(standardized){
