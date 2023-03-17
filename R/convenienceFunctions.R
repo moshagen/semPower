@@ -1955,7 +1955,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. 
 #' @param rBXBY correlation between random intercept factors. If `NULL`, the correlation is zero. 
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups.
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'`, and `corBXBYA = corBXBYB` to constrain them to be equal across groups.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
@@ -1986,6 +1986,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' * `corBXBY = 0`: Tests the hypothesis that the correlation between the random intercept factors of X and Y is zero.
 #' * `autoregXA = autoregXB` and `autoregYA = autoregYB`: Tests the hypothesis that the autoregressive effect of either X or Y are equal across groups.
 #' * `crossedXA = crossedXB` and `crossedYA = crossedYB`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) or of Y on X (`crossedY`), respectively, is equal across groups.
+#' * `corBXBYA = corBXBYB`: Tests the hypothesis that the correlation between the random intercept factors is equal across groups.
 #' 
 #' For hypotheses regarding the traditional CLPM, see [semPower.powerCLPM()].
 #' 
@@ -2404,10 +2405,10 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   
   # TODO: do we need autocorrelated residuals?
   # TODO: implement multigroup hypothesis of 'rBXBYA = rBXBB'
-
+  
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
-
+  
   # validate input
   if('standardized' %in% names(list(...)) && list(...)[['standardized']]) stop('Standardized is not available for RICLPM.')
   if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
@@ -2418,7 +2419,9 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
                  'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
                  'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0', 'corbxby=0',
-                 'autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb')
+                 'autoregxa=autoregxb', 'autoregya=autoregyb', 
+                 'crossedxa=crossedxb', 'crossedya=crossedyb',
+                 'corbxbya=corbxbyb')
   nullEffect <- checkNullEffect(nullEffect, nullValid)
   
   # create list structure for autoregEffects, crossedEffects, and corXY
@@ -2429,8 +2432,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   nGroups <- max(c(ngA, ngX))
   isMultigroup <- nGroups > 1
   
-  if(isMultigroup && !nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb')) stop('Multigroup analysis are only supported for nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb')
-  if(!isMultigroup && nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb')) stop('nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb imply multigroup analyses, but no list structure for any relevant parameter provided.')
+  if(isMultigroup && !nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb','corbxbya=corbxbyb')) stop('Multigroup analysis are only supported for nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb, corbxbya=corbxbyb')
+  if(!isMultigroup && nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb','corbxbya=corbxbyb')) stop('nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb, corbxbya=corbxbyb imply multigroup analyses, but no list structure for any relevant parameter provided.')
   if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
   
   # [[groups]][[X, Y]][[waves]]
@@ -2449,18 +2452,19 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if(any(unlist(lapply(crossedEffects, function(x) length(x[[1]]) != (nWaves - 1))))) stop('crossedEffects must be of length nWaves - 1.')
   invisible(lapply(autoregEffects, function(y) lapply(y, function(x) lapply(x, function(x) checkBounded(x, 'All autoregressive effects ', bound = c(-1, 1), inclusive = FALSE)))))
   invisible(lapply(crossedEffects, function(y) lapply(y, function(x) lapply(x, function(x) checkBounded(x, 'All crossed effects ', bound = c(-1, 1), inclusive = FALSE)))))
-
+  
   if(is.null(rXY)) rXY <- rep(0, nWaves)
   if(is.list(rXY) && length(rXY) != nGroups) stop('corXY implies a different number of groups as autoregEffects or crossedEffects.')
   if(!is.list(rXY)) rXY <- rep(list(rXY), nGroups)
   if(any(unlist(lapply(rXY, function(x) length(x) != nWaves)))) stop('rXY must be of length nWaves')
   invisible(lapply(rXY, function(y) lapply(y, function(x) checkBounded(x, 'All rXY ', bound = c(-1, 1), inclusive = FALSE))))
   
+  if(nullEffect %in% c('corbxbya=corbxbyb') && (is.null(rBXBY) || length(rBXBY) == 1)) stop('nullEffect corbxbya=corbxbyb requires that rBXBY is specified for each group.')
   if(is.null(rBXBY)) rBXBY <- rep(list(0), nGroups)
   if(isMultigroup && length(rBXBY) == 1) rBXBY <- rep(list(rBXBY), nGroups)
   if(any(unlist(lapply(rBXBY, function(x) length(x) != 1)))) stop('rBXBY must contain a single number or be a list of single numbers')
   invisible(lapply(rBXBY, function(x) checkBounded(x, 'All rBXBY ', bound = c(-1, 1), inclusive = FALSE)))
-
+  
   if(!is.null(waveEqual)){
     waveEqual <- unlist(lapply(waveEqual, function(x) tolower(trimws(x))))
     if(any(unlist(lapply(waveEqual, function(x) !x %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy'))))) stop('waveEqual may only contain autoregX, autoregY, crossedX, crossedY, corXY')
@@ -2483,7 +2487,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     if(nullEffect == 'corbxby=0' && nullWhich != 1) stop('If nullEffect is "corBXBY = 0", nullWhich must be 1.')
     if(nullWhich < 1 || (nullEffect != 'corxy=0' && nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
   }
-
+  
   
   ### create Lambda 
   args <- list(...)
@@ -2526,7 +2530,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     
     B
   })
-
+  
   ### create Psi
   Psi <- lapply(seq(nGroups), function(g){
     P <- diag(ncol(Beta[[1]]))
@@ -2547,7 +2551,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     
     P
   })
-
+  
   # add metric invariance constrains
   metricInvarianceList <- NULL
   if(metricInvariance){
@@ -2556,7 +2560,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
       seq(4 + 2*nWaves, 2 + 4*nWaves, 2)  
     )
   }
-
+  
   ### get model-implied sigma
   generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
                                  Psi = if(!isMultigroup) Psi[[1]] else Psi, 
@@ -2609,10 +2613,10 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     tok <- paste0('f',(1 + 2*i),' ~~ ', paste0('pf', paste0(formatC(2 + 2*i, width = 2, flag = 0), formatC(1 + 2*i, width = 2, flag = 0)), '*'), 'f', (2 + 2*i))
     model <- paste(model, tok, sep='\n')
   }
-
-
+  
+  
   ### define H1 and H0 model
-
+  
   # first get relevant parameter labels that may be subject to waveEqual or nullEffect constraints 
   xw <- seq(2 + 2*nWaves - 1, 5, -2)
   pAutoregX <- paste0('pf', formatC(xw, width = 2, flag = 0), formatC(xw - 2, width = 2, flag = 0))
@@ -2794,7 +2798,11 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     }
     modelH0 <- gsub(patt, repl, modelH0)
   }  
-
+  if('corbxbya=corbxbyb' %in% nullEffect){
+    patt <- paste(paste0('pf0201_g', nullWhichGroups), collapse = '|')
+    modelH0 <- gsub(patt, 'pf0201_gc', modelH0)
+  }
+  
   
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models 
@@ -3076,7 +3084,7 @@ semPower.powerMI <- function(type,
     }
     if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
   }
-
+  
   # models are the same, the only difference pertains to lavOptions
   modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
   
@@ -3341,7 +3349,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups', bound = c(1, length(Beta)), inclusive = TRUE))
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
   if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq_along(Beta)
-
+  
   
   ### get Sigma
   if(standardized){
@@ -3393,7 +3401,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   }
   modelH0 <- paste(c(model, unlist(tok)), collapse = '\n')
   modelH1 <- paste(c(model, unlist(tokH1)), collapse = '\n')
-
+  
   # always enforce invariance constraints in the multigroup case
   lavOptions <- NULL
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))

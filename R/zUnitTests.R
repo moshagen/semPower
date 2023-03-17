@@ -2369,14 +2369,46 @@ test_powerRICLPM <- function(doTest = TRUE){
   par <- lavres$par
   lavres24 <- helper_lav(ph24$modelH0, ph24$Sigma, sample.nobs = list(1000, 1000))
   par24 <- lavres24$par  
+
+  # multigroup case, crossedX 
+  ph25 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted', 
+                               nWaves = 3,
+                               autoregEffects = c(.5, .4), # group and wave constant 
+                               crossedEffects = list(
+                                 # group 1
+                                 list(
+                                   c(.25, .10),   # X
+                                   c(.05, .15)    # Y 
+                                 ),
+                                 # group 2
+                                 list(
+                                   c(.15, .05),   # X
+                                   c(.01, .10)    # Y 
+                                 )
+                               ),
+                               rXY = NULL, # diagonal
+                               rBXBY = list(.1, .4), # diagonal 
+                               nullEffect = 'corbxbya=corbxbyb',
+                               nullWhich = 1,
+                               nIndicator = rep(3, 6), 
+                               loadM = c(.5, .6, .5, .6, .5, .6),
+                               metricInvariance = TRUE,
+                               waveEqual = c('autoregX', 'autoregY'),
+                               alpha = .05, N = list(500, 500))
   
-  
+  lavres <- helper_lav(ph25$modelH1, ph25$Sigma, sample.nobs = list(1000, 1000))
+  par <- lavres$par
+  lavres25 <- helper_lav(ph25$modelH0, ph25$Sigma, sample.nobs = list(1000, 1000))
+  par25 <- lavres25$par  
+
   valid3 <- valid2 &&
     length(unique(round(par[par$lhs %in% c('f5', 'f7') & par$rhs %in% c('f3', 'f5') & par$op == '~', 'est'], 4))) == 1 &&
     length(unique(round(par[par$lhs %in% c('f6', 'f8') & par$rhs %in% c('f4', 'f6') & par$op == '~', 'est'], 4))) == 1 &&  
     length(unique(round(par[par$lhs %in% c('f5', 'f7') & par$rhs %in% c('f4', 'f6') & par$op == '~', 'est'], 4))) == 4 &&
     length(unique(round(par24[par24$lhs %in% c('f6') & par24$rhs %in% c('f3') & par24$op == '~', 'est'], 4))) == 1 &&
-    length(unique(round(par24[par24$lhs %in% c('f8') & par24$rhs %in% c('f5') & par24$op == '~', 'est'], 4))) == 2
+    length(unique(round(par24[par24$lhs %in% c('f8') & par24$rhs %in% c('f5') & par24$op == '~', 'est'], 4))) == 2 &&
+    length(unique(round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4))) == 2 &&
+    length(unique(round(par25[par25$lhs == 'f1' & par25$rhs == 'f2', 'est'], 4))) == 1
 
   
   if(valid3){
@@ -2450,10 +2482,10 @@ test_powerPath <- function(){
   lavres2a <- helper_lav(ph2$modelH1, ph2$Sigma)
   par2a <- lavres2a$par
   preg <- semPower.powerRegression(type = 'post-hoc',
-                                 slopes = c(.25, .4), corXX = .2, nullWhich = 1,
-                                 nIndicator = c(3, 3, 3), loadM = .5,
-                                 alpha = .05, N = 250)
-
+                                   slopes = c(.25, .4), corXX = .2, nullWhich = 1,
+                                   nIndicator = c(3, 3, 3), loadM = .5,
+                                   alpha = .05, N = 250)
+  
   ph3 <- semPower.powerPath(type = 'post-hoc',
                             Beta = B,
                             Psi = Psi,
@@ -2485,7 +2517,7 @@ test_powerPath <- function(){
   par4a <- lavres4a$par
   lavres4b <- helper_lav(ph4$modelH0, ph4$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
   par4b <- lavres4b$par
-
+  
   valid2 <- valid && 
     par2a[par2a$lhs == 'f1' & par2a$rhs == 'f2', 'est'] - .2 < 1e-6 &&
     length(unique(round(par3a[par3a$lhs == 'f3' & par3a$op == '~', 'est'], 4))) == 1 &&
@@ -2611,20 +2643,20 @@ test_powerBifactor <- function(doTest = TRUE){
   lavres1b <- helper_lav(ph$modelH1, ph$Sigma)
   par1a <- lavres1a$par
   par1b <- lavres1b$par
-
+  
   # define bf through other factors
   bfWhichFactors <- c(1, 2, 4)
   ph2 <- semPower.powerBifactor(type = 'post-hoc',
-                               bfLoadings = bfLoadings,
-                               bfWhichFactors = bfWhichFactors,
-                               Phi = Phi,
-                               nullWhich = c(1, 2),
-                               loadings = loadings,
-                               alpha = .05, N = 500)
+                                bfLoadings = bfLoadings,
+                                bfWhichFactors = bfWhichFactors,
+                                Phi = Phi,
+                                nullWhich = c(1, 2),
+                                loadings = loadings,
+                                alpha = .05, N = 500)
   lavres2 <- helper_lav(ph2$modelH1, ph2$Sigma)
   lavres2b <- helper_lav(ph2$modelH0, ph2$Sigma)
   par2 <- lavres2$par
-
+  
   valid <- round(lavres1b$fit['fmin'], 4) == 0 &&
     round(2*lavres1a$fit['fmin'] - ph$power$fmin, 4) == 0 &&
     ph$power$df == 1 &&
@@ -2636,7 +2668,7 @@ test_powerBifactor <- function(doTest = TRUE){
     round(2*lavres2b$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
     sum(par2$rhs %in% paste0('x', 8:10) & par2$op == '=~') == 3 &&
     sum(par2$rhs %in% paste0('x', c(2:7, 11:14)) & par2$op == '=~') == 20
-    
+  
   # two bifactors, two covariates
   bfLoadings <- list(rep(.6, 10),
                      rep(.6, 10))
@@ -2662,19 +2694,19 @@ test_powerBifactor <- function(doTest = TRUE){
     c(.2, .5, 1, .6),
     c(.1, .4, .6, 1)
   ), ncol = 4, byrow = TRUE)
-
+  
   ph3 <- suppressWarnings(semPower.powerBifactor(type = 'post-hoc',
-                               bfLoadings = bfLoadings,
-                               bfWhichFactors = bfWhichFactors,
-                               Phi = Phi,
-                               nullWhich = c(1, 2),
-                               loadings = loadings,
-                               alpha = .05, N = 500))
+                                                 bfLoadings = bfLoadings,
+                                                 bfWhichFactors = bfWhichFactors,
+                                                 Phi = Phi,
+                                                 nullWhich = c(1, 2),
+                                                 loadings = loadings,
+                                                 alpha = .05, N = 500))
   lavres3a <- suppressWarnings(helper_lav(ph3$modelH0, ph3$Sigma))
   lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma)
   par3a <- lavres3a$par
   par3b <- lavres3b$par
-
+  
   valid2 <- valid &&
     round(lavres3b$fit['fmin'], 4) == 0 &&
     round(2*lavres3a$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
@@ -2686,7 +2718,7 @@ test_powerBifactor <- function(doTest = TRUE){
     sum(par3b$rhs %in% paste0('x', 12:20) & par3b$lhs == 'f2') == 9 &&
     sum(par3b$rhs %in% paste0('x', 3:11) & par3b$op == '=~') == 18 &&
     sum(par3b$rhs %in% paste0('x', 12:20) & par3b$op == '=~') == 18
-
+  
   
   ph4 <- suppressWarnings(semPower.powerBifactor(type = 'post-hoc',
                                                  bfLoadings = bfLoadings,
@@ -2698,11 +2730,11 @@ test_powerBifactor <- function(doTest = TRUE){
                                                  alpha = .05, N = 500))
   lavres4a <- suppressWarnings(helper_lav(ph4$modelH0, ph4$Sigma))
   par4a <- lavres4a$par
-
+  
   valid3 <- valid2 &&
     length(unique(round(par4a[par4a$lhs %in% c('f1','f2') & par4a$rhs == 'f9', 'est'], 4))) == 1 &&
     round(2*lavres4a$fit['fmin'] - ph4$power$fmin, 4) == 0
-    
+  
   
   # multigroup 
   # single bf, single cov
@@ -2716,13 +2748,13 @@ test_powerBifactor <- function(doTest = TRUE){
   )
   Phi <- list(.3, .1) # bifactor - covariate
   ph5 <- semPower.powerBifactor(type = 'post-hoc',
-                               bfLoadings = bfLoadings,
-                               bfWhichFactors = bfWhichFactors,
-                               Phi = Phi,
-                               nullEffect = 'cora=corb',
-                               nullWhich = c(1, 2),
-                               loadings = loadings,
-                               alpha = .05, N = list(500, 500))
+                                bfLoadings = bfLoadings,
+                                bfWhichFactors = bfWhichFactors,
+                                Phi = Phi,
+                                nullEffect = 'cora=corb',
+                                nullWhich = c(1, 2),
+                                loadings = loadings,
+                                alpha = .05, N = list(500, 500))
   lavres5a <- helper_lav(ph5$modelH0, ph5$Sigma, sample.nobs = list(500, 500), group.equal = c('loadings', 'lv.variances'))
   lavres5b <- helper_lav(ph5$modelH1, ph5$Sigma, sample.nobs = list(500, 500), group.equal = c('loadings', 'lv.variances'))
   par5a <- lavres5a$par
@@ -2733,7 +2765,7 @@ test_powerBifactor <- function(doTest = TRUE){
     abs(2*lavres5a$fit['fmin'] - ph5$power$fmin) < 1e-8 &&
     sum(abs(par5b[par5b$lhs == 'f1' & par5b$rhs == 'f5', 'std.all'] - c(.3, .1))) < 1e-6 &&
     length(unique(round(par5a[par5a$lhs == 'f1' & par5a$rhs == 'f5', 'est'], 4))) == 1
-
+  
   if(valid4){
     print('test_powerBifactor: OK')
   }else{
@@ -2746,7 +2778,7 @@ test_simulatePower <- function(doTest = TRUE){
     print('test_simulatePower: NOT TESTED')
     return()
   }
-
+  
   # gen some data
   pha <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
                            nullEffect = 'cor=0',
@@ -2755,18 +2787,18 @@ test_simulatePower <- function(doTest = TRUE){
                            alpha = .05, N = 250)
   Sigma <- pha$Sigma
   modelH0 <- pha$modelH0
-
+  
   # compare powerLav and postHoc
   phs <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
                            nReplications = 200, simulatedPower = TRUE, 
                            seed = 30012021)
-
+  
   phs2 <- semPower.postHoc(alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
                            nReplications = 200, simulatedPower = TRUE,
                            seed = 30012021)
-
+  
   lavres <- helper_lav(modelH0, Sigma, 250) 
   SigmaHat <- lavaan::fitted(lavres$res)$cov
   pha2 <- semPower.postHoc(alpha = .05, N = 250, df = pha$power$df,
@@ -2778,13 +2810,13 @@ test_simulatePower <- function(doTest = TRUE){
     round(pha2$power - pha$power$power, 4) == 0 &&
     round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
     abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  # need some margin
-
+  
   # restricted comparison model
   pha3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
-                           nullEffect = 'cor=0',
-                           nullWhich = c(1, 2),
-                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
-                           alpha = .05, N = 250)
+                            nullEffect = 'cor=0',
+                            nullWhich = c(1, 2),
+                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            alpha = .05, N = 250)
   modelH0 <- pha3$modelH0
   modelH1 <- pha3$modelH1
   
@@ -2806,10 +2838,10 @@ test_simulatePower <- function(doTest = TRUE){
                           nReplications = 200, simulatedPower = TRUE, 
                           seed = 30012021)
   aps2 <- semPower.powerLav('ap', alpha = .05,power = .80,
-                           modelH0 = modelH0, Sigma = Sigma,
-                           nReplications = 200, simulatedPower = TRUE, 
-                           seed = 30012021)
-
+                            modelH0 = modelH0, Sigma = Sigma,
+                            nReplications = 200, simulatedPower = TRUE, 
+                            seed = 30012021)
+  
   valid3 <- valid2 &&
     apa$power$df == aps$df &&
     aps$requiredN - aps2$power$requiredN == 0 &&
@@ -2823,12 +2855,12 @@ test_simulatePower <- function(doTest = TRUE){
                            Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1,
                            nReplications = 200, simulatedPower = TRUE, 
                            seed = 30012021)
-
+  
   valid4 <- valid3 &&
     apa2$power$df == aps3$df &&
     abs(aps3$desiredPower - aps3$impliedPower) < .07  &&                     # 7% margin should be still ok
     abs(apa2$power$requiredN - aps3$requiredN) < .05 * apa2$power$requiredN  # 5% margin should be ok
-   
+  
   
   # try different estimator
   phs4 <- semPower.postHoc(alpha = .05, N = 350,
@@ -2836,12 +2868,12 @@ test_simulatePower <- function(doTest = TRUE){
                            nReplications = 200, simulatedPower = TRUE,
                            lavOptions = list(estimator = 'mlm'),
                            seed = 30202199)  
-
+  
   phs2a <- semPower.postHoc(alpha = .05, N = 350,
-                           modelH0 = modelH0, Sigma = Sigma,
-                           nReplications = 200, simulatedPower = TRUE,
-                           seed = 30202199)
-
+                            modelH0 = modelH0, Sigma = Sigma,
+                            nReplications = 200, simulatedPower = TRUE,
+                            seed = 30202199)
+  
   valid5 <- valid4 &&
     phs2a$power != phs4$power &&
     round((phs2a$fmin - phs4$fmin)^2, 4) == 0
@@ -2887,12 +2919,12 @@ test_simulatePower <- function(doTest = TRUE){
                            alpha = .05, power = apa6$power$impliedPower, N = list(1, 2),
                            simulatedPower = TRUE, nReplications = 250, 
                            seed = 30012021)
-
+  
   valid6 <- valid5 &&
     abs(pha5$power$power - phs5$power) < .05 &&
     abs(sum(unlist(aps5$requiredN)) - sum(unlist(pha5$power$N))) < .1*sum(unlist(pha5$power$N)) &&
     sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$requiredN.g))) < .1*apa6$power$requiredN
-
+  
   if(valid6){
     print('test_simulatePower: OK')
   }else{
