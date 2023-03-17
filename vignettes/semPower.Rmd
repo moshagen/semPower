@@ -2420,16 +2420,18 @@ powerRICLPM <- semPower.powerRICLPM(
                                     rBXBY = .30,                  
                                     # define measurement model
                                     nIndicator = rep(3, 6),
-                                    loadM = c(.5, .6, .5, .6, .5, .6)
+                                    loadM = rep(c(.5, .6), 3)
                                     )
 ```
 
 
 
-##### Detect whether the crossed effects of either $X$ and $Y$ differ across groups  {-}
-To perform a power analysis to detect whether a cross-lagged effect of either $X$ or $Y$ differs across groups, use `nullEffect = 'crossedXA = crossedXB'` or `nullEffect = 'crossedYA = crossedYB'`. In RI-CLPMs, it is also possible to specify different correlations between the random intercept factors for each group.
+##### Detect whether the correlations between the random intercept factors differ across groups  {-}
+To perform a power analysis to detect whether the correlation between the random intercept factors differs across groups, use `nullEffect = 'corBXBYA = corBXBYB'`. 
 
-When performing a multigroup analysis, `autoregEffects` and/or `crossedEffects` must be provided in a list structure, where each component specifies the values for a particular group. For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the cross-lagged effect of $X$ from wave 2 to wave 3 (`nullWhich = 2`) differs across groups (`nullEffect = 'crossedXA = crossedXB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). In the first group, the cross-lagged effects of $X$ are .25 and .10, in the second group the cross-lagged effect of $X$ are .05 and .15 from wave 1 to 2 and from wave 2 to 3, respectively (`crossedEffects`). The autoregressive effects of both $X$ and $Y$ are constant across waves and groups (but freely estimated for each wave and group). Further, the correlation between the random intercept factors is .3 in the first and .6 in the second group (`rBXBY = list(.3, .6)`). For the remaining arguments, see the chapter on traditional [CLPMs](#powerCLPM).
+When performing a multigroup analysis, `autoregEffects` and/or `crossedEffects` must be provided in a list structure, where each component specifies the values for a particular group. When aiming to detect a group difference in the correlation between the intercept factors, `rBXBY` must be a list as well.
+
+For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the correlation between the random intercept factors in group 1 differs from the correlation in group 2 (`nullEffect = 'corBXBYA = corBXBYB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). In the first group, the correlation between the random intercept factors is .3, in the second group .6 (`rBXBY = list(.3, .6)`). There are further group differences in the cross-lagged effects (`crossedEffects`), whereas the autoregressive effects of both $X$ and $Y$ are constant across waves and groups (but freely estimated for each wave and group). For the remaining arguments, see the chapter on traditional [CLPMs](#powerCLPM).
 
 ```{r eval=FALSE}
 powerRICLPM <- semPower.powerRICLPM(
@@ -2456,11 +2458,10 @@ powerRICLPM <- semPower.powerRICLPM(
                                     rBXBY = list(.3, .6),         # (group1, group2) 
                                     # define measurement model (same for all groups)
                                     nIndicator = rep(3, 6),
-                                    loadM = c(.5, .6, .5, .6, .5, .6)
+                                    loadM = rep(c(.5, .6), 3)
                                     )
 ```
 Note that `lavaan` throws warnings regarding the use of parameter labels, which can safely be ignored.
-
 
 
 ## Generic model-based power analysis {#powerLav}
