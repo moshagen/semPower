@@ -2326,7 +2326,7 @@ test_powerRICLPM <- function(doTest = TRUE){
   lavres23 <- helper_lav(ph22$modelH0, ph22$Sigma)
   par23 <- lavres23$par
   
-  valid <- valid &&
+  valid2 <- valid &&
     round(sum((par[par$op == '~', 'est'] - c(.6, .05, .2, .4, .6, .05, .2, .4, .6, .05, .2, .4))^2), 4) == 0 && # regression coefficients
     round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == .1 && # random intercept
     round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == .3 && # correlation btw. factors at wave 1
@@ -2337,9 +2337,49 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f7' & par23$rhs == 'f8', 'est'], 4) && # nullEffect
     round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f9' & par23$rhs == 'f10', 'est'], 4) && 
     round(2*lavres23$fit['fmin'] - ph22$power$fmin, 4) == 0
+
+  
+  # multigroup case, crossedX 
+  ph24 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted', 
+                             nWaves = 3,
+                             autoregEffects = c(.5, .4), # group and wave constant 
+                             crossedEffects = list(
+                               # group 1
+                               list(
+                                 c(.25, .10),   # X
+                                 c(.05, .15)    # Y 
+                               ),
+                               # group 2
+                               list(
+                                 c(.15, .05),   # X
+                                 c(.01, .10)    # Y 
+                               )
+                             ),
+                             rXY = NULL, # diagonal
+                             rBXBY = NULL, # diagonal 
+                             nullEffect = 'crossedxa=crossedxb',
+                             nullWhich = 1,
+                             nIndicator = rep(3, 6), 
+                             loadM = c(.5, .6, .5, .6, .5, .6),
+                             metricInvariance = TRUE,
+                             waveEqual = c('autoregX', 'autoregY'),
+                             alpha = .05, N = list(500, 500))
+  
+  lavres <- helper_lav(ph24$modelH1, ph24$Sigma, sample.nobs = list(1000, 1000))
+  par <- lavres$par
+  lavres24 <- helper_lav(ph24$modelH0, ph24$Sigma, sample.nobs = list(1000, 1000))
+  par24 <- lavres24$par  
   
   
-  if(valid){
+  valid3 <- valid2 &&
+    length(unique(round(par[par$lhs %in% c('f5', 'f7') & par$rhs %in% c('f3', 'f5') & par$op == '~', 'est'], 4))) == 1 &&
+    length(unique(round(par[par$lhs %in% c('f6', 'f8') & par$rhs %in% c('f4', 'f6') & par$op == '~', 'est'], 4))) == 1 &&  
+    length(unique(round(par[par$lhs %in% c('f5', 'f7') & par$rhs %in% c('f4', 'f6') & par$op == '~', 'est'], 4))) == 4 &&
+    length(unique(round(par24[par24$lhs %in% c('f6') & par24$rhs %in% c('f3') & par24$op == '~', 'est'], 4))) == 1 &&
+    length(unique(round(par24[par24$lhs %in% c('f8') & par24$rhs %in% c('f5') & par24$op == '~', 'est'], 4))) == 2
+
+  
+  if(valid3){
     print('test_powerRICLPM: OK')
   }else{
     warning('Invalid')

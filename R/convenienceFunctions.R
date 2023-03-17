@@ -1205,7 +1205,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param crossedEffects vector of crossed effects of X on Y `(X -> Y)` and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for `X1 - > Y2` = .2, `X2 -> Y3` = .3, `Y1 -> Y2` = .1, and `Y2 -> Y3` = .1. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. Can be a list for multiple groups models, otherwise no no group differences are assumed.
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them across groups. 
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups. 
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
@@ -1944,8 +1944,9 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. 
 #' @param rBXBY correlation between random intercept factors. If `NULL`, the correlation is zero. 
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
-#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y.
+#' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
+#' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
 #' @return A list containing the following components is returned:
@@ -1972,6 +1973,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' * `crossedX` and `crossedY`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) and Y on X (`crossedY`), respectively, is equal across waves. 
 #' * `corXY`: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves. 
 #' * `corBXBY = 0`: Tests the hypothesis that the correlation between the random intercept factors of X and Y is zero.
+#' * `autoregXA = autoregXB` and `autoregYA = autoregYB`: Tests the hypothesis that the autoregressive effect of either X or Y are equal across groups.
+#' * `crossedXA = crossedXB` and `crossedYA = crossedYB`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) or of Y on X (`crossedY`), respectively, is equal across groups.
 #' 
 #' For hypotheses regarding the traditional CLPM, see [semPower.powerCLPM()].
 #' 
@@ -2313,6 +2316,43 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nIndicator = c(5, 3, 5, 3, 5, 3),
 #'                                     loadM = c(.5, .4, .5, .4, .5, .4),
 #'                                     alpha = .05, beta = .05)
+#'
+#'
+#' # multigroup example
+#' # Determine the achieved power N in a 3-wave RI-CLPM to detect that
+#' # the crossed effect of X at wave 1 (X1 -> Y2) in group 1 of .25 differs
+#' # from the crossed effect of X at wave 1 (X1 -> Y2) in group 2 of .15,
+#' # where both groups comprise 500 observations and alpha = 5%, and
+#' # the measurement model is equal for both groups, and
+#' # the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .25 and .10 in the first group, 
+#' # the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .15 and .05 in the second group, 
+#' # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .05 and .15 in the first group, 
+#' # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .01 and .10 in the second group, and
+#' # the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups (but freely estimated in each group).
+#' powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
+#'                                     nWaves = 3,
+#'                                     autoregEffects = c(.5, .4), # group and wave constant 
+#'                                     crossedEffects = list(
+#'                                       # group 1
+#'                                       list(
+#'                                         c(.25, .10),   # X
+#'                                         c(.05, .15)    # Y 
+#'                                       ),
+#'                                       # group 2
+#'                                       list(
+#'                                         c(.15, .05),   # X
+#'                                         c(.01, .10)    # Y 
+#'                                       )
+#'                                     ),
+#'                                     rXY = NULL,        # diagonal
+#'                                     rBXBY = NULL,      # diagonal 
+#'                                     nullEffect = 'crossedXA = crossedXB',
+#'                                     nullWhich = 1,
+#'                                     nIndicator = rep(3, 6), 
+#'                                     loadM = c(.5, .6, .5, .6, .5, .6),
+#'                                     metricInvariance = TRUE,
+#'                                     waveEqual = c('autoregX', 'autoregY')
+#'                                     )
 #' 
 #' 
 #' # Request a simulated post-hoc power analysis with 500 replications
@@ -2345,20 +2385,15 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  rXY = NULL,
                                  rBXBY = NULL,
                                  waveEqual = NULL, 
-                                 nullEffect = NULL, 
+                                 nullEffect = NULL,
+                                 nullWhichGroups = NULL,
                                  nullWhich = NULL,
                                  metricInvariance = TRUE,
                                  ...){
   
   # TODO: do we need autocorrelated residuals?
-  # TODO: change the way combined equality and value restrictions are applied
-  
-  ### TODO: multigroup support
-  # create proper model strings
-  # add nullEffect and nullWhichGroup arguemnts
-  isMultigroup <- FALSE
-  nGroups <- 1
-    
+  # TODO: implement multigroup hypothesis of 'rBXBYA = rBXBB'
+
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
 
@@ -2371,7 +2406,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   # but this would complicate defining the relevant parameter when these vary across waves. 
   nullValid <- c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corxy',
                  'autoregx=0', 'autoregy=0', 'crossedx=0', 'crossedy=0',
-                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0', 'corbxby=0')
+                 'autoregx=autoregy', 'crossedx=crossedy', 'corxy=0', 'corbxby=0',
+                 'autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb')
   nullEffect <- checkNullEffect(nullEffect, nullValid)
   
   # create list structure for autoregEffects, crossedEffects, and corXY
@@ -2707,46 +2743,46 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
   
   # multigroup cases
-  # if('autoregxa=autoregxb' %in% nullEffect){
-  #   if('autoregx' %in% waveEqual){
-  #     patt <- paste0(paste(pAutoregX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(paste(pAutoregX, collapse = ''), '_gc')
-  #   }else{
-  #     patt <- paste0(pAutoregX[nullWhich], '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(pAutoregX[nullWhich], '_gc')
-  #   }
-  #   modelH0 <- gsub(patt, repl, modelH0)
-  # }
-  # if('autoregya=autoregyb' %in% nullEffect){
-  #   if('autoregy' %in% waveEqual){
-  #     patt <- paste0(paste(pAutoregY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(paste(pAutoregY, collapse = ''), '_gc')
-  #   }else{
-  #     patt <- paste0(pAutoregY[nullWhich], '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(pAutoregY[nullWhich], '_gc')
-  #   }
-  #   modelH0 <- gsub(patt, repl, modelH0)
-  # }
-  # if('crossedxa=crossedxb' %in% nullEffect){
-  #   if('crossedx' %in% waveEqual){
-  #     patt <- paste0(paste(pCrossedX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(paste(pCrossedX, collapse = ''), '_gc')
-  #   }else{
-  #     patt <- paste0(pCrossedX[nullWhich], '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(pCrossedX[nullWhich], '_gc')
-  #   }
-  #   modelH0 <- gsub(patt, repl, modelH0)
-  # }
-  # if('crossedya=crossedyb' %in% nullEffect){
-  #   if('crossedy' %in% waveEqual){
-  #     patt <- paste0(paste(pCrossedY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(paste(pCrossedY, collapse = ''), '_gc')
-  #   }else{
-  #     patt <- paste0(pCrossedY[nullWhich], '_g', nullWhichGroups, collapse = '|')
-  #     repl <- paste0(pCrossedY[nullWhich], '_gc')
-  #   }
-  #   modelH0 <- gsub(patt, repl, modelH0)
-  # }  
+  if('autoregxa=autoregxb' %in% nullEffect){
+    if('autoregx' %in% waveEqual){
+      patt <- paste0(paste(pAutoregX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pAutoregX, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pAutoregX[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pAutoregX[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('autoregya=autoregyb' %in% nullEffect){
+    if('autoregy' %in% waveEqual){
+      patt <- paste0(paste(pAutoregY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pAutoregY, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pAutoregY[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pAutoregY[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('crossedxa=crossedxb' %in% nullEffect){
+    if('crossedx' %in% waveEqual){
+      patt <- paste0(paste(pCrossedX, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pCrossedX, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pCrossedX[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pCrossedX[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }
+  if('crossedya=crossedyb' %in% nullEffect){
+    if('crossedy' %in% waveEqual){
+      patt <- paste0(paste(pCrossedY, collapse = ''), '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(paste(pCrossedY, collapse = ''), '_gc')
+    }else{
+      patt <- paste0(pCrossedY[nullWhich], '_g', nullWhichGroups, collapse = '|')
+      repl <- paste0(pCrossedY[nullWhich], '_gc')
+    }
+    modelH0 <- gsub(patt, repl, modelH0)
+  }  
 
   
   # here we actually fit modelH1 in case of a restricted comparison
