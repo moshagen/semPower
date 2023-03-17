@@ -406,7 +406,7 @@ genModelString <- function(Lambda = NULL,
   tok <- list()
   for(f in 1:ncol(Lambda)){
     iIdx <- which(Lambda[, f] != 0)
-    if(!identical(iIdx, integer(0))){
+    if(length(iIdx) > 0){
       cload <- Lambda[iIdx, f]
       tok <- append(tok, paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')))
     }
@@ -457,8 +457,8 @@ genModelString <- function(Lambda = NULL,
   # build analysis models strings, one pure cfa based, and one including regression relationships 
   tok <- list()
   for(f in 1:ncol(Lambda)){
-    iIdx <- which(Lambda[, f] != 0)
-    if(!identical(iIdx, integer(0))){
+    iIdx <- which(Lambda[, f] != 0)   # use any non-zero loading as indicator
+    if(length(iIdx) > 0){
       # add invariance constraints
       if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
         labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
