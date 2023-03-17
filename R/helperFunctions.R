@@ -717,6 +717,8 @@ orderLavMu <- function(lavMu = NULL){
 
 #' makeRestrictionsLavFriendly
 #'
+#' This function is currently orphaned, but we keep it just in case.
+#' 
 #' This function transforms a `lavaan` model string into a model string that works reliably
 #' when both equality constrains and value constrains are imposed on the same parameters.
 #' `lavaan` cannot reliably handle this case, e. g., `"a == b \\n a == 0"` will not always work. 
