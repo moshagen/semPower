@@ -1951,8 +1951,9 @@ powerMI <- semPower.powerMI(
 * `crossedEffects`: vector of crossed effects of $X$ on $Y$ (`X -> Y`) and of $Y$ on $X$ (`Y -> X`) (both constant across waves), or a list of vectors of crossed effects for each wave. 
 * `rXY`: vector of (residual-)correlations between $X$ and $Y$ for each wave or `NULL` for no (residual-)correlations. 
 * `waveEqual`: parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none. 
-* `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the $X$ or $Y$ autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for $X$ and $Y$.
+* `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the $X$ or $Y$ autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for $X$ and $Y$,  and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups.
 * `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when there are > 2 waves.
+* `nullWhichGroups`: for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied.
 * `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
 * `metricInvariance`: whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
 * additional arguments [specifying the type of power analysis](#commonArgs). 
@@ -2401,6 +2402,8 @@ Note that `lavaan` throws warnings regarding the use of parameter labels, which 
 * whether the crossed effects of $X$ on $Y$ (`crossedX`) or the crossed effects of $Y$ on $X$ (`crossedY`) are equal across waves. 
 * whether the (residual-)correlations between $X$ and $Y$ are equal across waves (`corXY`). 
 * whether the correlation between the random intercept factors of X and Y differs from zero (`corBXBY = 0`).
+* whether the autoregressive effects of $X$ (`autoregXA = autoregXB`) or $Y$ (`autoregXA = autoregXB`) differ across groups. 
+* whether the crossed effect of $X$ on $Y$ (`crossedXA = crossedXB`) or the crossed effect of $Y$ on $X$ (`crossedYA = crossedYB`) differs across groups. 
 
 `semPower.powerRICLPM` only addresses hypotheses arising in a RI-CLPM structure. `semPower` provides other convenience functions for hypothesis arising in standard [cross-lagged panel models](#powerCLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
@@ -2413,8 +2416,8 @@ Note that `lavaan` throws warnings regarding the use of parameter labels, which 
 * `rBXBY`: correlation between random intercept factors, or `NULL` for no correlation.
 * `waveEqual`: parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none. 
 * `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the $X$ or $Y$ autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for $X$ and $Y$, and `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero.
-* `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when there are > 2 waves.
-* `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
+* `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when the parameters are not part of the `waveEqual` argument.
+* `nullWhichGroups`: for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied.
 * `metricInvariance`: whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
 * additional arguments [specifying the type of power analysis](#commonArgs). 
 * additional arguments [defining the factor model](#factorDefinition), where the order of factors is ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). 
@@ -2440,19 +2443,13 @@ to be written
 ##### Detect whether the correlations between the random intercept factors differs from zero {-}
 to be written
 
-##### Detect whether the autoregressive effects of $X$ and $Y$ differ {-}
-to be written
-
 ##### Detect whether the crossed effects of $X$ and $Y$ differ {-}
-to be written
-
-##### Detect whether the autoregressive effects differ across waves  {-}
 to be written
 
 ##### Detect whether the crossed effects differ across waves  {-}
 to be written
 
-##### Detect whether the residual correlations between $X$ and $Y$ differ across waves  {-}
+##### Detect whether the crossed effects of either $X$ and $Y$ differ across groups  {-}
 to be written
 
 
