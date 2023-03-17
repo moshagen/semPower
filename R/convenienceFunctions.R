@@ -2340,17 +2340,27 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @export
 semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  nWaves = NULL, 
-                                 autoregEffects = NULL, crossedEffects = NULL, 
+                                 autoregEffects = NULL, 
+                                 crossedEffects = NULL, 
                                  rXY = NULL,
                                  rBXBY = NULL,
                                  waveEqual = NULL, 
-                                 nullEffect = NULL, nullWhich = NULL,
+                                 nullEffect = NULL, 
+                                 nullWhich = NULL,
                                  metricInvariance = TRUE,
                                  ...){
   
   # TODO: do we need autocorrelated residuals?
   # TODO: change the way combined equality and value restrictions are applied
   
+  ### TODO: multigroup support
+  # create list structure for arguments
+  # to validatino on lists
+  # create proper model strings
+  # add nullEffect and nullWhichGroup arguemnts
+  isMultigroup <- FALSE
+  nGroups <- 1
+    
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
 
@@ -2419,48 +2429,56 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   Lambda <- cbind(matrix(0, nrow = nrow(Lambda), ncol = (2*nWaves + 2)), Lambda) # add between + within factors
   # cols: Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
   
+  Lambda <- rep(list(Lambda), nGroups)  # require same measurement model across groups
   
-  ### create B
-  B <- matrix(0, ncol = (4*nWaves + 2), nrow = (4*nWaves + 2)) 
-  # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
-  
-  # define between factors (random intercepts)
-  B[seq((3 + 2*nWaves), (4*nWaves + 2), 2), 1] <- 1 # BX
-  B[seq((4 + 2*nWaves), (4*nWaves + 2), 2), 2] <- 1 # BY
-  
-  # define within factors
-  diag(B[((3 + 2*nWaves):(4*nWaves + 2)), (3:(2 + 2*nWaves))]) <- 1 
-  
-  # add autoregressive effects and crossed-effects
-  for(i in 1:(nWaves - 1)){
-    xidx <- 2 + 2*(i - 1) + 3
-    yidx <- xidx + 1
-    # autoregressive effects
-    B[xidx, (xidx - 2)] <- autoregEffects[[1]][i]
-    B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
-    # crossed effects
-    B[yidx, (xidx - 2)] <- crossedEffects[[1]][i]
-    B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
-  }
-  
-  
-  ### create Psi
-  Psi <- diag(ncol(B))
-  # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
-  
-  # add cor between random intercepts
-  Psi[2,1] <- Psi[1,2] <- rBXBY
-  
-  # set residual variance of Fx_1, ..., Fy_nWaves to 0
-  diag(Psi[(3 + 2*nWaves):(4*nWaves + 2), (3 + 2*nWaves):(4*nWaves + 2)]) <- 0 
-  
-  # add (residual) correlations between within-factors
-  if(any(rXY != 0)){
-    for(i in 1:nWaves){
-      Psi[(2*i + 2), (2*i + 1)] <- Psi[(2*i + 1), (2*i + 2)] <- rXY[i]
+  ### create Beta
+  Beta <- lapply(seq(nGroups), function(g){
+    B <- matrix(0, ncol = (4*nWaves + 2), nrow = (4*nWaves + 2)) 
+    # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
+    
+    # define between factors (random intercepts)
+    B[seq((3 + 2*nWaves), (4*nWaves + 2), 2), 1] <- 1 # BX
+    B[seq((4 + 2*nWaves), (4*nWaves + 2), 2), 2] <- 1 # BY
+    
+    # define within factors
+    diag(B[((3 + 2*nWaves):(4*nWaves + 2)), (3:(2 + 2*nWaves))]) <- 1 
+    
+    # add autoregressive effects and crossed-effects
+    for(i in 1:(nWaves - 1)){
+      xidx <- 2 + 2*(i - 1) + 3
+      yidx <- xidx + 1
+      # autoregressive effects
+      B[xidx, (xidx - 2)] <- autoregEffects[[1]][i]    # TODO this must become autoregEffects[[g]][[1]][i] 
+      B[yidx, (yidx - 2)] <- autoregEffects[[2]][i]
+      # crossed effects
+      B[yidx, (xidx - 2)] <- crossedEffects[[1]][i]    # TODO this must become crossedEffects[[g]][[1]][i] 
+      B[xidx, (yidx - 2)] <- crossedEffects[[2]][i]
     }
-  }
-  
+    
+    B
+  })
+
+  ### create Psi
+  Psi <- lapply(seq(nGroups), function(g){
+    P <- diag(ncol(Beta[[1]]))
+    # Bx, By, Wx_1, Wy_1,..., Wx_nWaves, Wy_nWaves, Fx_1, Fy_1, ..., Fx_nWaves, Fy_nWaves
+    
+    # add cor between random intercepts
+    P[2,1] <- P[1,2] <- rBXBY                                         # TODO must become rBXBY[[g]]
+    
+    # set residual variance of Fx_1, ..., Fy_nWaves to 0
+    diag(P[(3 + 2*nWaves):(4*nWaves + 2), (3 + 2*nWaves):(4*nWaves + 2)]) <- 0 
+    
+    # add (residual) correlations between within-factors
+    if(any(rXY != 0)){
+      for(i in 1:nWaves){
+        P[(2*i + 2), (2*i + 1)] <- P[(2*i + 1), (2*i + 2)] <- rXY[i]  # TODO must become rXY[[g]]
+      }
+    }
+    
+    P
+  })
+
   # add metric invariance constrains
   metricInvarianceList <- NULL
   if(metricInvariance){
@@ -2471,17 +2489,19 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
 
   ### get model-implied sigma
-  generated <- semPower.genSigma(Lambda = Lambda, Beta = B, Psi = Psi,
+  generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
+                                 Psi = if(!isMultigroup) Psi[[1]] else Psi, 
+                                 Lambda = if(!isMultigroup) Lambda[[1]] else Lambda, 
                                  useReferenceIndicator = TRUE,
                                  metricInvariance = metricInvarianceList)
-
-  Sigma <- generated$Sigma
-
+  
+  
   ### create ana model string
+  if(!isMultigroup) modelCFA <- generated[['modelTrueCFA']] else modelCFA <- generated[[1]][['modelTrueCFA']]
   
   # define random intercept (between) factors
-  tok1 <- paste0('f1 =~ ', paste0('1*', paste0('f', seq((3 + 2*nWaves), ncol(B), 2)), collapse = ' + '))
-  tok2 <- paste0('f2 =~ ', paste0('1*', paste0('f', seq((4 + 2*nWaves), ncol(B), 2)), collapse = ' + '))
+  tok1 <- paste0('f1 =~ ', paste0('1*', paste0('f', seq((3 + 2*nWaves), ncol(Beta[[1]]), 2)), collapse = ' + '))
+  tok2 <- paste0('f2 =~ ', paste0('1*', paste0('f', seq((4 + 2*nWaves), ncol(Beta[[1]]), 2)), collapse = ' + '))
   model <- paste(tok1, tok2, sep='\n')
   
   # define residualized (within) factors
@@ -2492,7 +2512,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
   
   # add unresidualized factors
-  model <- paste(model, generated[['modelTrueCFA']], sep='\n')
+  model <- paste(model, modelCFA, sep='\n')
   
   # set residual variance of unresidualized factors to 0
   for(f in (2*nWaves + 3):(4*nWaves + 2)){
@@ -2508,7 +2528,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   
   # add autoregressive and cross-lagged effects
   for(f in 3:(2*nWaves + 2)){ # omit rows for random intercepts and unresidualized factors
-    fidx <- which(B[f, ] != 0)
+    fidx <- which(Beta[[1]][f, ] != 0)
     if(length(fidx) != 0){
       tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
@@ -2640,6 +2660,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   # when there are additional constraints (waveequal or invariance)
   # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
+  
+  if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
   semPower.powerLav(type, 
                     modelH0 = modelH0, 
