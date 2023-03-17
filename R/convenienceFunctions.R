@@ -1720,15 +1720,17 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
                                    useReferenceIndicator = TRUE,
                                    metricInvariance = metricInvarianceList, 
+                                   nGroups = nGroups,
                                    ...)
   }else{  
     generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
                                    Psi = if(!isMultigroup) Psi[[1]] else Psi, 
                                    useReferenceIndicator = TRUE,
                                    metricInvariance = metricInvarianceList, 
+                                   nGroups = nGroups,
                                    ...)
   }
-
+  
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   
@@ -1741,7 +1743,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
   }
   # add (residual) correlations 
-  # TODO think about whether this makes sense when rxy is diagonal
+  # (note that lav estimates these by default)
   model <- paste(model, 'f1 ~~ pf0201*f2', sep='\n')
   for(i in 2:nWaves){
     tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(formatC(2*i, width = 2, flag = 0), formatC(2*i - 1, width = 2, flag = 0)), '*'), 'f', 2*i)
@@ -1773,11 +1775,12 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   yw <- seq(2*nWaves, 3, -2)
   pCorXY <- paste0('pf', formatC(yw, width = 2, flag = 0), formatC(xw, width = 2, flag = 0))
   pCorXY <- pCorXY[order(pCorXY)]
-
+  
   # multigroup case
   if(isMultigroup){
-    # assign group labels to all structural parameters (measurement part is held equal across groups)
-    # TODO maybe do this as well for measurement part to get rid of lav warning
+    # remove group specific labels from measurement part to enforce metric invariance
+    model <- gsub(paste0('_g', seq(nGroups), collapse = '|'), '_gc', model)
+    # assign group labels to all structural parameters
     patt <- 'pf0201'
     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
     model <- gsub(patt, repl, model)
@@ -1799,7 +1802,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
       model <- gsub(patt, repl, model)
     }
   }
-
+  
   # add constraints to H1 model
   modelH1 <- model
   if(!is.null(waveEqual)){
@@ -1809,7 +1812,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     if('crossedy' %in% waveEqual) modelH1 <- gsub(paste(pCrossedY, collapse = '|'), paste(pCrossedY, collapse = ''), modelH1)
     if('corxy' %in% waveEqual) modelH1 <- gsub(paste(pCorXY, collapse = '|'), paste(pCorXY, collapse = ''), modelH1)
   }
-
+  
   # add additional constraints to H0 model
   modelH0 <- modelH1
   
@@ -1819,7 +1822,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if('crossedx' %in% nullEffect) modelH0 <- gsub(paste(pCrossedX, collapse = '|'), paste(pCrossedX, collapse = ''), modelH0)
   if('crossedy' %in% nullEffect) modelH0 <- gsub(paste(pCrossedY, collapse = '|'), paste(pCrossedY, collapse = ''), modelH0)
   if('corxy' %in% nullEffect) modelH0 <- gsub(paste(pCorXY, collapse = '|'), paste(pCorXY, collapse = ''), modelH0)
-
+  
   # zero and equality constraints:
   if('autoregx=0' %in% nullEffect){
     if('autoregx' %in% waveEqual){
@@ -1924,13 +1927,13 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     }
     modelH0 <- gsub(patt, repl, modelH0)
   }
-
+  
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
   # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
-
+  
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
   semPower.powerLav(type, 
@@ -2566,7 +2569,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  Psi = if(!isMultigroup) Psi[[1]] else Psi, 
                                  Lambda = if(!isMultigroup) Lambda[[1]] else Lambda, 
                                  useReferenceIndicator = TRUE,
-                                 metricInvariance = metricInvarianceList)
+                                 metricInvariance = metricInvarianceList,
+                                 nGroups = nGroups)
   
   
   ### create ana model string
@@ -2643,8 +2647,9 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   
   # multigroup case
   if(isMultigroup){
+    # remove group specific labels from measurement part to enforce metric invariance
+    model <- gsub(paste0('_g', seq(nGroups), collapse = '|'), '_gc', model)
     # assign group labels to all structural parameters (measurement part is held equal across groups)
-    # TODO maybe do this as well for measurement part to get rid of lav warning
     patt <- 'pf0201' #  RI cor
     repl <- paste0('c(', paste(paste0(patt, '_g', seq(nGroups)), collapse = ', '), ')')
     model <- gsub(patt, repl, model)

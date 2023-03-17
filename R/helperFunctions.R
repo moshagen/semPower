@@ -9,6 +9,7 @@
 #' @param Theta variance-covariance matrix between manifest residuals. If `NULL` and `Lambda` is not a square matrix, `Theta` is diagonal so that the manifest variances are 1. If `NULL` and `Lambda` is square, `Theta` is 0. A list for multiple group models.      
 #' @param tau vector of intercepts. If `NULL` and `Alpha` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
 #' @param Alpha vector of factor means. If `NULL` and `tau` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
+#' @param ... other
 #' @return Returns a list (or list of lists for multiple group models) containing the following components:
 #' \item{`Sigma`}{implied variance-covariance matrix.}
 #' \item{`mu`}{implied means}
@@ -152,7 +153,7 @@ semPower.genSigma <- function(Lambda = NULL,
   argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & 
                      names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 
                                           'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax', 
-                                          'useReferenceIndicator', 'metricInvariance')]
+                                          'useReferenceIndicator', 'metricInvariance', 'nGroups')]
   nGroups <- unlist(lapply(seq_along(argsMG), function(x){
     len <- 1
     if(names(argsMG)[x] %in% c('loadings', 'loadMinMax', 'metricInvariance')){
@@ -176,6 +177,7 @@ semPower.genSigma <- function(Lambda = NULL,
     # also create list structure for additional arguments 
     if(!is.null(argsMG[['useReferenceIndicator']])) argsMG[['useReferenceIndicator']] <- as.list(rep(list(argsMG[['useReferenceIndicator']]), max(nGroups)))
     if(!is.null(argsMG[['metricInvariance']])) argsMG[['metricInvariance']] <- as.list(rep(list(argsMG[['metricInvariance']]), max(nGroups)))
+    if(!is.null(argsMG[['nGroups']])) argsMG[['nGroups']] <- as.list(rep(list(argsMG[['nGroups']]), max(nGroups)))
     params <- lapply(1:max(nGroups), function(x) lapply(argsMG, '[[', x))
     return(
       lapply(params, function(x) do.call(semPower.genSigma, x)) 
@@ -266,7 +268,8 @@ loadings by indicator does not exceed 1.')
                                  Phi = Phi, Beta = Beta, Psi = Psi, Theta = Theta,
                                  tau = tau, Alpha = Alpha,
                                  useReferenceIndicator = ifelse(is.null(args[['useReferenceIndicator']]), !is.null(Beta), args[['useReferenceIndicator']]), 
-                                 metricInvariance = args[['metricInvariance']])
+                                 metricInvariance = args[['metricInvariance']], 
+                                 nGroups = args[['nGroups']])
 
   append(
     list(Sigma = Sigma, 
@@ -358,6 +361,7 @@ genLambda <- function(loadings = NULL,
 #' @param Alpha Factor means. If `NULL` and `tau` is set, these are assumed to be zero. 
 #' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (`TRUE`) or by setting their variance to 1 (`FALSE`). When `Beta` is defined, a reference indicator is used by default, otherwise the variance approach. 
 #' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. `list(c(1, 2), c(3, 4))` to assume invariance for f1 and f2 as well as f3 and f4.  
+#' @param nGroups (defaults to 1) If > 1 and `metricInvariance = TRUE`, group specific labels will be used in the measurement model.
 #' @return A list containing the following `lavaan` model strings:
 #' \item{`modelPop`}{population model}
 #' \item{`modelTrue`}{"true" analysis model freely estimating all non-zero parameters.}
@@ -370,7 +374,8 @@ genModelString <- function(Lambda = NULL,
                            tau = NULL,
                            Alpha = NULL,  # capital Alpha, to distinguish from alpha error
                            useReferenceIndicator = !is.null(Beta),
-                           metricInvariance = NULL){
+                           metricInvariance = NULL, 
+                           nGroups = 1){
 
   nfac <- ncol(Lambda)
   nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
@@ -382,6 +387,9 @@ genModelString <- function(Lambda = NULL,
     if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
     if(any(unlist(lapply(metricInvariance, function(x) length(unique(nIndicator[x])) > 1)))) stop('factors in metricInvariance must have the same number of indicators')
     metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', formatC(x, width = 2, flag = 0), formatC(1:nIndicator[metricInvariance[[x]][1]], width = 2, flag = 0), '*')) 
+    if(!is.null(nGroups) && nGroups > 1){
+      metricInvarianceLabels <- lapply(metricInvarianceLabels, function(x) unlist(lapply(x, function(y) paste0('c(', paste0(substr(y, 1, nchar(y) - 1), '_g', seq(nGroups), collapse = ','), ')*'))))
+    }
   }
   
   # remove names if set. we currently don't support labels anyway
