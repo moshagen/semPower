@@ -124,6 +124,7 @@ semPower.powerLav <- function(type,
   if(!is.null(Sigma) && !is.list(Sigma)) Sigma <- list(Sigma)
   
   # the following is probably no longer needed, as we now always supply lav-friendly restrictions
+  
   # # lav doesn't like both equality constrains and value constrains on the same parameters, so
   # # transform this by dropping equality constrains and assign value constrains to the affected parameters
   # modelH0 <- makeRestrictionsLavFriendly(modelH0)
