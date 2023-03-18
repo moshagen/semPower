@@ -1220,7 +1220,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
-#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
+#' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
+#' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -1589,10 +1590,10 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                nullWhichGroups = NULL,
                                standardized = TRUE,
                                metricInvariance = TRUE,
+                               autocorResiduals = TRUE,
                                ...){
   
   # TODO: lagged effects would be nice
-  # TODO: do we need autocorrelated residuals?
 
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
@@ -1706,9 +1707,9 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   })
   
   # add metric invariance constraints to analysis model
-  metricInvarianceList <- NULL
+  metricInvarianceFactors <- NULL
   if(metricInvariance){
-    metricInvarianceList <- list(
+    metricInvarianceFactors <- list(
       seq(1, 2*nWaves, 2),
       seq(2, 2*nWaves, 2)  
     )
@@ -1719,14 +1720,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     Phi <- lapply(seq_along(Beta), function(x) getPhi.B(Beta[[x]], Psi[[x]]))
     generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
                                    useReferenceIndicator = TRUE,
-                                   metricInvariance = metricInvarianceList, 
+                                   metricInvariance = metricInvarianceFactors, 
                                    nGroups = nGroups,
                                    ...)
   }else{  
     generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
                                    Psi = if(!isMultigroup) Psi[[1]] else Psi, 
                                    useReferenceIndicator = TRUE,
-                                   metricInvariance = metricInvarianceList, 
+                                   metricInvariance = metricInvarianceFactors, 
                                    nGroups = nGroups,
                                    ...)
   }
@@ -1748,6 +1749,27 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   for(i in 2:nWaves){
     tok <- paste0('f',(2*i - 1),' ~~ ', paste0('pf', paste0(formatC(2*i, width = 2, flag = 0), formatC(2*i - 1, width = 2, flag = 0)), '*'), 'f', 2*i)
     model <- paste(model, tok, sep='\n')
+  }
+  
+  # add autocorrelated residuals
+  if(autocorResiduals){
+    if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
+    # do this only when there is at least one latent variable
+    if(nrow(Lambda) > 2*nWaves){
+      autocorResidualsFactors <- metricInvarianceFactors  # same structure 
+      tok <- list()
+      for(x in seq_along(autocorResidualsFactors)){
+        ci <- lapply(autocorResidualsFactors[[x]], function(f) paste0('x', which(Lambda[, f] != 0)))
+        if(length(ci[[1]]) > 1){
+          for(i in 1:(length(ci) - 1)){
+            for(j in (i + 1) : length(ci)){
+              tok <- append(tok, paste(ci[[i]], '~~', ci[[j]]))
+            }
+          }
+        }
+      }
+      model <- paste(model, paste(tok, collapse = '\n'), sep ='\n')
+    }
   }
   
   ### define H1 and H0 model
@@ -1854,29 +1876,29 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   if('autoregx=autoregy' %in% nullEffect){
     if('autoregx' %in% waveEqual && 'autoregy' %in% waveEqual){
-      pattern <- paste(c(paste(pAutoregX, collapse = ''), paste(pAutoregY, collapse = '')), collapse = '|')
+      patt <- paste(c(paste(pAutoregX, collapse = ''), paste(pAutoregY, collapse = '')), collapse = '|')
     }else if('autoregx' %in% waveEqual){
-      pattern <- paste(c(paste(pAutoregX, collapse = ''), pAutoregY[nullWhich]), collapse = '|')
+      patt <- paste(c(paste(pAutoregX, collapse = ''), pAutoregY[nullWhich]), collapse = '|')
     }else if('autoregy' %in% waveEqual){
-      pattern <- paste(c(pAutoregX[nullWhich], paste(pAutoregY, collapse = '')), collapse = '|')
+      patt <- paste(c(pAutoregX[nullWhich], paste(pAutoregY, collapse = '')), collapse = '|')
     }else{
-      pattern <- paste(c(pAutoregX[nullWhich], pAutoregY[nullWhich]), collapse = '|')
+      patt <- paste(c(pAutoregX[nullWhich], pAutoregY[nullWhich]), collapse = '|')
     }
-    repl <-  gsub('\\|', '', pattern)
-    modelH0 <- gsub(pattern, repl, modelH0)
+    repl <-  gsub('\\|', '', patt)
+    modelH0 <- gsub(patt, repl, modelH0)
   }
   if('crossedx=crossedy' %in% nullEffect){
     if('crossedx' %in% waveEqual && 'crossedy' %in% waveEqual){
-      pattern <- paste(c(paste(pCrossedX, collapse = ''), paste(pCrossedY, collapse = '')), collapse = '|')
+      patt <- paste(c(paste(pCrossedX, collapse = ''), paste(pCrossedY, collapse = '')), collapse = '|')
     }else if('crossedx' %in% waveEqual){
-      pattern <- paste(c(paste(pCrossedX, collapse = ''), pCrossedY[nullWhich]), collapse = '|')
+      patt <- paste(c(paste(pCrossedX, collapse = ''), pCrossedY[nullWhich]), collapse = '|')
     }else if('crossedy' %in% waveEqual){
-      pattern <- paste(c(pCrossedX[nullWhich], paste(pCrossedY, collapse = '')), collapse = '|')
+      patt <- paste(c(pCrossedX[nullWhich], paste(pCrossedY, collapse = '')), collapse = '|')
     }else{
-      pattern <- paste(c(pCrossedX[nullWhich], pCrossedY[nullWhich]), collapse = '|')
+      patt <- paste(c(pCrossedX[nullWhich], pCrossedY[nullWhich]), collapse = '|')
     }
-    repl <-  gsub('\\|', '', pattern)
-    modelH0 <- gsub(pattern, repl, modelH0)
+    repl <-  gsub('\\|', '', patt)
+    modelH0 <- gsub(patt, repl, modelH0)
   }
   if('corxy=0' %in% nullEffect){
     if('corxy' %in% waveEqual){
@@ -1962,6 +1984,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
+#' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
 #' @return A list containing the following components is returned:
 #' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
@@ -2404,10 +2427,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  nullWhichGroups = NULL,
                                  nullWhich = NULL,
                                  metricInvariance = TRUE,
+                                 autocorResiduals = TRUE,
                                  ...){
-  
-  # TODO: do we need autocorrelated residuals?
-  # TODO: implement multigroup hypothesis of 'rBXBYA = rBXBB'
   
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
@@ -2556,9 +2577,9 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   })
   
   # add metric invariance constrains
-  metricInvarianceList <- NULL
+  metricInvarianceFactors <- NULL
   if(metricInvariance){
-    metricInvarianceList <- list(
+    metricInvarianceFactors <- list(
       seq(3 + 2*nWaves, 2 + 4*nWaves, 2),
       seq(4 + 2*nWaves, 2 + 4*nWaves, 2)  
     )
@@ -2569,7 +2590,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  Psi = if(!isMultigroup) Psi[[1]] else Psi, 
                                  Lambda = if(!isMultigroup) Lambda[[1]] else Lambda, 
                                  useReferenceIndicator = TRUE,
-                                 metricInvariance = metricInvarianceList,
+                                 metricInvariance = metricInvarianceFactors,
                                  nGroups = nGroups)
   
   
@@ -2616,6 +2637,28 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   for(i in 1:nWaves){
     tok <- paste0('f',(1 + 2*i),' ~~ ', paste0('pf', paste0(formatC(2 + 2*i, width = 2, flag = 0), formatC(1 + 2*i, width = 2, flag = 0)), '*'), 'f', (2 + 2*i))
     model <- paste(model, tok, sep='\n')
+  }
+  
+  
+  # add autocorrelated residuals
+  if(autocorResiduals){
+    if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
+    # do this only when there is at least one latent variable
+    if(nrow(Lambda) > 2*nWaves){
+      autocorResidualsFactors <- metricInvarianceFactors  # same structure 
+      tok <- list()
+      for(x in seq_along(autocorResidualsFactors)){
+        ci <- lapply(autocorResidualsFactors[[x]], function(f) paste0('x', which(Lambda[, f] != 0)))
+        if(length(ci[[1]]) > 1){
+          for(i in 1:(length(ci) - 1)){
+            for(j in (i + 1) : length(ci)){
+              tok <- append(tok, paste(ci[[i]], '~~', ci[[j]]))
+            }
+          }
+        }
+      }
+      model <- paste(model, paste(tok, collapse = '\n'), sep ='\n')
+    }
   }
   
   

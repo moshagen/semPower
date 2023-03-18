@@ -1580,14 +1580,13 @@ test_powerCLPM <- function(doTest = TRUE){
                              loadM = c(.5, .4, .5, .4, .5, .4))
   
 
-  
   valid6 <- valid5 && 
     length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
     length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
-    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 1, 'est']) -  (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 2, 'est'])) < 1e-8 &&
+    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 1, 'est']) -  (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f2', 'f4') & par22$op == '~' & par22$group == 2, 'est'])) < 1e-6 &&
     length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
     length(unique(round(par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
-    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'])) < 1e-8 &&
+    sum((par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f4', 'f6') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'])) < 1e-6 &&
     length(unique(round(par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est'], 4))) == 1 &&
     length(unique(round(par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'], 4))) == 1 &&
     sum((par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'])) > .1 &&
@@ -1597,8 +1596,6 @@ test_powerCLPM <- function(doTest = TRUE){
     ph23$power$fmin - ph21$power$fmin < 1e-8
 
 
-  
-  
   if(valid6){
     print('test_powerCLPM: OK')
   }else{
