@@ -2769,29 +2769,29 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   }
   if('autoregx=autoregy' %in% nullEffect){
     if('autoregx' %in% waveEqual && 'autoregy' %in% waveEqual){
-      pattern <- paste(c(paste(pAutoregX, collapse = ''), paste(pAutoregY, collapse = '')), collapse = '|')
+      patt <- paste(c(paste(pAutoregX, collapse = ''), paste(pAutoregY, collapse = '')), collapse = '|')
     }else if('autoregx' %in% waveEqual){
-      pattern <- paste(c(paste(pAutoregX, collapse = ''), pAutoregY[nullWhich]), collapse = '|')
+      patt <- paste(c(paste(pAutoregX, collapse = ''), pAutoregY[nullWhich]), collapse = '|')
     }else if('autoregy' %in% waveEqual){
-      pattern <- paste(c(pAutoregX[nullWhich], paste(pAutoregY, collapse = '')), collapse = '|')
+      patt <- paste(c(pAutoregX[nullWhich], paste(pAutoregY, collapse = '')), collapse = '|')
     }else{
-      pattern <- paste(c(pAutoregX[nullWhich], pAutoregY[nullWhich]), collapse = '|')
+      patt <- paste(c(pAutoregX[nullWhich], pAutoregY[nullWhich]), collapse = '|')
     }
-    repl <-  gsub('\\|', '', pattern)
-    modelH0 <- gsub(pattern, repl, modelH0)
+    repl <-  gsub('\\|', '', patt)
+    modelH0 <- gsub(patt, repl, modelH0)
   }
   if('crossedx=crossedy' %in% nullEffect){
     if('crossedx' %in% waveEqual && 'crossedy' %in% waveEqual){
-      pattern <- paste(c(paste(pCrossedX, collapse = ''), paste(pCrossedY, collapse = '')), collapse = '|')
+      patt <- paste(c(paste(pCrossedX, collapse = ''), paste(pCrossedY, collapse = '')), collapse = '|')
     }else if('crossedx' %in% waveEqual){
-      pattern <- paste(c(paste(pCrossedX, collapse = ''), pCrossedY[nullWhich]), collapse = '|')
+      patt <- paste(c(paste(pCrossedX, collapse = ''), pCrossedY[nullWhich]), collapse = '|')
     }else if('crossedy' %in% waveEqual){
-      pattern <- paste(c(pCrossedX[nullWhich], paste(pCrossedY, collapse = '')), collapse = '|')
+      patt <- paste(c(pCrossedX[nullWhich], paste(pCrossedY, collapse = '')), collapse = '|')
     }else{
-      pattern <- paste(c(pCrossedX[nullWhich], pCrossedY[nullWhich]), collapse = '|')
+      patt <- paste(c(pCrossedX[nullWhich], pCrossedY[nullWhich]), collapse = '|')
     }
-    repl <-  gsub('\\|', '', pattern)
-    modelH0 <- gsub(pattern, repl, modelH0)
+    repl <-  gsub('\\|', '', patt)
+    modelH0 <- gsub(patt, repl, modelH0)
   }
   if('corxy=0' %in% nullEffect){
     if('corxy' %in% waveEqual){
