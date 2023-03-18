@@ -885,11 +885,11 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' * More complex mediation structures can be defined by providing the `Beta` matrix along with `indirect` specifying which paths define the indirect effect. See examples below.
 #' 
 #' Notes on implementation:
-#' * For models without latent variables, `nullEffect = 'ind = 0'` and `nullEffect = 'indA = indB'` constrain the indirect effect to zero and to equality, respectively.
-#' * For models with latent variables and `nullEffect = 'ind = 0'`, power is approximated by constraining the smallest slope contained in the indirect effect to zero. Although this hypothesis is not identical to the hypothesis of the absence of an indirect effect, it provides a close approximation of the resulting power.
-#' * For models with latent variables multiple groups (i. e., `nullEffect = 'indA = indB'`), there is currently no way to determine power, 
-#' because implementing equality constrains on the indirect effects leads to non-convergence and 
-#' the approach to constrain a single or all slopes to equality across groups can severely misrepresent the actual hypothesis of interest. 
+#' * For models without latent variables, `nullEffect = 'ind = 0'` and `nullEffect = 'indA = indB'` constrain the indirect effect to zero and to equality, respectively, yielding the test described in Tofighi & Kelley (2020).
+#' * For models with latent variables and `nullEffect = 'ind = 0'`, power is (sometimes roughly) approximated by constraining the smallest slope contained in the indirect effect to zero.
+#' * For models with latent variables multiple groups (i. e., `nullEffect = 'indA = indB'`), there is currently no way to determine power. 
+#' 
+#' Tofighi, D., & Kelley, K. (2020). Improved inference in mediation analysis: Introducing the model-based constrained optimization procedure. *Psychological Methods, 25(4)*, 496–515. https://doi.org/10.1037/met0000259
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -1146,16 +1146,18 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   }
 
   # lav doesn't like constraining the indirect effect to zero or to equality for latent variable models, 
-  # so we apply different approaches depending on whether there are latent variables
+  # so as a temporary workaround we apply different approaches depending on whether there are latent variables
   if(nullEffect == 'ind=0'){
     if(isObserved){
       # constrain indirect effect
       modelH0 <- paste(model, '\n', 'ind == 0')
     }else{
       # constrain the smallest of the contained direct effects, so this
-      # actually gives power for a single slope. however, this seems to closely reflect
-      # power for the indirect effect (and indeed works much better than using ind=0 as 
-      # comparison model, which grossly overestimates the true effect)
+      # actually gives power for a single slope. whereas this works much better than using 
+      # ind=0 as comparison model, power is only approximated.
+      # this approach should be replaced by the proper way of constraining 
+      # the indirect effect to zero, once lav supports a suited optimizer
+      # such as NPSOL or SLSQP.
       cs <- indirect[[which.min(unlist(lapply(indirect, function(x) B[[1]][x[1], x[2]])))]]
       mb <- paste0('pf', paste(formatC(cs, width = 2, flag = 0), collapse = ''))
       modelH0 <- paste(model, '\n', paste0(mb,' == 0'))  
