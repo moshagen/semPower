@@ -1954,8 +1954,9 @@ powerMI <- semPower.powerMI(
 * `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the $X$ or $Y$ autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for $X$ and $Y$,  and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups.
 * `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when there are > 2 waves.
 * `nullWhichGroups`: for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied.
-* `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
+* `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized * `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
 * `metricInvariance`: whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
+* `autocorResiduals`: whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
 * additional arguments [specifying the type of power analysis](#commonArgs). 
 * additional arguments [defining the factor model](#factorDefinition), where the order of factors is ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). 
 
@@ -1968,7 +1969,7 @@ powerMI <- semPower.powerMI(
 
 
 ##### Defining the CLPM structure {-#clpmDefinition}
-`semPower.powerCLPM` assumes that two variables $X$ and $Y$ are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a [generic path model](#powerPath)). The structure of a CLPM is defined by specifying `nWaves`, `autoregEffects`, `crossedEffects`,  `rXY`, and `standardized`.
+`semPower.powerCLPM` assumes that two variables $X$ and $Y$ are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a [generic path model](#powerPath)). The structure of a CLPM is defined by specifying `nWaves`, `autoregEffects`, `crossedEffects`,  `rXY`, `standardized`, and `autorcorResiduals`.
 
 `nWaves` defines the number of measurements of $X$ and $Y$ and thus must be two or larger. Setting `nWaves = 2` implies the following regression equations: 
 $$
@@ -2043,7 +2044,8 @@ $$
 
 To assume that the residual correlations between $X_2$ and $Y_2$ as well as $X_3$ and $Y_3$ shall be equal, add `'corXY'` to `waveEqual`. Although the constraints defined in `waveEqual` apply to both the H0 and the H1 model, this will nevertheless affect statistical power.  
 
-Second, when $X$ and $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`). This can be set to `FALSE` to disable invariance constraints over waves, however, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constrains also affects power for hypothesis concerning the CLPM parameters. However, when `metricInvariance = TRUE`, ensure to define the measurement in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$. 
+Second, when $X$ and/or $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`) and also assume that the residuals of the indicators are autocorrelated across waves (`autorcorResiduals = TRUE`). Both can be set to `FALSE` to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constrains as well as the presence of autocorrelated residuals also affects power for hypothesis concerning the CLPM parameters. Note that when `metricInvariance = TRUE`, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$.
+
 
 
 ##### Detect whether a cross-lagged effect differs from zero {-}
