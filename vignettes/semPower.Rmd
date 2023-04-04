@@ -2689,6 +2689,8 @@ Other hypotheses arising in multiple group settings are supported in most functi
 * See [`semPower.powerBifactor`](#powerBifactor) to detect that a correlation involving a bifactor differs across groups.
 * See [`semPower.powerRegression`](#powerRegression) and [`semPower.powerPath`](#powerPath) to detect that a regression slope differs across groups.
 * See [`semPower.powerMediation`](#powerMediation) to detect that a mediation effect differs across groups.
+* See [`semPower.powerCLPM`](#powerCLPM) to detect that autoregressive effects or cross-lagged effects in a CLPM differ across groups.
+* See [`semPower.powerRICLPM`](#powerRICLPM) to detect that autoregressive effects, cross-lagged effects, or the correlation between random intercept factors in a random-intercept CLPM differ across groups.
 
 
 ## Simulated power {#simulatedPower}
