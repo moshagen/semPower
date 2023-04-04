@@ -2399,7 +2399,7 @@ The arguments expected by `semPower.powerRICLPM` are identical to those expected
 
 * `nWaves` must be $\geq$ 3. 
 * `rBXBY` defines the correlation between random intercept factors (or `NULL` for no correlation).
-* `nullEffect` also accepts `'corBXBY = 0'` to constrain the correlation between the random intercept factors to zero.
+* `nullEffect` also accepts `'corBXBY = 0'` to constrain the correlation between the random intercept factors to zero and `'corBXBYA = corBXBYB'` to constrain the correlation between the random intercept factors to be equal across groups.
 * Standardized (`standardized`) parameters are not available.
 
 
