@@ -470,6 +470,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
 
   modelH1 <- NULL
+  fitH1model <- FALSE
   if(comparison == 'restricted'){
     if(isMultigroup) modelH1 <- generated[[1]][['modelTrueCFA']] else modelH1 <- generated[['modelTrueCFA']] 
     # single group case: the h1 model always fits perfectly
@@ -819,6 +820,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))
   
   modelH1 <- NULL
+  fitH1model <- FALSE
   if(comparison == 'restricted'){
     if(!isMultigroup){
       modelH1 <- paste(model, 
@@ -1187,6 +1189,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
   
   modelH1 <- NULL
+  fitH1model <- FALSE
   if(comparison == 'restricted'){
     # h1 model always fits perfectly, only needed for delta df
     modelH1 <- model
@@ -3898,6 +3901,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
   
   modelH1 <- NULL
+  fitH1model <- FALSE
   if(comparison == 'restricted'){
     modelH1 <- model 
     # single group case: the h1 model always fits perfectly
