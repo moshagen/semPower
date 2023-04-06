@@ -47,8 +47,12 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   # we need to call lavaan() directly with defaults as defined in sem()
   lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
+  lavOptions <- append(lavOptions,
+                       # suppress checks 
+                       list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
   
   efmin <- efminGroups <- list()
+  rLambda <- rPhi <- rPsi <- rBeta <- list()
   ePower <- 0
   r <- rr <- 1
   progress <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
@@ -60,8 +64,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         # single group case
         cdata <- genData(N, Sigma, mu)
         lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata,
-                                        check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), # suppress checks
+                            append(list(model = modelH0, data = cdata),
                                         lavOptions))
         cfminGroups <- NULL
       }else{
@@ -69,9 +72,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         gdata <- lapply(1:length(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x))
         cdata <- unlist(do.call(rbind, gdata))
         lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata,
-                                        check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), # suppress checks 
-                                   append(list(group = 'gIdx'), lavOptions)))
+                            append(list(model = modelH0, data = cdata, group = 'gIdx'), 
+                                   lavOptions))
         # store fmin by group
         cfminGroups <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
       }
@@ -89,29 +91,32 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         # handle restricted comparison model 
         # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
         if(!is.null(modelH1)){
-          lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
-          if(!is.list(Sigma)){
-            # single group case
-            lavresH1 <- do.call(lavaan::lavaan, 
-                                append(list(model = modelH1, data = cdata,
-                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), 
-                                       lavOptionsH1))
-          }else{
-            # multigroup group case
-            lavresH1 <- do.call(lavaan::lavaan, 
-                                append(list(model = modelH1, data = cdata,
-                                            check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE), 
-                                       append(list(group = 'gIdx'), lavOptionsH1)))
-          }
           
+          lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
+          lavOptionsH1 <- append(lavOptionsH1,
+                                 list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
+          lavArgs <- list(model = modelH1, data = cdata)
+          if(is.list(Sigma)) lavArgs <- append(lavArgs, list(group = 'gIdx'))
+          
+          lavresH1 <- do.call(lavaan::lavaan, append(lavArgs, lavOptionsH1))
+
           if(lavresH1@optim[["converged"]]){
             
             mcomp <- lavaan::anova(lavresH0, lavresH1) 
             p <- mcomp$`Pr(>Chisq)`[2]
             df <- mcomp$`Df diff`[2]
             cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
-            if(is.list(Sigma)) cfminGroups <- cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
+            if(is.list(Sigma)) cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
             
+            # also store param est
+            cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
+            rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0]))))
+            cPsi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')]
+            rPsi <- append(rPsi, list(unlist(lapply(cPsi, function(x) x[x != 0]))))
+            cBeta <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'beta')]
+            rBeta <- append(rBeta, list(unlist(lapply(cBeta, function(x) x[x != 0]))))
+            cPhi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'phi')]
+            rPhi <- append(rPhi, list(unlist(lapply(cPhi, function(x) x[x != 0]))))
           }
         }
       }
@@ -137,7 +142,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   if((r - 1) == 0) stop("Something went wrong during model estimation, no replication converged.")
   ePower <- ePower / (r - 1)
-  if(round((r - 1) / (rr - 1), 2) < minConvergenceRate){ 
+  if((r - 1) / (rr - 1) < minConvergenceRate){ 
     warning(paste("Actual convergence rate of", round((r - 1) / (rr - 1), 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", (r - 1),"replications."))
   }
   
@@ -149,13 +154,55 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     # we assume that each group contributes proportional df
     ubFmeanGroups <- NULL
     if(!is.null(efminGroups)) ubFmeanGroups <- unlist(lapply(1:ncol(efminGroups), function(x) mean( efminGroups[ ,x] - (df / length(N)) / N[[x]] ))) / length(N)
-    list(
+
+    out <- list(
       ePower = ePower,
       meanFmin = ubFmean,
       meanFminGroups = ubFmeanGroups,
       df = df,
-      nrep = (r - 1)
+      nrep = (r - 1),
+      convergenceRate = (r - 1) / (rr - 1)
     )
+    
+    # also store mean param estm and pop params
+    if(!is.null(modelH1)){
+      
+      # assume that modelH1 is properly specified, so that fitting modelH1 to Sigma
+      # yields population parameters
+      if(is.list(Sigma)) sample.nobs <- list(1000, 1000) else sample.nobs <- 1000
+      lavresPop <- do.call(lavaan::lavaan, 
+                           append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = sample.nobs, 
+                                       sample.cov.rescale = FALSE),
+                                  lavOptionsH1))
+      if(lavresPop@optim$fx > 1e-6) warning('H1 model is not properly specified.')
+
+      # calc bias
+      cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
+      pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
+      bLambda <- mean( (apply(do.call(rbind, rLambda), 2, mean) -  pLambda) / pLambda )
+      
+      cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
+      pPhi <- unlist(lapply(cPhi, function(x) x[x != 0]))
+      if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, mean) -  pPhi) / pPhi ) else bPhi <- NULL
+
+      cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
+      pPsi <- unlist(lapply(cPsi, function(x) x[x != 0]))
+      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi), 2, mean) -  pPsi) / pPsi ) else bPsi <- NULL
+      
+      cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
+      pBeta <- unlist(lapply(cBeta, function(x) x[x != 0]))
+      if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, mean) -  pBeta) / pBeta ) else bBeta <- NULL
+      
+      out <- append(out, list(
+        bLambda = bLambda,
+        bPhi = bPhi,
+        bBeta = bBeta,
+        bPsi = bPsi
+      ))
+    }
+    
+    out
+    
   }else{
     ePower
   }

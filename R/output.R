@@ -156,3 +156,37 @@ getFormattedResults <- function(type, result, digits = 6){
   
   out
 }
+
+
+#' getFormattedResults
+#'
+#' Return data.frame containing formatted results.
+#' 
+#' @param type type of power analysis
+#' @param object result object (list)
+#' @param digits number of significant digits
+#' @return data.frame
+getFormattedSimulationResults <- function(object, digits = 2){
+
+  simOut <- data.frame(NA, ncol = 2)
+  simOut[1, ] <- c('Convergence Rate (%)', formatC(c(100*object[['convergenceRate']]), format = 'f', digits = digits))
+  simOut[2, ] <- c('', '')
+  
+  if(!is.null(object[['bLambda']])){
+    simOut <- rbind(simOut, c('Average Parameter Bias (%) in the H1 Model:', ''))
+    simOut <- rbind(simOut, c('Loadings', formatC(c(100*object[['bLambda']]), format = 'f', digits = digits)))
+    if(!is.null(object[['bPsi']])){
+      simOut <- rbind(simOut, c('Variances/Covariances', formatC(c(100*object[['bPsi']]), format = 'f', digits = digits)))
+    }
+    if(!is.null(object[['bBeta']])){
+      simOut <- rbind(simOut, c('Regression Coefficients', formatC(c(100*object[['bBeta']]), format = 'f', digits = digits)))
+    }
+    if(!is.null(object[['bPhi']])){
+      simOut <- rbind(simOut, c('Variances/Covariances', formatC(c(100*object[['bPhi']]), format = 'f', digits = digits)))
+    }
+  }
+  
+  colnames(simOut) <- rownames(simOut) <- NULL
+  
+  simOut
+}

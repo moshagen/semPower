@@ -74,7 +74,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              lavOptions = NULL, lavOptionsH1 = lavOptions, 
                              seed = NULL,
                              ...){
-
+  args <- list(...)
+  
   # validate input and do some preparations
   pp <- powerPrepare('a-priori', effect = effect, effect.measure = effect.measure,
                      alpha = alpha, beta = beta, power = power, abratio = NULL,
@@ -240,12 +241,21 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     cfi = fit[['cfi']],
     bPrecisionWarning = bPrecisionWarning,
     simulated = simulatedPower,
-    nrep = nrep,
-    plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
-    plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
-    plotShowLabels = if('plotShowLabels' %in% names(list(...))) list(...)[['plotShowLabels']] else TRUE
+    plotShow = if('plotShow' %in% names(args)) args[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(args)) args[['plotLinewidth']] else 1,
+    plotShowLabels = if('plotShowLabels' %in% names(args)) args[['plotShowLabels']] else TRUE
   )
-
+  
+  if(simulatedPower){
+    result <- append(result, list(
+      nrep = nrep,
+      convergenceRate = sim[['convergenceRate']],
+      bLambda = sim[['bLambda']],
+      bPhi = sim[['bPhi']],
+      bBeta = sim[['bBeta']],
+      bPsi = sim[['bPsi']]
+    ))
+  }
   class(result) <- "semPower.aPriori"
   result
 
@@ -305,7 +315,7 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL,
 #' @export
 summary.semPower.aPriori <- function(object, ...){
 
-  out.table <- getFormattedResults('a-priori', object)
+  out <- getFormattedResults('a-priori', object)
 
   cat("\n semPower: A-priori power analysis\n")
 
@@ -316,7 +326,15 @@ summary.semPower.aPriori <- function(object, ...){
   if(object[['bPrecisionWarning']])
     cat("\n\n NOTE: Power is higher than requested even for a sample size < 10.\n\n")
 
-  print(out.table, row.names = FALSE, right = FALSE)
+  print(out, row.names = FALSE, right = FALSE)
+
+  if(object[['simulated']]){
+    cat(paste("\n\n Simulation results:\n"))
+    simOut <- getFormattedSimulationResults(object)
+    
+    print(simOut, row.names = FALSE, right = FALSE)
+    if(is.null(object[['bLambda']])) cat('Average Parameter Biases are only available when an H1 model was specified (add comparison = restricted).')
+  }  
   
   if(object[['plotShow']])
     semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['impliedNCP']], df = object[['df']], 

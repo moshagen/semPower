@@ -65,6 +65,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              lavOptions = NULL, lavOptionsH1 = lavOptions,
                              seed = NULL,
                              ...){
+  args <- list(...)
 
   # validate input and do some preparations
   pp <- powerPrepare(type = 'post-hoc', 
@@ -133,11 +134,21 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     srmr = fit[['srmr']],
     cfi = fit[['cfi']],
     simulated = simulatedPower,
-    nrep = nrep,
-    plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
-    plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
-    plotShowLabels = if('plotShowLabels' %in% names(list(...))) list(...)[['plotShowLabels']] else TRUE
+    plotShow = if('plotShow' %in% names(args)) args[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(args)) args[['plotLinewidth']] else 1,
+    plotShowLabels = if('plotShowLabels' %in% names(args)) args[['plotShowLabels']] else TRUE
   )
+  
+  if(simulatedPower){
+    result <- append(result, list(
+      nrep = nrep,
+      convergenceRate = sim[['convergenceRate']],
+      bLambda = sim[['bLambda']],
+      bPhi = sim[['bPhi']],
+      bBeta = sim[['bBeta']],
+      bPsi = sim[['bPsi']]
+    ))
+  }
 
   class(result) <- "semPower.postHoc"
   result
@@ -154,14 +165,22 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
 #' @export
 summary.semPower.postHoc <- function(object, ...){
 
-  out.table <- getFormattedResults('post-hoc', object)
+  out <- getFormattedResults('post-hoc', object)
 
   cat("\n semPower: Post-hoc power analysis\n")
   if(object[['simulated']]){
     cat(paste("\n Simulated power based on", object[['nrep']], "successful replications.\n"))
   }
 
-  print(out.table, row.names = FALSE, right = FALSE)
+  print(out, row.names = FALSE, right = FALSE)
+  
+  if(object[['simulated']]){
+    cat(paste("\n\n Simulation results:\n"))
+    simOut <- getFormattedSimulationResults(object)
+
+    print(simOut, row.names = FALSE, right = FALSE)
+    if(is.null(object[['bLambda']])) cat('Average Parameter Biases are only available when an H1 model was specified (add comparison = restricted).')
+  }  
 
   if(object[['plotShow']])
     semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']], 
