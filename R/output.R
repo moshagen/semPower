@@ -55,7 +55,7 @@ getFormattedResults <- function(type, result, digits = 6){
     
     # manually correct some quirks
     if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
+      foot$values[foot$rows == 'Power (1 - Beta)'] <- '> 0.9999'
     }
     
     
