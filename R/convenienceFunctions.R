@@ -729,7 +729,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   
   # get temporary Lambda so that we can check whether number of factors matches slopes + 1
   args <- list(...)
-  tLambda  <- args$Lambda
+  tLambda  <- args[['Lambda']]
   if(is.null(tLambda)){
     tLambda <- genLambda(args[['loadings']], args[['nIndicator']],
                         args[['loadM']], args[['loadSD']], args[['loadMinMax']])
@@ -2517,7 +2517,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   
   ### create Lambda 
   args <- list(...)
-  Lambda  <- args$Lambda
+  Lambda  <- args[['Lambda']]
   if(is.null(Lambda)){
     Lambda <- genLambda(args[['loadings']], args[['nIndicator']],
                         args[['loadM']], args[['loadSD']], args[['loadMinMax']])
@@ -3770,7 +3770,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   
   ### create Lambda
   # sLambda only contains specific factors and covariate(s)
-  sLambda <- args$Lambda
+  sLambda <- args[['Lambda']]
   if(is.null(sLambda)){
     sLambda <- lapply(seq(nGroups), function(x){
       if(is.list(args[['loadings']][[1]]) || 
