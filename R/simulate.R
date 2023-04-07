@@ -42,8 +42,9 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      returnFmin = TRUE){
   
   if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
-  if(nvar >= N) stop('Simulated power is not possible when the number of variables exceeds N.')
-  if(N < 50 || 2*nvar >= N) warning('In small N situations, simulated power will likely be inaccurate and yield high non-convergence rates.')
+  if(is.list(Sigma)) gN <- N[[1]] else gN <- N 
+  if(nvar >= gN) stop('Simulated power is not possible when the number of variables exceeds N.')
+  if(gN < 50 || 2*nvar >= gN) warning('In small N situations, simulated power will likely be inaccurate and yield high non-convergence rates.')
   checkBounded(nReplications, bound = c(10, 100000), inclusive = TRUE)
   checkBounded(minConvergenceRate, bound = c(0.01, 1), inclusive = TRUE)
   # remaining checks are done in corresponding power fnc
@@ -57,7 +58,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     lavOptionsH1 <- append(lavOptionsH1,
                            list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
   }
-    
+  
+  # generate data 
+  if(!is.list(Sigma)){
+    simData <- genData(N, Sigma, mu, gIdx = NULL, nSets = nReplications / minConvergenceRate)
+  }else{
+    simData <- lapply(seq_along(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x, nSets = nReplications / minConvergenceRate))
+  }
   
   efmin <- efminGroups <- list()
   rLambda <- rPhi <- rPsi <- rBeta <- list()
@@ -69,24 +76,20 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     tryCatch({
       
       if(!is.list(Sigma)){
-        # single group case
-        cdata <- genData(N, Sigma, mu)
-        lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata),
-                                        lavOptions))
-        cfminGroups <- NULL
+        cdata <- simData[[r]]
       }else{
-        # multigroup group case
-        gdata <- lapply(1:length(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x))
-        cdata <- unlist(do.call(rbind, gdata))
-        lavresH0 <- do.call(lavaan::lavaan, 
-                            append(list(model = modelH0, data = cdata, group = 'gIdx'), 
-                                   lavOptions))
-        # store fmin by group
-        cfminGroups <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
+        cdata <- rbind(simData[[1]][[r]], simData[[2]][[r]])
       }
-      
+
+      lavArgs <- list(model = modelH0, data = cdata)
+      if(is.list(Sigma)) lavArgs <- append(lavArgs, list(group = 'gIdx'))
+      lavresH0 <- do.call(lavaan::lavaan, append(lavArgs, lavOptions))
+
       if(lavresH0@optim[["converged"]]){
+        
+        # fmin by group
+        cfminGroups <- NULL
+        if(is.list(Sigma)) cfminGroups <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
         
         cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
         p <- lavaan::fitMeasures(lavresH0, 'pvalue')
@@ -214,6 +217,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   }
 }
 
+
 #' genData
 #' 
 #' Generates random data from population variance-covariance matrix and population means.
@@ -222,6 +226,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
+#' @param nSets number of data sets to generate
 #' @param gIdx if not `NULL`, add gIdx as numeric group index as additional variable to generated data
 #' @return Returns the generated data
 #' @examples
@@ -230,11 +235,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' data <- genData(N = 500, Sigma = gen$Sigma) 
 #' }
 #' @importFrom stats rnorm 
-genData <- function(N = NULL, Sigma = NULL, mu = NULL, gIdx = NULL){
-  randomData <- matrix(rnorm(N * ncol(Sigma)), N, ncol(Sigma)) 
-  rdat <- t(t(chol(Sigma)) %*% t(randomData))
-  if(!is.null(mu)) rdat <- rdat + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE)
-  if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) 
-  rdat
+genData <- function(N = NULL, Sigma = NULL, mu = NULL, nSets = 1, gIdx = NULL){
+  lapply(seq(nSets), function(x){
+    randomData <- matrix(rnorm(N * ncol(Sigma)), N, ncol(Sigma)) 
+    rdat <- t(t(chol(Sigma)) %*% t(randomData))
+    if(!is.null(mu)) rdat <- rdat + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE)
+    if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) 
+    rdat
+  })
 }
 
