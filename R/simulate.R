@@ -8,8 +8,7 @@
 #' @param mu population means.
 #' @param N sample size
 #' @param alpha alpha error probability
-#' @param nReplications number of random samples drawn.
-#' @param minConvergenceRate the minimum convergence rate required
+#' @param simOptions a list of additional options specifying simulation details, see detais. 
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation
 #' @param lavOptionsH1 lavoptions when fitting `modelH1`. If `NULL`, the same as `lavOptions`.
 #' @param returnFmin whether to return the mean unbiased Fmin over replications (i. e., `fmin_0 = fmin_hat - df/N`) 
@@ -19,6 +18,17 @@
 #' \item{`meanFminGroups`}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, `meanFmin != sum(meanFminGroups)`}
 #' \item{`df`}{the model df.}
 #' \item{`nrep`}{the successful number of replications.}
+#' \item{`bChiSq`}{median chi-square bias of the H1 model}
+#' \item{`bLambda`}{average median bias in lambda in the H1 model}
+#' \item{`bPhi`}{average median bias in phi in the H1 model}
+#' \item{`bPsi`}{average median bias in psi in the H1 model}
+#' \item{`bBeta`}{average median bias in beta in the H1 model}
+#' @details 
+#' 
+#' `simOptions` is a list that may have the following components:
+#' * `nReplications`: The targeted number of valid simulation runs, defaults to 250.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#'  
 #' @examples
 #' \dontrun{
 #' # get Sigma and modelH0
@@ -37,9 +47,16 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      Sigma = NULL, mu = NULL, 
                      N = NULL,
                      alpha = NULL,
-                     nReplications = 250, minConvergenceRate = .5,
+                     simOptions = list(
+                       nReplications = 250, 
+                       minConvergenceRate = .5
+                     ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
+  
+  
+  nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 250)
+  minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .5)
   
   if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
   if(nvar >= min(unlist(N))) stop('Simulated power is not possible when the number of variables exceeds N.')
@@ -57,7 +74,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   if(projectedLong){
     mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to go on?")
     if(mResp != 1){
-      stop("Simulated power aborted")
+      stop("Simulated power aborted.")
     }else{
       cat("You have been warned.\n")
     }
