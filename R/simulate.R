@@ -48,8 +48,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # we need to call lavaan() directly with defaults as defined in sem()
   lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
   lavOptions <- append(lavOptions,
-                       # suppress checks 
                        list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
+  if(!is.null(modelH1)){
+    lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
+    lavOptionsH1 <- append(lavOptionsH1,
+                           list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
+  }
+    
   
   efmin <- efminGroups <- list()
   rLambda <- rPhi <- rPsi <- rBeta <- list()
@@ -92,9 +97,6 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
         if(!is.null(modelH1)){
           
-          lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
-          lavOptionsH1 <- append(lavOptionsH1,
-                                 list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
           lavArgs <- list(model = modelH1, data = cdata)
           if(is.list(Sigma)) lavArgs <- append(lavArgs, list(group = 'gIdx'))
           
@@ -139,6 +141,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     rr <- rr + 1
   }
   close(progress)
+  
   
   if((r - 1) == 0) stop("Something went wrong during model estimation, no replication converged.")
   ePower <- ePower / (r - 1)
