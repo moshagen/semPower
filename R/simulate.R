@@ -185,19 +185,19 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # calc bias
       cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
       pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
-      bLambda <- mean( (apply(do.call(rbind, rLambda), 2, mean) -  pLambda) / pLambda )
+      bLambda <- mean( (apply(do.call(rbind, rLambda), 2, median) -  pLambda) / pLambda )
       
       cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
       pPhi <- unlist(lapply(cPhi, function(x) x[x != 0]))
-      if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, mean) -  pPhi) / pPhi ) else bPhi <- NULL
+      if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, median) -  pPhi) / pPhi ) else bPhi <- NULL
 
       cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
       pPsi <- unlist(lapply(cPsi, function(x) x[x != 0]))
-      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi), 2, mean) -  pPsi) / pPsi ) else bPsi <- NULL
+      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi), 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
       
       cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
       pBeta <- unlist(lapply(cBeta, function(x) x[x != 0]))
-      if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, mean) -  pBeta) / pBeta ) else bBeta <- NULL
+      if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
       
       out <- append(out, list(
         bLambda = bLambda,
