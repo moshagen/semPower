@@ -17,7 +17,7 @@
 #' \item{`meanFmin`}{the estimated mean unbiased Fmin over replications (i. e., `fmin_0 = fmin_hat - df/N`).}
 #' \item{`meanFminGroups`}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, `meanFmin != sum(meanFminGroups)`}
 #' \item{`df`}{the model df.}
-#' \item{`nrep`}{the successful number of replications.}
+#' \item{`nrep`}{the number of successful replications.}
 #' \item{`bChiSq`}{median chi-square bias of the H1 model}
 #' \item{`bLambda`}{average median bias in lambda in the H1 model}
 #' \item{`bPhi`}{average median bias in phi in the H1 model}
