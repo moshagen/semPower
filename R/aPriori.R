@@ -21,7 +21,6 @@
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required.
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation.
 #' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
-#' @param seed for simulated power: the seed.
 #' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
 #' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
@@ -72,7 +71,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              modelH0 = NULL, modelH1 = NULL,
                              nReplications = 250, minConvergenceRate = .5, 
                              lavOptions = NULL, lavOptionsH1 = lavOptions, 
-                             seed = NULL,
                              ...){
   args <- list(...)
   
@@ -146,7 +144,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
   # simulated power  
   }else{
-    if(!is.null(seed)) set.seed(seed)
     iterationCounter <<- 1
 
     ### determine starting N using analytical power
