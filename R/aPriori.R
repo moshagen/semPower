@@ -158,9 +158,9 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
 
     
-    # for simulated power, we refuse to do anything
-    bPrecisionWarning <- (ap[['power']][['requiredN']] < pp[['p']])  
-    if(bPrecisionWarning) stop("Required N is smaller than the number of variables. Simulated power will not work well in this case because of very high nonconvergence rates.")
+    # for simulated power, we refuse to do anything when 2*p exceeds N
+    bPrecisionWarning <- (ap[['power']][['requiredN']] <= 2*pp[['p']])  
+    if(bPrecisionWarning) stop(paste0("The required N of ", ap[['power']][['requiredN']], " is probably smaller than twice the number of variables. Simulated a priori power will probably not work in this case. If N exceeds p, you can try a simulated post-hoc analyses."))
 
     # we need a pretty high tolerance because of sampling error: it doesn't make sense 
     # to suggest high accuracy when there it is in fact quite limited
@@ -186,8 +186,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     requiredN <- sum(ceiling(weights * chiCritOptim$par))
     requiredN.g <- ceiling(weights * requiredN)
 
-    # TODO catch small N situations?
-    
     # now call simulate with final N again to get all relevant parameters
     sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
                     Sigma = Sigma, mu = mu,
@@ -253,6 +251,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
       bPsi = sim[['bPsi']]
     ))
   }
+  
   class(result) <- "semPower.aPriori"
   result
 
