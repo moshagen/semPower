@@ -116,15 +116,15 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
             if(is.list(Sigma)) cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
             
-            # also store param est
+            # store param est
             cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
-            rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0]))))
+            rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0])))) # only non-zero loadings  
             cPsi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')]
-            rPsi <- append(rPsi, list(unlist(lapply(cPsi, function(x) x[x != 0]))))
+            rPsi <- append(rPsi, list(unlist(cPsi)))
             cBeta <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'beta')]
-            rBeta <- append(rBeta, list(unlist(lapply(cBeta, function(x) x[x != 0]))))
+            rBeta <- append(rBeta, list(unlist(cBeta)))
             cPhi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'phi')]
-            rPhi <- append(rPhi, list(unlist(lapply(cPhi, function(x) x[x != 0]))))
+            rPhi <- append(rPhi, list(unlist(cPhi)))
           }
         }
       }
@@ -190,16 +190,21 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
       bLambda <- mean( (apply(do.call(rbind, rLambda), 2, median) -  pLambda) / pLambda )
       
+      # for phi/psi/beta, we only consider population parameters that are larger than
+      # a small constant to avoid absurd relative biases for parameter with true values close to zero 
       cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
-      pPhi <- unlist(lapply(cPhi, function(x) x[x != 0]))
+      nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
+      pPhi <- unlist(lapply(cPhi, function(x) x[nonzero]))
       if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, median) -  pPhi) / pPhi ) else bPhi <- NULL
 
       cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
-      pPsi <- unlist(lapply(cPsi, function(x) x[x != 0]))
-      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi), 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
+      nonzero <- unlist(lapply(cPsi, function(x) which(abs(x) > .01)))
+      pPsi <- unlist(lapply(cPsi, function(x) x[nonzero]))
+      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi)[, nonzero], 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
       
       cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
-      pBeta <- unlist(lapply(cBeta, function(x) x[x != 0]))
+      nonzero <- unlist(lapply(cBeta, function(x) which(abs(x) > .01)))
+      pBeta <- unlist(lapply(cBeta, function(x) x[nonzero]))
       if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
       
       out <- append(out, list(
