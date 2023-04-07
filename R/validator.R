@@ -18,7 +18,6 @@
 #' @param mu observed (or population) mean vector
 #' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
-#' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param nReplications for simulated power: number of random samples drawn.
 #' @param minConvergenceRate for simulated power: the minimum convergence rate required
 #' @param lavOptions for simulated power: a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation.
@@ -30,7 +29,7 @@ powerPrepare <- function(type = NULL,
                          N = NULL, df = NULL, p = NULL,
                          SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
                          simulatedPower = FALSE, 
-                         modelH0 = NULL, modelH1 = NULL,
+                         modelH0 = NULL, 
                          nReplications = NULL, minConvergenceRate = NULL, lavOptions = NULL){
   
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
@@ -42,7 +41,7 @@ powerPrepare <- function(type = NULL,
                 N = N, df = df, p = p,
                 SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                 simulatedPower = simulatedPower, 
-                modelH0 = modelH0, modelH1 = modelH1)
+                modelH0 = modelH0)
 
   # convert vectors to lists and vice versa
   if(is.list(N) && length(N) == 1) N <- N[[1]]
@@ -103,21 +102,6 @@ powerPrepare <- function(type = NULL,
   
   if(simulatedPower){
     if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
-    if(nReplications < 100) warning("Empirical power estimate with < 100 replications will be unreliable.")
-    if(minConvergenceRate < .25) warning("Empirical power estimate allowing a low convergence rate might be unreliable.")
-    
-    # warn in case of long computation times
-    lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
-    costlyEstm <- (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% lavEstimators)
-    projectedLong <- (costlyEstm && ncol(Sigma) > 50 && nReplications > 100) || (ncol(Sigma) > 100 && nReplications > 500) || nReplications > 10000
-    if(projectedLong){
-      mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to go on?")
-      if(mResp != 1){
-        stop("Simulated power aborted")
-      }else{
-        cat("You have been warned.\n")
-      }
-    }
   }
   
   list(
@@ -155,7 +139,6 @@ powerPrepare <- function(type = NULL,
 #' @param mu observed (or population) mean vector
 #' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
-#' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
 #' @param power.min for plotting: minimum power
 #' @param power.max for plotting: maximum power
 #' @param effect.min for plotting: minimum effect
@@ -166,7 +149,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
                           SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
-                          simulatedPower = FALSE, modelH0 = NULL, modelH1 = NULL,
+                          simulatedPower = FALSE, modelH0 = NULL,
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){

@@ -15,8 +15,6 @@
 #' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. Only available if `Sigma` and `modelH0` are defined.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
-#' @param nReplications for simulated power: number of random samples drawn.
-#' @param minConvergenceRate for simulated power: the minimum convergence rate required.
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation.
 #' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
 #' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
@@ -72,8 +70,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                      simulatedPower = simulatedPower, 
-                     modelH0 = modelH0, modelH1 = modelH1,
-                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
+                     modelH0 = modelH0,
                      lavOptions = lavOptions)
 
   if(!simulatedPower){

@@ -42,12 +42,27 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      returnFmin = TRUE){
   
   if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
-  if(is.list(Sigma)) gN <- N[[1]] else gN <- N 
-  if(nvar >= gN) stop('Simulated power is not possible when the number of variables exceeds N.')
-  if(gN < 50 || 2*nvar >= gN) warning('In small N situations, simulated power will likely be inaccurate and yield high non-convergence rates.')
+  if(nvar >= min(unlist(N))) stop('Simulated power is not possible when the number of variables exceeds N.')
+  if(min(unlist(N)) < 50 || 2*nvar >= min(unlist(N))) warning('In small N situations, simulated power will likely be inaccurate and yield high non-convergence rates.')
   checkBounded(nReplications, bound = c(10, 100000), inclusive = TRUE)
   checkBounded(minConvergenceRate, bound = c(0.01, 1), inclusive = TRUE)
+  if(nReplications < 100) warning("Empirical power estimate with < 100 replications will be unreliable.")
+  if(minConvergenceRate < .25) warning("Empirical power estimate allowing a low convergence rate might be unreliable.")
   # remaining checks are done in corresponding power fnc
+  
+  # warn in case of long computation times
+  lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
+  costlyEstm <- (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% lavEstimators)
+  projectedLong <- (costlyEstm && ncol(Sigma) > 50 && nReplications > 100) || (ncol(Sigma) > 100 && nReplications > 500) || nReplications > 10000
+  if(projectedLong){
+    mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to go on?")
+    if(mResp != 1){
+      stop("Simulated power aborted")
+    }else{
+      cat("You have been warned.\n")
+    }
+  }
+  
   
   # we need to call lavaan() directly with defaults as defined in sem()
   lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
@@ -193,22 +208,29 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
       bLambda <- mean( (apply(do.call(rbind, rLambda), 2, median) -  pLambda) / pLambda )
       
+      bPhi <- bPsi <- bBeta <- NULL
       # for phi/psi/beta, we only consider population parameters that are larger than
       # a small constant to avoid absurd relative biases for parameter with true values close to zero 
       cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
-      nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
-      pPhi <- unlist(lapply(cPhi, function(x) x[nonzero]))
-      if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, median) -  pPhi) / pPhi ) else bPhi <- NULL
+      if(length(cPhi) > 0){
+        nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
+        pPhi <- unlist(lapply(cPhi, function(x) x[nonzero]))
+        if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, median) -  pPhi) / pPhi ) else bPhi <- NULL
+      }
 
       cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
-      nonzero <- unlist(lapply(cPsi, function(x) which(abs(x) > .01)))
-      pPsi <- unlist(lapply(cPsi, function(x) x[nonzero]))
-      if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi)[, nonzero], 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
+      if(length(cPsi) > 0){
+        nonzero <- unlist(lapply(cPsi, function(x) which(abs(x) > .01)))
+        pPsi <- unlist(lapply(cPsi, function(x) x[nonzero]))
+        if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi)[, nonzero], 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
+      }
       
       cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
-      nonzero <- unlist(lapply(cBeta, function(x) which(abs(x) > .01)))
-      pBeta <- unlist(lapply(cBeta, function(x) x[nonzero]))
-      if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
+      if(length(cBeta) > 0){
+        nonzero <- unlist(lapply(cBeta, function(x) which(abs(x) > .01)))
+        pBeta <- unlist(lapply(cBeta, function(x) x[nonzero]))
+        if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta)[, nonzero], 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
+      }
       
       out <- append(out, list(
         bChiSq = bChiSq,
