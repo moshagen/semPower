@@ -67,7 +67,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   }
   
   efmin <- efminGroups <- list()
-  rLambda <- rPhi <- rPsi <- rBeta <- list()
+  rChiSq <- rLambda <- rPhi <- rPsi <- rBeta <- list()
   ePower <- 0
   r <- rr <- 1
   progress <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
@@ -117,6 +117,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             if(is.list(Sigma)) cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
             
             # store param est
+            rChiSq <- append(rChiSq, lavaan::fitMeasures(lavresH1, 'chisq'))
             cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
             rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0])))) # only non-zero loadings  
             cPsi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')]
@@ -186,6 +187,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       if(lavresPop@optim$fx > 1e-6) warning('H1 model is not properly specified.')
 
       # calc bias
+      bChiSq <- (median(unlist(rChiSq)) - lavaan::fitMeasures(lavresPop, 'df')) / lavaan::fitMeasures(lavresPop, 'df')
+      
       cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
       pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
       bLambda <- mean( (apply(do.call(rbind, rLambda), 2, median) -  pLambda) / pLambda )
@@ -208,6 +211,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta), 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
       
       out <- append(out, list(
+        bChiSq = bChiSq,
         bLambda = bLambda,
         bPhi = bPhi,
         bBeta = bBeta,

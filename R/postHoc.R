@@ -140,6 +140,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
     result <- append(result, list(
       nrep = nrep,
       convergenceRate = sim[['convergenceRate']],
+      bChiSq = sim[['bChiSq']],
       bLambda = sim[['bLambda']],
       bPhi = sim[['bPhi']],
       bBeta = sim[['bBeta']],

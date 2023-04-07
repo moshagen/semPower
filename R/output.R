@@ -169,8 +169,10 @@ getFormattedResults <- function(type, result, digits = 6){
 getFormattedSimulationResults <- function(object, digits = 2){
 
   simOut <- data.frame(NA, ncol = 2)
-  simOut[1, ] <- c('Convergence Rate (%)', formatC(c(100*object[['convergenceRate']]), format = 'f', digits = digits))
+  simOut[1, ] <- c('Convergence Rate (%) of the H0 model', formatC(c(100*object[['convergenceRate']]), format = 'f', digits = digits))
   simOut[2, ] <- c('', '')
+  simOut[3, ] <- c('Chi-Squared Bias (%) of the H1 model', formatC(c(100*object[['bChiSq']]), format = 'f', digits = digits))
+  simOut[4, ] <- c('', '')
   
   if(!is.null(object[['bLambda']])){
     simOut <- rbind(simOut, c('Average Parameter Bias (%) in the H1 Model:', ''))
