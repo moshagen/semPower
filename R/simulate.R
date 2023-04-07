@@ -18,6 +18,7 @@
 #' \item{`meanFminGroups`}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, `meanFmin != sum(meanFminGroups)`}
 #' \item{`df`}{the model df.}
 #' \item{`nrep`}{the number of successful replications.}
+#' \item{`convergenceRate`}{the convergence rate of the H0 model.}
 #' \item{`bChiSq`}{median chi-square bias of the H1 model}
 #' \item{`bLambda`}{average median bias in lambda in the H1 model}
 #' \item{`bPhi`}{average median bias in phi in the H1 model}
@@ -31,17 +32,25 @@
 #'  
 #' @examples
 #' \dontrun{
-#' # get Sigma and modelH0
-#' powerCFA <- semPower.powerCFA(type = 'a-priori',
+#' # create Sigma and modelH0 using powerCFA
+#' powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, beta = .05,
 #'                               comparison = 'saturated',
-#'                               Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)), 
-#'                               alpha = .05, beta = .05)
+#'                               Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)) 
+#'                               )
 #' # perform simulation       
 #' simulate(modelH0 = powerCFA$modelH0, 
-#'          powerCFA$Sigma,
+#'          Sigma = powerCFA$Sigma,
 #'          N = powerCFA$power$requiredN,
-#'          alpha = powerCFA$power$alpha)
+#'          alpha = .05)
 #' }
+#' # same with additional options       
+#' simulate(modelH0 = powerCFA$modelH0, 
+#'          Sigma = powerCFA$Sigma,
+#'          N = powerCFA$power$requiredN,
+#'          alpha = .05, 
+#'          simOptions = list(nReplications = 500, minConvergenceRate = .80))
+#' }
+#' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
 simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      Sigma = NULL, mu = NULL, 
