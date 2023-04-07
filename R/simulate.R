@@ -81,7 +81,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   costlyEstm <- (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% lavEstimators)
   projectedLong <- (costlyEstm && ncol(Sigma) > 50 && nReplications > 100) || (ncol(Sigma) > 100 && nReplications > 500) || nReplications > 10000
   if(projectedLong){
-    mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to go on?")
+    mResp <- menu(c("Yes", "No"), title = "Simulated power with the specified model, the number of replications, and the type of estimator will presumably take a long time.\nDo you really want to proceed?")
     if(mResp != 1){
       stop("Simulated power aborted.")
     }else{
@@ -225,7 +225,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                            append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = sample.nobs, 
                                        sample.cov.rescale = FALSE),
                                   lavOptionsH1))
-      if(lavresPop@optim$fx > 1e-6) warning('H1 model is not properly specified.')
+      if(lavresPop@optim[['fx']] > 1e-6) warning('H1 model is not properly specified.')
 
       # calc bias
       bChiSq <- (median(unlist(rChiSq)) - lavaan::fitMeasures(lavresPop, 'df')) / lavaan::fitMeasures(lavresPop, 'df')
@@ -236,7 +236,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       
       bPhi <- bPsi <- bBeta <- NULL
       # for phi/psi/beta, we only consider population parameters that are larger than
-      # a small constant to avoid absurd relative biases for parameter with true values close to zero 
+      # a small constant to avoid absurd relative biases for parameters with true values close to zero 
       cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
       if(length(cPhi) > 0){
         nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
