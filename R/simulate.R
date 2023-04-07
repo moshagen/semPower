@@ -40,7 +40,10 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      nReplications = 250, minConvergenceRate = .5,
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
-
+  
+  if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
+  if(nvar >= N) stop('Simulated power is not possible when the number of variables exceeds N.')
+  if(N < 50 || 2*nvar >= N) warning('In small N situations, simulated power will likely be inaccurate and yield high non-convergence rates.')
   checkBounded(nReplications, bound = c(10, 100000), inclusive = TRUE)
   checkBounded(minConvergenceRate, bound = c(0.01, 1), inclusive = TRUE)
   # remaining checks are done in corresponding power fnc
