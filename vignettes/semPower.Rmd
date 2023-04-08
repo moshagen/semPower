@@ -448,10 +448,10 @@ This shows that 858 observations (286 by group) are required for a power of 80%.
 ## Define the effect through covariance matrices {#InputCovMatrix}
 
 The previous sections assumed that the magnitude of effect is determined by defining a certain effect size metric (such as $F_0$ or RMSEA) and a certain magnitude of effect. Alternatively, the effect can also be determined by specifying the population ($\Sigma$) and the model-implied ($\hat{\Sigma}$) covariance matrices (and, if means are part of the model, $\mu$ and $\hat{\mu}$) directly. To determine the associated effect in terms of F0, `semPower` just plugs these matrices in the ML-fitting function: 
+??? please check whether changes in equation are correct
+$$F_0 = \log|\hat{\Sigma}| - \log|\Sigma| + tr(\Sigma\hat{\Sigma}^{-1}) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
 
-$$F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\hat{\Sigma}\Sigma) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
-
-Suppose, $\Sigma$ and $\hat{\Sigma}$ have been defined previously and are referred to by the variables `Sigma` and `SigmaHat` Then, any of the power-analysis functions is called setting the `Sigma` and `SigmaHat` arguments accordingly (and omitting the `effect` and `effect.measures` arguments). This could look as follows:
+Suppose, $\Sigma$ and $\hat{\Sigma}$ have been defined previously and are referred to by the variables `Sigma` and `SigmaHat` Then, any of the power-analysis functions is called by setting the `Sigma` and `SigmaHat` arguments accordingly (and omitting the `effect` and `effect.measures` arguments). This could look as follows:
 
 ```{r eval=FALSE}
 semPower.aPriori(alpha = .05, power = .80, df = 100, 
@@ -464,7 +464,7 @@ semPower.powerPlot.byN(alpha = .05, df = 100, power.min = .05, power.max = .99,
                        Sigma = Sigma, SigmaHat = SigmaHat)
 ```
 
-This feature is particularly useful when used in conjunction with other functions provided by `semPower` and is indeed internally used by all functions performing [model-based power analyses](#modelBasedPower). An example on how to obtain the relevant covariance matrices is provided in a [later chapter](#powerCov).
+This feature is particularly useful when used in conjunction with other functions provided by `semPower` and is indeed internally used by all functions performing [model-based power analyses](#modelBasedPower). An example of how to obtain the relevant covariance matrices is provided in a [later chapter](#powerCov).
 
 
 
@@ -480,21 +480,21 @@ Given that the functions performing a model-based power analysis operate on a fa
  
 ## Definition of the factor model {#factorDefinition}
 
-Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also need to be specified if the model does not include any factor, but operates on observed variables (such as a CLPM based on observed scores, rather than on latent factors). There are several ways to achieve this, which are documented further below, for the impatient reader the easiest way is to add `Lambda = diag(p)`, where p is the number of variables contained in the model.
+Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also needs to be specified if the model does not include any factor, but operates on observed variables only (such as a CLPM based on observed scores rather than on latent factors). There are several ways to achieve this, which are documented further below. (??? I think I would omit the following subsentence. It might be confusing because it is a bit out of context) for the impatient reader the easiest way is to add `Lambda = diag(p)`, where p is the number of variables contained in the model.
 
-The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings also affects power, although to a (considerably) lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
+The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings (??? what is meant by the dispersion of factor loadings?) also affects power, although to a (considerably) lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
 
-Any `semPower` convenience function expects one of the following arguments defining the factor model:
+Any `semPower` convenience function expects one of the following arguments to define the factor model:
 
 * `Lambda` to define the loading matrix.
 * `loadings` to define a reduced loading matrix that only contains the primary loadings.
-*  `nIndicator` in conjunction with `loadM`  to define the number of indicators by factor along with a single loading for the indicators of each factor or a single loading to apply for all indicators. 
+*  `nIndicator` to define the number of indicators per factor in conjunction with `loadM` to define a single loading (??? magnitude?) for the indicators of each factor or a single loading (??? magnitude?) to apply for all indicators. 
 
-In general, the `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loading magnitude within a factor. This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
+The `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loading magnitude within a factor (??? Again, what is meant by dispersion exactly? I think I know what you mean from the context but this could be clarified). This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
 
 ##### Provide the full loading matrix (`Lambda`)  {-}
 
-Suppose there are two factors measured by 3 and 4 indicators, respectively, and all loadings are equal to .5. The first option to define this factor model is to provide a loading matrix as value to the `Lambda` argument:
+Suppose there are two factors measured by 3 and 4 indicators, respectively, and all loadings are equal to .5. The first option to define this factor model is to provide a loading matrix for the `Lambda` argument:
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
@@ -510,7 +510,7 @@ Lambda <- matrix(c(
 
 ##### Provide the primary factor loadings only (`loadings`)  {-}
 
-A second way to define the model above is to provide a list comprising two vectors as value to the `loadings` argument:
+A second way to define the model above is to provide a list comprising two vectors for the `loadings` argument:
 
 ```{r eval=FALSE}
 loadings <- list(
@@ -544,14 +544,14 @@ loadings <- list(
 ```
 
 
-##### Provide a single loading to apply to indicator of a specific factor (`nIndicator` and `loadM`)  {-}
+##### Provide a single loading (??? magnitude?) to apply to indicator (??? all indicators?) of a specific factor (`nIndicator` and `loadM`)  {-}
 
 A third way to define two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5, is to provide both the `nIndicator` and the `loadM` arguments:
 ```{r eval=FALSE}
 nIndicator <- c(3, 4)
 loadM <- .5
 ```
-`nIndicator` is a vector providing the number of indicators separately for each factor. `loadM` can be a single number (as in the example above) to say that all loadings have the same value. Alternatively, `loadM` can be a vector specifying the loadings separately for each factor, where each indicator of a specific factor takes the defined value as loading. Thus, specifying `loadM <- c(.5, .5)` would achieve the same result, whereas `loadM <- c(.5, .6)` would assign all indicators of the second factor a loading of .6. 
+`nIndicator` is a vector providing the number of indicators separately for each factor. `loadM` can be a single number (as in the example above) to say that all loadings have the same value. Alternatively, `loadM` can be a vector specifying the loadings separately for each factor, where each indicator of a specific factor takes the defined value as loading. Thus, specifying `loadM <- c(.5, .5)` would achieve the same result as the code above, whereas `loadM <- c(.5, .6)` would assign all indicators of the second factor a loading of .6. 
 
 ##### Factor models involving observed covariates {-}
 To include additional observed variables (that do not act as a factor indicator) in a model, a dummy factor with a single indicator loading by 1 can be defined. For instance, each of the following options defines an observed variable and a factor with 4 indicators loading by .5 each:
@@ -574,7 +574,7 @@ Lambda <- matrix(c(
 ```
 
 ##### Models including observed variables only {-}
-The "factor" model also needs to be defined, when the model does not include any factor, but only contains observed variables. Consider a CLPM with two waves based on observed variables only, so there are 4 observed variables in total. Requesting an observed only model can be achieved by using either of the following:
+The "factor" model also needs to be defined when the model does not include any factor, but only contains observed variables. Consider a CLPM with two waves based on observed variables only, so there are 4 observed variables in total. Requesting an observed only model can be achieved by using either of the following:
 
 * `Lambda = diag(4)`
 * `loadings = as.list(rep(1, 4))`
@@ -614,12 +614,12 @@ loadM <- list(
   c(.4, .7)
 )
 ```
-Because the number of indicators by factor is usually assumed to be identical across groups, the list structure for `nIndicator` can also be omitted (e.g., `nIndicator = c(3, 4)`). Similarly, when assuming all loadings are equal as well, the list structure for `loadM` may be omitted as well, provided that at least one additional argument referring to the factor model (such as `Phi` , `Alpha`, or `tau`) is a list.
+Because the number of indicators per factor is usually assumed to be identical across groups, the list structure for `nIndicator` can also be omitted (e.g., `nIndicator = c(3, 4)`). Similarly, when also assuming that all loadings are equal across groups, the list structure for `loadM` may be omitted as well, provided that at least one additional argument referring to the factor model (such as `Phi` , `Alpha`, or `tau`) is a list.
 
 
 ## Arguments common to all convenience functions {#commonArgs}
 
-Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to a specific function, a number of arguments are expected by all functions:
+Whereas all convenience functions expect certain arguments (or values provided as arguments) that are unique to the specific function, a number of arguments are expected by all functions:
 
 * The type of power analysis requested (`type`):
     + Use `type = 'a-priori'` (or `'ap'`) to request an [a-priori power analysis](#ap) and provide the alpha error (e. g., `alpha = .05`) and the desired beta error (e. g., `beta = .20`; or equivalently, the desired power, `power = .80`).  
@@ -652,10 +652,12 @@ powerCFA <- semPower.powerCFA(
   )
 ```
 
+??? General comment: You often write e.g., that "an indicator loads by .6". Is "by" really the correct preposition here? It sounds a bit strange to me, but I am also not sure which preposition would be better. Maybe "the indicator loads at .6?" 
+
 
 ## CFA models {#powerCFA}
 
-`semPower.powerCFA` is used to perform power analyses to reject hypotheses arising in a standard CFA model involving several factors or factor(s) and one or more additional observed covariates. `semPower.powerCFA` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerCFA` is used to perform power analyses to reject hypotheses arising in a standard CFA model involving several factors or factor(s) (??? what do you mean by "or factor(s)") and one or more additional observed covariates. `semPower.powerCFA` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
@@ -676,15 +678,15 @@ powerCFA <- semPower.powerCFA(
 
 * `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
 
 
 ##### Detect whether a correlation differs from zero {-}
 
-To perform a power analysis to detect whether a correlation between factors differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
+To perform a power analysis to detect whether a correlation between factors differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and could thus be omitted). 
 
-In the simplest case, the model contains exactly two factors, so only the to-be detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The first factors is measured by 4 indicators, the second factor by 3 indicators (`nIndicator = c(4, 3)`). All indicators of the first factor load by .5, whereas all indicators of the second factor load by .6 (`loadM = c(.5, .6)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
+In the simplest case, the model contains exactly two factors, so only the to-be-detected factor correlation needs to be specified (along the factor model itself). For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a factor correlation of at least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The first factor is measured by 4 indicators and the second factor by 3 indicators (`nIndicator = c(4, 3)`). All indicators of the first factor load by .5, whereas all indicators of the second factor load by .6 (`loadM = c(.5, .6)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(
@@ -710,11 +712,11 @@ powerCFA <- semPower.powerCFA(
                               # define measurement model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
 ```
-Now, `summary(powerCFA$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerCFA$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
-If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, `nIndicator = c(4, 1)` and `loadM = c(.5, 1)` define a factor with 4 indicators loadings by .5 each and another dummy factor with a single indicator loading by 1 (which is then simply an observed variable):
+If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, `nIndicator = c(4, 1)` and `loadM = c(.5, 1)` define a factor with 4 indicators loading by .5 each and another dummy factor with a single indicator loading by 1 (which is then simply an observed variable):
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
@@ -766,7 +768,7 @@ Note that `nullWhich` is now a list comprising two vectors, jointly defining whi
 
 `nullWhich` can also comprise more than two elements to test for the equality of more than two correlations. For instance, using `nullWhich = list(c(1, 2), c(1, 3), c(2, 3))` in the scenario above constrains all factor correlations to be equal.
 
-As before, it is also possible to include observed covariates instead of latent factors by just defining a dummy factor with a single indicator loading by 1. For example, to replace the first factor in the example above by an observed variable (thus asking for the required N to detect that two factors correlate differently to an observed outcome), the factor model is changed by altering `nIndicator` and `loadM`: 
+As before, it is also possible to include observed covariates instead of latent factors by simply defining a dummy factor with a single indicator loading by 1. For example, to replace the first factor in the example above by an observed variable (thus asking for the required N to detect that two factors correlate differently to an observed outcome), the factor model is changed by altering `nIndicator` and `loadM`: 
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
@@ -827,6 +829,8 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 
 ## Models involving a bifactor structure {#powerBifactor}
 
+??? As a general comment, I am not sure what you refer to when you write "bifactor". Is it only the general factor or the complete bifactor structure? Edit: It gets clear from the first subsection onwards, but it should also be clearly states in the beginning.
+
 `semPower.powerBifactor` is used to perform power analyses to reject correlational hypotheses arising in a model involving one bifactor and at least one additional variable, which can also be a bifactor, a standard factor, or an observed covariate. `semPower.powerBifactor` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
@@ -855,7 +859,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 
 
 ##### Definition of the bifactor structure {-}
-A model involving a bifactor structure implies that each indicator that is part of the structure loads on both a general factor (the bifactor) and on a specific factor. In orthogonal bifactor models, the general and the specific factor are independent. A bifactor is defined by specifying the number of indicators and the respective loadings on the bifactor in the argument `bfLoadings`. The specific factors comprised in the bifactor structure are defined in `bfWhichFactors`, and the number of indicators and loadings on the specific factors in either `Lambda`, `loadings`, or `nIndicator` and `loadM` (see the chapter on [specifying a factor model](#factorDefinition)). The latter arguments also include the number of indicators and loadings defining the covariate(s).
+A model involving a bifactor structure implies that each indicator that is part of the structure loads on both a general factor (the bifactor) and on a specific factor. In orthogonal bifactor models, the general and the specific factors are independent. A bifactor is defined by specifying the number of indicators and the respective loadings on the bifactor in the argument `bfLoadings`. The specific factors comprised in the bifactor structure are defined in `bfWhichFactors`, and the number of indicators and loadings on the specific factors in either `Lambda`, `loadings`, or `nIndicator` and `loadM` (see the chapter on [specifying a factor model](#factorDefinition)). The latter arguments also include the number of indicators and loadings defining the covariate(s).
 
 Note that identifying and estimating models involving a bifactor can be rather tricky, in particular when there is more than a single bifactor structure. Be prepared to receive warnings about non-convergence and adapt your model accordingly. Indeed, a common warning is `lavaan` complaining about a non-positive definite covariance matrix between the latent variables, which can be safely ignored. Concerning identification, it is generally recommended to define at least one indicator that only loads on the bifactor, but not on any of the specific factors.
 
@@ -890,9 +894,9 @@ BF & S_1 & S_2 & S_3 & COV\\
 0 & 0 & 0 & 0 & .85
 \end{pmatrix}$$
 
-Note that the bifactor comprises 10 indicators, whereas the specific factors jointly comprise only 9 indicators, so that one indicator solely loads on the bifactor. This is in fact desired and recommended to ensure that the model is identified. Any indicator that is exclusive for the bifactor is not part of the `loadings` argument, so that in the example above the first indicator loads on the bifactor only, and the second indicator is the first indicator of the first specific factor.
+Note that the bifactor comprises 10 indicators, whereas the specific factors jointly comprise only 9 indicators, so that one indicator solely loads on the bifactor. This is in fact desired and recommended to ensure that the model is identified. Any indicator that is exclusive for the bifactor is not part of the `loadings` argument, so that, in the example above, the first indicator loads on the bifactor only and the second indicator is the first indicator of the first specific factor.
 
-If a certain indicator should only load on the specific factor, but not on the bifactor, define the respective loading on the bifactor to equal zero. In the following example, the first indicator of the specific factor (and thus the second indicator of the bifactor) only loads in the specific factor:
+If a certain indicator should only load on the specific factor, but not on the bifactor, define the respective loading on the bifactor to equal zero. In the following example, the first indicator of the specific factor (and thus the second indicator of the bifactor) only loads on the specific factor:
 
 ```{r eval=FALSE}
 bfLoadings <- c(.5, 0, .5, .5, .5, .5, .5, .5, .5, .5)
@@ -905,7 +909,7 @@ loadings <- list(
 )
 ```
 
-The correlations betwen the bifactor(s) and the covariate(s) are defined in `Phi`. However, given that orthogonal bifactor models require all correlations between the bifactor and the specific factors to be zero, `Phi` *must* omit the specific factors and only include the bifactor(s) and the covariate(s) assuming the following order: $(BF_1, \cdots, BF_k, COV_1, \cdots, COV_k)$. For instance, to define the correlation between the bifactor and the covariate in the example above to be .30, `Phi` becomes a matrix with 2 rows and 2 columns:
+The correlations between the bifactor(s) and the covariate(s) are defined in `Phi`. However, given that orthogonal bifactor models require all correlations between the bifactor and the specific factors to be zero, `Phi` *must* omit the specific factors and only include the bifactor(s) and the covariate(s) assuming the following order: $(BF_1, \cdots, BF_k, COV_1, \cdots, COV_k)$. For instance, to define the correlation between the bifactor and the covariate in the example above to be .30, `Phi` becomes a matrix with 2 rows and 2 columns:
 
 ```{r eval=FALSE}
 Phi <- matrix(c(
@@ -914,7 +918,7 @@ Phi <- matrix(c(
 ), ncol = 2, byrow = TRUE)
 ```
 
-The same approach is used for more complex structures involving more than one bifactor and more than one covariate. If more than one bifactor is to be defined, `bfLoadings` and `bfWhichFactors` become lists, where each component refers to a particular bifactor. For instance, the following defines two bifactors. The first involves 10 indicators all loadings by .6 (`rep(.6, 10)`), the second involves 11 indicators all loadings by .6 (`rep(.6, 11)`). Both bifactors comprise 3 specific factors (`bfWhichFactors`), the first factors 1-3 (`c(1, 2, 3)`) and the second factors 4-6 (`c(4, 5, 6)`). The `loadings` argument shows that the specific factors 1-3 (that are part of the first bifactor) all involve three indicators, whereas the specific factors 4-6 (that are part of the second bifactor) involve 4, 3, and 3 indicators, respectively. Further, `loadings` also defines a factor that is not part of any of the bifactors and thus act as a covariate. The covariate is a factor with 4 indicators, all loading by .6 (`c(.6, .6, .6, .6)`). As there are now two bifactors and one additional covariate, `Phi`, defining their intercorrelations, must be a $3 \cdot 3$ matrix, where the columns 1-2 refer to the bifactors, and the third column to the covariate. The correlations in `Phi` imply that the correlations between the bifactors is .3. The covariate correlates by .5 and .1 to the first and second bifactor, respectively.
+The same approach is used for more complex structures involving more than one bifactor and more than one covariate. If more than one bifactor is to be defined, `bfLoadings` and `bfWhichFactors` become lists, where each component refers to a particular bifactor. For instance, the following defines two bifactors. The first involves 10 indicators that all load by .6 (`rep(.6, 10)`), the second involves 11 indicators that all load by .6 (`rep(.6, 11)`). Both bifactors comprise 3 specific factors (`bfWhichFactors`), the first factors 1-3 (`c(1, 2, 3)`) and the second factors 4-6 (`c(4, 5, 6)`). The `loadings` argument shows that the specific factors 1-3 (that are part of the first bifactor) all involve three indicators, whereas the specific factors 4-6 (that are part of the second bifactor) involve 4, 3, and 3 indicators, respectively. Further, `loadings` also defines a factor that is not part of any of the bifactors and thus acts as a covariate. The covariate is a factor with 4 indicators that all load by .6 (`c(.6, .6, .6, .6)`). As there are now two bifactors and one additional covariate, `Phi`, defining their intercorrelations, must be a $3 \cdot 3$ matrix, where the columns 1-2 refer to the bifactors, and the third column to the covariate. The correlations in `Phi` imply that the correlations between the bifactors is .3. The covariate correlates at .5 and .1 with the first and second bifactor, respectively.
 
 ```{r eval=FALSE}
 bfLoadings <- list(rep(.6, 10),
@@ -943,9 +947,9 @@ Phi <- matrix(c(
 
 ##### Detect whether a correlation differs from zero {-}
 
-To perform a power analysis to detect whether a correlation between a bifactor and another factor or observed covariate differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and thus could be omitted). 
+To perform a power analysis to detect whether a correlation between a bifactor and another factor or observed covariate differs from zero, use `nullEffect = 'cor = 0'` (which is also the default hypothesis and could thus be omitted). 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the covariate of at least .30 (`Phi`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `nullWhich = c(1, 2)` defines which correlation between the factors should be restricted to zero. In this example, there is only a single correlation in `Phi`, so `nullWhich` must be `c(1, 2)`. The arguments related to the definition of the bifactor structure were described in detail in the previous section, implying a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and a covariate not part of the bifactor structure with 4 indicators. 
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the covariate of at least .30 (`Phi`) differs from zero (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `nullWhich = c(1, 2)` defines which correlation between the factors should be restricted to zero. In this example, there is only a single correlation in `Phi`, so `nullWhich` must be `c(1, 2)`. The arguments related to the definition of the bifactor structure were described in detail in the previous section. Here, a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and a covariate not part of the bifactor structure with 4 indicators are defined. 
 
 ```{r eval=FALSE}
 bfLoadings <- rep(.5, 10)
@@ -993,7 +997,7 @@ powerBF <- semPower.powerBifactor(
 ```
 Now, `summary(powerBF$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
-If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, the fourth factor defined in  `loadings` comprises a single indicator loading by 1 `c(1)`, which is then simply an observed variable:
+If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, the fourth factor defined in `loadings` comprises a single indicator loading by 1 `c(1)`, which is then simply an observed variable:
 ```{r eval=FALSE}
 bfLoadings <- rep(.5, 10)
 bfWhichFactors <- c(1, 2, 3)
@@ -1062,7 +1066,7 @@ In the examples above, a power analysis was performed by comparing the implied H
 
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'corX = corZ'`. 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the first covariate (of .30) differs from the correlation of between the bifactor and the second covariate (of .50; `nullEffect = 'corX = corZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The arguments related to the definition of the bifactor structure were described in detail in one of the previous sections, implying a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and two covariates that are not part of the bifactor structure with 4 and 5 indicators, respectively. 
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a correlation between the bifactor and the first covariate (of .30) differs from the correlation between the bifactor and the second covariate (of .50; `nullEffect = 'corX = corZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The arguments related to the definition of the bifactor structure were described in detail in one of the previous sections. Here, a bifactor spanning 10 indicators, three specific factors with 3 indicators each, and two covariates that are not part of the bifactor structure with 4 and 5 indicators, respectively, are defined. 
 
 ```{r eval=FALSE}
 bfLoadings <- rep(.5, 10)
@@ -1093,14 +1097,14 @@ powerBF <- semPower.powerBifactor(
                                   )
 ```
 
-Note that `nullWhich` is now a list comprising two vectors, jointly defining which correlations defined in `Phi` to set to equality. `nullWhich = list(c(1, 2), c(1, 3))` says that the correlation between the first and the second factor (`c(1, 2)`) and the correlation between the first and the third (`c(1, 3)`) factor are restricted to be equal. Since the first factor in `Phi` refers to the bifactor, this means that the correlation of the bifactor to the two covariates is targeted by the null hypothesis.
+Note that `nullWhich` is now a list comprising two vectors, jointly defining which correlations defined in `Phi` to set to equality. `nullWhich = list(c(1, 2), c(1, 3))` says that the correlation between the first and the second factor (`c(1, 2)`) and the correlation between the first and the third factor (`c(1, 3)`) are restricted to be equal. Since the first factor in `Phi` refers to the bifactor, this means that the correlation of the bifactor to the two covariates is targeted by the null hypothesis.
 
 
 ##### Detect whether a correlation differs across two or more groups {-}
 
 To perform a power analysis to detect whether a correlation differs across two or more groups, use `nullEffect = 'corA = corB'`. 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between the bifactor and the covarite in group 1 (of .30) differs from the one in group 2 (of .10; `nullEffect = 'corA = corB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The measurement model is identical in both groups and implies a bifactor measured by 10 indicators (`bfLoadings`) spanning three specific factors (`bfWhichFactors`) measured by 3 indicators each, and an additional covariate (that not part of the bifactor structure) measured by 4 indicators (`loadings`). See above for details. `Phi` is now a list comprising two elements, the first defining the correlation between the bifactor and the covariate in the first group (`Phi1`), the second defining the corresponding correlation in the second group (`Phi2`). In addition, `N` must also be a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the correlation between the bifactor and the covariate in group 1 (of .30) differs from the one in group 2 (of .10; `nullEffect = 'corA = corB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The measurement model is identical in both groups and implies a bifactor measured by 10 indicators (`bfLoadings`) spanning three specific factors (`bfWhichFactors`) measured by 3 indicators each, and an additional covariate (that is not part of the bifactor structure) measured by 4 indicators (`loadings`). See above for details. `Phi` is now a list comprising two elements, the first defining the correlation between the bifactor and the covariate in the first group (`Phi1`), the second defining the corresponding correlation in the second group (`Phi2`). In addition, `N` must also be a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 bfLoadings <- rep(.6, 10)
@@ -1138,7 +1142,7 @@ powerBF <- semPower.powerBifactor(
 ```
 
 
-If there are more than two groups, the targeted correlation is held equal across all groups by default. If the correlation should only be constrained to equality in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, the following expands the previous example by defining another `Phi` for a third group and then asks for the required sample to detect that the correlation in group 1 differs from the one in group 3 (`nullWhichGroups = c(1, 3)`). 
+If there are more than two groups, the targeted correlation is held equal across all groups by default. If the correlation should only be constrained to equality in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, the following expands the previous example by defining another `Phi` for a third group and then asks for the required sample size to detect that the correlation in group 1 differs from the one in group 3 (`nullWhichGroups = c(1, 3)`). 
 
 ```{r eval=FALSE}
 # correlations in group 3
@@ -1161,7 +1165,7 @@ powerBF <- semPower.powerBifactor(
                                   )
 ```
 
-
+??? Maybe you could add an example on how to perform a cross-group comparison of a model with two bifactors? Some readers might wonder how the definition of the loadings would look like. Would you first need a list for the two bifactors and then an overarching list for the two groups?
 
 
 ## Latent regression models {#powerRegression}
@@ -1171,7 +1175,7 @@ powerBF <- semPower.powerBifactor(
 * whether two slopes ($\beta_i$, $\beta_j$) differ from each other (`nullEffect = 'slopeX = slopeZ'`).
 * whether a slope ($\beta_{i,m}$, $\beta_{i,n}$) differs across two or more groups (`nullEffect = 'slopeA = slopeB'`).
 
-`semPower.powerRegression` only addresses hypotheses concerning slope(s) in a latent regression. `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerRegression` only addresses hypotheses concerning slope(s) in a latent regression (??? but you could also use it for manifest regression when defining only observed variables, right?). `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerRegression` expects the following arguments:
 
@@ -1193,9 +1197,9 @@ powerBF <- semPower.powerBifactor(
 
 
 ##### Detect whether a slope differs from zero {-}
-To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'slope = 0'` (which is also the default and thus could be omitted). 
+To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'slope = 0'` (which is also the default and could thus be omitted). 
 
-For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerRegression` treats the first defined factor as criterion ($Y$) and the remaining factors as predictors (here: $X_1$ and $X_2$), so in the present example the criterion is measured by 3 indicators loading by .5 each. The slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .2 and .3, respectively (`slopes = c(.2, .3)`) and the correlation between the predictors is defined to be .4 (`corXX = .4`). Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the first slope (`nullWhich = 1`) differs from zero (`nullEffect = 'slope = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerRegression` treats the first defined factor as the criterion ($Y$) and the remaining factors as predictors (here: $X_1$ and $X_2$), so, in the present example, the criterion is measured by 3 indicators loading by .5 each. The slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .2 and .3, respectively (`slopes = c(.2, .3)`) and the correlation between the predictors is defined to be .4 (`corXX = .4`). Finally, the required sample (`type = 'a-priori'`) is requested to detect that the first slope (`nullWhich = 1`) differs from zero (`nullEffect = 'slope = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
                                      # define type of power analysis
@@ -1210,7 +1214,7 @@ powerReg <- semPower.powerRegression(
                                      loadM = c(.5, .6, .7))
 summary(powerReg$power)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerReg$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerReg$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1275,7 +1279,7 @@ Similarly, using `nIndicator = c(6, 1, 4)` and `loadM = c(.5, 1, .7)` would make
 ##### Detect whether two slopes differ from each other {-}
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'slopeX = slopeZ'`.
 
-For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`; see [definition of a factor model](#factorDefinition)). Recall that the first factor is treated as criterion ($Y$). Having defined the criterion and the predictors, the slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .1 and .4, respectively (`slopes = c(.1, .4)`) and the correlation between the predictors is defined to be .25 (`corXX = .25`). Finally, the the required sample (`type = 'a-priori'`, `nullWhich = c(1, 2)`) is requested to detect that the first slope differs from the second slope (`nullEffect = 'slopeX = slopeZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`; see [definition of a factor model](#factorDefinition)). Recall that the first factor is treated as criterion ($Y$). Having defined the criterion and the predictors, the slopes of $X_1$ and $X_2$ in the prediction of $Y$ are defined to be .1 and .4, respectively (`slopes = c(.1, .4)`) and the correlation between the predictors is defined to be .25 (`corXX = .25`). Finally, the required sample (`type = 'a-priori'`, `nullWhich = c(1, 2)`) is requested to detect that the first slope differs from the second slope (`nullEffect = 'slopeX = slopeZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
@@ -1299,7 +1303,7 @@ Note that `nullWhich` is now a vector defining which slopes should be set to equ
 
 To perform a power analysis to detect whether a slope differs across two or more groups, use `nullEffect = 'slopeA = slopeB'`. 
 
-For instance, the following sets up four factors measured by 4, 5, 3, and 6 indicators (`nIndicator = c(4, 5, 3, 6)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, all of the third factor by .7, and all of the fourth factor by .6 (`loadM = c(.5, .6, .7, .6)`; see [definition of a factor model](#factorDefinition)). Recall that the first factor is treated as criterion ($Y$), and the remaining factors as predictors. The predictors are correlated according to the matrix defined in `corXX`. Note that this part of the factor model is identical across groups, which is indeed a prerequesite to allow for meaningful cross-group comparisons of slopes. However, seperate regression relationships are defined for each group by using a list structure as value to the `slopes` argument: In the first group, the regression equation is $\hat{Y} = .2 \cdot X_1 + .3 \cdot X_2 + .4 \cdot X_3$ (`c(.2, .3, .4)`), whereas in the second group it is $\hat{Y} = .2 \cdot X_1 + .05 \cdot X_2 + .4 \cdot X_3$ (`c(.2, .05, .4)`). Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the second slope ($\beta_2$, `nullWhich = 2`) differs across groups (`nullEffect = 'slopeA = slopeB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following sets up four factors measured by 4, 5, 3, and 6 indicators (`nIndicator = c(4, 5, 3, 6)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, all of the third factor by .7, and all of the fourth factor by .6 (`loadM = c(.5, .6, .7, .6)`; see [definition of a factor model](#factorDefinition)). Recall that the first factor is treated as criterion ($Y$), and the remaining factors as predictors. The predictors are correlated according to the matrix defined in `corXX`. Note that this part of the factor model is identical across groups, which is indeed a prerequisite to allow for meaningful cross-group comparisons of slopes. However, separate regression relationships are defined for each group by using a list structure for the `slopes` argument: In the first group, the regression equation is $\hat{Y} = .2 \cdot X_1 + .3 \cdot X_2 + .4 \cdot X_3$ (`c(.2, .3, .4)`), whereas in the second group it is $\hat{Y} = .2 \cdot X_1 + .05 \cdot X_2 + .4 \cdot X_3$ (`c(.2, .05, .4)`). Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the second slope ($\beta_2$, `nullWhich = 2`) differs across groups (`nullEffect = 'slopeA = slopeB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 corXX <- matrix(c(
@@ -1389,7 +1393,7 @@ Note that (for now) `semPower` only provides accurate power analyses for models 
 
 
 ##### Detect whether an indirect effect differs from zero {-}
-To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and thus could be omitted. Note again that this is yields approximate results for models involving latent variables and provide accurate results only for models without latent variables. 
+To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and could thus be omitted. Note again that this is yields approximate results for models involving latent variables and provide accurate results only for models without latent variables. 
 
 In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y`, `X -> M`, `M -> Y`are defined to be .25 (`bYX = .25`), .3  (`bMX = .3`), and .4 (`bYM = .4`), respectively. Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the indirect effect differs from zero  (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
 ```{r eval=FALSE}
@@ -1537,7 +1541,7 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 
 
 ##### Detect whether a slope differs from zero {-}
-To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'beta = 0'` (which is also the default and thus could be omitted). 
+To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'beta = 0'` (which is also the default and could thus be omitted). 
 
 `semPower.powerRegression` requires to specify the regression relations between the factors via the `Beta` argument ([see this chapter for details](semDefinition)). For instance, in the example below, there are four factors (equal to number of columns/rows of `Beta`). The structure of `Beta` implies the relations $F_2 = .2 \cdot F_1$, $F_3 = .3 \cdot F_2$, and $F_4 = .1 \cdot F_1 + .4 \cdot F_3$. `nullWhich` is a vector of size two indicating the element of `Beta` (i.e. the specific slope) that is targeted by the null hypothesis. Below, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_4$ (`nullWhich = c(4, 1)`) differs from zero (`nullEffect = 'beta = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Finally, the measurement model for the factors needs to be defined. The order of factors matches the order in `Beta`: The first factors is measured by 3 indicators, the second factor by 4 indicators, the third by 5, and the fourth by 6 indicators (`nIndicator = c(3, 4, 5, 6)`). The respective indicators of the first factor load by .7, on the second by .5, on the third by .6, and on the fourth factor by .8  (`loadM = c(.7, .5, .6, .8)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
 
