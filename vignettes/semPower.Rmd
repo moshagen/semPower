@@ -448,7 +448,6 @@ This shows that 858 observations (286 by group) are required for a power of 80%.
 ## Define the effect through covariance matrices {#InputCovMatrix}
 
 The previous sections assumed that the magnitude of effect is determined by defining a certain effect size metric (such as $F_0$ or RMSEA) and a certain magnitude of effect. Alternatively, the effect can also be determined by specifying the population ($\Sigma$) and the model-implied ($\hat{\Sigma}$) covariance matrices (and, if means are part of the model, $\mu$ and $\hat{\mu}$) directly. To determine the associated effect in terms of F0, `semPower` just plugs these matrices in the ML-fitting function: 
-??? please check whether changes in equation are correct
 $$F_0 = \log|\hat{\Sigma}| - \log|\Sigma| + tr(\Sigma\hat{\Sigma}^{-1}) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
 
 Suppose, $\Sigma$ and $\hat{\Sigma}$ have been defined previously and are referred to by the variables `Sigma` and `SigmaHat` Then, any of the power-analysis functions is called by setting the `Sigma` and `SigmaHat` arguments accordingly (and omitting the `effect` and `effect.measures` arguments). This could look as follows:
@@ -480,17 +479,17 @@ Given that the functions performing a model-based power analysis operate on a fa
  
 ## Definition of the factor model {#factorDefinition}
 
-Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also needs to be specified if the model does not include any factor, but operates on observed variables only (such as a CLPM based on observed scores rather than on latent factors). There are several ways to achieve this, which are documented further below. (??? I think I would omit the following subsentence. It might be confusing because it is a bit out of context) for the impatient reader the easiest way is to add `Lambda = diag(p)`, where p is the number of variables contained in the model.
+Although all convenience functions described in this chapter implement different model structures, all these structures involve latent factors, so the factor model always needs to be defined in terms of the number of factors, the number of indicators for each factors, and the loadings of each indicator on the factors. Indeed, the "factor" model also needs to be specified if the model does not include any factor, but operates on observed variables only (such as a CLPM based on observed scores rather than on latent factors). There are several ways to achieve this, which are documented further below.
 
-The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings (??? what is meant by the dispersion of factor loadings?) also affects power, although to a (considerably) lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
+The magnitude of the factor loadings and the number of indicators per factor have a very large effect on statistical power (because both quantities increase factor determinacy and thus reduce random noise). For example, power to detect a factor correlation of $r \geq .2$ with N = 250 is 88% when both factors are measured by 10 indicators each and all loadings are .90, but only 11% when both factors are measured by 3 indicators each and all loadings are .30. Likewise, the dispersion of factor loadings also affects power, although to a (considerably) lesser degree. It is thus crucial to be careful in defining appropriate factor loadings, which should generally be based on previous empirical results.
 
 Any `semPower` convenience function expects one of the following arguments to define the factor model:
 
 * `Lambda` to define the loading matrix.
 * `loadings` to define a reduced loading matrix that only contains the primary loadings.
-*  `nIndicator` to define the number of indicators per factor in conjunction with `loadM` to define a single loading (??? magnitude?) for the indicators of each factor or a single loading (??? magnitude?) to apply for all indicators. 
+*  `nIndicator` to define the number of indicators per factor in conjunction with `loadM` to define a single loading magnitude for the indicators of each factor or a single loading magnitude to apply for all indicators. 
 
-The `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loading magnitude within a factor (??? Again, what is meant by dispersion exactly? I think I know what you mean from the context but this could be clarified). This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
+The `nIndicator` and `loadM` arguments are usually the simplest approach, but do not allow for any dispersion of the loading magnitude within a factor. This flexibility is offered by the `loadings` argument, which in most cases should suit all needs. Providing the complete loading matrix via the `Lambda` argument is only required for more complex loadings patterns where a single indicator is supposed to load on more than one factor.
 
 ##### Provide the full loading matrix (`Lambda`)  {-}
 
@@ -544,7 +543,7 @@ loadings <- list(
 ```
 
 
-##### Provide a single loading (??? magnitude?) to apply to indicator (??? all indicators?) of a specific factor (`nIndicator` and `loadM`)  {-}
+##### Provide a single loading magnitude to apply to all indicators of a specific factor (`nIndicator` and `loadM`)  {-}
 
 A third way to define two factors measured by 3 and 4 indicators, respectively, and all loadings equal to .5, is to provide both the `nIndicator` and the `loadM` arguments:
 ```{r eval=FALSE}
@@ -652,12 +651,9 @@ powerCFA <- semPower.powerCFA(
   )
 ```
 
-??? General comment: You often write e.g., that "an indicator loads by .6". Is "by" really the correct preposition here? It sounds a bit strange to me, but I am also not sure which preposition would be better. Maybe "the indicator loads at .6?" 
-
-
 ## CFA models {#powerCFA}
 
-`semPower.powerCFA` is used to perform power analyses to reject hypotheses arising in a standard CFA model involving several factors or factor(s) (??? what do you mean by "or factor(s)") and one or more additional observed covariates. `semPower.powerCFA` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerCFA` is used to perform power analyses to reject hypotheses arising in a standard CFA model involving several factors or one or more factor(s) and one or more additional observed covariates. `semPower.powerCFA` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
@@ -829,9 +825,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 
 ## Models involving a bifactor structure {#powerBifactor}
 
-??? As a general comment, I am not sure what you refer to when you write "bifactor". Is it only the general factor or the complete bifactor structure? Edit: It gets clear from the first subsection onwards, but it should also be clearly states in the beginning.
-
-`semPower.powerBifactor` is used to perform power analyses to reject correlational hypotheses arising in a model involving one bifactor and at least one additional variable, which can also be a bifactor, a standard factor, or an observed covariate. `semPower.powerBifactor` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerBifactor` is used to perform power analyses to reject correlational hypotheses arising in a model involving one general factor in a  bifactor structure (which is referred to a "bifactor") and at least one additional variable, which can also be a bifactor, a standard factor, or an observed covariate. `semPower.powerBifactor` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
@@ -1165,8 +1159,6 @@ powerBF <- semPower.powerBifactor(
                                   )
 ```
 
-??? Maybe you could add an example on how to perform a cross-group comparison of a model with two bifactors? Some readers might wonder how the definition of the loadings would look like. Would you first need a list for the two bifactors and then an overarching list for the two groups?
-
 
 ## Latent regression models {#powerRegression}
 `semPower.powerRegression` is used to perform power analyses for SEM models involving a simple linear regression relation of the form $\hat{Y} = \beta_1 \cdot X_1 + ... + \beta_k \cdot X_k$, where $Y$ and $X_i$ can be factors or observed variables. `semPower.powerRegression`provides interfaces to perform power analyses concerning the following hypotheses:
@@ -1175,7 +1167,7 @@ powerBF <- semPower.powerBifactor(
 * whether two slopes ($\beta_i$, $\beta_j$) differ from each other (`nullEffect = 'slopeX = slopeZ'`).
 * whether a slope ($\beta_{i,m}$, $\beta_{i,n}$) differs across two or more groups (`nullEffect = 'slopeA = slopeB'`).
 
-`semPower.powerRegression` only addresses hypotheses concerning slope(s) in a latent regression (??? but you could also use it for manifest regression when defining only observed variables, right?). `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerRegression` only addresses hypotheses concerning slope(s) in a regression. `semPower` provides other convenience functions for hypothesis arising in [mediation models](#powerMediation), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerRegression` expects the following arguments:
 
