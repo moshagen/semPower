@@ -2788,10 +2788,13 @@ test_simulatePower <- function(doTest = TRUE){
   modelH0 <- pha$modelH0
   
   # compare powerLav and postHoc
+  set.seed(30012021)
   phs <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
-                           nReplications = 200, simulatedPower = TRUE)
+                           simulatedPower = TRUE, 
+                           simOptions = list(nReplications = 200))
   
+  set.seed(30012021)
   phs2 <- semPower.postHoc(alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
                            simulatedPower = TRUE,
@@ -2810,6 +2813,7 @@ test_simulatePower <- function(doTest = TRUE){
     abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  # need some margin
   
   # restricted comparison model
+  set.seed(30012021)
   pha3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
                             nullEffect = 'cor=0',
                             nullWhich = c(1, 2),
@@ -2818,6 +2822,7 @@ test_simulatePower <- function(doTest = TRUE){
   modelH0 <- pha3$modelH0
   modelH1 <- pha3$modelH1
   
+  set.seed(30012021)
   phs3 <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
                             modelH0 = modelH0, modelH1 = modelH1, Sigma = Sigma,
                             simulatedPower = TRUE,
@@ -2831,10 +2836,12 @@ test_simulatePower <- function(doTest = TRUE){
   # a priori
   apa <- semPower.powerLav('ap', alpha = .05, power = .80,
                            Sigma = Sigma, modelH0 = modelH0)
+  set.seed(30012021)
   aps <- semPower.aPriori(alpha = .05, power = .80,
                           Sigma = Sigma, modelH0 = modelH0,
                           simulatedPower = TRUE,
                           simOptions = list(nReplications = 200))
+  set.seed(30012021)
   aps2 <- semPower.powerLav('ap', alpha = .05,power = .80,
                             modelH0 = modelH0, Sigma = Sigma,
                             simulatedPower = TRUE,
@@ -2847,8 +2854,10 @@ test_simulatePower <- function(doTest = TRUE){
     abs(apa$power$requiredN - aps$requiredN) < .05 * apa$power$requiredN  # 5% margin should be ok
   
   # a priori + restricted
+  set.seed(30012021)
   apa2 <- semPower.powerLav('ap', alpha = .05, power = .80,
                             Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1)
+  set.seed(30012021)
   aps3 <- semPower.aPriori(alpha = .05, power = .80,
                            Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1,
                            simulatedPower = TRUE,
@@ -2861,12 +2870,14 @@ test_simulatePower <- function(doTest = TRUE){
   
   
   # try different estimator
+  set.seed(30012021)
   phs4 <- semPower.postHoc(alpha = .05, N = 350,
                            modelH0 = modelH0, Sigma = Sigma,
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200),
                            lavOptions = list(estimator = 'mlm'))  
   
+  set.seed(30012021)
   phs2a <- semPower.postHoc(alpha = .05, N = 350,
                             modelH0 = modelH0, Sigma = Sigma,
                             simulatedPower = TRUE,
@@ -2884,6 +2895,7 @@ test_simulatePower <- function(doTest = TRUE){
                        sample.nobs = list(500, 500),
                        group.equal = c('loadings'))
   
+  set.seed(30012021)
   pha5 <- semPower.powerLav('ph',
                             modelH0 = generated$modelTrue,
                             Sigma = list(generated$Sigma, generated2$Sigma),
@@ -2891,12 +2903,14 @@ test_simulatePower <- function(doTest = TRUE){
                             alpha = .05, N = list(500, 500),
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 200))  
+  set.seed(30012021)
   phs5 <- semPower.postHoc(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
                            alpha = .05, N = list(500, 500),
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200))  
+  set.seed(30012021)
   aps5 <- semPower.aPriori(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
@@ -2904,12 +2918,14 @@ test_simulatePower <- function(doTest = TRUE){
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200))
   # add weights
+  set.seed(30012021)
   apa6 <- semPower.powerLav('ap',
                             modelH0 = generated$modelTrue,
                             Sigma = list(generated$Sigma, generated2$Sigma),
                             lavOptions = list(group.equal = c('loadings')),
                             alpha = .05, power = .5, N = list(1, 2),
                             simulatedPower = FALSE)  
+  set.seed(30012021)
   aps6 <- semPower.aPriori(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
@@ -2931,6 +2947,7 @@ test_simulatePower <- function(doTest = TRUE){
     list('rpois', list(lambda = 4)),
     list('rbinom', list(size = 1, prob = .5))
   )
+  set.seed(30012021)
   ph7 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                                 comparison = 'saturated',
                                 Phi = .3, nIndicator = c(3, 3), loadM = .5,
@@ -2940,6 +2957,7 @@ test_simulatePower <- function(doTest = TRUE){
                                                   distributions = distributions
                                 ))
 
+  set.seed(30012021)
   ph8 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                            comparison = 'saturated',
                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
@@ -2950,6 +2968,7 @@ test_simulatePower <- function(doTest = TRUE){
                                              kurtosis = rep(10, 6)
                            ))
   
+  set.seed(30012021)
   ph9 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                            comparison = 'saturated',
                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
@@ -2960,25 +2979,51 @@ test_simulatePower <- function(doTest = TRUE){
                                              kurtosis = 100
                            ))
   
+  set.seed(30012021)
   ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
-                           comparison = 'saturated',
-                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
-                           simulatedPower = TRUE,
-                           simOptions = list(nReplications = 100, 
-                                             type = 'mnonr',
-                                             skewness = 1,
-                                             kurtosis = 100
-                           ),
-                           lavOptions = list(estimator = 'mlm'))
+                            comparison = 'saturated',
+                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            simulatedPower = TRUE,
+                            simOptions = list(nReplications = 100, 
+                                              type = 'ig',
+                                              skewness = rep(1, 6),
+                                              kurtosis = rep(10, 6)
+                            ),
+                            lavOptions = list(estimator = 'mlm'))
   
-  
+  # compare estimators
+  set.seed(30012021)
+  ph11 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+                            comparison = 'restricted',
+                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            simulatedPower = TRUE,
+                            simOptions = list(nReplications = 100, 
+                                              type = 'ig',
+                                              skewness = rep(1, 6),
+                                              kurtosis = rep(20, 6)
+                            ),
+                            lavOptions = list(estimator = 'mlr'))
+  set.seed(30012021)
+  ph12 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+                            comparison = 'restricted',
+                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            simulatedPower = TRUE,
+                            simOptions = list(nReplications = 100, 
+                                              type = 'ig',
+                                              skewness = rep(1, 6),
+                                              kurtosis = rep(20, 6)
+                            ),
+                            lavOptions = list(estimator = 'ml'))
+
   valid7 <- valid6 &&
     ph7$power$power - pha$power$power > .2 &&
     ph8$power$power - pha$power$power > .2 &&     
-    ph9$power$power - pha$power$power > .2
+    ph9$power$power - pha$power$power > .2 &&
+    ph8$power$power - ph10$power$power > .01 &&
+    abs(ph11$power$bChiSq) < abs( ph12$power$bChiSq) # this is actually a tiny difference, but seems to be correct
+
   
-  
-  if(valid6){
+  if(valid7){
     print('test_simulatePower: OK')
   }else{
     warning('Invalid')
