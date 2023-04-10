@@ -223,7 +223,11 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             if(is.list(Sigma)) cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
             
             # store param est
-            rChiSq <- append(rChiSq, lavaan::fitMeasures(lavresH1, 'chisq'))
+            cChi <- lavaan::fitMeasures(lavresH1, 'chisq')
+            if(lavresH1@Options[['test']] != 'standard'){
+              cChi <- lavaan::fitMeasures(lavresH1, 'chisq.scaled')
+            }
+            rChiSq <- append(rChiSq, cChi)
             cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
             rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0])))) # only non-zero loadings  
             cPsi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')]
@@ -286,6 +290,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # assume that modelH1 is properly specified, so that fitting modelH1 to Sigma
       # yields population parameters
       if(is.list(Sigma)) sample.nobs <- list(1000, 1000) else sample.nobs <- 1000
+      lavOptionsH1[['estimator']] = 'ML'  # needs to be overwritten in case this is set, since we are not working with observed variables
       lavresPop <- do.call(lavaan::lavaan, 
                            append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = sample.nobs, 
                                        sample.cov.rescale = FALSE),
