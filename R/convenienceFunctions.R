@@ -426,6 +426,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
                               nullWhich = NULL, 
                               nullWhichGroups = NULL, 
                               ...){
+  args <- list(...)
   
   # validate input
   checkEllipsis(...)
@@ -490,8 +491,9 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   }
 
   # we always enforce invariance constraints in the multigroup case
-  lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+  if(isMultigroup){
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings', 'lv.variances')))
+  } 
 
   modelH1 <- NULL
   fitH1model <- FALSE
@@ -504,14 +506,15 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
-  semPower.powerLav(type = type,
+  do.call(semPower.powerLav, append(list(
+                    type = type,
                     Sigma = Sigma,
                     modelH0 = modelH0,
                     modelH1 = modelH1,
-                    fitH1model = fitH1model,
-                    lavOptions = lavOptions,
-                    ...)
-  
+                    fitH1model = fitH1model),
+                    args)
+          )
+
 }
 
 #' semPower.powerRegression
@@ -719,6 +722,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                                      standardized = TRUE,
                                      ...){
   
+  args <- list(...)
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
   
@@ -765,12 +769,17 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   nullWhich <- nullWhich + 1 # because first factor is criterion
   
   # get temporary Lambda so that we can check whether number of factors matches slopes + 1
-  args <- list(...)
   tLambda  <- args[['Lambda']]
   if(is.null(tLambda)){
-    tLambda <- genLambda(args[['loadings']], args[['nIndicator']],
-                        args[['loadM']], args[['loadSD']], args[['loadMinMax']])
+    if(!isMultigroup){
+      tLambda <- genLambda(args[['loadings']], args[['nIndicator']],
+                           args[['loadM']], args[['loadSD']], args[['loadMinMax']])
+    }else{
+      tLambda <- genLambda(args[['loadings']][[1]], args[['nIndicator']][[1]],
+                           args[['loadM']][[1]], args[['loadSD']][[1]], args[['loadMinMax']][[1]])
+      
     }
+  }
   if(ncol(tLambda) != (1 + nrow(slopes[[1]]))) stop('The number of factors does not match the number of slopes + 1. Remember to define a measurement model including both the criterion (Y) and all predictors (X).')
   
   ### calc implied sigma. 
@@ -852,8 +861,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   }
 
   # we always enforce metric invariance in the multigroup case
-  lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))
+  if(isMultigroup){
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings')))
+  } 
   
   modelH1 <- NULL
   fitH1model <- FALSE
@@ -876,13 +886,14 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
-  semPower.powerLav(type, 
-                    Sigma = Sigma, 
-                    modelH0 = modelH0, 
-                    modelH1 = modelH1, 
-                    fitH1model = fitH1model,
-                    lavOptions = lavOptions,
-                    ...)
+  do.call(semPower.powerLav, append(list(
+    type = type,
+    Sigma = Sigma,
+    modelH0 = modelH0,
+    modelH1 = modelH1,
+    fitH1model = fitH1model),
+    args)
+  )
 }
 
 
@@ -1108,6 +1119,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
                                     standardized = TRUE,
                                     ...){
   
+  args <- list(...)
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
   
@@ -1233,8 +1245,9 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   }
 
   # enforce invariance constraints in the multigroup case
-  lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+  if(isMultigroup){
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings', 'lv.variances')))
+  } 
   
   modelH1 <- NULL
   fitH1model <- FALSE
@@ -1248,12 +1261,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
-  semPower.powerLav(type, 
-                    Sigma = Sigma, 
-                    modelH0 = modelH0, 
-                    modelH1 = modelH1, 
-                    fitH1model = fitH1model,
-                    ...)
+  do.call(semPower.powerLav, append(list(
+    type = type,
+    Sigma = Sigma,
+    modelH0 = modelH0,
+    modelH1 = modelH1,
+    fitH1model = fitH1model),
+    args)
+  )
+
 }
 
 
@@ -3188,6 +3204,8 @@ semPower.powerMI <- function(type,
                              nullEffect = NULL,
                              ...){
   
+  args <- list(...)
+  
   # validate input
   checkEllipsis(...)
   lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.variances', 'lv.covariances','regressions', 'means')
@@ -3223,9 +3241,9 @@ semPower.powerMI <- function(type,
   
   # models are the same, the only difference pertains to lavOptions
   modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
-  
+
   # set proper lavOptions
-  lavOptionsH1 <- NULL
+  lavOptionsH1 <- list()
   if(!useLavOptions){
     lavOptionsH0 <- list(group.equal = switch(nullEffect,
                                               'metric' = c('loadings'),
@@ -3258,15 +3276,19 @@ semPower.powerMI <- function(type,
       mu <- lapply(generated, '[[', 'mu')
   }
   
-  semPower.powerLav(type = type,
-                    Sigma = Sigma,
-                    mu = mu,
-                    modelH0 = modelH0,
-                    modelH1 = modelH1,
-                    fitH1model = TRUE,
-                    lavOptions = lavOptionsH0,
-                    lavOptionsH1 = lavOptionsH1,
-                    ...)
+  args[['lavOptions']] <- append(args[['lavOptions']], lavOptionsH0)
+  args[['lavOptionsH1']] <- append(args[['lavOptionsH1']], lavOptionsH1)
+  
+  do.call(semPower.powerLav, append(list(
+    type = type,
+    Sigma = Sigma,
+    mu = mu,
+    modelH0 = modelH0,
+    modelH1 = modelH1,
+    fitH1model = TRUE),
+    args)
+  )
+  
   
 }
 
@@ -3466,6 +3488,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
                                standardized = TRUE,
                                ...){
   
+  args <- list(...)
   comparison <- checkComparisonModel(comparison)
   checkEllipsis(...)
   
@@ -3551,8 +3574,9 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   modelH1 <- paste(c(model, unlist(tokH1)), collapse = '\n')
   
   # always enforce invariance constraints in the multigroup case
-  lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings'))
+  if(isMultigroup){
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings')))
+  } 
   
   # always fit H1 model
   fitH1model <- TRUE 
@@ -3562,13 +3586,14 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
-  semPower.powerLav(type, 
-                    Sigma = Sigma, 
-                    modelH0 = modelH0, 
-                    modelH1 = modelH1, 
-                    fitH1model = fitH1model,
-                    lavOptions = lavOptions,
-                    ...)
+  do.call(semPower.powerLav, append(list(
+    type = type,
+    Sigma = Sigma,
+    modelH0 = modelH0,
+    modelH1 = modelH1,
+    fitH1model = fitH1model),
+    args)
+  )
 }
 
 #' semPower.powerBifactor
@@ -4004,8 +4029,9 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   }
   
   # we always enforce invariance constraints in the multigroup case
-  lavOptions <- NULL
-  if(isMultigroup) lavOptions <- list(group.equal = c('loadings', 'lv.variances'))
+  if(isMultigroup){
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings', 'lv.variances')))
+  } 
   
   modelH1 <- NULL
   fitH1model <- FALSE
@@ -4018,12 +4044,13 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
   
-  semPower.powerLav(type = type,
-                    Sigma = Sigma,
-                    modelH0 = modelH0,
-                    modelH1 = modelH1,
-                    fitH1model = fitH1model,
-                    lavOptions = lavOptions,
-                    ...)
+  do.call(semPower.powerLav, append(list(
+    type = type,
+    Sigma = Sigma,
+    modelH0 = modelH0,
+    modelH1 = modelH1,
+    fitH1model = fitH1model),
+    args)
+  )
   
 }
