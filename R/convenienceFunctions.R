@@ -38,9 +38,21 @@
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -291,9 +303,21 @@ semPower.powerLav <- function(type,
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -391,7 +415,7 @@ semPower.powerLav <- function(type,
 #'                               Phi = .2, 
 #'                               nIndicator = c(5, 6), loadM = .5,
 #'                               alpha = .05, N = 500, 
-#'                               simulatedPower = TRUE, nReplications = 500)
+#'                               simulatedPower = TRUE, simOptions = list(nReplications = 500))
 #' 
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
@@ -542,9 +566,21 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -670,7 +706,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      nullWhich = 1,
 #'                                      nIndicator = c(4, 3, 3), loadM = .5,
 #'                                      alpha = .05, N = 500, 
-#'                                      simulatedPower = TRUE, nReplications = 500)
+#'                                      simulatedPower = TRUE, , simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -913,9 +949,21 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -1048,7 +1096,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     nIndicator = c(3, 5, 4),
 #'                                     loadM = c(.5, .6, .7),
 #'                                     alpha = .05, N = 500,
-#'                                     simulatedPower = TRUE, nReplications = 500)
+#'                                     simulatedPower = TRUE, simOptions = list(nReplications = 500))
 #'}
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -1278,9 +1326,21 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -1580,7 +1640,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 nullEffect = 'crossedX = 0',
 #'                                 Lambda = diag(4),
 #'                                 alpha = .05, N = 500, 
-#'                                 simulatedPower = TRUE, nReplications = 500)
+#'                                 simulatedPower = TRUE, simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -2041,11 +2101,22 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
 #' 
-
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
 #' @examples
 #' \dontrun{
 #' # Determine required N in a 3-wave RI-CLPM
@@ -2417,7 +2488,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nullEffect = 'crossedX = 0',
 #'                                     Lambda = diag(6),
 #'                                     alpha = .05, N = 500,
-#'                                     simulatedPower = TRUE, nReplications = 500)
+#'                                     simulatedPower = TRUE, simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -2950,9 +3021,21 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3095,7 +3178,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             nIndicator = list(5, 5),
 #'                             loadM = list(.5, .6),
 #'                             alpha = .05, N = list(500, 500), 
-#'                             simulatedPower = TRUE, nReplications = 500)
+#'                             simulatedPower = TRUE, simOptions = list(nReplications = 500))
 #'                              
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
@@ -3286,9 +3369,21 @@ semPower.powerMI <- function(type,
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3556,9 +3651,21 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' * `N`: The sample size. Always required for `type = 'post-hoc'` and `type = 'compromise'`. For `type = 'a-priori'` and multiple group analysis, `N` is a list of group weights.
 #' * `abratio`: The ratio of alpha to beta. Only for `type = 'compromise'`. 
 #' 
-#' Optional arguments if a **simulated power analysis** (`simulatedPower = TRUE`) is requested:
-#' * `nReplications`: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-#' * `minConvergenceRate`: The required minimum convergence rate. Defaults to .50.
+#' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
+#' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3721,7 +3828,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #'                                         nullWhich = c(1, 2),
 #'                                         loadings = loadings,
 #'                                         alpha = .05, N = 500, 
-#'                                         simulatedPower = TRUE, nReplications = 100)
+#'                                         simulatedPower = TRUE, simOptions = list(nReplications = 100))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export

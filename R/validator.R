@@ -448,7 +448,7 @@ checkPowerTypes <- function(type){
 #' @param comparison comparison
 #' @return Returns cleaned comparison
 checkComparisonModel <- function(comparison){
-  if(is.null(comparison) || length(comparison) != 1 || typeof(comparison) != 'character') stop('Comparison model must be one of a-priori, post-hoc, or compromise.')
+  if(is.null(comparison) || length(comparison) != 1 || typeof(comparison) != 'character') stop('Comparison model must be one of "saturated" or "restricted".')
   comparison <- tolower(trimws(comparison))
   if(comparison == 'saturated' || comparison == 'sat') comparison <- 'saturated'
   if(comparison == 'restricted' || comparison == 'restr') comparison <- 'restricted'
@@ -471,6 +471,20 @@ checkNullEffect <- function(nullEffect, valid){
   nullEffect <- gsub(" ", "", nullEffect, fixed = TRUE)
   if(any(unlist(lapply(nullEffect, function(x) !x %in% valid)))) stop(paste(mesage, 'must be one of', paste(valid, collapse = ' ')))
   nullEffect
+}
+
+#' checkDataGenerationTypes
+#'
+#' Checks whether data generation type is one of `'normal'`, `'IG'`, `'mnonr'`, or `'RK'`, stop otherwise.
+#' 
+#' @param type type
+#' @return Returns cleaned data generation type
+checkDataGenerationTypes <- function(type){
+  if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Data generation type is invalid.')
+  type <- tolower(trimws(type))
+  if(type == 'norm') type <- 'normal'
+  if(!type %in% c('normal', 'ig', 'mnonr', 'rk')) stop('Data generation type must be one of "normal", "IG", "mnonr", or "RK"')
+  type
 }
 
 #' checkEllipsis

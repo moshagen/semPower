@@ -8,7 +8,7 @@
 #' @param mu population means.
 #' @param N sample size
 #' @param alpha alpha error probability
-#' @param simOptions a list of additional options specifying simulation details, see detais. 
+#' @param simOptions a list of additional options specifying simulation details, see details. 
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation
 #' @param lavOptionsH1 lavoptions when fitting `modelH1`. If `NULL`, the same as `lavOptions`.
 #' @param returnFmin whether to return the mean unbiased Fmin over replications (i. e., `fmin_0 = fmin_hat - df/N`) 
@@ -26,30 +26,93 @@
 #' \item{`bBeta`}{average median bias in beta in the H1 model}
 #' @details 
 #' 
-#' `simOptions` is a list that may have the following components:
+#' The details of the simulation are specified in `simOptions`, which is a list that may have the following components:
 #' * `nReplications`: The targeted number of valid simulation runs, defaults to 250.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' The approaches generating non-normal data require additional arguments detailed below.
+#' 
+#' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' 
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' 
+#' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+#'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' 
+#' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. doi: 10.1080/00273171.2015.1133274
+#'
+#' Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. *Behavior Research Methods, 52*, 939-946. doi: 10.3758/s13428-019-01291-5
+#' 
+#' Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. *Multivariate Behavioral Research, 43*, 355-381. doi: 10.1080/00273170802285693
 #'  
 #' @examples
 #' \dontrun{
 #' # create Sigma and modelH0 using powerCFA
 #' powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, beta = .05,
 #'                               comparison = 'saturated',
-#'                               Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)) 
-#'                               )
-#' # perform simulation       
+#'                               Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
+#'                               
+#' # perform simulated power analysis using defaults       
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
 #'          N = powerCFA$power$requiredN,
-#'          alpha = .05)
-#' }
+#'          alpha = .05,
+#'          simulatedPower = TRUE)
+#'          
+#' 
 #' # same with additional options       
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
 #'          N = powerCFA$power$requiredN,
-#'          alpha = .05, 
+#'          alpha = .05,
+#'          simulatedPower = TRUE, 
 #'          simOptions = list(nReplications = 500, minConvergenceRate = .80))
+#' 
+#' 
+#' # same with IG as data generation routine
+#' simulate(modelH0 = powerCFA$modelH0, 
+#'          Sigma = powerCFA$Sigma,
+#'          N = powerCFA$power$requiredN,
+#'          alpha = .05,
+#'          simulatedPower = TRUE, 
+#'          simOptions = list(type = 'IG', 
+#'                            skewness = c(0, 1, -2, 6, 5, 4), 
+#'                            kurtosis = c(-3, 6, 9, 0, 2, -2)))
+#'                            
+#'                            
+#' # same with mnonr as data generation routine
+#' simulate(modelH0 = powerCFA$modelH0, 
+#'          Sigma = powerCFA$Sigma,
+#'          N = powerCFA$power$requiredN,
+#'          alpha = .05,
+#'          simulatedPower = TRUE, 
+#'          simOptions = list(type = 'mnonr', 
+#'                            skewness = 1, 
+#'                            kurtosis = 50))
+#'                            
+#'                            
+#' # same with RK as data generation routine
+#' distributions <- list(
+#'   list('rnorm', list(mean = 0, sd = 10)),
+#'   list('runif', list(min = 0, max = 1)),
+#'   list('rbeta', list(shape1 = 1, shape2 = 2)),
+#'   list('rexp', list(rate = 1)),
+#'   list('rpois', list(lambda = 4)),
+#'   list('rbinom', list(size = 1, prob = .5))
+#' )
+#' simulate(modelH0 = powerCFA$modelH0, 
+#'          Sigma = powerCFA$Sigma,
+#'          N = powerCFA$power$requiredN,
+#'          alpha = .05,
+#'          simulatedPower = TRUE, 
+#'          simOptions = list(type = 'RK', 
+#'                            distributions = distributions))
 #' }
+#' 
 #' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
 simulate <- function(modelH0 = NULL, modelH1 = NULL,
@@ -58,7 +121,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      alpha = NULL,
                      simOptions = list(
                        nReplications = 250, 
-                       minConvergenceRate = .5
+                       minConvergenceRate = .5,
+                       type = 'normal'
                      ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
@@ -75,6 +139,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   if(nReplications < 100) warning("Empirical power estimate with < 100 replications will be unreliable.")
   if(minConvergenceRate < .25) warning("Empirical power estimate allowing a low convergence rate might be unreliable.")
   # remaining checks are done in corresponding power fnc
+  # data gen checks are done in gendata
   
   # warn in case of long computation times
   lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
@@ -102,9 +167,9 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   # generate data 
   if(!is.list(Sigma)){
-    simData <- genData(N, Sigma, mu, gIdx = NULL, nSets = nReplications / minConvergenceRate)
+    simData <- genData(N = N, Sigma = Sigma, mu = mu, gIdx = NULL, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions)
   }else{
-    simData <- lapply(seq_along(Sigma), function(x) genData(N[[x]], Sigma[[x]], mu[[x]], gIdx = x, nSets = nReplications / minConvergenceRate))
+    simData <- lapply(seq_along(Sigma), function(x) genData(N = N[[x]], Sigma = Sigma[[x]], mu = mu[[x]], gIdx = x, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions))
   }
   
   efmin <- efminGroups <- list()
@@ -277,28 +342,276 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 
 #' genData
 #' 
-#' Generates random data from population variance-covariance matrix and population means.
-#' Currently only the multivariate normal case.
+#' Generates random data from population variance-covariance matrix and population means, either
+#' from a multivariate normal distribution, or using one of various approaches to generate 
+#' non-normal data.
 #'
+#' @param type one of 'normal' (the default), 'IG', 'mnonr', or 'RK'.
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
 #' @param nSets number of data sets to generate
 #' @param gIdx if not `NULL`, add gIdx as numeric group index as additional variable to generated data
+#' @param simOptions additional arguments passed to specific data generation routine
 #' @return Returns the generated data
 #' @examples
 #' \dontrun{
 #' gen <- semPower.genSigma(Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
 #' data <- genData(N = 500, Sigma = gen$Sigma) 
 #' }
+genData <- function(type = 'normal', 
+                    N = NULL, Sigma = NULL, mu = NULL, 
+                    nSets = 1, gIdx = NULL, modelH0 = NULL, simOptions = NULL){
+  
+  type <- checkDataGenerationTypes(type)
+  switch(type,
+         # normal by cholesky decomposition
+         normal = {
+           rdat <- genData.normal(N, Sigma, nSets)
+         },
+         # non-normal using IG
+         ig = {
+           rdat <- genData.IG(N, Sigma, nSets, simOptions[['skewness']], simOptions[['kurtosis']])
+         },
+         # non-normal using mnonr
+         mnonr = {
+           rdat <- genData.mnonr(N, Sigma, nSets, simOptions[['skewness']], simOptions[['kurtosis']])
+         },
+         # non-normal using ruscio
+         rk = {
+           rdat <- genData.RK(N, Sigma, nSets, simOptions[['distributions']], modelH0)
+         }
+  )  
+  
+  # add mu
+  if(!is.null(mu)){
+    rdat <- lapply(rdat, function(x) x + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE))
+  }
+  # add gidx
+  if(!is.null(gIdx)){
+    rdat <- lapply(rdat, function(x) cbind(x, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) )
+  }
+ 
+  rdat 
+}
+
+
+#' genData.normal
+#' 
+#' Generates multivariate normal random data from population variance-covariance matrix.
+#'
+#' @param N sample size.
+#' @param Sigma population covariance matrix.
+#' @param nSets number of data sets to generate
+#' @return Returns the generated data
 #' @importFrom stats rnorm 
-genData <- function(N = NULL, Sigma = NULL, mu = NULL, nSets = 1, gIdx = NULL){
+genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
   lapply(seq(nSets), function(x){
     randomData <- matrix(rnorm(N * ncol(Sigma)), N, ncol(Sigma)) 
-    rdat <- t(t(chol(Sigma)) %*% t(randomData))
-    if(!is.null(mu)) rdat <- rdat + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE)
-    if(!is.null(gIdx)) rdat <- cbind(rdat, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) 
-    rdat
+    t(t(chol(Sigma)) %*% t(randomData))
   })
 }
+
+
+#' genData.IG
+#' 
+#' Generates random data from population variance-covariance matrix using 
+#' the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
+#' specifying third and fourth moments of the marginals.
+#' 
+#' This function is a wrapper for the respective function of the ´covsim´ package. 
+#' 
+#' For details, see 
+#' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. 10.1080/00273171.2015.1133274
+#'
+#' @param N sample size.
+#' @param Sigma population covariance matrix.
+#' @param nSets number of data sets to generate
+#' @param skewness vector specifying skewness for each variable 
+#' @param kurtosis vector specifying excess kurtosis for each variable
+#' @return Returns the generated data
+genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,  
+                       skewness = NULL, kurtosis = NULL){
+  
+  if(!'covsim' %in% rownames(installed.packages())) stop('Generation of non-normal random data using IG requires the covsim package, so install covsim first.')
+  if(is.null(skewness) || is.null(kurtosis)) stop('skewness and kurtosis must not be NULL.')
+  if(length(skewness) != ncol(Sigma)) stop('skewness must match ncol(Sigma), i.e., must be specified for each variable ')
+  if(length(kurtosis) != ncol(Sigma)) stop('kurtosis must match ncol(Sigma), i.e., must be specified for each variable ')
+  
+  covsim::rIG(N = N, sigma = Sigma,
+              skewness = skewness,
+              excesskurt = kurtosis,
+              reps = nSets)
+  
+}
+
+
+#' genData.mnonr
+#' 
+#' Generates random data from population variance-covariance matrix using 
+#' the approach by Qu, Liu, & Zhang (2020) specifying Mardia's multivariate skewness and kurtosis.
+#' 
+#' This function is a wrapper for the respective function of the ´mnonr´ package. 
+#' 
+#' For details, see 
+#' Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. *Behavior Research Methods, 52*, 939-946. doi: 10.3758/s13428-019-01291-5
+#'
+#' @param N sample size.
+#' @param Sigma population covariance matrix.
+#' @param nSets number of data sets to generate
+#' @param skewness multivariate skewness. May not be negative.
+#' @param kurtosis multivariate kurtosis. Must be >= 1.641\*MS + p\*(p + 0.774), where p is the number of variables.
+#' @return Returns the generated data
+genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,  
+                       skewness = NULL, kurtosis = NULL){
+  
+  if(!'mnonr' %in% rownames(installed.packages())) stop('Generation of non-normal random data using mnonr requires the mnonr package, so install mnonr first.')
+  if(is.null(skewness) || is.null(kurtosis)) stop('skewness and kurtosis must not be NULL.')
+  if(length(skewness) != 1) stop('multivariate skewness must be a single number.')
+  if(length(kurtosis) != 1) stop('multivariate kurtosis must be a single number.')
+  
+  lapply(seq(nSets), function(x){
+    mnonr::mnonr(n = N, Sigma = Sigma, p = ncol(Sigma), 
+                 ms = skewness, 
+                 mk = kurtosis)
+  })
+  
+}
+
+#' genData.ruscio
+#' 
+#' Generates random data from population variance-covariance matrix using 
+#' the approach by Ruscio & Kaczetow (2008)
+#' specifying distributions for the marginals.
+#' 
+#' This function is based on the implementation by Ruscio & Kaczetow (2008).
+#' 
+#' For details, see 
+#' Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. *Multivariate Behavioral Research, 43*, 355-381.
+#'
+#' @param N sample size.
+#' @param Sigma population covariance matrix.
+#' @param nSets number of data sets to generate
+#' @param distributions a list specifying the population distribution and  additional arguments in a list either to apply to all variables (e.g. `list(rchisq, list(df = 2))`) or a list of lists specifying the distributions for each variable. See examples.
+#' @param modelH0 a `lavaan` model string, only used to determine the number of factors.
+#' @param maxIter maximum number of iterations, defaults to 10.
+#' @return Returns the generated data
+#' @examples
+#' \dontrun{
+#' distributions <- list(
+#'   list('rchisq', list(df = 2)),
+#'   list('runif', list(min = 0, max = 1)),
+#'   list('rexp', list(rate = 1))
+#' )
+#' data <- genData.ruscio(N = 100, Sigma = diag(3),
+#'                        distributions = distributions, 
+#'                        modelH0 = 'f =~ x1 + x2 + x3')
+#'                        
+#' distributions <- list(
+#'   list('rnorm', list(mean = 0, sd = 10)),
+#'   list('runif', list(min = 0, max = 1)),
+#'   list('rbeta', list(shape1 = 1, shape2 = 2)),
+#'   list('rexp', list(rate = 1)),
+#'   list('rpois', list(lambda = 4)),
+#'   list('rbinom', list(size = 1, prob = .5))
+#' )
+#' data <- genData.ruscio(N = 100, Sigma = diag(6),
+#'                        distributions = distributions, 
+#'                        modelH0 = 'f1=~x1+x2+x3\nf2=~x4+x5+x6')
+#' 
+#'}
+genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
+                           distributions = NULL, modelH0 = NULL, maxIter = 10){
+  
+  if(!is.list(distributions)) stop('distributions must be a list.')
+  if(is.list(distributions) && !is.list(distributions[[1]])) distributions <- (rep(list(distributions), ncol(Sigma)))
+  lapply(distributions, function(x){
+    if(length(x) != 2 || !is.character(x[[1]]) || !is.list(x[[2]])) 
+      stop('Each component of distributions must contain two parts, the first specifying the distribution (e.g. rnorm) and the second a (perhaps empty) list specifying the arguments, but omitting n (e.g. list(mean = 0, sd = 1))')
+  }) 
+   
+  getLoadings <- function(Sigma, nFactors){
+    fa <- factanal(covmat = Sigma, factors = nFactors)
+    loadings <- matrix(fa$loadings, ncol = nFactors)
+    loadings[loadings > 1] <- 1
+    loadings[loadings < -1] <- -1
+    if (loadings[1, 1] < 0) loadings <- loadings * -1
+    loadings
+  }
+  
+  # determine nFactors through model string; this could lead to incorrect results, 
+  # but we want to avoid both parallel analysis and the need to supply nFactors directly 
+  tok <- as.list(strsplit(modelH0, split = '\n', fixed = TRUE)[[1]])
+  nFactors <- sum(unlist(lapply(tok, function(x) if(grepl('=~', x)) length(strsplit(x, split = '+', fixed = TRUE)[[1]]) > 1 )))
+  nFactors <- max(1, nFactors)
+  
+  Sigma <- cov2cor(Sigma)
+  k <- ncol(Sigma)
+  rdat <- matrix(0, nrow = N, ncol = k) 
+  
+  nnDistributions <- lapply(distributions, function(x){
+    sort(do.call(x[[1]], append(list(n = N), x[[2]])))
+  })
+  nnDistributions <- t(do.call(rbind, nnDistributions))
+
+  # Generate random normal data for shared and unique components
+  lapply(seq(nSets), function(x){
+    Shared.Comp <- matrix(rnorm(N * nFactors, 0, 1), nrow = N, ncol = nFactors)
+    Unique.Comp <- matrix(rnorm(N * k, 0, 1), nrow = N, ncol = k)
+    residuals <- matrix(0, nrow = k, ncol = 1)
+    
+    # find best intermediate correlation matrix
+    RMSRBest <- 1 
+    SigmaInterm <- Sigma
+    iter <- 0 
+    while(iter < maxIter) {
+      iter <- iter + 1
+      # Calculate factor loadings and apply to reproduce desired correlations (steps 7, 8)
+      loadings <- getLoadings(Sigma, nFactors)
+      residuals <- 1 - rowSums(loadings^2)
+      residuals[residuals < 0] <- 0
+      residuals <- sqrt(residuals)
+      for(i in 1:k){
+        rdat[ ,i] <- (Shared.Comp %*% t(loadings))[ ,i] + Unique.Comp[ ,i] * residuals[i]
+      }
+      
+      # Replace normal with nonnormal distributions (step 9)
+      for(i in 1:k) {
+        rdat <- rdat[sort.list(rdat[,i]),]
+        rdat[,i] <- nnDistributions[,i]
+      }
+      # Calculate RMSR correlation, compare to lowest value, take appropriate action (steps 10, 11, 12)
+      ResCor <- Sigma - cor(rdat)
+      RMSR <- sqrt(sum(ResCor[lower.tri(ResCor)] * ResCor[lower.tri(ResCor)]) / (.5 * (k * k - k)))
+      
+      if(RMSR < RMSRBest){
+        RMSRBest <- RMSR
+        SigmaBest <- SigmaInterm
+        ResCorBest <- ResCor
+        SigmaInterm <- SigmaInterm + ResCor
+        iter <- 0
+      }else{
+        iter <- iter + 1
+        SigmaInterm <- SigmaBest + .5 ^ iter * ResCorBest
+      }
+    }
+    
+    # Construct the data set with the lowest RMSR
+    loadings <- getLoadings(SigmaBest, nFactors)
+    residuals <- 1 - rowSums(loadings^2)
+    residuals[residuals < 0] <- 0
+    residuals <- sqrt(residuals)
+    for(i in 1:k){
+      rdat[ ,i] <- (Shared.Comp %*% t(loadings))[ ,i] + Unique.Comp[ ,i] * residuals[i]
+    }
+    rdat <- apply(rdat, 2, scale) 
+    for(i in 1:k) {
+      rdat <- rdat[sort.list(rdat[ ,i]),]
+      rdat[ ,i] <- nnDistributions[ ,i]
+    }
+    rdat
+  })
+  
+}
+
 
