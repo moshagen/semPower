@@ -1424,7 +1424,7 @@ Now, `summary(powerMed$power)` provides the same information as a model-free [po
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
-Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. (??? Ist Psi keine Diagonalmatrix, wenn die Parameter standardisiert sind?)
+Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies an identity matrix for $\Psi$.
 
 If one or all of the involved variables are observed variables (instead of factors), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first "factor", which is treated as the predictor $X$, as a dummy factor with a single indicator (`nIndicator = c(1, 4, 5)`) and a loading of 1 (`loadM = c(1, .6, .7)`), so it becomes equivalent to an observed variable:
 ```{r eval=FALSE}
@@ -1821,7 +1821,6 @@ powerMI <- semPower.powerMI(
 
 Measurement parameters that should be equal across groups can also be provided omitting the list structure, so the same as above can be achieved by using: 
 
-??? could the list for Phi also be replaced in the code below?
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
                            type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
@@ -2257,7 +2256,7 @@ powerCLPM <- semPower.powerCLPM(
 
 
 ##### Detect whether the residual correlations between $X$ and $Y$ differ across waves  {-}
-To perform a power analysis to detect whether the residual correlations between $X$ and $Y$ differ across waves, use `nullEffect = 'corXY'`. This is only meaningful when there are at least 3 waves.
+To perform a power analysis to detect whether the residual correlations between $X$ and $Y$ differ across waves, use `nullEffect = 'corXY'`. This is only meaningful when there are at least 3 waves, because otherwise there is only a single residual correlation (namely the one at wave 2; the synchronous correlation at wave 1 is not residualized and therefore not subject of any equality constraint).
 
 For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the synchronous correlations between $X$ and $Y$ differs at wave 2 from the one at wave 3 (`nullEffect = 'corXY'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The synchronous correlations are defined to be .3, .2, and .1 at the first, second, and third wave, respectively (`rXY = c(.3, .2, .1)`). The cross-lagged effects of both $X$ and $Y$ (`crossedEffects = c(.05, .15)`) are constant across waves, as is the autoregressive effect of $Y$, whereas the autoregressive effect of $X$ is not (`autoregEffects`). The analyses models restrict the cross-lagged effects and the autoregressive effect of $Y$ to be equal across waves (`waveEqual = c('crossedX', 'crossedY', 'autoregY')`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
@@ -2283,8 +2282,6 @@ powerCLPM <- semPower.powerCLPM(
 ```
 
 Whereas all previous examples were based on standardized effects (by omitting the `standardized` argument which defaults to `TRUE`), hypotheses referring to the residual correlations require `standardized` to be set to `FALSE`, because the equality restrictions are always applied on unstandardized parameters, which in case of the residual correlations generally differ from the standardized parameters.
-
-??? The equality constraints are only placed on the residual correlations at wave 2 and wave 3 but not at the correlation at wave 1, right? Maybe this could be stated really explicitly.
 
 
 ##### Detect whether the cross-lagged effect of $X$ or $Y$ differs across groups {-}
