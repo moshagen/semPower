@@ -471,7 +471,7 @@ This feature is particularly useful when used in conjunction with other function
 # Model-based power analyses {#modelBasedPower}
 A general difficulty in [model-free power analysis](#modelFreePower) is that the relation between constraints on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect $\geq$ .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is hardly feasible. `semPower` therefore provides various convenience function to simplify this process, which are described in this chapter.
 
-The purpose of all convenience functions is to provide high-level interfaces that allow specifying the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a crossed-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the `lavaan` package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the [desired power analysis](#modelFreePower).
+The purpose of all convenience functions is to provide high-level interfaces that allow specifying the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a cross-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the `lavaan` package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the [desired power analysis](#modelFreePower).
 
 More precisely, all convenience functions internally obtain the population covariance matrix (and mean vector, if necessary) via [`semPower.genSigma`](#genSigma), define the H0 model (and optionally the H1 model), call [`semPower.powerLav`](#powerLav) to fit the models to the population values, which, in turn, obtains the model-implied covariance matrix (and mean vector), and plugs the population and model-implied matrices into one of the [model-free power analyses](#modelFreePower) functions. Since all of these low level functions are also exposed, an even higher level of flexibility can be achieved by calling these functions directly (see [this](#powerLav) and [this](#powerCov) chapter for illustrations).
 
@@ -825,7 +825,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 
 ## Models involving a bifactor structure {#powerBifactor}
 
-`semPower.powerBifactor` is used to perform power analyses to reject correlational hypotheses arising in a model involving one general factor in a  bifactor structure (which is referred to a "bifactor") and at least one additional variable, which can also be a bifactor, a standard factor, or an observed covariate. `semPower.powerBifactor` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerBifactor` is used to perform power analyses to reject correlational hypotheses arising in a model involving one general factor in a bifactor structure (which is referred to as the "bifactor") and at least one additional variable, which can also be a bifactor, a standard factor, or an observed covariate. `semPower.powerBifactor` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
@@ -1352,14 +1352,14 @@ powerReg <- semPower.powerRegression(
 
 ## Mediation models  {#powerMediation}
 
-`semPower.powerMediation` is used to perform power analyses to reject hypotheses arising in a mediation context involving factors and/or observed variables. This includes the simple case or a single variable $M$ mediating the relation between $X$ and $Y$ (`X -> M -> Y`), but may also refer to more complex mediation chains involving several mediators. Note that power for mediation effects involving latent variables is only approximated. `semPower.powerMediation` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerMediation` is used to perform power analyses to reject hypotheses arising in a mediation context involving factors and/or observed variables. This includes the simple case or a single variable $M$ mediating the relation between $X$ and $Y$ (`X -> M -> Y`), but may also refer to more complex mediation chains involving several mediators. Note that the power for mediation effects involving latent variables is only approximated. `semPower.powerMediation` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether an indirect effect differs from zero (`nullEffect = 'ind = 0'`). 
 * whether an indirect effect differs across two or more groups (`nullEffect = 'indA = indB'`).
 
-Note that (for now) `semPower` only provides accurate power analyses for models without latent variables, where the test of the indirect effect is performed according to Tofighi and Kelley (2020). For single group models with latent variables (i.e, `nullEffect = 'ind = 0'`), power is only (sometimes roughly) approximated. Multiple group models involving latent variables (i.e, `nullEffect = 'indA = indB'`) are currently not supported.^[This may change once `lavaan` supports an optimizer that better copes with non-linear constraints, such as NPSOL or SLSQP.] 
+Note that (for now) `semPower` only provides accurate power analyses for models without latent variables, where the test of the indirect effect is performed according to Tofighi and Kelley (2020). For single group models with latent variables (i.e, `nullEffect = 'ind = 0'`), power is only (sometimes roughly) approximated. Multiple group models involving latent variables (i.e., `nullEffect = 'indA = indB'`) are currently not supported.^[This may change once `lavaan` supports an optimizer that better copes with non-linear constraints, such as NPSOL or SLSQP.] 
 
-`semPower.powerMediation` only addresses hypotheses in a mediation context. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerMediation` only addresses hypotheses in a mediation context. `semPower` provides other convenience functions for hypotheses arising in [latent regression models](#powerRegression), [generic path models](#powerPath), and [cross-lagged panel models](#powerCLPM). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerMediation` expects the following arguments:
 
@@ -1380,14 +1380,14 @@ Note that (for now) `semPower` only provides accurate power analyses for models 
 
 * `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
 
 
 ##### Detect whether an indirect effect differs from zero {-}
-To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and could thus be omitted. Note again that this is yields approximate results for models involving latent variables and provide accurate results only for models without latent variables. 
+To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs from zero, use `nullEffect = 'ind = 0'`, which is also the default and could thus be omitted. Note again that this is yields approximate results for models involving latent variables and provides accurate results only for models without latent variables. 
 
-In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y`, `X -> M`, `M -> Y`are defined to be .25 (`bYX = .25`), .3  (`bMX = .3`), and .4 (`bYM = .4`), respectively. Finally, the the required sample (`type = 'a-priori'`) is requested to detect that the indirect effect differs from zero  (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+In the simple case of a mediation of the form `X -> M -> Y`, the relevant arguments specifying the size of the slopes and thus the magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For instance, the following sets up three factors measured by 3, 4, and 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first factor load by .5, all indicators of the second factor by .6, and all indicators of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. `semPower.powerMediation` treats the first factor as predictor $X$, the second factor as mediator $M$, and the third factor as criterion $Y$, so in the present example the mediator is measured by 4 indicators loading by .6 each. The slopes for the relations `X -> Y`, `X -> M`, `M -> Y`are defined to be .25 (`bYX = .25`), .3  (`bMX = .3`), and .4 (`bYM = .4`), respectively. Finally, the required sample size (`type = 'a-priori'`) to detect that the indirect effect differs from zero (`nullEffect = 'ind = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`) is requested. 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(
                                      # define type of power analysis
@@ -1403,7 +1403,7 @@ powerMed <- semPower.powerMediation(
                                      )
 summary(powerMed$power)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerMed$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerMed$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1420,11 +1420,11 @@ powerMed <- semPower.powerMediation(
                                      loadM = c(.5, .6, .7)
                                      )
 ```
-Now, `summary(powerMed$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerMed$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
-Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. 
+Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. (??? Ist Psi keine Diagonalmatrix, wenn die Parameter standardisiert sind?)
 
 If one or all of the involved variables are observed variables (instead of factors), the only change refers to the [definition of the factor model](#factorDefinition). For instance, the following defines the first "factor", which is treated as the predictor $X$, as a dummy factor with a single indicator (`nIndicator = c(1, 4, 5)`) and a loading of 1 (`loadM = c(1, .6, .7)`), so it becomes equivalent to an observed variable:
 ```{r eval=FALSE}
@@ -1443,7 +1443,7 @@ powerMed <- semPower.powerMediation(
 ```
 Similarly, a mediation model involving observed variables only could be defined using `nIndicator = c(1, 1, 1)` and `loadM = c(1, 1, 1)` or, more simply, by just providing `Lambda = diag(3)` instead of `nIndicator` and `loadM`.
 
-`semPower.powerMediation` provides an alternative way to specify mediation structures that go beyond the simple case of a `X -> M -> Y` mediation. For illustration, suppose there are four variables, the hypothesized structure is `X -> M1 -> M2 -> Y`, and that the indirect effect of interest is given by the slopes connecting `X -> M1`, `M1 -> M2`, and `M2 -> Y`. To reflect this type of mediation, the `Beta` and `indirect` arguments need to be set. Below, the regression relations between the factors are defined in `Beta` (see [this chapter](semDefinition) for details), implying a slope for `X -> M1` of .2, for `M1 -> M2` of .3, and for `M2 -> Y` of .4 (and all other slopes being equal to zero). `indirect` is a list of vectors of size two indicating the elements of `Beta` that define the indirect effect, so in this example, the indirect effect of interest comprise `X -> M1` (`c(2, 1)`),  `M1 -> M2` (`c(3, 2)`),  `Y -> M2` (`c(4, 3)`). Further, all variables are defined to be observed variables, rather than latent factors (`Lambda = diag(4)`).   
+`semPower.powerMediation` provides an alternative way to specify mediation structures that go beyond the simple case of a `X -> M -> Y` mediation. For illustration, suppose there are four variables, the hypothesized structure is `X -> M1 -> M2 -> Y`, and that the indirect effect of interest is given by the slopes connecting `X -> M1`, `M1 -> M2`, and `M2 -> Y`. To reflect this type of mediation, the `Beta` and `indirect` arguments need to be set. Below, the regression relations between the factors are defined in `Beta` (see [this chapter](semDefinition) for details), implying a slope for `X -> M1` of .2, for `M1 -> M2` of .3, and for `M2 -> Y` of .4 (and all other slopes being equal to zero). `indirect` is a list of vectors of size two, indicating the elements of `Beta` that define the indirect effect, so in this example, the indirect effect of interest comprise `X -> M1` (`c(2, 1)`),  `M1 -> M2` (`c(3, 2)`),  `Y -> M2` (`c(4, 3)`). Further, all variables are defined to be observed variables, rather than latent factors (`Lambda = diag(4)`).   
 
 ```{r eval=FALSE}
 Beta <- matrix(c(
@@ -1469,7 +1469,7 @@ powerMed <- semPower.powerMediation(
 ##### Detect whether an indirect differs across groups {-}
 To perform a power analysis to detect whether a mediation effect (= an indirect effect) differs across groups, use `nullEffect = 'indA = indB'`. This is currently only possible for models involving observed variables only.
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the indirect effect in group 1 differs from the one in group 2 (`nullEffect = 'indA = indB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `bYX`, `bMX`, and `bYM` are now lists comprising two elements, the first defining the respective slope in the first group, the second the respective slope in the second group. Thus, the slopes in the first and second group for `X -> M` are .2 and .4, for `M -> Y` .3 and .5, and for `X -> M` .25 and .25, respectively. `Lambda = diag(3)` implies that all variables are observed. Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the indirect effect in group 1 differs from the one in group 2 (`nullEffect = 'indA = indB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). `bYX`, `bMX`, and `bYM` are now lists comprising two elements, the first defining the respective slope in the first group, the second the respective slope in the second group. Thus, the slopes in the first and second group for `X -> M` are .2 and .4, for `M -> Y` .3 and .5, and for `X -> M` .25 and .25, respectively. `Lambda = diag(3)` implies that all variables are observed. Furthermore, in multiple group models, the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
@@ -1512,7 +1512,7 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 * whether two slopes differ from each other (`nullEffect = 'betaX = betaZ'`).
 * whether a slope differs across two or more groups (`nullEffect = 'betaA = betaB'`).
 
-`semPower.powerPath` offers a generic and flexible way to address hypotheses involving regression relationships, so that power analyses can be performed for hypothesis not covered by a more specific convenience function, such as [`semPower.powerRegression`](#powerRegression), [`semPower.powerMediation`](#powerMediation), and [`semPower.powerCLPM`](#powerCLPM).
+`semPower.powerPath` offers a generic and flexible way to address hypotheses involving regression relationships, so that power analyses can be performed for hypotheses not covered by a more specific convenience function, such as [`semPower.powerRegression`](#powerRegression), [`semPower.powerMediation`](#powerMediation), and [`semPower.powerCLPM`](#powerCLPM).
 
 `semPower.powerPath` expects the following arguments:
 
@@ -1528,14 +1528,14 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 
 * `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
 
 
 ##### Detect whether a slope differs from zero {-}
 To perform a power analysis to detect whether a slope differs from zero, use `nullEffect = 'beta = 0'` (which is also the default and could thus be omitted). 
 
-`semPower.powerRegression` requires to specify the regression relations between the factors via the `Beta` argument ([see this chapter for details](semDefinition)). For instance, in the example below, there are four factors (equal to number of columns/rows of `Beta`). The structure of `Beta` implies the relations $F_2 = .2 \cdot F_1$, $F_3 = .3 \cdot F_2$, and $F_4 = .1 \cdot F_1 + .4 \cdot F_3$. `nullWhich` is a vector of size two indicating the element of `Beta` (i.e. the specific slope) that is targeted by the null hypothesis. Below, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_4$ (`nullWhich = c(4, 1)`) differs from zero (`nullEffect = 'beta = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Finally, the measurement model for the factors needs to be defined. The order of factors matches the order in `Beta`: The first factors is measured by 3 indicators, the second factor by 4 indicators, the third by 5, and the fourth by 6 indicators (`nIndicator = c(3, 4, 5, 6)`). The respective indicators of the first factor load by .7, on the second by .5, on the third by .6, and on the fourth factor by .8  (`loadM = c(.7, .5, .6, .8)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
+`semPower.powerRegression` requires to specify the regression relations between the factors via the `Beta` argument ([see this chapter for details](semDefinition)). For instance, in the example below, there are four factors (equal to number of columns/rows of `Beta`). The structure of `Beta` implies the relations $F_2 = .2 \cdot F_1$, $F_3 = .3 \cdot F_2$, and $F_4 = .1 \cdot F_1 + .4 \cdot F_3$. `nullWhich` is a vector of size two, indicating the element of `Beta` (i.e. the specific slope) that is targeted by the null hypothesis. Below, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_4$ (`nullWhich = c(4, 1)`) differs from zero (`nullEffect = 'beta = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Finally, the measurement model for the factors needs to be defined. The order of factors matches the order in `Beta`: The first factor is measured by 3 indicators, the second factor by 4 indicators, the third by 5, and the fourth by 6 indicators (`nIndicator = c(3, 4, 5, 6)`). The respective indicators of the first factor load by .7, on the second by .5, on the third by .6, and on the fourth factor by .8  (`loadM = c(.7, .5, .6, .8)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings.
 
 
 ```{r eval=FALSE}
@@ -1557,7 +1557,7 @@ powerPath <- semPower.powerPath(
                                 )
 summary(powerPath$power)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerPath$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerPath$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1627,7 +1627,7 @@ Similarly, a path model involving observed variables only could be defined using
 ##### Detect whether two slopes differ from each other {-}
 To perform a power analysis to detect whether two correlations differ from each other, use `nullEffect = 'betaX = betaZ'`.
 
-For instance, the following defines the regression relationships (`Beta`) between four factors in the same way as described in detail above to be $F_3 = .2 \cdot F_1 + .3 \cdot F_2$ and $F_4 = .3 \cdot F_1 + .4 \cdot F_2$. The four factors are measured by 3, 4, 5, and 6 indicators (`nIndicator = c(3, 4, 5, 6)`), which load by .7, .5, .6, and .8, respectively (`loadM = c(.7, .5, .6, .8)`, see [definition of the factor model](#factorDefinition)). The the required sample (`type = 'a-priori'`) is requested to detect that the slopes for $F1$ and $F_2$ in the prediction of $F_4$ (`nullWhich = list(c(4, 1), c(4, 2))`) differ (`nullEffect = 'betaX = betaZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). 
+For instance, the following defines the regression relationships (`Beta`) between four factors in the same way as described in detail above to be $F_3 = .2 \cdot F_1 + .3 \cdot F_2$ and $F_4 = .3 \cdot F_1 + .4 \cdot F_2$. The four factors are measured by 3, 4, 5, and 6 indicators (`nIndicator = c(3, 4, 5, 6)`), which load by .7, .5, .6, and .8, respectively (`loadM = c(.7, .5, .6, .8)`, see [definition of the factor model](#factorDefinition)). The required sample size (`type = 'a-priori'`) to detect that the slopes for $F1$ and $F_2$ in the prediction of $F_4$ (`nullWhich = list(c(4, 1), c(4, 2))`) differ (`nullEffect = 'betaX = betaZ'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`) is requested. 
 
 ```{r eval=FALSE}
 Beta <- matrix(c(
@@ -1651,7 +1651,7 @@ powerPath <- semPower.powerPath(
 
 Note that `nullWhich` is now a list of vectors defining which slopes should be set to equality. `nullWhich = list(c(4, 1), c(4, 2))` says that the slopes for $F1$ and $F_2$ in the prediction of $F_4$ shall be equal.
 
-`nullWhich` can also comprise more than two elements to test for the equality of more than two slopes For instance, when there are 4 predictors, using `nullWhich = list(c(4, 1), c(4, 2), c(3, 1))` would constrain the slopes for for $F1$ and $F_2$ in the prediction of $F_4$ and the slope for $F1$ in the prediction of $F_3$ to equality.
+`nullWhich` can also comprise more than two elements to test for the equality of more than two slopes For instance, when there are 4 predictors, using `nullWhich = list(c(4, 1), c(4, 2), c(3, 1))` would constrain the slopes for $F1$ and $F_2$ in the prediction of $F_4$ and the slope for $F1$ in the prediction of $F_3$ to equality.
 
 
 
@@ -1659,20 +1659,20 @@ Note that `nullWhich` is now a list of vectors defining which slopes should be s
 
 To perform a power analysis to detect whether a slope differs across two or more groups, use `nullEffect = 'betaA = betaB'`. 
 
-For instance, the following defines the regression relationships between three factors in the same way as described in detail above separately for two groups. In  the first group (`Beta1`), the relations are $F_2 = .2 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$, whereas in the second group (`Beta2`) these are $F_2 = .4 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$. In multiple group models, `Beta` must be provided as a list, where each component defines the regression relations for a  specific group (`Beta = list(Beta1, Beta2)`). The measurement model is identical across groups: All factors are measured by 5 indicators (`nIndicator =  c(5, 5, 5)`) which load by .7 on the first, by .5 on the second, and by .6 on the third factor (`loadM =  c(.7, .5, .6)`). Then, the required sample (`type = 'a-priori'`) is requested to detect that the slope of $F_1$ in the prediction of $F_2$ (`nullWhich = c(2, 1)`) differs across groups (`nullEffect = 'betaA = betaB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following defines the regression relationships between three factors in the same way as described in detail above separately for two groups. In the first group (`Beta1`), the relations are $F_2 = .2 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$, whereas in the second group (`Beta2`) these are $F_2 = .4 \cdot F_1$ and $F_3 = .3 \cdot F_1 + .5 \cdot F_2$. In multiple group models, `Beta` must be provided as a list, where each component defines the regression relations for a  specific group (`Beta = list(Beta1, Beta2)`). The measurement model is identical across groups: All factors are measured by 5 indicators (`nIndicator =  c(5, 5, 5)`) which load by .7 on the first, by .5 on the second, and by .6 on the third factor (`loadM =  c(.7, .5, .6)`). Then, the required sample size (`type = 'a-priori'`) to detect that the slope of $F_1$ in the prediction of $F_2$ (`nullWhich = c(2, 1)`) differs across groups (`nullEffect = 'betaA = betaB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`) is requested. Furthermore, in multiple group models, the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 # beta in group 1
 Beta1 <- matrix(c(
   c(.00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
   c(.20, .00, .00),       # f2 = .20*f1 + .00*f2 + .00*f3 + .00*f4
-  c(.30, .50, .00)        # f3 = .30*f1 + .30*f2 + .00*f3 + .00*f4
+  c(.30, .50, .00)        # f3 = .30*f1 + .50*f2 + .00*f3 + .00*f4
 ), byrow = TRUE, ncol = 3)
 # beta in group 2
 Beta2 <- matrix(c(
   c(.00, .00, .00),       # f1 = .00*f1 + .00*f2 + .00*f3 + .00*f4
   c(.40, .00, .00),       # f2 = .40*f1 + .00*f2 + .00*f3 + .00*f4
-  c(.30, .50, .00)        # f3 = .30*f1 + .30*f2 + .00*f3 + .00*f4
+  c(.30, .50, .00)        # f3 = .30*f1 + .50*f2 + .00*f3 + .00*f4
 ), byrow = TRUE, ncol = 3)
 powerPath <- semPower.powerPath(
                                 # define type of power analysis
@@ -1723,7 +1723,7 @@ powerPath <- semPower.powerPath(
 
 
 ## Multiple group invariance {#powerMI}
-`semPower.powerMI` is used to perform power analyses for hypothesis arising in multigroup measurement invariance models. The typical - but not in all parts necessary -
+`semPower.powerMI` is used to perform power analyses for hypotheses arising in multigroup measurement invariance models. The typical - but not in all parts necessary -
 sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance, where each level of invariance is usually compared against the previous level (e.g., scalar vs. metric). `semPower.powerMI` provides interfaces to perform power analyses concerning the hypothesis whether a particular level of invariance is tenable, implementing a model-based approach, so that non-invariant parameters need to be specified. When one does not expect (or is not interested in or does not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assumes that non-invariance spreads across multiple parameters (say, across most or all loadings), one should consider to perform model-free power analysis concerning the [overall difference](#diffPower) between two models.
 
 `semPower.powerMI` only addresses hypotheses concerning multigroup measurement invariance. See the corresponding chapter for [other hypothesis arising in multigroup settings](#multipleGroups).
@@ -1733,7 +1733,7 @@ sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance,
 * `comparison`: Defines the comparison model (see below for valid arguments). 
 * `nullEffect`: Defines the level of invariance of interest (see below for valid arguments).
 * additional arguments [specifying the type of power analysis](#commonArgs). 
-* additional arguments [defining the factor model](#factorDefinition), which in must include a list structure for at least some model parameters, so that parameters that differ across groups are defined.   
+* additional arguments [defining the factor model](#factorDefinition), which must include a list structure for at least some model parameters, so that parameters that differ across groups are defined.   
 
 
 The models defined in the `comparison` and `nullEffect` arguments can be one of:
@@ -1758,14 +1758,14 @@ Note that `semPower.powerMI` implements variance scaling of the factors (the var
 
 * `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`). Note that multiple group constraints are provided to `lavaan` via its `group.equal` argument, which is not returned by `semPower.powerMI`.
 
 
 ##### Detect metric non-invariance {-}
 To perform a power analysis to detect whether a metric invariance model is significantly worse than a configural invariance model, use `nullEffect = 'metric'` in conjunction with `comparison = 'configural'`, and define the factor model in a way that at least one loading differs across groups (so that metric invariance is violated to the extent as defined by the difference in the loadings across groups).
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises a single factor, which is measured by 5 indicators in both groups (`nIndicator = list(5, 5)`). In the first group, all indicators load by .5, whereas in the second group, all indicators load by .6 (`loadM = list(.5, .6)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. Furthermore, in multiple group models the `N` argument also needs to be supplied as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. 
+For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises a single factor, which is measured by 5 indicators in both groups (`nIndicator = list(5, 5)`). In the first group, all indicators load by .5, whereas in the second group, all indicators load by .6 (`loadM = list(.5, .6)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. Furthermore, in multiple group models, the `N` argument also needs to be supplied as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. 
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
@@ -1821,6 +1821,7 @@ powerMI <- semPower.powerMI(
 
 Measurement parameters that should be equal across groups can also be provided omitting the list structure, so the same as above can be achieved by using: 
 
+??? could the list for Phi also be replaced in the code below?
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
                            type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
@@ -1829,10 +1830,10 @@ powerMI <- semPower.powerMI(
                            # define two factors
                            nIndicator = c(3, 4),
                            loadM = list(c(.5, .5), c(.5, .6)),
-                           Phi = list(.3, .3))
+                           Phi = list(.3, .3)) 
 ```
 
-In the examples above, all indicators of a certain factor exhibited measurement non-invariance. If only a subset of indicators should show a different loading by group, [specify the factor model](#factorDefinition) using the `loadings` argument. For instance, the following defines a two-factor model with a factor correlation of .3 (`Phi = list(.3, 3)`) in both groups. The first factor is measured by 3 indicators and the second factor is measured by 4 indicators (in both groups). In the first group, the loadings on the first factor are .7, .6, and .5, and those on the second factor are  .5, .5, and .7. In the second group, the loadings on the first factor are .7, .7, and .5, and those on the second factor are .5, .5, and .6. Thus, there are group differences concerning the loadings of the second indicator of the first factor (.6 vs .5) and concerning the loadings of the third indicator of the second factor (.7 vs .6). 
+In the examples above, all indicators of a certain factor exhibited measurement non-invariance. If only a subset of indicators should show a different loading by group, [specify the factor model](#factorDefinition) using the `loadings` argument. For instance, the following defines a two-factor model with a factor correlation of .3 (`Phi = list(.3, 3)`) in both groups. The first factor is measured by 3 indicators and the second factor is also measured by 3 indicators (in both groups). In the first group, the loadings on the first factor are .7, .6, and .5, and those on the second factor are  .5, .5, and .7. In the second group, the loadings on the first factor are .7, .7, and .5, and those on the second factor are .5, .5, and .6. Thus, there are group differences concerning the loadings of the second indicator of the first factor (.6 vs .5) and concerning the loadings of the third indicator of the second factor (.7 vs .6). 
 
 
 ```{r eval=FALSE}
@@ -1929,31 +1930,31 @@ powerMI <- semPower.powerMI(
 `semPower.powerCLPM` is used to perform power analyses for hypothesis arising in cross-lagged panel models (CLPM). In a standard CLPM implemented here, two variables $X$ and $Y$ are repeatedly assessed at two (or more) different time points (waves) yielding autoregressive effects (stabilities; `X1 -> X2` and `Y1 -> Y2`), synchronous effects (`X1 <-> Y1` and `X2 <-> Y2`), and cross-lagged effects (`X1 -> Y2` and `Y1 -> X2`). `semPower.powerCLPM`provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether the autoregressive effects of $X$ (`X1 -> X2`, `autoregX = 0`) or $Y$ (`Y1 -> Y2`, `autoregY = 0`) differ from zero. 
-* whether the crossed effect of $X$ on $Y$ (`X -> Y`, `crossedX`) or the crossed effect of $Y$ on $X$ (`Y -> X`, `crossedY`) differs from zero. 
+* whether the cross-lagged effect of $X$ on $Y$ (`X -> Y`, `crossedX`) or the cross-lagged effect of $Y$ on $X$ (`Y -> X`, `crossedY`) differs from zero. 
 * whether the autoregressive effects of $X$ and $Y$ are equal (`autoregX = autoregY`).
-* whether the crossed effect of $X$ on $Y$ and the crossed effect of $Y$ on $X$ are equal (`crossedX = crossedY`).
+* whether the cross-lagged effect of $X$ on $Y$ and the cross-lagged effect of $Y$ on $X$ are equal (`crossedX = crossedY`).
 * whether the autoregressive effect of $X$ (`autoregX`) or the autoregressive effect of $Y$ (`autoregY`) are equal across waves. 
-* whether the crossed effect of $X$ on $Y$ (`crossedX`) or the crossed effect of $Y$ on $X$ (`crossedY`) are equal across waves. 
+* whether the cross-lagged effect of $X$ on $Y$ (`crossedX`) or the cross-lagged effect of $Y$ on $X$ (`crossedY`) are equal across waves. 
 * whether the (residual-)correlations between $X$ and $Y$ are equal across waves (`corXY`). 
 * whether the autoregressive effects of $X$ (`autoregXA = autoregXB`) or $Y$ (`autoregXA = autoregXB`) differ across groups. 
-* whether the crossed effect of $X$ on $Y$ (`crossedXA = crossedXB`) or the crossed effect of $Y$ on $X$ (`crossedYA = crossedYB`) differs across groups. 
+* whether the cross-lagged effect of $X$ on $Y$ (`crossedXA = crossedXB`) or the cross-lagged effect of $Y$ on $X$ (`crossedYA = crossedYB`) differs across groups. 
 
 
-`semPower.powerCLPM` only addresses hypotheses arising in a CLPM structure. `semPower` provides other convenience functions for hypothesis arising in  [random intercep cross-lagged panel models](#powerRICLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
+`semPower.powerCLPM` only addresses hypotheses arising in a CLPM structure. `semPower` provides other convenience functions for hypothesis arising in  [random intercept cross-lagged panel models](#powerRICLPM) and in [generic path models](#powerPath). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
 `semPower.powerCLPM` expects the following arguments:
 
-* `nWaves`: the number of waves, must be at $\geq$ 2. 
-* `autoregEffects`: vector of the autoregressive effects of $X$ and $Y$ (constant across waves), or a list of vectors of autoregressive effects for $X$ and $Y$ from wave to wave. 
-* `crossedEffects`: vector of crossed effects of $X$ on $Y$ (`X -> Y`) and of $Y$ on $X$ (`Y -> X`) (both constant across waves), or a list of vectors of crossed effects for each wave. 
+* `nWaves`: The number of waves, must be at $\geq$ 2. 
+* `autoregEffects`: Vector of the autoregressive effects of $X$ and $Y$ (constant across waves), or a list of vectors of autoregressive effects for $X$ and $Y$ from wave to wave. 
+* `crossedEffects`: Vector of cross-lagged effects of $X$ on $Y$ (`X -> Y`) and of $Y$ on $X$ (`Y -> X`) (both constant across waves), or a list of vectors of cross-lagged effects for each wave. 
 * `rXY`: vector of (residual-)correlations between $X$ and $Y$ for each wave or `NULL` for no (residual-)correlations. 
-* `waveEqual`: parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none. 
+* `waveEqual`: Parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for cross-lagged effects, `'corXY'` for residual correlations, or `NULL` for none. 
 * `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the $X$ or $Y$ autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for $X$ and $Y$,  and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups.
 * `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when there are > 2 waves.
-* `nullWhichGroups`: for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied.
-* `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized * `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
-* `metricInvariance`: whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
-* `autocorResiduals`: whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
+* `nullWhichGroups`: For hypotheses involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied.
+* `standardized`: Whether all parameters are standardized (`TRUE`, the default) or unstandardized (`FALSE`).
+* `metricInvariance`: Whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
+* `autocorResiduals`: Whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This generally affects power and may also affect the df, depending on the comparison model. 
 * additional arguments [specifying the type of power analysis](#commonArgs). 
 * additional arguments [defining the factor model](#factorDefinition), where the order of factors is ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). 
 
@@ -1961,19 +1962,19 @@ powerMI <- semPower.powerMI(
 
 * `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
 
 
 ##### Defining the CLPM structure {-#clpmDefinition}
 `semPower.powerCLPM` assumes that two variables $X$ and $Y$ are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a [generic path model](#powerPath)). The structure of a CLPM is defined by specifying `nWaves`, `autoregEffects`, `crossedEffects`,  `rXY`, `standardized`, and `autorcorResiduals`.
 
-`nWaves` defines the number of measurements of $X$ and $Y$ and thus must be two or larger. Setting `nWaves = 2` implies the following regression equations: 
+`nWaves` defines the number of measurements of $X$ and $Y$ and must be two or larger. Setting `nWaves = 2` implies the following regression equations: 
 $$
 \hat{X_2} = \beta_{X_2,X_1} \cdot X_1 + \beta_{X_2, Y_1} \cdot Y_1 \\
 \hat{Y_2} = \beta_{Y_2,X_1} \cdot X_1 + \beta_{Y_2, Y_1} \cdot Y_1
 $$
-So that $\beta_{X_2,X_1}$ is the autogressive effect (the stability) of $X$ (`X1 -> X2`),  $\beta_{Y_2, Y_1}$  the autogressive effect of $Y$ (`Y1 -> Y2`),  $\beta_{X_2, Y_1}$ the cross-lagged effect of $Y$ on $X$ (`Y1 -> X2`), and $\beta_{Y_2, X_1}$ the cross-lagged effect of $X$ on $Y$ (`X1 -> Y2`). The correlation between $X_1$ and $Y_1$ (`X1 <-> Y1`) as well as the residual correlation between $X_2$ and $Y_2$ (`X2 <-> Y2`; the synchronous effects) are defined in `rXY`, which defaults to `NULL` implying zero correlations. If setting `rXY = c(.3, .5)` the correlation between $X_1$ and $Y_1$ is .3, and the residual correlation between $X_2$ and $Y_2$ is .5.
+So that $\beta_{X_2,X_1}$ is the autoregressive effect (the stability) of $X$ (`X1 -> X2`),  $\beta_{Y_2, Y_1}$ is the autoregressive effect of $Y$ (`Y1 -> Y2`),  $\beta_{X_2, Y_1}$ is the cross-lagged effect of $Y$ on $X$ (`Y1 -> X2`), and $\beta_{Y_2, X_1}$ is the cross-lagged effect of $X$ on $Y$ (`X1 -> Y2`). The correlation between $X_1$ and $Y_1$ (`X1 <-> Y1`) as well as the residual correlation between $X_2$ and $Y_2$ (`X2 <-> Y2`; the synchronous effects) are defined in `rXY`, which defaults to `NULL`, implying zero correlations. If setting `rXY = c(.3, .5)` the correlation between $X_1$ and $Y_1$ is .3, and the residual correlation between $X_2$ and $Y_2$ is .5.
 
 When `nWaves = 3`, the system becomes
 $$
@@ -1984,7 +1985,7 @@ $$
 $$
 so that there are now two autoregressive effects and two cross-lagged effects each for both $X$ and $Y$. Note that there are no lag-2 effects, meaning that neither $X_3$ nor $Y_3$ are predicted by $X1$ and $Y1$. This assumption cannot be relaxed in `semPower.powerCLPM`. Consider power analysis for [generic path models](#powerPath) when you need lag-2 effects. 
 
-The population values for the autoregressive effects, the cross-lagged effects, and the (residual)-correlations are defined in `autoregEffects`, `crossedEffects`, and `rXY`, respectively. When these effects are assumed to be constant across waves (as must be the case when there are two waves), `autoregEffects` and `crossedEffects` are vectors of size 2, giving the effects of $X$ and $Y$. For instance, `autoregEffects = c(.7, .6)` defines the autoregressive effect(s) of $X$ to be equal to .7, and those of $Y$ to be equal to .6. Similarly, `crossedEffects = c(.1, .2)` defines the cross-lagged effect of $X$ on $Y$ (`X -> Y`) to be .1, and the cross-lagged effect of $Y$ on $X$ (`Y -> X`) to be .20. Non-zero (residual) correlations always need to refer to each wave, so in case of two waves, `rXY` is a vector comprising two entries, the first giving the correlation between $X_1$ and $Y_1$, the second the residual correlation between $X_2$ and $Y_2$.
+The population values for the autoregressive effects, the cross-lagged effects, and the (residual-)correlations are defined in `autoregEffects`, `crossedEffects`, and `rXY`, respectively. When these effects are assumed to be constant across waves (as must be the case when there are two waves), `autoregEffects` and `crossedEffects` are vectors of size 2, giving the effects of $X$ and $Y$. For instance, `autoregEffects = c(.7, .6)` defines the autoregressive effect(s) of $X$ to be equal to .7, and those of $Y$ to be equal to .6. Similarly, `crossedEffects = c(.1, .2)` defines the cross-lagged effect of $X$ on $Y$ (`X -> Y`) to be .1, and the cross-lagged effect of $Y$ on $X$ (`Y -> X`) to be .20. Non-zero (residual) correlations always need to refer to each wave, so in case of two waves, `rXY` is a vector comprising two entries, the first giving the correlation between $X_1$ and $Y_1$, the second the residual correlation between $X_2$ and $Y_2$.
 
 When there are more than two waves and wave-dependent autoregressive or cross-lagged effects are assumed, a list of vectors is supplied. For instance, in the case of three waves, `autoregEffects = list(c(.8, .7), c(.6, .5))` defines an autoregressive effect of .8 for `X1 -> X2` and of .6 for `X2 -> X3`, and an autoregressive effect of .7 for `Y1 -> Y2` and of .5 for `Y2 -> Y3`. When additionally specifying `crossedEffects = list(c(.1, .2), c(.3, .4))`, the system becomes:
 
@@ -1994,7 +1995,7 @@ $$
 \hat{X_3} = .6 \cdot X_2 + .4 \cdot Y_2 \\
 \hat{Y_3} = .3 \cdot X_2 + .5 \cdot Y_2
 $$
-By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, a diagonal matrix is assumed for $\Psi$, in turn leading to unstandardized parameters.
+By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, a diagonal matrix is assumed for $\Psi$, in turn, leading to unstandardized parameters.
 
 All of the above holds regardless of whether $X$ and $Y$ are latent factors or observed variables. To define the measurement model for $X$ and $Y$, and thereby also whether these are latent factors or observed variables, arguments [defining the factor model](#factorDefinition) are used assuming the order ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). For instance, when there are two waves (`nWaves = 2`), the following shows three equivalent ways to define three indicators for $X$ and four indicators for $Y$ at both waves, where the loadings of each indicator on $X$ are equal to .50 and the loadings on $Y$ are equal to .60:
 
@@ -2030,7 +2031,7 @@ loadM = c(.5, .6, .5, .6)     # X1, Y1, X2, Y2
 ```
 Generally, when homogeneous loadings are assumed, `nIndicator` and `loadM` are probably the way to go, whereas the simplest way to specify heterogeneous loadings is offered by the `loadings` argument. When $X$ and $Y$ shall be observed variables (rather than latent factors), dummy factors with a single indicator loading by 1 are defined, which is most easily done by setting `Lambda = diag(p)`, where `p` is replaced by $2 \cdot nWaves$, so in case of two waves this becomes `Lambda = diag(4)`. For more details, see the chapter on the [definition of the factor model](#factorDefinition).
 
-Beyond the structure of the CLPM and particular values for the population parameters, `semPower.powerCLPM` also requires to define certain defaults that apply to both analysis models, i.e. to both the H0 model reflecting the hypothesis of interest and to the H1 comparison model. First, by default, the analyses models impose no equality constraints on the autoregressive effects, cross-lagged effects, and residual correlations over waves, i.e. the respective parameters (such as $\beta_{X_2,X_1}$ and $\beta_{X_3,X_2}$) are freely estimated for each wave. The `waveEqual` argument can be set to change this behavior. For instance, when setting `waveEqual = c('autoregX', 'autoregY')` both the autoregressive effect of $X$ and $Y$ are held equal over waves. When setting `waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY')` both the autoregressive and the cross-lagged effects are constrained to equality over waves, so in this example the system becomes:
+Beyond the structure of the CLPM and particular values for the population parameters, `semPower.powerCLPM` also requires to define certain defaults that apply to both analysis models, i.e., to both the H0 model reflecting the hypothesis of interest and to the H1 comparison model. First, by default, the analyses models impose no equality constraints on the autoregressive effects, cross-lagged effects, and residual correlations over waves, i.e., the respective parameters (such as $\beta_{X_2,X_1}$ and $\beta_{X_3,X_2}$) are freely estimated for each wave. The `waveEqual` argument can be set to change this behavior. For instance, when setting `waveEqual = c('autoregX', 'autoregY')` both the autoregressive effect of $X$ and $Y$ are held equal over waves. When setting `waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY')`, both the autoregressive and the cross-lagged effects are constrained to equality over waves, so in this example the system becomes:
 
 $$
 \hat{X_2} = \beta_{X,X} \cdot X_1 + \beta_{X, Y} \cdot Y_1 \\
@@ -2039,16 +2040,16 @@ $$
 \hat{Y_3} = \beta_{Y,X} \cdot X_2 + \beta_{Y, Y} \cdot Y_2
 $$
 
-To assume that the residual correlations between $X_2$ and $Y_2$ as well as $X_3$ and $Y_3$ shall be equal, add `'corXY'` to `waveEqual`. Although the constraints defined in `waveEqual` apply to both the H0 and the H1 model, this will nevertheless affect statistical power.  
+To assume that the residual correlations between $X_2$ and $Y_2$ as well as between $X_3$ and $Y_3$ shall be equal, add `'corXY'` to `waveEqual`. Although the constraints defined in `waveEqual` apply to both the H0 and the H1 model, this will nevertheless affect statistical power.  
 
-Second, when $X$ and/or $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`) and also assume that the residuals of the indicators are autocorrelated across waves (`autorcorResiduals = TRUE`). Both can be set to `FALSE` to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constrains as well as the presence of autocorrelated residuals also affects power for hypothesis concerning the CLPM parameters. Note that when `metricInvariance = TRUE`, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$.
+Second, when $X$ and/or $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`) and also assume that the residuals of the indicators are autocorrelated across waves (`autorcorResiduals = TRUE`). Both can be set to `FALSE` to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constraints as well as the presence of autocorrelated residuals also affects power for hypotheses concerning the CLPM parameters. Note that when `metricInvariance = TRUE`, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$.
 
 
 
 ##### Detect whether a cross-lagged effect differs from zero {-}
 To perform a power analysis to detect whether the cross-lagged effect of either $X$ (`X -> Y`) or $Y$ (`Y -> X`) differs from zero, use `nullEffect = 'crossedX = 0'` or `nullEffect = 'crossedY = 0'`.  
 
-For instance, the following sets up a CLPM with two waves (`nWaves = 2`) and requests the required sample (`type = 'a-priori'`) to detect that a cross-lagged effect of $X$ of at least .10 (`crossedEffects = c(.10, .15)`) differs from zero (`nullEffect = 'crossedX = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The cross-lagged effect of $Y$ is .15, the autoregressive effects of $X$ and $Y$ are .6 and .7 (`autoregEffects = c(.6, .7)`), respectively, and the synchronous (residual-)correlations at the first and second wave are .3 and .1 (`rXY = c(.3, .1)`), respectively. $X$ is a latent factor measured by 5 indicators loading by .5 each (at both waves) and  $Y$ is measured by 3 indicators loading by .6 each (at both waves; `nIndicator = c(5, 3, 5, 3)` and `loadM = c(.5, .6, .5, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
+For instance, the following sets up a CLPM with two waves (`nWaves = 2`) and requests the required sample size (`type = 'a-priori'`) to detect that a cross-lagged effect of $X$ of at least .10 (`crossedEffects = c(.10, .15)`) differs from zero (`nullEffect = 'crossedX = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The cross-lagged effect of $Y$ is .15, the autoregressive effects of $X$ and $Y$ are .6 and .7 (`autoregEffects = c(.6, .7)`), respectively, and the synchronous (residual-)correlations at the first and second wave are .3 and .1 (`rXY = c(.3, .1)`), respectively. $X$ is a latent factor measured by 5 indicators loading by .5 each (at both waves) and  $Y$ is measured by 3 indicators loading by .6 each (at both waves; `nIndicator = c(5, 3, 5, 3)` and `loadM = c(.5, .6, .5, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2066,7 +2067,7 @@ powerCLPM <- semPower.powerCLPM(
                                 )
 summary(powerCLPM$power)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerCLPM$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerCLPM$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -2103,7 +2104,7 @@ powerCLPM <- semPower.powerCLPM(
                                 )
 ```
 
-If the model comprises more than two waves and the autoregressive, cross-lagged effects, and/or synchronous residual correlations are considered stable across waves, the `waveEqual` can be used to define both the H0 and the H1 models to implement equality restrictions on these parameters. For instance, the following sets up a CLPM with three waves (`nWaves = 3`). Only a single value is provided for both $X$ and $Y$ concerning the autoregressive effects (`autoregEffects = c(.60, .70)`) and cross-lagged effects (`crossedEffects = c(.10, .15)`), so these are constant across waves. Similarly, `rXY = c(.3, .1, .1)` defines the residual correlations between $X$ and $Y$ at waves 2 and 3 to be equal to .10. The arguments provided to `waveEqual` ensure that the analyses models implement equality restrictions over waves on the autoregressive effects, crossed-lag effects, and the residual correlations at wave 2 and 3. Both the H0 model and the comparison model implement these restrictions and merely differ with respect to the hypothesized effect (the absence of the cross-lagged effect of $X$, `nullEffect = 'crossedX = 0'`).
+If the model comprises more than two waves and the autoregressive effects, cross-lagged effects, and/or synchronous residual correlations are considered stable across waves, the `waveEqual` can be used to define both the H0 and the H1 models to implement equality restrictions on these parameters. For instance, the following sets up a CLPM with three waves (`nWaves = 3`). Only a single value is provided for both $X$ and $Y$ concerning the autoregressive effects (`autoregEffects = c(.60, .70)`) and cross-lagged effects (`crossedEffects = c(.10, .15)`), so these are constant across waves. Similarly, `rXY = c(.3, .1, .1)` defines the residual correlations between $X$ and $Y$ at waves 2 and 3 to be equal to .10. The arguments provided to `waveEqual` ensure that the analyses models implement equality restrictions over waves on the autoregressive effects, crossed-lag effects, and the residual correlations at wave 2 and 3. Both the H0 model and the comparison model implement these restrictions and merely differ with respect to the hypothesized effect (the absence of the cross-lagged effect of $X$, `nullEffect = 'crossedX = 0'`).
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2127,7 +2128,7 @@ In all examples above, a power analysis was performed by comparing the implied H
 ##### Detect whether an autoregressive effect differs from zero {-}
 To perform a power analysis to detect whether the autoregressive effect of either $X$ or $Y$ differs from zero, use `nullEffect = 'autoregX = 0'` or `nullEffect = 'autoregY = 0'`.  
 
-For instance, the following sets up a CLPM with two waves (`nWaves = 2`) and requests the required sample (`type = 'a-priori'`) to detect that an autoregressive effect of $X$ of at least .50 (`autoregEffects = c(.50, .80)`) differs from zero (`nullEffect = 'autoregX = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The autoregressive effect of $Y$ is .80, the cross-lagged effects of $X$ and $Y$ are .10 and .05 (`crossedEffects = c(.10, .05)`), respectively, and the synchronous (residual-)correlations at the first and second wave are .2 and .3 (`rXY = c(.2, .3)`), respectively. $X$ is a latent factor measured by 3 indicators loading by .5 each (at both waves) and  $Y$ is measured by 3 indicators loading by .7 each (at both waves; `nIndicator = c(3, 3, 3, 3)` and `loadM = c(.5, .7, .5, .7)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
+For instance, the following sets up a CLPM with two waves (`nWaves = 2`) and requests the required sample size (`type = 'a-priori'`) to detect that an autoregressive effect of $X$ of at least .50 (`autoregEffects = c(.50, .80)`) differs from zero (`nullEffect = 'autoregX = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The autoregressive effect of $Y$ is .80, the cross-lagged effects of $X$ and $Y$ are .10 and .05 (`crossedEffects = c(.10, .05)`), respectively, and the synchronous (residual-)correlations at the first and second wave are .2 and .3 (`rXY = c(.2, .3)`), respectively. $X$ is a latent factor measured by 3 indicators loading by .5 each (at both waves) and  $Y$ is measured by 3 indicators loading by .7 each (at both waves; `nIndicator = c(3, 3, 3, 3)` and `loadM = c(.5, .7, .5, .7)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2149,7 +2150,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the cross-lagged effects of $X$ and $Y$ differ {-}
 To perform a power analysis to detect whether the cross-lagged effect of $X$ (`X -> Y`) differs from the cross-lagged effect of $Y$ (`Y -> X`) , use `nullEffect = 'crossedX = crossedY'`.
 
-For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the cross-lagged effect of $X$ differs from the cross-lagged effect of $Y$  (`nullEffect = 'crossedX = crossedY'`) at the first wave (`nullWhich = 1`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The autoregressive effects of both $X$ and $Y$ are constant across waves (`autoregEffects = c(.60, .70)`), which is also an assumption made in both the H0 and the H1 model (`waveEqual = c('autoregX', 'autoregY', 'corXY')`). Likewise, the analyses models restrict the residual correlations between $X$ and $Y$ at the second and third wave to equality, which matches the defined values in the population (`rXY = c(.3, .1, .1)`). However, the cross-lagged effects for $X$ and $Y$ differ across waves (`crossedEffects`): the cross-lagged effects of $X$ are .05 and .15 at wave 2 (`X1 -> Y2`) and 3 (`X2 -> Y3`), respectively, and the cross-lagged effects of $Y$ are .15 and .20 at wave 2 (`Y1 -> X2`) and 3 (`Y2 -> X3`), respectively. Note that `waveEqual` does not constrain the cross-lagged effect to be equal across waves. The `nullWhich = 1` argument now indicates which of the two cross-lagged effects of $X$ are targeted by the hypothesis, namely first one, i.e., the effect from wave 1 to  wave 2 (`X1 -> Y2`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
+For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the cross-lagged effect of $X$ differs from the cross-lagged effect of $Y$  (`nullEffect = 'crossedX = crossedY'`) at the first wave (`nullWhich = 1`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The autoregressive effects of both $X$ and $Y$ are constant across waves (`autoregEffects = c(.60, .70)`), which is also an assumption made in both the H0 and the H1 model (`waveEqual = c('autoregX', 'autoregY', 'corXY')`). Likewise, the analyses models restrict the residual correlations between $X$ and $Y$ at the second and third wave to equality, which matches the defined values in the population (`rXY = c(.3, .1, .1)`). However, the cross-lagged effects for $X$ and $Y$ differ across waves (`crossedEffects`): the cross-lagged effects of $X$ are .05 and .15 at wave 2 (`X1 -> Y2`) and 3 (`X2 -> Y3`), respectively, and the cross-lagged effects of $Y$ are .15 and .20 at wave 2 (`Y1 -> X2`) and 3 (`Y2 -> X3`), respectively. Note that `waveEqual` does not constrain the cross-lagged effect to be equal across waves. The `nullWhich = 1` argument now indicates which of the two cross-lagged effects of $X$ and $Y$ are targeted by the hypothesis, namely the first cross-lagged effects, i.e., the effect from wave 1 to wave 2 (`X1 -> Y2` and `Y1 -> X2`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2175,7 +2176,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the autoregressive effects of $X$ and $Y$ differ {-}
 To perform a power analysis to detect whether the autoregressive effect of $X$ differs from the autoregressive effect of $Y$, use `nullEffect = 'autoregX = autoregY'`.
 
-For instance, the following sets up a CLPM in the same way as in the previous section and requests the required sample (`type = 'a-priori'`) to detect that the autoregressive effect of $X$ differs from the autoregressive effect of $Y$  (`nullEffect = 'autoregX = autoregY'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Because the autoregressive effects of both $X$ and $Y$ are constant across waves (`autoregEffects = c(.60, .70)`), which is also an assumption made in both the H0 and the H1 model (`waveEqual = c('autoregX', 'autoregY', 'corXY')`), there is in fact only one autoregressive effect each for  $X$ and $Y$, so the `nullWhich` argument can be omitted.
+For instance, the following sets up a CLPM in the same way as in the previous section and requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive effect of $X$ differs from the autoregressive effect of $Y$  (`nullEffect = 'autoregX = autoregY'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Because the autoregressive effects of both $X$ and $Y$ are constant across waves (`autoregEffects = c(.60, .70)`), which is also an assumption made in both the H0 and the H1 model (`waveEqual = c('autoregX', 'autoregY', 'corXY')`), there is in fact only one autoregressive effect each for $X$ and $Y$, so the `nullWhich` argument can be omitted.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2200,7 +2201,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the cross-lagged effects differ across waves  {-}
 To perform a power analysis to detect whether the cross-lagged effects of either $X$ or $Y$ differ across waves, use `nullEffect = 'crossedX'` or `nullEffect = 'crossedY'`. This is only meaningful when there are at least 3 waves. 
 
-For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the cross-lagged effects of $X$ differs across waves (`nullEffect = 'crossedX'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Both the cross-lagged effects of $X$ and $Y$ differ across waves (`crossedEffects`): the cross-lagged effects of $X$ are .05 and .15 at wave 2 (`X1 -> Y2`) and 3 (`X2 -> Y3`), respectively, and the cross-lagged effects of $Y$ are .15 and .20 at wave 2 (`Y1 -> X2`) and 3 (`Y2 -> X3`), respectively. Similarly, the  autoregressive effects of $X$ (but not $Y$) differ across waves as well (`autoregEffects`). The analyses models restrict the residual correlations between $X$ and $Y$ at the second and third wave to equality (`waveEqual = c('corXY')`), which matches the defined values in the population (`rXY = c(.3, .1, .1)`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
+For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the cross-lagged effects of $X$ differ across waves (`nullEffect = 'crossedX'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Both the cross-lagged effects of $X$ and $Y$ differ across waves (`crossedEffects`): the cross-lagged effects of $X$ are .05 and .15 at wave 2 (`X1 -> Y2`) and 3 (`X2 -> Y3`), respectively, and the cross-lagged effects of $Y$ are .15 and .20 at wave 2 (`Y1 -> X2`) and 3 (`Y2 -> X3`), respectively. Similarly, the autoregressive effects of $X$ (but not $Y$) differ across waves as well (`autoregEffects`). The analyses models restrict the residual correlations between $X$ and $Y$ at the second and third wave to equality (`waveEqual = c('corXY')`), which matches the defined values in the population (`rXY = c(.3, .1, .1)`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2229,7 +2230,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the autoregressive effects differ across waves  {-}
 To perform a power analysis to detect whether the autoregressive effects of either $X$ or $Y$ differ across waves, use `nullEffect = 'autoregX'` or `nullEffect = 'autoregY'`. This is only meaningful when there are at least 3 waves.
 
-For instance, the following sets up a CLPM in the same way as in the previous section and requests the required sample (`type = 'a-priori'`) to detect that the autoregressive effect of $X$ differs across waves (`nullEffect = 'autoregX'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Note that the autoregressive effects of $Y$ do not change over waves, so in this example performing a power analysis with `nullEffect = 'autoregY'` would not be possible, as there is no difference to detect.
+For instance, the following sets up a CLPM in the same way as in the previous section and requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive effect of $X$ differs across waves (`nullEffect = 'autoregX'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Note that the autoregressive effects of $Y$ do not change over waves, so in this example performing a power analysis with `nullEffect = 'autoregY'` would not be possible, as there is no difference to detect.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2258,7 +2259,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the residual correlations between $X$ and $Y$ differ across waves  {-}
 To perform a power analysis to detect whether the residual correlations between $X$ and $Y$ differ across waves, use `nullEffect = 'corXY'`. This is only meaningful when there are at least 3 waves.
 
-For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the synchronous correlations between $X$ and $Y$ differs at wave 2 from the one at wave 3 (`nullEffect = 'corXY'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The synchronous correlations are defined to be .3, .2, and .1 at the first, second, and third wave, respectively (`rXY = c(.3, .2, .1)`). The cross-lagged effects of both $X$ and $Y$ (`crossedEffects = c(.05, .15)`) are constant across waves, as is the autoregressive effect of $Y$, whereas the autoregressive effect of $X$ is not (`autoregEffects`). The analyses models restrict the cross-lagged effects and the autoregressive effect of $Y$ to be equal across waves (`waveEqual = c('crossedX', 'crossedY', 'autoregY')`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
+For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the synchronous correlations between $X$ and $Y$ differs at wave 2 from the one at wave 3 (`nullEffect = 'corXY'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The synchronous correlations are defined to be .3, .2, and .1 at the first, second, and third wave, respectively (`rXY = c(.3, .2, .1)`). The cross-lagged effects of both $X$ and $Y$ (`crossedEffects = c(.05, .15)`) are constant across waves, as is the autoregressive effect of $Y$, whereas the autoregressive effect of $X$ is not (`autoregEffects`). The analyses models restrict the cross-lagged effects and the autoregressive effect of $Y$ to be equal across waves (`waveEqual = c('crossedX', 'crossedY', 'autoregY')`). Finally, $X$ is defined to be a latent factor measured by 10 indicators loading by .7 each (at all waves) and  $Y$ is measured by 8 indicators loading by .7 each (at all waves; `nIndicator = c(10, 8, 10, 8, 10, 8)` and `loadM = c(.7, .6, .7, .6, .7, .6)`). See the section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
@@ -2283,13 +2284,15 @@ powerCLPM <- semPower.powerCLPM(
 
 Whereas all previous examples were based on standardized effects (by omitting the `standardized` argument which defaults to `TRUE`), hypotheses referring to the residual correlations require `standardized` to be set to `FALSE`, because the equality restrictions are always applied on unstandardized parameters, which in case of the residual correlations generally differ from the standardized parameters.
 
+??? The equality constraints are only placed on the residual correlations at wave 2 and wave 3 but not at the correlation at wave 1, right? Maybe this could be stated really explicitly.
+
 
 ##### Detect whether the cross-lagged effect of $X$ or $Y$ differs across groups {-}
 To perform a power analysis to detect whether the cross-lagged effect of $X$ or the one of $Y$ differs across groups, use `nullEffect = 'crossedXA = crossedXB'` or `nullEffect = 'crossedYA = crossedYB'`.
 
-In multigroup analysis, `autoregEffects` and/or `crossedEffects` must be provided in a list structure, where each component specifies the values for a particular group. For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample (`type = 'a-priori'`) to detect that the cross-lagged effect of $X$ differs across groups (`nullEffect = 'crossedXA = crossedXB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). In the first group, the cross-lagged effect of $X$ is .10 in all waves, in the second group the cross-lagged effect of $X$ is .20 in all waves (`crossedEffects`). The cross-lagged effect of $Y$ is .05 in both groups and in all waves. The autoregressive effects of $X$ and $Y$ are also constant across waves, but differ from each other and concerning $X$ also across groups (with .8 in the first group and .6 in the second group, `autoregEffects`). The synchronous correlations are zero in all waves and in both groups (`rXY = NULL`). Further, the both the H0 and the H1 model assume the autoregressive and cross-lagged effects to be equal across waves (but not across groups; `waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY')`). Because the cross-lagged effects of $Y$ are held constant over waves, in the H0 model only a single parameter differs across groups, so the df of the power analysis become 1.
+In multigroup analysis, `autoregEffects` and/or `crossedEffects` must be provided in a list structure, where each component specifies the values for a particular group. For instance, the following sets up a CLPM with three waves (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the cross-lagged effect of $X$ differs across groups (`nullEffect = 'crossedXA = crossedXB'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). In the first group, the cross-lagged effect of $X$ is .10 in all waves, in the second group the cross-lagged effect of $X$ is .20 in all waves (`crossedEffects`). The cross-lagged effect of $Y$ is .05 in both groups and in all waves. The autoregressive effects of $X$ and $Y$ are also constant across waves, but differ from each other and concerning $X$ also across groups (with .8 in the first group and .6 in the second group, `autoregEffects`). The synchronous correlations are zero in all waves and in both groups (`rXY = NULL`). Further, both the H0 and the H1 model assume the autoregressive and cross-lagged effects to be equal across waves (but not across groups; `waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY')`). Because the cross-lagged effects of $Y$ are held constant over waves, in the H0 model only a single parameter differs across groups, so the df of the power analysis become 1.
 
-Since `semPower.powerCLPM` by default applies metric invariance constraints across both waves and groups (`metricInvariance = TRUE`), the measurement model is defined to be identical in both groups: $X$ is a latent factor measured by 5 indicators loading by .5 each (at all three waves) and  $Y$ is measured by 3 indicators loading by .4 each (at all three waves; `nIndicator` and `loadM`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+Since `semPower.powerCLPM` by default applies metric invariance constraints across both waves and groups (`metricInvariance = TRUE`), the measurement model is defined to be identical in both groups: $X$ is a latent factor measured by 5 indicators loading by .5 each (at all three waves) and $Y$ is measured by 3 indicators loading by .4 each (at all three waves; `nIndicator` and `loadM`). Furthermore, in multiple group models, the `N` argument also needs to be provided as a list, which in case of an a-priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post-hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 
 ```{r eval=FALSE}
@@ -2358,7 +2361,7 @@ powerCLPM <- semPower.powerCLPM(
 ##### Detect whether the autoregressive effect of $X$ or $Y$ differs across groups {-}
 To perform a power analysis to detect whether the autoregressive effect of $X$ or $Y$ differs across groups, use `nullEffect = 'autoregXA = autoregXB'` or `nullEffect = 'autoregYA = autoregYB'`.
 
-For instance, the following defines a CLPM similar to the example in the previous section, which three alterations: First, no list is provided as argument to `crossedEffects`, so the crossed-effects of both $X$ and $Y$ are assumed to be both constant across waves and equal across groups. Second, both the H0 and the H1 model merely assume the crossed effects to be constant across waves (`waveEqual = c('crossedX', 'crossedY')`). Third, the autoregressive effect of $X$ differs both across waves and across groups (`autoregEffects`). Specifically, whereas the autoregressive effect of $X$ from wave 1 to wave 2 is .80 in both groups, the autoregressive effect of $X$ from wave 2 to wave 3 is .80 in the first group, but .60 in the second group. Because there are now multiple autoregressive effects for $X$, `nullWhich = 2` is used to identify the effect on which the cross-group constraint should be applied.
+For instance, the following defines a CLPM similar to the example in the previous section, with three alterations: First, no list is provided as argument to `crossedEffects`, so the crossed-effects of both $X$ and $Y$ are assumed to be both constant across waves and equal across groups. Second, both the H0 and the H1 model merely assume the crossed effects to be constant across waves (`waveEqual = c('crossedX', 'crossedY')`). Third, the autoregressive effect of $X$ differs both across waves and across groups (`autoregEffects`). Specifically, whereas the autoregressive effect of $X$ from wave 1 to wave 2 is .80 in both groups, the autoregressive effect of $X$ from wave 2 to wave 3 is .80 in the first group, but .60 in the second group. Because there are now multiple autoregressive effects for $X$, `nullWhich = 2` is used to identify the effect on which the cross-group constraint should be applied.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
