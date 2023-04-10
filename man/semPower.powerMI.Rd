@@ -31,74 +31,7 @@ in multigroup measurement invariance models concerning a specific level of invar
 This requires the lavaan package.
 }
 \details{
-This function performs a power analysis to reject various hypotheses arising
-in the context of multigroup measurement invariance. Multigroup invariance models
-fit the specified model simultaneously to various groups and place increasingly
-restrictive cross-group equality constrains on the model parameters. The typical - but not in all parts necessary -
-sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance, where each level of invariance is
-compared against the previous level (e.g., scalar vs. metric). Power analysis provides
-the power (or the required N) to reject a particular level of invariance.
 
-The models defined in the \code{comparison} and the \code{nullEffect} arguments can be specified as follows:
-\itemize{
-\item \code{'configural'}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
-\item \code{'metric'}: all loadings are restricted to equality.
-\item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality.
-\item \code{'residual'}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
-}
-
-For example, setting \code{comparison = 'metric'} and \code{nullEffect = 'scalar'} determines power
-to reject the hypothesis that the constraints placed in the scalar invariance model
-(restricting loadings and intercepts) over the
-metric invariance model (restricting only the loadings) are defensible.
-
-For greater flexibility, the models can also be defined using \code{lavaan} style \code{group.equal} restrictions as a vector:
-\itemize{
-\item \code{'none'}: no invariance constraints and thus representing a configural invariance model. Shows the same fit as the saturated model, so only the delta df differ.
-\item \code{c('loadings')}: all loadings are restricted to equality.
-\item \code{c('loadings', 'intercepts')}: all loadings and (indicator-)intercepts are restricted to equality.
-\item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
-\item \code{c('loadings', 'residuals')}: all loadings and (indicator-)residuals are restricted to equality.
-\item \code{c('loadings', 'intercepts', 'means')}: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
-}
-
-For example, setting \code{comparison = c('loadings')} and \verb{nullEffect = 'c('loadings', 'intercepts')'}
-determines power to reject the hypothesis that the constraints placed in the scalar invariance model
-(restricting loadings and intercepts) over the  metric invariance model (restricting only the loadings) are defensible.
-Note that variance scaling is used, so invariance of variances (\code{'lv.variances'}) is always met.
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the factor model and the requested type of power analysis.
-
-Additional arguments related to the \strong{definition of the factor model}:
-\itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-\item \code{tau}: Defines the item intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If \code{NULL} and \code{Alpha} is set, all intercepts are assumed to equal zero.
-\item \code{Alpha}: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If \code{NULL} and \code{tau} is set, all latent means are assumed to equal zero. Because variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
-}
-
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} always need to be defined,
-and \code{tau} and \code{Alpha} need to be defined for particular levels of invariance.
-As this function operates on multiple groups, either argument is a list whenever there are
-group differences in the respective parameters. When no list is provided, the same
-parameter values are assumed for all groups.
-
-Additional arguments related to the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{
@@ -241,7 +174,7 @@ powerMI <- semPower.powerMI(type = 'post-hoc',
                             nIndicator = list(5, 5),
                             loadM = list(.5, .6),
                             alpha = .05, N = list(500, 500), 
-                            simulatedPower = TRUE, nReplications = 500)
+                            simulatedPower = TRUE, simOptions = list(nReplications = 500))
                              
 }
 }

@@ -13,6 +13,9 @@ makeRestrictionsLavFriendly(model)
 model with  \code{lavaan}-friendly constrains
 }
 \description{
+This function is currently orphaned, but we keep it just in case.
+}
+\details{
 This function transforms a \code{lavaan} model string into a model string that works reliably
 when both equality constrains and value constrains are imposed on the same parameters.
 \code{lavaan} cannot reliably handle this case, e. g., \code{"a == b \\\\n a == 0"} will not always work.

@@ -57,27 +57,7 @@ a \code{lavaan} model string defining the population model or the population cov
 This requires the \code{lavaan} package.
 }
 \details{
-Generic function to perform a power analysis based  on a true population covariance matrix Sigma
-and a model implied covariance matrix SigmaHat (and optionally the associated mean vectors),
-where SigmaHat (and muHat) is determined by fitting a respective H0 model using \code{lavaan},
-and Sigma (and mu) can also be provided through a corresponding \code{lavaan} model string.
 
-All \code{semPower} convenience functions internally call this function.
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{

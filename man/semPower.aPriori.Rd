@@ -20,11 +20,9 @@ semPower.aPriori(
   simulatedPower = FALSE,
   modelH0 = NULL,
   modelH1 = NULL,
-  nReplications = 250,
-  minConvergenceRate = 0.5,
+  simOptions = NULL,
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
-  seed = NULL,
   ...
 )
 }
@@ -59,15 +57,11 @@ semPower.aPriori(
 
 \item{modelH1}{for simulated power: \code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
-\item{nReplications}{for simulated power: number of random samples drawn.}
-
-\item{minConvergenceRate}{for simulated power: the minimum convergence rate required.}
+\item{simOptions}{a list of additional options specifying simulation details, see \code{\link[=simulate]{simulate()}} for details.}
 
 \item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation.}
 
 \item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
-
-\item{seed}{for simulated power: the seed.}
 
 \item{...}{other parameters related to plots, notably \code{plotShow}, \code{plotShowLabels}, and \code{plotLinewidth}.}
 }

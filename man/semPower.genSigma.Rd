@@ -29,6 +29,8 @@ semPower.genSigma(
 \item{tau}{vector of intercepts. If \code{NULL} and \code{Alpha} is set, these are assumed to be zero. If both \code{Alpha} and \code{tau} are \code{NULL}, no means are returned. A list for multiple group models.}
 
 \item{Alpha}{vector of factor means. If \code{NULL} and \code{tau} is set, these are assumed to be zero. If both \code{Alpha} and \code{tau} are \code{NULL}, no means are returned. A list for multiple group models.}
+
+\item{...}{other}
 }
 \value{
 Returns a list (or list of lists for multiple group models) containing the following components:

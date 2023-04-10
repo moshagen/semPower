@@ -56,59 +56,7 @@ Convenience function for performing power analysis concerning indirect effect(s)
 This requires the lavaan package.
 }
 \details{
-This function performs a power analysis to reject various hypotheses arising
-in the context of mediation:
-\itemize{
-\item \code{nullEffect = 'ind = 0'}: Tests the hypothesis that an indirect effect is zero.
-\item \code{nullEffect = 'indA = indB'}: Tests the hypothesis that an indirect effect is equal in two or more groups. This is currently only possible for models without latent variables.
-}
 
-The indirect effect of interest can be specified in two ways:
-\itemize{
-\item If a simple mediation involving three variables of the form \code{X -> M -> Y} is assumed, the arguments
-\code{bYX}, \code{bMX}, and \code{bYM} are used to define the respective slopes, e. g.  \code{bYX = .4}, \code{bMX = .5}, and \code{bYM = .3} translates to
-\verb{X -- .5 --> M -- .3 --> Y} and  \verb{X -- .4 --> Y}.
-\item More complex mediation structures can be defined by providing the \code{Beta} matrix along with \code{indirect} specifying which paths define the indirect effect. See examples below.
-}
-
-Notes on implementation:
-\itemize{
-\item For models without latent variables, \code{nullEffect = 'ind = 0'} and \code{nullEffect = 'indA = indB'} constrain the indirect effect to zero and to equality, respectively.
-\item For models with latent variables and \code{nullEffect = 'ind = 0'}, power is approximated by constraining the smallest slope contained in the indirect effect to zero. Although this hypothesis is not identical to the hypothesis of the absence of an indirect effect, it provides a close approximation of the resulting power.
-\item For models with latent variables multiple groups (i. e., \code{nullEffect = 'indA = indB'}), there is currently no way to determine power,
-because implementing equality constrains on the indirect effects leads to non-convergence and
-the approach to constrain a single or all slopes to equality across groups can severely misrepresent the actual hypothesis of interest.
-}
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the factor model and the requested type of power analysis.
-
-Additional arguments related to the \strong{definition of the factor model}:
-\itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-}
-
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
-If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
-
-Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the thrird as Y. In case of a more complex mediation defined via the \code{Beta} matrix, the order of factors matches the order of \code{Beta}.
-
-Additional arguments related to the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{
@@ -241,7 +189,7 @@ powerMed <- semPower.powerMediation(type = 'post-hoc',
                                     nIndicator = c(3, 5, 4),
                                     loadM = c(.5, .6, .7),
                                     alpha = .05, N = 500,
-                                    simulatedPower = TRUE, nReplications = 500)
+                                    simulatedPower = TRUE, simOptions = list(nReplications = 500))
 }
 }
 \seealso{

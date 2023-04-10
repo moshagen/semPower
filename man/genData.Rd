@@ -4,23 +4,39 @@
 \alias{genData}
 \title{genData}
 \usage{
-genData(N = NULL, Sigma = NULL, mu = NULL, gIdx = NULL)
+genData(
+  type = "normal",
+  N = NULL,
+  Sigma = NULL,
+  mu = NULL,
+  nSets = 1,
+  gIdx = NULL,
+  modelH0 = NULL,
+  simOptions = NULL
+)
 }
 \arguments{
+\item{type}{one of 'normal' (the default), 'IG', 'mnonr', or 'RK'.}
+
 \item{N}{sample size.}
 
 \item{Sigma}{population covariance matrix.}
 
 \item{mu}{population means.}
 
+\item{nSets}{number of data sets to generate}
+
 \item{gIdx}{if not \code{NULL}, add gIdx as numeric group index as additional variable to generated data}
+
+\item{simOptions}{additional arguments passed to specific data generation routine}
 }
 \value{
 Returns the generated data
 }
 \description{
-Generates random data from population variance-covariance matrix and population means.
-Currently only the multivariate normal case.
+Generates random data from population variance-covariance matrix and population means, either
+from a multivariate normal distribution, or using one of various approaches to generate
+non-normal data.
 }
 \examples{
 \dontrun{

@@ -14,8 +14,10 @@ semPower.powerRICLPM(
   rBXBY = NULL,
   waveEqual = NULL,
   nullEffect = NULL,
+  nullWhichGroups = NULL,
   nullWhich = NULL,
   metricInvariance = TRUE,
+  autocorResiduals = TRUE,
   ...
 )
 }
@@ -36,11 +38,15 @@ semPower.powerRICLPM(
 
 \item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'autoregX'} and \code{'autoregY'} for autoregressive effects, \code{'crossedX'} and \code{'crossedY'} for crossed effects, \code{'corXY'} for residual correlations, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in \code{waveEqual} and additionally \code{'autoregX = 0'}, \code{'autoregY = 0'}, \code{'crossedX = 0'}, \code{'crossedY = 0'} to constrain the X or Y autoregressive effects or the crossed effects to zero, \code{'corBXBY = 0'} to constrain the correlation between the random intercepts to zero, and \code{'autoregX = autoregY'} and \code{'crossedX = crossedY'} to constrain them to be equal for X and Y.}
+\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in \code{waveEqual} and additionally \code{'autoregX = 0'}, \code{'autoregY = 0'}, \code{'crossedX = 0'}, \code{'crossedY = 0'} to constrain the X or Y autoregressive effects or the crossed effects to zero, \code{'corBXBY = 0'} to constrain the correlation between the random intercepts to zero, and \code{'autoregX = autoregY'} and \code{'crossedX = crossedY'} to constrain them to be equal for X and Y, and \code{'autoregXA = autoregXB'}, \code{'autoregYA = autoregYB'}, \code{'crossedXA = crossedXB'}, \code{'crossedYA = crossedYB'}, and \code{corBXBYA = corBXBYB} to constrain them to be equal across groups.}
+
+\item{nullWhichGroups}{for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
 \item{nullWhich}{used in conjunction with \code{nullEffect} to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, \code{nullEffect = 'autoregX = 0'} with \code{nullWhich = 2} would constrain the second autoregressive effect for X to zero.}
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).}
+
+\item{autocorResiduals}{whether the residuals of the indicators of latent variables are autocorrelated over waves (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
 }
@@ -59,55 +65,7 @@ Convenience function for performing power analysis on effects in a random interc
 This requires the lavaan package.
 }
 \details{
-This function performs a power analysis to reject various hypotheses arising in a random intercept crossed-lagged panel model (RI-CLPM).
-In a standard RI-CLPM implemented here, two variables X and Y are repeatedly assessed at three or more different time points (\code{nWaves}),
-yielding autoregressive effects (\code{X1 -> X2}, \code{X2 -> X3}, \code{Y1 -> Y2}, \code{Y2 -> Y3}), synchronous effects (\verb{X1 <-> Y1}, \verb{X2 <-> Y2}, \verb{X3 <-> Y3}), and cross-lagged effects (\code{X1 -> Y2}, \code{X2 -> Y3}, \code{Y1 -> X2}, \code{Y2 -> X3}).
-RI-CLPMs are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., \code{X1 -> Y3}).
-RI-CLPMs based on latent factors usually assume at least metric invariance of the factors over waves (\code{metricInvariance}).
 
-Relevant hypotheses in arising in a RI-CLPM are:
-\itemize{
-\item \code{autoregX = 0} and \code{autoregY = 0}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero.
-\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is zero.
-\item \code{autoregX = autoregY}: Tests the hypothesis that the autoregressive effect of X and Y are equal.
-\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}) are equal.
-\item \code{autoregX} and \code{autoregY}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves.
-\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is equal across waves.
-\item \code{corXY}: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves.
-\item \code{corBXBY = 0}: Tests the hypothesis that the correlation between the random intercept factors of X and Y is zero.
-}
-
-For hypotheses regarding the traditional CLPM, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the factor model and the requested type of power analysis.
-
-Additional arguments related to the \strong{definition of the factor model}:
-\itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling 2 times the number of waves). Columns should be in order X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves.
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure ordered by wave, e.g., list(c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4)) defines loadings of .2 for the three indicators of X at waves 1-3 and loadings of .4 for the four indicators of Y at waves 1-3. Must not contain secondary loadings.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators for each factor ordered by wave, e.g. c(3, 4, 3, 4, 3, 4) defines three indicators for X at waves 1-3 and four indicators for Y at waves 1-3.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor at each wave (if a vector is provided), e. g. \code{loadM = c(.5, .6, .5, .6, .5, .6)} defines mean loadings of .5 for X at waves 1-3 and mean loadings of .6 for Y at waves 1-3.
-}
-
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
-If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
-
-Note that the order of the factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves), i. e., the first factor is treated as the first measurement of X, the second as the first measurement of Y, the third as the second measurement of X, etc..
-
-Additional arguments related to the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{
@@ -424,6 +382,43 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
+# multigroup example
+# Determine the achieved power N in a 3-wave RI-CLPM to detect that
+# the crossed effect of X at wave 1 (X1 -> Y2) in group 1 of .25 differs
+# from the crossed effect of X at wave 1 (X1 -> Y2) in group 2 of .15,
+# where both groups comprise 500 observations and alpha = 5\%, and
+# the measurement model is equal for both groups, and
+# the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .25 and .10 in the first group, 
+# the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .15 and .05 in the second group, 
+# the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .05 and .15 in the first group, 
+# the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .01 and .10 in the second group, and
+# the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups (but freely estimated in each group).
+powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
+                                    nWaves = 3,
+                                    autoregEffects = c(.5, .4), # group and wave constant 
+                                    crossedEffects = list(
+                                      # group 1
+                                      list(
+                                        c(.25, .10),   # X
+                                        c(.05, .15)    # Y 
+                                      ),
+                                      # group 2
+                                      list(
+                                        c(.15, .05),   # X
+                                        c(.01, .10)    # Y 
+                                      )
+                                    ),
+                                    rXY = NULL,        # diagonal
+                                    rBXBY = NULL,      # diagonal 
+                                    nullEffect = 'crossedXA = crossedXB',
+                                    nullWhich = 1,
+                                    nIndicator = rep(3, 6), 
+                                    loadM = c(.5, .6, .5, .6, .5, .6),
+                                    metricInvariance = TRUE,
+                                    waveEqual = c('autoregX', 'autoregY')
+                                    )
+
+
 # Request a simulated post-hoc power analysis with 500 replications
 # to detect crossed effects of X (X1 -> Y2 and X2 -> Y3) of >= .2
 # with a power of 95\% on alpha = 5\% in a RI-CLPM with 3 waves, 
@@ -443,7 +438,7 @@ powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc',
                                     nullEffect = 'crossedX = 0',
                                     Lambda = diag(6),
                                     alpha = .05, N = 500,
-                                    simulatedPower = TRUE, nReplications = 500)
+                                    simulatedPower = TRUE, simOptions = list(nReplications = 500))
 }
 }
 \seealso{

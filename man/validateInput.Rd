@@ -21,7 +21,6 @@ validateInput(
   mu = NULL,
   simulatedPower = FALSE,
   modelH0 = NULL,
-  modelH1 = NULL,
   power.min = alpha,
   power.max = 0.999,
   effect.min = NULL,
@@ -62,8 +61,6 @@ validateInput(
 \item{simulatedPower}{whether to perform a simulated (\code{TRUE}) (rather than analytical, \code{FALSE}) power analysis.}
 
 \item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
-
-\item{modelH1}{for simulated power: \code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
 
 \item{power.min}{for plotting: minimum power}
 

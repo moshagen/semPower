@@ -21,9 +21,9 @@ semPower.powerPath(
 
 \item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{Beta}{matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. Exogenous variables must occupy the first rows in \code{Beta} when \code{standardized = TRUE}.  See details.}
+\item{Beta}{matrix of regression slopes between latent variables (all-Y notation). A list for multiple group models. Exogenous variables must occupy the first rows in \code{Beta} when \code{standardized = TRUE}. See details.}
 
-\item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
+\item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{standardized = TRUE}, the diagonal is ignored and all off-diagonal elements are treated as correlations. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
 
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'beta = 0'} (the default) to test whether a regression slope is zero, \code{'betaX = betaZ'} to test for the equality of slopes, and \code{'betaX = betaZ'} to test for the equality of a slope across groups. Define the slopes to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
@@ -51,92 +51,7 @@ in a generic path model.
 This requires the lavaan package.
 }
 \details{
-This function performs a power analysis to reject a hypothesis arising
-in a generic structural equation model specifying regression relations between the factors via the Beta matrix:
-\itemize{
-\item \code{nullEffect = 'beta = 0'}: Tests the hypothesis that a slope is zero.
-\item \code{nullEffect = 'betaX = betaZ'}: Tests the hypothesis that two or more slopes are equal to each other.
-\item \code{nullEffect = 'betaA = betaB'}: Tests the hypothesis that a slope is equal in two or more groups (always assuming metric invariance).
-}
 
-This function provides a generic way to perform power analyses (as compared to other functions covering special cases in a more accessible manner).
-
-A specific hypothesis is defined by setting \code{nullEffect} to define the hypothesis type,
-\code{nullWhich} to define the slope(s) that are targeted, and by providing
-the \code{Beta} (and optionally the \code{Psi}) matrix to define the population structure.
-
-To understand the structure of \code{Beta} and \code{Psi}, consider the general structural equation model,
-\deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta }
-where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors.
-
-As an example, suppose there are four factors (X1, X2, X3, X4), and Beta is defined as follows:
-\eqn{
-\begin{array}{lrrr} 
-    & X_1 & X_2 & X_3 & X_4\\ 
-X_1 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
-X_2 & 0.0 & 0.0 & 0.0 & 0.0  \\ 
-X_3 & 0.2 & 0.3 & 0.0 & 0.0  \\ 
-X_4 & 0.3 & 0.5 & 0.0 & 0.0  \\ 
-\end{array}
-}
-
-Each row specifies how a particular factor is predicted by the available factors,
-so the above implies the following regression relations:
-
-\eqn{
-X_1 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
-X_2 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
-X_3 = 0.2 \cdot X_1 +  0.3 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
-X_4 = 0.3 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 
-}
-
-which simplifies to
-
-\eqn{
-X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
-X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2 
-}
-
-Further suppose that Psi is
-\eqn{
-\begin{array}{lrrr} 
-    & X_1 & X_2 & X_3 & X_4\\ 
-X_1 & 1.0 & 0.3 & 0.0 & 0.0 \\ 
-X_2 & 0.3 & 1.0 & 0.0 & 0.0 \\ 
-X_3 & 0.0 & 0.0 & 1.0 & 0.2 \\ 
-X_4 & 0.0 & 0.0 & 0.2 & 1.0 \\ 
-\end{array}
-}
-
-which implies a correlation between X1 and X2 of .3 and a residual correlation
-between X3 and X4 of .2.
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the factor model and the requested type of power analysis.
-
-Additional arguments related to the \strong{definition of the factor model}:
-\itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-}
-
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} always need to be defined.
-
-Additional arguments related to the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{
@@ -190,7 +105,7 @@ powerPath <- semPower.powerPath(type = 'a-priori',
 # same as above, but consider a multiple group model with equally sized groups, 
 # and obtain the required N to detect that the slope 
 # in group 1 (of .20) differs from the one in group 2 (of .40)
-Beta1 <- matrix(c(
+Beta1 <- Beta2 <- matrix(c(
   c(.00, .00, .00, .00),       # f1
   c(.20, .00, .00, .00),       # f2
   c(.00, .30, .00, .00),       # f3

@@ -13,7 +13,8 @@ genModelString(
   tau = NULL,
   Alpha = NULL,
   useReferenceIndicator = !is.null(Beta),
-  metricInvariance = NULL
+  metricInvariance = NULL,
+  nGroups = 1
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ genModelString(
 \item{useReferenceIndicator}{Whether to identify factors in accompanying model strings by a reference indicator (\code{TRUE}) or by setting their variance to 1 (\code{FALSE}). When \code{Beta} is defined, a reference indicator is used by default, otherwise the variance approach.}
 
 \item{metricInvariance}{A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. \code{list(c(1, 2), c(3, 4))} to assume invariance for f1 and f2 as well as f3 and f4.}
+
+\item{nGroups}{(defaults to 1) If > 1 and \code{metricInvariance = TRUE}, group specific labels will be used in the measurement model.}
 }
 \value{
 A list containing the following \code{lavaan} model strings:

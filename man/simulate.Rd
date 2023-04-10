@@ -11,8 +11,7 @@ simulate(
   mu = NULL,
   N = NULL,
   alpha = NULL,
-  nReplications = 250,
-  minConvergenceRate = 0.5,
+  simOptions = list(nReplications = 250, minConvergenceRate = 0.5, type = "normal"),
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
   returnFmin = TRUE
@@ -31,9 +30,7 @@ simulate(
 
 \item{alpha}{alpha error probability}
 
-\item{nReplications}{number of random samples drawn.}
-
-\item{minConvergenceRate}{the minimum convergence rate required}
+\item{simOptions}{a list of additional options specifying simulation details, see details.}
 
 \item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation}
 
@@ -47,22 +44,83 @@ Returns empirical power: \code{sum(p < alpha) / nReplications} or a list (if \co
 \item{\code{meanFmin}}{the estimated mean unbiased Fmin over replications (i. e., \code{fmin_0 = fmin_hat - df/N}).}
 \item{\code{meanFminGroups}}{the estimated mean unbiased Fmin by groups given as a vector, assuming the df spread equally over groups. Therefore, \code{meanFmin != sum(meanFminGroups)}}
 \item{\code{df}}{the model df.}
-\item{\code{nrep}}{the successful number of replications.}
+\item{\code{nrep}}{the number of successful replications.}
+\item{\code{convergenceRate}}{the convergence rate of the H0 model.}
+\item{\code{bChiSq}}{median chi-square bias of the H1 model}
+\item{\code{bLambda}}{average median bias in lambda in the H1 model}
+\item{\code{bPhi}}{average median bias in phi in the H1 model}
+\item{\code{bPsi}}{average median bias in psi in the H1 model}
+\item{\code{bBeta}}{average median bias in beta in the H1 model}
 }
 \description{
 Estimates empirical power using a simulation approach.
 }
+\details{
+
+}
 \examples{
 \dontrun{
-# get Sigma and modelH0
-powerCFA <- semPower.powerCFA(type = 'a-priori',
+# create Sigma and modelH0 using powerCFA
+powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, beta = .05,
                               comparison = 'saturated',
-                              Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)), 
-                              alpha = .05, beta = .05)
-# perform simulation       
+                              Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
+                              
+# perform simulated power analysis using defaults       
 simulate(modelH0 = powerCFA$modelH0, 
-         powerCFA$Sigma,
+         Sigma = powerCFA$Sigma,
          N = powerCFA$power$requiredN,
-         alpha = powerCFA$power$alpha)
+         alpha = .05,
+         simulatedPower = TRUE)
+         
+
+# same with additional options       
+simulate(modelH0 = powerCFA$modelH0, 
+         Sigma = powerCFA$Sigma,
+         N = powerCFA$power$requiredN,
+         alpha = .05,
+         simulatedPower = TRUE, 
+         simOptions = list(nReplications = 500, minConvergenceRate = .80))
+
+
+# same with IG as data generation routine
+simulate(modelH0 = powerCFA$modelH0, 
+         Sigma = powerCFA$Sigma,
+         N = powerCFA$power$requiredN,
+         alpha = .05,
+         simulatedPower = TRUE, 
+         simOptions = list(type = 'IG', 
+                           skewness = c(0, 1, -2, 6, 5, 4), 
+                           kurtosis = c(-3, 6, 9, 0, 2, -2)))
+                           
+                           
+# same with mnonr as data generation routine
+simulate(modelH0 = powerCFA$modelH0, 
+         Sigma = powerCFA$Sigma,
+         N = powerCFA$power$requiredN,
+         alpha = .05,
+         simulatedPower = TRUE, 
+         simOptions = list(type = 'mnonr', 
+                           skewness = 1, 
+                           kurtosis = 50))
+                           
+                           
+# same with RK as data generation routine
+distributions <- list(
+  list('rnorm', list(mean = 0, sd = 10)),
+  list('runif', list(min = 0, max = 1)),
+  list('rbeta', list(shape1 = 1, shape2 = 2)),
+  list('rexp', list(rate = 1)),
+  list('rpois', list(lambda = 4)),
+  list('rbinom', list(size = 1, prob = .5))
+)
+simulate(modelH0 = powerCFA$modelH0, 
+         Sigma = powerCFA$Sigma,
+         N = powerCFA$power$requiredN,
+         alpha = .05,
+         simulatedPower = TRUE, 
+         simOptions = list(type = 'RK', 
+                           distributions = distributions))
 }
+
+
 }

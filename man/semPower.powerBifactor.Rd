@@ -52,70 +52,7 @@ or (c) the equality of a correlation between two factors across two or more grou
 This requires the lavaan package.
 }
 \details{
-This function performs a power analysis to reject various hypotheses arising
-in a model including a bifactor structure:
-\itemize{
-\item \code{nullEffect = 'cor = 0'}: Tests the hypothesis that the correlation between a bifactor and another factor (which can also be a bifactor) is zero.
-\item \code{nullEffect = 'corX = corZ'}: Tests the hypothesis that two or more correlations involving one or more bifactors are equal to each other.
-\item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between the bifactor and another factor (which can also be a  bifactor) is equal in two or more groups (always assuming metric invariance).
-}
 
-A bifactor is defined by specifying its loadings in \code{bfLoadings}, the comprised specific
-factors in \code{bfWhichFactors}, and the loadings on the specific factors in either \code{Lambda}, or \code{loadings},
-or \code{nIndicator} and \code{loadM}. The latter arguments also include the loadings defining the
-covariate(s).
-
-The correlations betwen the bifactor(s) and the covariate(s) are defined in \code{Phi}, which
-must omit the specific factors and only includes the bifactor(s) and the covariate(s) assuming
-the following order: (bifactor_1, bifactor_2, ..., bifactor_j, covariate_1,  covariate_2, ...,  covariate_k).
-
-For example, the following defines a single bifactor with 10 indicators loading by .5 each.
-The bifactor structure involves 3 specific factors measured by 3 indicators each, each loading by
-.3, .2, and .1 on the respective specific factor (in addition to the loadings on the bifactor).
-Furthermore, two covariate with 5 indicators each, all loading by .7, are defined. The correlation
-between the covariates is .5, the one between the bifactor and the first and second covariate are
-.3 and .2, respectively.
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{bfLoadings <- rep(.5, 10)
-bfWhichFactors <- c(1, 2, 3)
-loadings <- list(
-  rep(.3, 3),   # specific factor 1
-  rep(.2, 3),   # specific factor 2
-  rep(.1, 3),   # specific factor 3
-  rep(.7, 5),   # covariate 1
-  rep(.7, 5)    # covariate 2
-)
-Phi <- matrix(c(
-  c(1, .3, .2),   # bifactor
-  c(.3, 1, .5),   # covariate 1
-  c(.2, .5, 1)   # covariate 2
-), ncol = 3, byrow = TRUE) 
-}\if{html}{\out{</div>}}
-
-Beyond the arguments explicitly contained in the function call, additional arguments
-are required specifying the factor model and the requested type of power analysis.
-
-Additional arguments related to the \strong{definition of the factor model} concerning the specific factors and the covariate(s):
-\itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
-\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-}
-
-Additional arguments related to the requested type of \strong{power analysis}:
-\itemize{
-\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
-\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
-\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
-\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
-}
-
-Optional arguments if a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested:
-\itemize{
-\item \code{nReplications}: The number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
-\item \code{minConvergenceRate}: The required minimum convergence rate. Defaults to .50.
-}
 }
 \examples{
 \dontrun{
@@ -278,7 +215,7 @@ powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
                                         nullWhich = c(1, 2),
                                         loadings = loadings,
                                         alpha = .05, N = 500, 
-                                        simulatedPower = TRUE, nReplications = 100)
+                                        simulatedPower = TRUE, simOptions = list(nReplications = 100))
 }
 }
 \seealso{
