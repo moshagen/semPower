@@ -392,6 +392,7 @@ genData <- function(type = 'normal',
   if(!is.null(mu)){
     rdat <- lapply(rdat, function(x) x + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE))
   }
+  
   # add gidx
   if(!is.null(gIdx)){
     rdat <- lapply(rdat, function(x) cbind(x, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) )
@@ -476,9 +477,10 @@ genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,
   if(length(kurtosis) != 1) stop('multivariate kurtosis must be a single number.')
   
   lapply(seq(nSets), function(x){
-    mnonr::mnonr(n = N, Sigma = Sigma, p = ncol(Sigma), 
+    rd <- mnonr::mnonr(n = N, Sigma = Sigma, p = ncol(Sigma), 
                  ms = skewness, 
                  mk = kurtosis)
+    colnames(rd) <- paste0('x', 1:ncol(Sigma))
   })
   
 }
@@ -614,6 +616,7 @@ genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
       rdat <- rdat[sort.list(rdat[ ,i]),]
       rdat[ ,i] <- nnDistributions[ ,i]
     }
+    colnames(rdat) <- paste0('x', 1:ncol(Sigma))
     rdat
   })
   
