@@ -31,6 +31,9 @@
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
 #' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
+#' * `missingVarProp`: The proportion of variables containing missing data (defaults to zero).
+#' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero).
+#' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
@@ -122,7 +125,10 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      simOptions = list(
                        nReplications = 250, 
                        minConvergenceRate = .5,
-                       type = 'normal'
+                       type = 'normal',
+                       missingVarProp = 0,
+                       missingProp = 0,
+                       missingMechanism = 'MCAR',
                      ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
@@ -156,12 +162,10 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   
   # we need to call lavaan() directly with defaults as defined in sem()
-  lavOptions <- getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
-  lavOptions <- append(lavOptions,
+  lavOptions <- append(getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma)),
                        list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
   if(!is.null(modelH1)){
-    lavOptionsH1 <- getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma))
-    lavOptionsH1 <- append(lavOptionsH1,
+    lavOptionsH1 <- append(getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma)),
                            list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
   }
   
@@ -170,6 +174,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     simData <- genData(N = N, Sigma = Sigma, mu = mu, gIdx = NULL, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions)
   }else{
     simData <- lapply(seq_along(Sigma), function(x) genData(N = N[[x]], Sigma = Sigma[[x]], mu = mu[[x]], gIdx = x, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions))
+  }
+
+  # if we have missings, notify lav and check estimator 
+  if(sum(is.na(simData[[1]])) > 0){
+    lavOptions <- append(lavOptions, list(missing = 'ml'))
+    if(!is.null(lavOptions[['estimator']]) && tolower(lavOptions[['estimator']]) %in% c('mlm', 'mlmv', 'mlmvs')) stop('Estimators mlm, mlmv, and mlmvs are not supported with missing data. Use mlr or mlf instead.')
+    if(!is.null(modelH1)) lavOptionsH1 <- append(lavOptionsH1, list(missing = 'ml'))
   }
   
   efmin <- efminGroups <- list()
@@ -290,7 +301,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # assume that modelH1 is properly specified, so that fitting modelH1 to Sigma
       # yields population parameters
       if(is.list(Sigma)) sample.nobs <- list(1000, 1000) else sample.nobs <- 1000
-      lavOptionsH1[['estimator']] = 'ML'  # needs to be overwritten in case this is set, since we are not working with observed variables
+      lavOptionsH1[['estimator']] <- 'ML'  # needs to be overwritten in case this is set, since we are not working with observed variables
+      lavOptionsH1[['missing']] <- NULL
       lavresPop <- do.call(lavaan::lavaan, 
                            append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = sample.nobs, 
                                        sample.cov.rescale = FALSE),
@@ -369,6 +381,15 @@ genData <- function(type = 'normal',
                     nSets = 1, gIdx = NULL, modelH0 = NULL, simOptions = NULL){
   
   type <- checkDataGenerationTypes(type)
+  missingProp <- ifelse(!is.null(simOptions[['missingProp']]), simOptions[['missingProp']], 0)
+  missingVarsProp <- ifelse(!is.null(simOptions[['missingVarsProp']]), simOptions[['missingVarsProp']], 0)
+  checkBounded(missingProp, inclusive = TRUE)
+  checkBounded(missingVarsProp, inclusive = TRUE)
+  if((missingProp > 0 && missingVarsProp == 0) || (missingProp == 0 && missingVarsProp > 0)) stop('Both missingVarProp and missingProp must be larger than zero to produce missings.')
+  missingMechanism <- ifelse(!is.null(simOptions[['missingMechanism']]), simOptions[['missingMechanism']], 'mcar')
+  missingMechanism <- checkMissingTypes(simOptions[['missingMechanism']])
+  if(missingMechanism == 'mar' && missingVarsProp == 1) warning('For MAR, one variable must act as conditioner, so missingVarsProp cannot be 1. Omitting a single variable from missing list.')
+  
   switch(type,
          # normal by cholesky decomposition
          normal = {
@@ -393,11 +414,64 @@ genData <- function(type = 'normal',
     rdat <- lapply(rdat, function(x) x + matrix(t(rep(mu, N)), ncol = ncol(Sigma), byrow = TRUE))
   }
   
+  ### missings
+  # implementation based on https://psyarxiv.com/rq6yb/
+  # always produces maximum number of missing patterns
+  if(missingProp > 0 && missingVarsProp > 0){
+
+    rdat <- lapply(rdat, function(x){
+      
+      if(missingMechanism == 'mcar'){
+        
+        NAvars <- sample(seq(ncol(Sigma)), round(missingVarsProp*(ncol(Sigma)))) 
+        for(i in seq(NAvars)){
+          NArows <- as.logical(rbinom(ncol(x), 1, missingProp))
+          x[NArows, i] <- NA
+        }
+        
+      }else if(missingMechanism == 'mar'){
+        
+        # pick as conditioning variable the one the correlates most strongly with all vars
+        predr <- rowSums(Sigma^2)
+        conditioningVar <- which(predr == max(predr))[1]
+        NAvars <- sample(seq(ncol(Sigma))[-conditioningVar], round(missingVarsProp*(ncol(Sigma)))) 
+        
+        pecdf <- ecdf(x[ ,conditioningVar])
+        for(i in seq(NAvars)){
+          NArows <- logical()
+          for(j in 1:nrow(x)){
+            percentile <- pecdf(x[j, conditioningVar])
+            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp*percentile))
+          }
+          x[NArows, NAvars[i]] <- NA
+        }
+        
+      }else if(missingMechanism == 'nmar'){
+        
+        NAvars <- sample(seq(ncol(Sigma)), round(missingVarsProp*(ncol(Sigma)))) 
+        for(i in seq(NAvars)){
+          pecdf <- ecdf(x[ , NAvars[i]])
+          NArows <- logical()
+          for(j in 1:nrow(x)){
+            percentile <- pecdf(x[j, NAvars[i]])
+            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp*percentile))
+          }
+          x[NArows, NAvars[i]] <- NA
+        }
+        
+      }
+      
+      x
+      
+    })
+    
+  }
+  
   # add gidx
   if(!is.null(gIdx)){
     rdat <- lapply(rdat, function(x) cbind(x, matrix(rep(gIdx, N), ncol = 1, dimnames = list(NULL, c('gIdx')))) )
   }
- 
+
   rdat 
 }
 
@@ -457,7 +531,7 @@ genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,
 #' Generates random data from population variance-covariance matrix using 
 #' the approach by Qu, Liu, & Zhang (2020) specifying Mardia's multivariate skewness and kurtosis.
 #' 
-#' This function is a wrapper for the respective function of the ´mnonr´ package. 
+#' This function is a wrapper for the respective function of the `mnonr` package. 
 #' 
 #' For details, see 
 #' Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. *Behavior Research Methods, 52*, 939-946. doi: 10.3758/s13428-019-01291-5
@@ -466,7 +540,7 @@ genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,
 #' @param Sigma population covariance matrix.
 #' @param nSets number of data sets to generate
 #' @param skewness multivariate skewness. May not be negative.
-#' @param kurtosis multivariate kurtosis. Must be >= 1.641\*MS + p\*(p + 0.774), where p is the number of variables.
+#' @param kurtosis multivariate kurtosis. Must be >= 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' @return Returns the generated data
 genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,  
                        skewness = NULL, kurtosis = NULL){
@@ -485,7 +559,7 @@ genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,
   
 }
 
-#' genData.ruscio
+#' genData.RK
 #' 
 #' Generates random data from population variance-covariance matrix using 
 #' the approach by Ruscio & Kaczetow (2008)

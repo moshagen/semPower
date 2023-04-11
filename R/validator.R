@@ -487,6 +487,19 @@ checkDataGenerationTypes <- function(type){
   type
 }
 
+#' checkMissingTypes
+#'
+#' Checks whether missing generation type is one of `'mcar'`, `'mar'`, or `'nmar'`, stop otherwise.
+#' 
+#' @param type type
+#' @return Returns cleaned data generation type
+checkMissingTypes <- function(type){
+  if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Missing mechanism must be one of "mcar", "mar", or "mnar".')
+  type <- tolower(trimws(type))
+  if(!type %in% c('mcar', 'mar', 'nmar')) stop('Missing mechanism must be one of "mcar", "mar", or "mnar"')
+  type
+}
+
 #' checkEllipsis
 #'
 #' Checks whether `...` contains arguments related to loadings and to power, stop otherwise.
