@@ -229,7 +229,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 
           if(lavresH1@optim[["converged"]]){
             
-            mcomp <- lavaan::anova(lavresH0, lavresH1) 
+            if(lavresH0@Options[['test']] != 'standard'){
+              # TODO: check whether this works for estim other than the ml-m family
+              mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
+            }else{
+              mcomp <- lavaan::anova(lavresH0, lavresH1) 
+            }
+            
             p <- mcomp$`Pr(>Chisq)`[2]
             df <- mcomp$`Df diff`[2]
             cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
@@ -264,9 +270,9 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       }
 
     }, warning = function(w) {
-      # print(paste('WARNING: ',w))
+      # print(paste('WARNING: ', w))
     }, error = function(e) {
-       print(paste('ERROR: ',e))
+       print(paste('ERROR: ', e))
     })
     rr <- rr + 1
   }
@@ -365,14 +371,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' from a multivariate normal distribution, or using one of various approaches to generate 
 #' non-normal data.
 #'
-#' @param type one of 'normal' (the default), 'IG', 'mnonr', or 'RK'.
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
 #' @param mu population means.
 #' @param nSets number of data sets to generate
 #' @param gIdx if not `NULL`, add gIdx as numeric group index as additional variable to generated data
 #' @param modelH0 a `lavaan` model string, only used to determine the number of factors when `type = 'RK'`
-#' @param simOptions additional arguments passed to specific data generation routine
+#' @param simOptions additional arguments specifying the data generation routine
 #' @return Returns the generated data
 #' @examples
 #' \dontrun{
@@ -380,10 +385,10 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' data <- genData(N = 500, Sigma = gen$Sigma) 
 #' }
 #' @importFrom stats rbinom ecdf 
-genData <- function(type = 'normal', 
-                    N = NULL, Sigma = NULL, mu = NULL, 
+genData <- function(N = NULL, Sigma = NULL, mu = NULL, 
                     nSets = 1, gIdx = NULL, modelH0 = NULL, simOptions = NULL){
   
+  type <- ifelse(!is.null(simOptions[['type']]), simOptions[['type']], 'normal')
   type <- checkDataGenerationTypes(type)
   
   missingMechanism <- ifelse(!is.null(simOptions[['missingMechanism']]), simOptions[['missingMechanism']], 'mcar')
@@ -710,7 +715,7 @@ genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
       rdat[ ,i] <- nnDistributions[ ,i]
     }
     colnames(rdat) <- paste0('x', 1:ncol(Sigma))
-    rdat
+    scale(rdat)  # scale because lav tends to complain about diverging variances  
   })
   
 }
