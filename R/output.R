@@ -162,7 +162,6 @@ getFormattedResults <- function(type, result, digits = 6){
 #'
 #' Return data.frame containing formatted results.
 #' 
-#' @param type type of power analysis
 #' @param object result object (list)
 #' @param digits number of significant digits
 #' @return data.frame

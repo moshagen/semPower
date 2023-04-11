@@ -104,7 +104,8 @@ summary(ap)
 # simulated power analysis (nonsense example)
 ap <- semPower.aPriori(alpha = .05, beta = .05, df = 200, 
                        SigmaHat = list(diag(4), diag(4)), 
-                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), cov(matrix(rnorm(4*1000), ncol=4))),
+                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), 
+                               cov(matrix(rnorm(4*1000), ncol=4))),
                        simulatedPower = TRUE, nReplications = 100)
 summary(ap)
 }

@@ -65,7 +65,74 @@ Convenience function for performing power analysis on effects in a random interc
 This requires the lavaan package.
 }
 \details{
+This function performs a power analysis to reject various hypotheses arising in a random intercept crossed-lagged panel model (RI-CLPM).
+In a standard RI-CLPM implemented here, two variables X and Y are repeatedly assessed at three or more different time points (\code{nWaves}),
+yielding autoregressive effects (\code{X1 -> X2}, \code{X2 -> X3}, \code{Y1 -> Y2}, \code{Y2 -> Y3}), synchronous effects (\verb{X1 <-> Y1}, \verb{X2 <-> Y2}, \verb{X3 <-> Y3}), and cross-lagged effects (\code{X1 -> Y2}, \code{X2 -> Y3}, \code{Y1 -> X2}, \code{Y2 -> X3}).
+RI-CLPMs are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., \code{X1 -> Y3}).
+RI-CLPMs based on latent factors usually assume at least metric invariance of the factors over waves (\code{metricInvariance}).
 
+Relevant hypotheses in arising in a RI-CLPM are:
+\itemize{
+\item \code{autoregX = 0} and \code{autoregY = 0}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero.
+\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is zero.
+\item \code{autoregX = autoregY}: Tests the hypothesis that the autoregressive effect of X and Y are equal.
+\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}) are equal.
+\item \code{autoregX} and \code{autoregY}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves.
+\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and Y on X (\code{crossedY}), respectively, is equal across waves.
+\item \code{corXY}: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves.
+\item \code{corBXBY = 0}: Tests the hypothesis that the correlation between the random intercept factors of X and Y is zero.
+\item \code{autoregXA = autoregXB} and \code{autoregYA = autoregYB}: Tests the hypothesis that the autoregressive effect of either X or Y are equal across groups.
+\item \code{crossedXA = crossedXB} and \code{crossedYA = crossedYB}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) or of Y on X (\code{crossedY}), respectively, is equal across groups.
+\item \code{corBXBYA = corBXBYB}: Tests the hypothesis that the correlation between the random intercept factors is equal across groups.
+}
+
+For hypotheses regarding the traditional CLPM, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the factor model and the requested type of power analysis.
+
+Additional arguments related to the \strong{definition of the factor model}:
+\itemize{
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling 2 times the number of waves). Columns should be in order X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves.
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure ordered by wave, e.g., list(c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4), c(.2, .2, .2), c(.4, .4, .4, .4)) defines loadings of .2 for the three indicators of X at waves 1-3 and loadings of .4 for the four indicators of Y at waves 1-3. Must not contain secondary loadings.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators for each factor ordered by wave, e.g. c(3, 4, 3, 4, 3, 4) defines three indicators for X at waves 1-3 and four indicators for Y at waves 1-3.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor at each wave (if a vector is provided), e. g. \code{loadM = c(.5, .6, .5, .6, .5, .6)} defines mean loadings of .5 for X at waves 1-3 and mean loadings of .6 for Y at waves 1-3.
+}
+
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
+If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+
+Note that the order of the factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves), i. e., the first factor is treated as the first measurement of X, the second as the first measurement of Y, the third as the second measurement of X, etc..
+
+Additional arguments related to the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+If a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested, optional arguments can be provided as a list to \code{simOptions}:
+\itemize{
+\item \code{nReplications}: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RC'}).
+The approaches generating non-normal data require additional arguments detailed below.
+\item \code{missingVars}: vector specifying the variables containing missing data (defaults to NULL).
+\item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
+\item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
+\item \code{missingMechanism}: The missing data mechanism, one of \code{MCAR} (the default), \code{MAR}, or \code{NMAR}.
+}
+
+\code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+
+\code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+
+\code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
+Each component must specify the population distribution (e.g. \code{'rchisq'}) and additional arguments (\code{list(df = 2)}).
 }
 \examples{
 \dontrun{
@@ -84,7 +151,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -106,7 +174,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -120,7 +189,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'compromise',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -136,7 +206,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'compromise',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -150,7 +221,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -165,7 +237,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -185,7 +258,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -195,12 +269,14 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
-# same as above, but determine N to detect that the crossed effect of Y (Y1 -> X2 and Y2 -> X3) is >= .1.
+# same as above, but determine N to detect that the crossed effect of Y 
+# (Y1 -> X2 and Y2 -> X3) is >= .1.
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedY = 0',
@@ -209,12 +285,14 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
-# same as above, but determine N to detect that the autoregressive effect of X (X1 -> X2 and X2 -> X3) is >= .8.
+# same as above, but determine N to detect that the autoregressive effect 
+# of X (X1 -> X2 and X2 -> X3) is >= .8.
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'autoregX = 0',
@@ -223,12 +301,14 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
-# same as above, but determine N to detect that the autoregressive effect of Y (Y1 -> Y2) is >= .7.
+# same as above, but determine N to detect that the autoregressive effect 
+# of Y (Y1 -> Y2) is >= .7.
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'autoregY = 0',
@@ -244,7 +324,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = crossedY',
@@ -260,7 +341,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'autoregX = autoregY',
@@ -269,12 +351,14 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
-# same as above, but determine N to detect that the correlation between the random intercept factors is >= .1
+# same as above, but determine N to detect that the correlation between the 
+# random intercept factors is >= .1
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = .1,
                                     nullEffect = 'corBXBY = 0',
@@ -283,14 +367,18 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 
-# same as above, but assume that the synchronous (residual-)correlations between X and Y are equal across waves, 
-# namely a synchronous correlation of .05 at the first wave and residual correlations of .05 at the second and third wave,
+# same as above, but assume that the synchronous (residual-)correlations between
+#  X and Y are equal across waves, 
+# namely a synchronous correlation of .05 at the first wave and residual correlations 
+# of .05 at the second and third wave,
 # and determine N to detect a crossed effect of X (X1 -> Y2 and X2 -> Y3) of >= .2
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY', 
+                                                  'corXY'),
                                     rXY = c(.05, .05, .05),
                                     rBXBY = .1,
                                     nullEffect = 'crossedX = 0',
@@ -300,13 +388,15 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 
 
 # same as above, but assume that the synchronous correlation between X and Y
-# is .3 at the first wave, and the respective residual correlations are .2 at the second wave and .3 at the third wave,
+# is .3 at the first wave, and the respective residual correlations are .2 at 
+# the second wave and .3 at the third wave,
 # and determine N to detect that the synchronous residual correlation at wave 2 is => .2.
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = c(.3, .2, .3),
                                     rBXBY = .1,
                                     nullEffect = 'corXY = 0',
@@ -323,11 +413,13 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 # the autoregressive effects of X and Y are equal over waves,
 # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
 # Y1, Y2, and Y3 are measured by 3 indicators loading by .4 each, and
-# the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, 
+# the synchronous correlation between X and Y are .2, .3, and .4 at the first, 
+# second, and third wave, 
 # the correlation between the random intercept factors of X and Y is .1, and
 # the autoregressive effect of X is .8 across all three waves,
 # the autoregressive effect of Y is .7 across all three waves, and
-# the crossed effects of Y (Y1 -> X2, and Y2 -> Y3) are both .1 (but freely estimated for each wave).
+# the crossed effects of Y (Y1 -> X2, and Y2 -> Y3) are both .1 
+# (but freely estimated for each wave).
 powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
@@ -392,7 +484,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 # the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .15 and .05 in the second group, 
 # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .05 and .15 in the first group, 
 # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .01 and .10 in the second group, and
-# the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups (but freely estimated in each group).
+# the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups 
+# (but freely estimated in each group).
 powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
                                     nWaves = 3,
                                     autoregEffects = c(.5, .4), # group and wave constant 
@@ -432,13 +525,15 @@ powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),
                                     crossedEffects = c(.2, .1),
-                                    waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+                                    waveEqual = c('autoregX', 'autoregY', 
+                                                  'crossedX', 'crossedY'),
                                     rXY = NULL,
                                     rBXBY = NULL,
                                     nullEffect = 'crossedX = 0',
                                     Lambda = diag(6),
                                     alpha = .05, N = 500,
-                                    simulatedPower = TRUE, simOptions = list(nReplications = 500))
+                                    simulatedPower = TRUE, 
+                                    simOptions = list(nReplications = 500))
 }
 }
 \seealso{

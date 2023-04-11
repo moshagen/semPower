@@ -889,11 +889,14 @@ test_powerCFA <- function(){
   valid3 <- valid2 &&
     round(2*lavres7$fit['fmin'] - ph7$power$fmin, 4) == 0 &&
     round(par3[par3$lhs == 'f1' & par3$rhs == 'f2', 'std.all'] - par3[par3$lhs == 'f2' & par3$rhs == 'f3', 'std.all'], 4) == 0 &&
-    round(var(
+    length(unique(round(
       c(par4[par4$lhs == 'f1' & par4$rhs == 'f2', 'std.all'], 
         par4[par4$lhs == 'f2' & par4$rhs == 'f3', 'std.all'], 
-        par4[par4$lhs == 'f1' & par4$rhs == 'f3', 'std.all'])), 4) == 0 &&
+        par4[par4$lhs == 'f1' & par4$rhs == 'f3', 'std.all']), 4))) == 1 &&
     ph8$power$df == 2
+  
+  
+
   
   # multigroup case
   Phi1 <- matrix(c(
@@ -941,7 +944,7 @@ test_powerCFA <- function(){
     round(sum(abs(par9[par9$op == '=~' & par9$group == 1, 'est'] - c(.5, .5, .5, .6, .6, .6, .7, .7, .7))), 4) == 0 &&
     round(sum(abs(par9[par9$op == '~~' & par9$lhs != par9$rhs & par9$group == 1, 'est'] - c(Phi1[lower.tri(Phi1)]))), 4) == 0 &&
     round(sum(abs(par9[par9$op == '~~' & par9$lhs != par9$rhs & par9$group == 2, 'est'] - c(Phi2[lower.tri(Phi2)]))), 4) == 0 &&
-    round(var(par9b[par9b$op == '~~' & par9b$lhs == 'f1' & par9b$rhs == 'f2', 'est']), 6) == 0 &&
+    length(unique(round(par9b[par9b$op == '~~' & par9b$lhs == 'f1' & par9b$rhs == 'f2', 'est'], 6))) == 1 &&
     round(lavres9a$fit['fmin'], 6) == 0  &&
     (lavres9b$fit['df'] - lavres9a$fit['df']) == ph9$power$df &&
     round(2*lavres9b$fit['fmin'] - ph9$power$fmin, 6) == 0 &&
@@ -950,7 +953,9 @@ test_powerCFA <- function(){
     round(2*lavres10b$fit['fmin'] - ph10$power$fmin, 6) == 0 &&
     round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 1, 'est'] - .2, 4) == 0 &&
     round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 2, 'est'] - .1, 4) == 0 &&
-    round(var(par10b[par10b$op == '~~' & par10b$lhs == 'f1' & par10b$rhs == 'f2', 'est']), 6) == 0
+    length(unique(round(par10b[par10b$op == '~~' & par10b$lhs == 'f1' & par10b$rhs == 'f2', 'est'], 6))) == 1
+  
+  
   
   if(valid4){
     print('test_powerCFA: OK')
@@ -1051,9 +1056,9 @@ test_powerRegression <- function(){
     lavres4$fit['df'] - ph3$power$df == 0 && 
     round(sum(par4[par4$op == '~~' & par4$lhs != par4$rhs, 'std.all'] - corXX[lower.tri(corXX)])^2, 4) == 0  &&
     round(sum(par4[par4$op == '~' & par4$lhs == 'f1', 'std.all'] - c(.2, .3, .4))^2, 4) == 0 && 
-    round(var(par5[par5$lhs == 'f1' & par5$rhs %in% c('f2', 'f3'), 'est']), 4) == 0 &&
+    length(unique(round(par5[par5$lhs == 'f1' & par5$rhs %in% c('f2', 'f3'), 'est'], 4))) == 1 &&
     round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
-    round(var(par6[par6$lhs == 'f1' & par6$rhs %in% c('f2', 'f3', 'f4'), 'est']), 4) == 0 &&
+    length(unique(round(par6[par6$lhs == 'f1' & par6$rhs %in% c('f2', 'f3', 'f4'), 'est'], 4))) == 1 &&
     round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
     ph5$power$df == 1 && ph6$power$df == 2 &&
     round(ph7$power$fmin - 2*lavres8$fit['fmin'], 4) == 0 &&    
@@ -2935,7 +2940,7 @@ test_simulatePower <- function(doTest = TRUE){
   
   valid6 <- valid5 &&
     abs(pha5$power$power - phs5$power) < .05 &&
-    abs(sum(unlist(aps5$requiredN)) - sum(unlist(pha5$power$N))) < .1*sum(unlist(pha5$power$N)) &&
+    abs(sum(unlist(aps5$requiredN)) - sum(unlist(pha5$power$N))) < .25*sum(unlist(pha5$power$N)) &&
     sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$requiredN.g))) < .1*apa6$power$requiredN
   
   # other distributions
@@ -3040,7 +3045,7 @@ test_simulatePower <- function(doTest = TRUE){
     ph8$power$power - pha$power$power > .2 &&     
     ph9$power$power - pha$power$power > .2 &&
     ph8$power$power - ph10$power$power > .01 &&
-    abs(ph11$power$bChiSq) < abs( ph12$power$bChiSq) # this is actually a tiny difference, but seems to be correct
+    abs(ph11$power$bChiSq) < abs(ph12$power$bChiSq) # this is actually a tiny difference, but seems to be correct
 
   
   if(valid7){

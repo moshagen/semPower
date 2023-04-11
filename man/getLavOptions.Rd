@@ -11,7 +11,7 @@ getLavOptions(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1)
 
 \item{isCovarianceMatrix}{if \code{TRUE}, also adds \code{sample.nobs = 1000} and \code{sample.cov.rescale = FALSE} to \code{lavoptions}}
 
-\item{nGroupes}{the number of groups, 1 by default}
+\item{nGroups}{the number of groups, 1 by default}
 }
 \value{
 a list of \code{lavaan} defaults

@@ -26,6 +26,8 @@ Imports:
 Suggests: 
     knitr,
     lavaan,
+    covsim,
+    mnonr,
     rmarkdown
 VignetteBuilder: 
     knitr

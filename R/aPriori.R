@@ -55,7 +55,8 @@
 #' # simulated power analysis (nonsense example)
 #' ap <- semPower.aPriori(alpha = .05, beta = .05, df = 200, 
 #'                        SigmaHat = list(diag(4), diag(4)), 
-#'                        Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), cov(matrix(rnorm(4*1000), ncol=4))),
+#'                        Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), 
+#'                                cov(matrix(rnorm(4*1000), ncol=4))),
 #'                        simulatedPower = TRUE, nReplications = 100)
 #' summary(ap)
 #' }
@@ -71,6 +72,11 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              simOptions = NULL,
                              lavOptions = NULL, lavOptionsH1 = lavOptions, 
                              ...){
+  
+  # create a package environment to get rid of "no visible binding" warning
+  pkgEnv <- new.env()
+  pkgEnv[['iterationCounter']] <- NULL
+  
   args <- list(...)
   
   # validate input and do some preparations
@@ -80,7 +86,6 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
                      simulatedPower = simulatedPower, 
                      modelH0 = modelH0,
-                     nReplications = nReplications, minConvergenceRate = minConvergenceRate,
                      lavOptions = lavOptions)
 
   Sigma <- pp[['Sigma']]
@@ -143,7 +148,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
   # simulated power  
   }else{
-    iterationCounter <<- 1
+    pkgEnv[['iterationCounter']] <- 1
 
     ### determine starting N using analytical power
     # set ml estm in case lavoptions request otherwise to avoid semPower complaining
@@ -166,7 +171,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # one option would be to define tolerance in terms of expected sampling error, e.g., 
     # pchisq(chiCrit +/- sqrt(df), df, ncp, lower.tail = T), but this leads to wide margins.
     # the option below increases tolerance with decreasing nrep and beta, but is more restrictive.
-    tolerance <- logBetaTarget^2 * 2 / nReplications
+    tolerance <- logBetaTarget^2 * 2 / simOptions[['nReplications']]
     chiCritOptim <- optim(par = c(N = startN), fn = getBetadiff,
                           logBetaTarget = logBetaTarget, weights = weights,
                           modelH0 = modelH0, modelH1 = modelH1,
@@ -176,6 +181,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                           lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1,
                           simulatedPower = TRUE,
                           returnF = FALSE,
+                          pkgEnv = pkgEnv,
                           method = 'Nelder-Mead', 
                           control = list(warn.1d.NelderMead = FALSE, abstol = tolerance)
                           )
@@ -268,11 +274,12 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
 #' @param df the model degrees of freedom
 #' @param weights sample weights for multiple group models 
 #' @param simulatedPower whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.
+#' @param pkgEnv local pkgEnv containing iterationCounter.
 #' @param ... other parameter passed to simulate()
 #' @return squared difference requested and achieved beta on a log scale
 #' @importFrom stats pchisq
 getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL, 
-                        simulatedPower = FALSE, ...){
+                        simulatedPower = FALSE, pkgEnv = NULL, ...){
   diff <- .Machine$integer.max
   
   if(!simulatedPower){
@@ -288,14 +295,14 @@ getBetadiff <- function(cN, critChi, logBetaTarget, fmin, df, weights = NULL,
     
   }else{
     
-    iterationCounter <<- iterationCounter + 1 
+    pkgEnv[['iterationCounter']] <- pkgEnv[['iterationCounter']] + 1 
     # we round here (instead of ceiling) because this should help optim
     ccN <- round(cN)
     if(length(weights) > 1) ccN <- as.list(round(weights * cN))
     ePower <- simulate(N = ccN, ...)
     if(ePower == 1) ePower <- 1 - 1e-5
     diff <- (logBetaTarget - log(1 - ePower))^2
-    print(paste("Iteration", iterationCounter, ":", cN, (1 - ePower), diff))
+    print(paste("Iteration", pkgEnv[['iterationCounter']], ":", cN, (1 - ePower), diff))
     
   }
 

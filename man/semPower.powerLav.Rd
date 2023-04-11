@@ -57,7 +57,43 @@ a \code{lavaan} model string defining the population model or the population cov
 This requires the \code{lavaan} package.
 }
 \details{
+Generic function to perform a power analysis based  on a true population covariance matrix Sigma
+and a model implied covariance matrix SigmaHat (and optionally the associated mean vectors),
+where SigmaHat (and muHat) is determined by fitting a respective H0 model using \code{lavaan},
+and Sigma (and mu) can also be provided through a corresponding \code{lavaan} model string.
 
+All \code{semPower} convenience functions internally call this function.
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+If a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested, optional arguments can be provided as a list to \code{simOptions}:
+\itemize{
+\item \code{nReplications}: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RC'}).
+The approaches generating non-normal data require additional arguments detailed below.
+\item \code{missingVars}: vector specifying the variables containing missing data (defaults to NULL).
+\item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
+\item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
+\item \code{missingMechanism}: The missing data mechanism, one of \code{MCAR} (the default), \code{MAR}, or \code{NMAR}.
+}
+
+\code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+
+\code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness}) and kurtosis (\code{kurtosis}), where
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+
+\code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
+Each component must specify the population distribution (e.g. \code{'rchisq'}) and additional arguments (\code{list(df = 2)}).
 }
 \examples{
 \dontrun{
@@ -99,7 +135,8 @@ powerLav <- semPower.powerLav(type = 'a-priori',
                               alpha = .05, beta = .05)
 
 # same as above, but use covariance matrix input instead of modelPop
-gen <- semPower.genSigma(Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)))
+gen <- semPower.genSigma(Phi = .2, 
+                         loadings = list(c(.5, .6, .4), c(.7, .8, .3)))
 Sigma <- gen$Sigma
 powerLav <- semPower.powerLav(type = 'a-priori', 
                               Sigma = Sigma, modelH0 = mH0,
@@ -108,7 +145,8 @@ powerLav <- semPower.powerLav(type = 'a-priori',
 # note all of the above is identical to the output provided by the powerCFA convenience function
 powerCFA <- semPower.powerCFA(type = 'a-priori',
                               comparison = 'saturated',
-                              Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
+                              Phi = .2, 
+                              loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
                               alpha = .05, beta = .05)
 
 # same as above, but use simulated power analysis based on a robust ML estimator

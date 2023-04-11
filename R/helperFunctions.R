@@ -33,9 +33,9 @@
 #' with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\alpha}.
 #' 
 #' In the structural equation model, 
-#' \deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta } 
-#' where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
-#' \deqn{\mu = \tau + \Lambda (I - \Beta)^{-1} \alpha}
+#' \deqn{\Sigma = \Lambda (I - B)^{-1} \Psi [(I - B)^{-1}]'  \Lambda' + \Theta } 
+#' where \eqn{B} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
+#' \deqn{\mu = \tau + \Lambda (I - B)^{-1} \alpha}
 #' 
 #' In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts. 
 #' 
@@ -81,7 +81,8 @@
 #'   c(0.2, 1.0, 0.3),
 #'   c(0.5, 0.3, 1.0)
 #' ), byrow = TRUE, ncol = 3)
-#' gen <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 4, 5), loadM = c(.7, .6, .5))
+#' gen <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 4, 5), 
+#'                          loadM = c(.7, .6, .5))
 #' 
 #' # same as above, but using a factor loadings matrix
 #' Lambda <- matrix(c(
@@ -117,14 +118,19 @@
 #'                 c(0.3, 0.0, 0.0),  # f2 = .3*f1
 #'                 c(0.2, 0.4, 0.0)   # f3 = .2*f1 + .4*f2
 #'                ), byrow = TRUE, ncol = 3)
-#' gen <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), loadM = c(.6, .5, .4))
+#' gen <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), 
+#'                          loadM = c(.6, .5, .4))
 #' 
 #' # two group example: 
-#' # correlated two factor model (r = .25 and .35 in the first and second group, respectively)
-#' # the first factor is indicated by four indicators loading by .7 in the first and .5 in the second group,
-#' # the second factor is indicated by five indicators loading by .6 in the first and .8 in the second group,
+#' # correlated two factor model (r = .25 and .35 in the first and second group, 
+#' # respectively)
+#' # the first factor is indicated by four indicators loading by .7 in the first 
+#' # and .5 in the second group,
+#' # the second factor is indicated by five indicators loading by .6 in the first 
+#' # and .8 in the second group,
 #' # all item intercepts are zero in both groups, 
-#' # the latent means are zero in the first group and .25 and .10 in the second group.
+#' # the latent means are zero in the first group
+#' # and .25 and .10 in the second group.
 #' gen <- semPower.genSigma(Phi = list(.25, .35), 
 #'                          nIndicator = list(c(4, 5), c(4, 5)), 
 #'                          loadM = list(c(.7, .6), c(.5, .8)), 
@@ -656,7 +662,7 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
 #' 
 #' @param lavOptions additional options to be added to (or overwriting) the defaults  
 #' @param isCovarianceMatrix if `TRUE`, also adds `sample.nobs = 1000` and `sample.cov.rescale = FALSE` to `lavoptions` 
-#' @param nGroupes the number of groups, 1 by default
+#' @param nGroups the number of groups, 1 by default
 #' @return a list of `lavaan` defaults
 getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1){
   # defaults as defined in lavaan::sem()

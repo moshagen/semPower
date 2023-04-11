@@ -28,6 +28,8 @@ genData(
 
 \item{gIdx}{if not \code{NULL}, add gIdx as numeric group index as additional variable to generated data}
 
+\item{modelH0}{a \code{lavaan} model string, only used to determine the number of factors when \code{type = 'RK'}}
+
 \item{simOptions}{additional arguments passed to specific data generation routine}
 }
 \value{

@@ -41,7 +41,7 @@
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -51,12 +51,12 @@
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
-#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`) and kurtosis (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -98,7 +98,8 @@
 #'                               alpha = .05, beta = .05)
 #' 
 #' # same as above, but use covariance matrix input instead of modelPop
-#' gen <- semPower.genSigma(Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)))
+#' gen <- semPower.genSigma(Phi = .2, 
+#'                          loadings = list(c(.5, .6, .4), c(.7, .8, .3)))
 #' Sigma <- gen$Sigma
 #' powerLav <- semPower.powerLav(type = 'a-priori', 
 #'                               Sigma = Sigma, modelH0 = mH0,
@@ -107,7 +108,8 @@
 #' # note all of the above is identical to the output provided by the powerCFA convenience function
 #' powerCFA <- semPower.powerCFA(type = 'a-priori',
 #'                               comparison = 'saturated',
-#'                               Phi = .2, loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
+#'                               Phi = .2, 
+#'                               loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
 #'                               alpha = .05, beta = .05)
 #' 
 #' # same as above, but use simulated power analysis based on a robust ML estimator
@@ -310,7 +312,7 @@ semPower.powerLav <- function(type,
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
@@ -321,11 +323,11 @@ semPower.powerLav <- function(type,
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -369,7 +371,8 @@ semPower.powerLav <- function(type,
 #' # four indicators with loadings of .5, .6, .4, .8 on the second factor 
 #' powercfa <- semPower.powerCFA(type = 'a-priori',
 #'                               Phi = .2, 
-#'                               loadings = list(c(.7, .6, .5), c(.5, .6, .4, .8)),
+#'                               loadings = list(c(.7, .6, .5), 
+#'                                               c(.5, .6, .4, .8)),
 #'                               alpha = .05, beta = .05)
 #'                               
 #' # get required N to detect a correlation of >= .3 between factors 1 and 3  
@@ -423,7 +426,8 @@ semPower.powerLav <- function(type,
 #'                               Phi = .2, 
 #'                               nIndicator = c(5, 6), loadM = .5,
 #'                               alpha = .05, N = 500, 
-#'                               simulatedPower = TRUE, simOptions = list(nReplications = 500))
+#'                               simulatedPower = TRUE, 
+#'                               simOptions = list(nReplications = 500))
 #' 
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
@@ -456,7 +460,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
   if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
   if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
-  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 | x[2] < 1 | x[1] > nfac | x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
+  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 || x[2] < 1 || x[1] > nfac || x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
   if(length(nullWhich) > 1){
     for(i in 1:(length(nullWhich) - 1)){
       for(j in (i + 1):length(nullWhich)){
@@ -580,7 +584,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -591,11 +595,11 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -606,8 +610,10 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' # X1 by 5 indicators loading by .6 each, and
 #' # X2 by 4 indicators loading by .7 each. 
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
-#'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 1, 
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
 #' # show summary
 #' summary(powerReg$power)
@@ -619,34 +625,44 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05 
 #' powerReg <- semPower.powerRegression(type = 'post-hoc',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
-#'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 1, 
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, N = 500)
 #'                                      
 #' # same as above, but determine the critical chi-square with N = 500 so that alpha = beta 
 #' powerReg <- semPower.powerRegression(type = 'compromise',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 1, 
-#'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 1, 
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
 #'                                      abratio = .05, N = 500)
 #'                                      
 #' # same as above, but ask for the required N to detect that the slope of X2 is zero
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
-#'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 2, 
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
 #'
 #' # same as above, but define unstandardized slopes
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
 #'                                     slopes = c(.2, .3), corXX = .4,
 #'                                     standardized = FALSE,
-#'                                     nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#'                                     nIndicator = c(3, 5, 4), 
+#'                                     loadM = c(.5, .6, .7),
 #'                                     alpha = .05, beta = .05)
 #'                                      
 #' # same as above, but compare to the saturated model
 #' # (rather than to the less restricted model)
-#' powerReg <- semPower.powerRegression(type = 'a-priori', comparison = 'saturated',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
-#'                                      nIndicator = c(3, 5, 4), loadM = c(.5, .6, .7),
+#' powerReg <- semPower.powerRegression(type = 'a-priori', 
+#'                                      comparison = 'saturated',
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 2, 
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
 #'                                      
 #' # same as above, but provide a reduced loading matrix defining
@@ -654,7 +670,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' # four indicators with loadings of .5, .6, .4, .8 on the second factor (X1), and
 #' # three indicators with loadings of .8, .7, .8 on the third factor (X2).
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = c(.2, .3), corXX = .4, nullWhich = 2, 
+#'                                      slopes = c(.2, .3), corXX = .4, 
+#'                                      nullWhich = 2, 
 #'                                      loadings = list(
 #'                                        c(.7, .6, .5), 
 #'                                        c(.5, .6, .4, .8),
@@ -706,13 +723,15 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' # Predictor X2 is measured by 3 indicators loading by .7 each.
 #' # Both groups are sized equally (N = list(1, 1)).
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
-#'                                      slopes = list(c(.2, .3, .4), c(.2, .0, .4)), 
+#'                                      slopes = list(c(.2, .3, .4), 
+#'                                      c(.2, .0, .4)), 
 #'                                      corXX = corXX, 
 #'                                      nullEffect = 'slopeA = slopeB', 
 #'                                      nullWhich = 2,
 #'                                      nIndicator = c(4, 5, 3, 5),
 #'                                      loadM = c(.5, .6, .7, .6), 
-#'                                      alpha = .05, beta = .05, N = list(1, 1))
+#'                                      alpha = .05, beta = .05, 
+#'                                      N = list(1, 1))
 #'
 #'# request a simulated post-hoc power analysis with 500 replications 
 #'# to detect that the slope of X1 differs from zero.
@@ -721,7 +740,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      nullWhich = 1,
 #'                                      nIndicator = c(4, 3, 3), loadM = .5,
 #'                                      alpha = .05, N = 500, 
-#'                                      simulatedPower = TRUE, , simOptions = list(nReplications = 500))
+#'                                      simulatedPower = TRUE, 
+#'                                      simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -975,7 +995,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -986,11 +1006,11 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -1081,7 +1101,9 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' )
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
 #'                                     Beta = B, 
-#'                                     indirect = list(c(2, 1), c(3, 2), c(4, 3)),
+#'                                     indirect = list(c(2, 1), 
+#'                                                     c(3, 2), 
+#'                                                     c(4, 3)),
 #'                                     loadings = loadings,
 #'                                     alpha = .05, beta = .05)
 #' 
@@ -1123,7 +1145,8 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     nIndicator = c(3, 5, 4),
 #'                                     loadM = c(.5, .6, .7),
 #'                                     alpha = .05, N = 500,
-#'                                     simulatedPower = TRUE, simOptions = list(nReplications = 500))
+#'                                     simulatedPower = TRUE, 
+#'                                     simOptions = list(nReplications = 500))
 #'}
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -1361,7 +1384,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -1372,11 +1395,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -1403,9 +1426,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' summary(powerCLPM$power)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerCLPM$modelH1, sample.cov = powerCLPM$Sigma,
-#'             sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerCLPM$power$requiredN, 
+#'             sample.cov.rescale = FALSE)
 #' lavaan::sem(powerCLPM$modelH0, sample.cov = powerCLPM$Sigma,
-#'             sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerCLPM$power$requiredN, 
+#'             sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
 #' powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
@@ -1568,7 +1593,9 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 autoregEffects = c(.8, .7),
 #'                                 crossedEffects = c(.2, .1),
 #'                                 rXY = c(.2, .2, .2),
-#'                                 waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+#'                                 waveEqual = c('autoregX', 'autoregY', 
+#'                                               'crossedX', 'crossedY', 
+#'                                               'corXY'),
 #'                                 nullEffect = 'crossedX = 0',
 #'                                 nIndicator = c(5, 3, 5, 3, 5, 3),
 #'                                 loadM = c(.5, .6, .5, .6, .5, .6),
@@ -1581,10 +1608,12 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' # the autoregressive effects of X and Y are equal over waves,
 #' # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
 #' # Y1, Y2, and Y3 are measured by 3 indicators loading by .6 each, and
-#' # the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, and
+#' # the synchronous correlation between X and Y are .2, .3, and .4 at the first, 
+#' # second, and third wave, and
 #' # the stability of X is .8 across all three waves,
 #' # the stability of Y is .7 across all three waves, and
-#' # the crossed-effects of Y (Y1 -> X2, and Y2 -> X3) are both .1 (but freely estimated for each wave).
+#' # the crossed-effects of Y (Y1 -> X2, and Y2 -> X3) are both .1 
+#' # (but freely estimated for each wave).
 #' powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 #'                                 nWaves = 3,
 #'                                 autoregEffects = c(.8, .7), 
@@ -1676,7 +1705,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 nullEffect = 'crossedX = 0',
 #'                                 Lambda = diag(4),
 #'                                 alpha = .05, N = 500, 
-#'                                 simulatedPower = TRUE, simOptions = list(nReplications = 500))
+#'                                 simulatedPower = TRUE, 
+#'                                 simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -2140,7 +2170,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -2151,11 +2181,11 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -2174,7 +2204,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2196,7 +2227,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2210,7 +2242,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2226,7 +2259,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2240,7 +2274,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2255,7 +2290,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2275,7 +2311,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2285,12 +2322,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' 
-#' # same as above, but determine N to detect that the crossed effect of Y (Y1 -> X2 and Y2 -> X3) is >= .1.
+#' # same as above, but determine N to detect that the crossed effect of Y 
+#' # (Y1 -> X2 and Y2 -> X3) is >= .1.
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedY = 0',
@@ -2299,12 +2338,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' 
-#' # same as above, but determine N to detect that the autoregressive effect of X (X1 -> X2 and X2 -> X3) is >= .8.
+#' # same as above, but determine N to detect that the autoregressive effect 
+#' # of X (X1 -> X2 and X2 -> X3) is >= .8.
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'autoregX = 0',
@@ -2313,12 +2354,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' 
-#' # same as above, but determine N to detect that the autoregressive effect of Y (Y1 -> Y2) is >= .7.
+#' # same as above, but determine N to detect that the autoregressive effect 
+#' # of Y (Y1 -> Y2) is >= .7.
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'autoregY = 0',
@@ -2334,7 +2377,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = crossedY',
@@ -2350,7 +2394,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'autoregX = autoregY',
@@ -2359,12 +2404,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' 
-#' # same as above, but determine N to detect that the correlation between the random intercept factors is >= .1
+#' # same as above, but determine N to detect that the correlation between the 
+#' # random intercept factors is >= .1
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'corBXBY = 0',
@@ -2373,14 +2420,18 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' 
-#' # same as above, but assume that the synchronous (residual-)correlations between X and Y are equal across waves, 
-#' # namely a synchronous correlation of .05 at the first wave and residual correlations of .05 at the second and third wave,
+#' # same as above, but assume that the synchronous (residual-)correlations between
+#' #  X and Y are equal across waves, 
+#' # namely a synchronous correlation of .05 at the first wave and residual correlations 
+#' # of .05 at the second and third wave,
 #' # and determine N to detect a crossed effect of X (X1 -> Y2 and X2 -> Y3) of >= .2
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY', 
+#'                                                   'corXY'),
 #'                                     rXY = c(.05, .05, .05),
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'crossedX = 0',
@@ -2390,13 +2441,15 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' 
 #' 
 #' # same as above, but assume that the synchronous correlation between X and Y
-#' # is .3 at the first wave, and the respective residual correlations are .2 at the second wave and .3 at the third wave,
+#' # is .3 at the first wave, and the respective residual correlations are .2 at 
+#' # the second wave and .3 at the third wave,
 #' # and determine N to detect that the synchronous residual correlation at wave 2 is => .2.
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = c(.3, .2, .3),
 #'                                     rBXBY = .1,
 #'                                     nullEffect = 'corXY = 0',
@@ -2413,11 +2466,13 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' # the autoregressive effects of X and Y are equal over waves,
 #' # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
 #' # Y1, Y2, and Y3 are measured by 3 indicators loading by .4 each, and
-#' # the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, 
+#' # the synchronous correlation between X and Y are .2, .3, and .4 at the first, 
+#' # second, and third wave, 
 #' # the correlation between the random intercept factors of X and Y is .1, and
 #' # the autoregressive effect of X is .8 across all three waves,
 #' # the autoregressive effect of Y is .7 across all three waves, and
-#' # the crossed effects of Y (Y1 -> X2, and Y2 -> Y3) are both .1 (but freely estimated for each wave).
+#' # the crossed effects of Y (Y1 -> X2, and Y2 -> Y3) are both .1 
+#' # (but freely estimated for each wave).
 #' powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
@@ -2482,7 +2537,8 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' # the crossed effects of X (X1 -> Y2, and X2 -> Y3) are .15 and .05 in the second group, 
 #' # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .05 and .15 in the first group, 
 #' # the crossed effects of Y (Y1 -> X2, and Y2 -> X3) are .01 and .10 in the second group, and
-#' # the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups (but freely estimated in each group).
+#' # the autoregressive effects of X (of .5) and Y (of .4) are equal over waves and over groups 
+#' # (but freely estimated in each group).
 #' powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500, 500),
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.5, .4), # group and wave constant 
@@ -2522,13 +2578,15 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     nWaves = 3,
 #'                                     autoregEffects = c(.8, .7),
 #'                                     crossedEffects = c(.2, .1),
-#'                                     waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+#'                                     waveEqual = c('autoregX', 'autoregY', 
+#'                                                   'crossedX', 'crossedY'),
 #'                                     rXY = NULL,
 #'                                     rBXBY = NULL,
 #'                                     nullEffect = 'crossedX = 0',
 #'                                     Lambda = diag(6),
 #'                                     alpha = .05, N = 500,
-#'                                     simulatedPower = TRUE, simOptions = list(nReplications = 500))
+#'                                     simulatedPower = TRUE, 
+#'                                     simOptions = list(nReplications = 500))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -2552,7 +2610,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   # validate input
   if('standardized' %in% names(list(...)) && list(...)[['standardized']]) stop('Standardized is not available for RICLPM.')
   if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
-  if(is.null(nWaves) | is.na(nWaves) | nWaves < 3) stop('nWaves must be >= 3.')
+  if(is.null(nWaves) || is.na(nWaves) || nWaves < 3) stop('nWaves must be >= 3.')
   
   # we do not allow stacking of hypotheses. there might be a use case for this,
   # but this would complicate defining the relevant parameter when these vary across waves. 
@@ -3064,7 +3122,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -3075,11 +3133,11 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3114,7 +3172,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             loadM = list(.5, .6),
 #'                             alpha = .05, N = list(500, 500))
 #' 
-#' # same as above, but determine the critical chi-square with N = 500 in each group so that alpha = beta
+#' # same as above, but determine the critical chi-square with N = 500 in each 
+#' # group so that alpha = beta
 #' powerMI <- semPower.powerMI(type = 'compromise',
 #'                             comparison = 'configural', 
 #'                             nullEffect = 'metric',
@@ -3222,7 +3281,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             nIndicator = list(5, 5),
 #'                             loadM = list(.5, .6),
 #'                             alpha = .05, N = list(500, 500), 
-#'                             simulatedPower = TRUE, simOptions = list(nReplications = 500))
+#'                             simulatedPower = TRUE, 
+#'                             simOptions = list(nReplications = 500))
 #'                              
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
@@ -3357,8 +3417,8 @@ semPower.powerMI <- function(type,
 #' the `Beta` (and optionally the `Psi`) matrix to define the population structure.
 #'  
 #' To understand the structure of `Beta` and `Psi`, consider the general structural equation model, 
-#' \deqn{\Sigma = \Lambda (I - \Beta)^{-1} \Psi [(I - \Beta)^{-1}]'  \Lambda' + \Theta } 
-#' where \eqn{\Beta} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. 
+#' \deqn{\Sigma = \Lambda (I - B)^{-1} \Psi [(I - B)^{-1}]'  \Lambda' + \Theta } 
+#' where \eqn{B} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. 
 #' 
 #' As an example, suppose there are four factors (X1, X2, X3, X4), and Beta is defined as follows:
 #' \eqn{
@@ -3422,7 +3482,7 @@ semPower.powerMI <- function(type,
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -3433,11 +3493,11 @@ semPower.powerMI <- function(type,
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3711,7 +3771,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -3722,11 +3782,11 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
 #' 
 #' @examples
 #' \dontrun{
@@ -3758,9 +3818,11 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' summary(powerbifactor$power)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerbifactor$modelH1, sample.cov = powerbifactor$Sigma,
-#'             sample.nobs = powerbifactor$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerbifactor$power$requiredN, 
+#'             sample.cov.rescale = FALSE)
 #' lavaan::sem(powerbifactor$modelH0, sample.cov = powerbifactor$Sigma,
-#'             sample.nobs = powerbifactor$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerbifactor$power$requiredN, 
+#'             sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
 #' powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
@@ -3868,7 +3930,8 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #'                                         nullEffect = 'corA = corB',
 #'                                         nullWhich = c(1, 2),
 #'                                         loadings = loadings,
-#'                                         alpha = .05, beta = .05, N = list(1, 1))
+#'                                         alpha = .05, beta = .05, 
+#'                                         N = list(1, 1))
 #'                                         
 #' # request a simulated post-hoc power analysis with 100 replications.
 #' bfLoadings <- rep(.6, 11)
@@ -3889,7 +3952,9 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #'                                         nullWhich = c(1, 2),
 #'                                         loadings = loadings,
 #'                                         alpha = .05, N = 500, 
-#'                                         simulatedPower = TRUE, simOptions = list(nReplications = 100))
+#'                                         simulatedPower = TRUE, 
+#'                                         simOptions = list(
+#'                                                        nReplications = 100))
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export

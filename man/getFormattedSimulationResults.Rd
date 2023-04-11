@@ -10,8 +10,6 @@ getFormattedSimulationResults(object, digits = 2)
 \item{object}{result object (list)}
 
 \item{digits}{number of significant digits}
-
-\item{type}{type of power analysis}
 }
 \value{
 data.frame

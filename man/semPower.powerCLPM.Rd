@@ -65,7 +65,74 @@ Convenience function for performing power analysis on effects in a cross-lagged 
 This requires the lavaan package.
 }
 \details{
+This function performs a power analysis to reject various hypotheses arising
+in crossed-lagged panel models (CLPM). In a standard CLPM implemented here,
+two variables X and Y are repeatedly assessed at two or more different time points (\code{nWaves}), yielding
+autoregressive effects (stabilities; X1 -> X2 and Y1 -> Y2),
+synchronous effects (X1 <-> Y1, X2 <-> Y2), and cross-lagged effects (X1 -> Y2 and Y1 -> X2).
+CLPM including more than two waves are typically implemented assuming that the parameters are constant across waves (\code{waveEqual}), and usually omit lag-2 effects (e.g., X1 -> Y3).
+CLPM based on latent factors usually assume at least metric invariance of the factors over waves (\code{metricInvariance}).
 
+Relevant hypotheses in arising in a CLPM are:
+\itemize{
+\item \code{autoregX = 0} and \code{autoregY = 0}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is zero.
+\item \code{crossedX = 0} and \code{crossedY = 0}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}), respectively, is zero.
+\item \code{autoregX = autoregY}: Tests the hypothesis that the autoregressive effect of X and Y are equal.
+\item \code{crossedX = crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}) are equal.
+\item \code{autoregX} and \code{autoregY}: Tests the hypothesis that the autoregressive effect of X and Y, respectively, is equal across waves.
+\item \code{crossedX} and \code{crossedY}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) and of Y on X (\code{crossedY}), respectively, is equal across waves.
+\item \code{corXY}: Tests the hypothesis that the (residual-)correlations between X and Y are equal across waves.
+\item \code{autoregXA = autoregXB} and \code{autoregYA = autoregYB}: Tests the hypothesis that the autoregressive effect of either X or Y are equal across groups.
+\item \code{crossedXA = crossedXB} and \code{crossedYA = crossedYB}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) or of Y on X (\code{crossedY}), respectively, is equal across groups.
+}
+
+For hypotheses regarding the random-intercept CLPM, see \code{\link[=semPower.powerRICLPM]{semPower.powerRICLPM()}}.
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the factor model and the requested type of power analysis.
+
+Additional arguments related to the \strong{definition of the factor model}:
+\itemize{
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
+}
+
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
+If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
+
+Note that the order of the factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves), i. e., the first factor is treated as the first measurement of X, the second as the first measurement of Y, the third as the second measurement of X, etc..
+
+Additional arguments related to the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+If a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested, optional arguments can be provided as a list to \code{simOptions}:
+\itemize{
+\item \code{nReplications}: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RC'}).
+The approaches generating non-normal data require additional arguments detailed below.
+\item \code{missingVars}: vector specifying the variables containing missing data (defaults to NULL).
+\item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
+\item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
+\item \code{missingMechanism}: The missing data mechanism, one of \code{MCAR} (the default), \code{MAR}, or \code{NMAR}.
+}
+
+\code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+
+\code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+
+\code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
+Each component must specify the population distribution (e.g. \code{'rchisq'}) and additional arguments (\code{list(df = 2)}).
 }
 \examples{
 \dontrun{
@@ -92,9 +159,11 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 summary(powerCLPM$power)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerCLPM$modelH1, sample.cov = powerCLPM$Sigma,
-            sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerCLPM$power$requiredN, 
+            sample.cov.rescale = FALSE)
 lavaan::sem(powerCLPM$modelH0, sample.cov = powerCLPM$Sigma,
-            sample.nobs = powerCLPM$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerCLPM$power$requiredN, 
+            sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05
 powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
@@ -257,7 +326,9 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 autoregEffects = c(.8, .7),
                                 crossedEffects = c(.2, .1),
                                 rXY = c(.2, .2, .2),
-                                waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+                                waveEqual = c('autoregX', 'autoregY', 
+                                              'crossedX', 'crossedY', 
+                                              'corXY'),
                                 nullEffect = 'crossedX = 0',
                                 nIndicator = c(5, 3, 5, 3, 5, 3),
                                 loadM = c(.5, .6, .5, .6, .5, .6),
@@ -270,10 +341,12 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
 # the autoregressive effects of X and Y are equal over waves,
 # X1, X2, and X3 are measured by 5 indicators loading by .5 each, and
 # Y1, Y2, and Y3 are measured by 3 indicators loading by .6 each, and
-# the synchronous correlation between X and Y are .2, .3, and .4 at the first, second, and third wave, and
+# the synchronous correlation between X and Y are .2, .3, and .4 at the first, 
+# second, and third wave, and
 # the stability of X is .8 across all three waves,
 # the stability of Y is .7 across all three waves, and
-# the crossed-effects of Y (Y1 -> X2, and Y2 -> X3) are both .1 (but freely estimated for each wave).
+# the crossed-effects of Y (Y1 -> X2, and Y2 -> X3) are both .1 
+# (but freely estimated for each wave).
 powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
@@ -365,7 +438,8 @@ powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
                                 nullEffect = 'crossedX = 0',
                                 Lambda = diag(4),
                                 alpha = .05, N = 500, 
-                                simulatedPower = TRUE, simOptions = list(nReplications = 500))
+                                simulatedPower = TRUE, 
+                                simOptions = list(nReplications = 500))
 }
 }
 \seealso{

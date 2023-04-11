@@ -12,7 +12,7 @@ simulate(
   N = NULL,
   alpha = NULL,
   simOptions = list(nReplications = 250, minConvergenceRate = 0.5, type = "normal",
-    missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR", ),
+    missingVars = NULL, missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR"),
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
   returnFmin = TRUE
@@ -57,7 +57,33 @@ Returns empirical power: \code{sum(p < alpha) / nReplications} or a list (if \co
 Estimates empirical power using a simulation approach.
 }
 \details{
+The details of the simulation are specified in \code{simOptions}, which is a list that may have the following components:
+\itemize{
+\item \code{nReplications}: The targeted number of valid simulation runs, defaults to 250.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RK'}).
+The approaches generating non-normal data require additional arguments detailed below.
+\item \code{missingVars}: vector specifying the variables containing missing data (defaults to \code{NULL}).
+\item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
+\item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
+\item \code{missingMechanism}: The missing data mechanism, one of \code{'MCAR'} (the default), \code{'MAR'}, or \code{'NMAR'}.
+}
 
+\code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+
+\code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+
+\code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
+Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
+
+Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. \emph{Multivariate Behavioral Research, 51}, 207-219. doi: 10.1080/00273171.2015.1133274
+
+Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. \emph{Behavior Research Methods, 52}, 939-946. doi: 10.3758/s13428-019-01291-5
+
+Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. \emph{Multivariate Behavioral Research, 43}, 355-381. doi: 10.1080/00273170802285693
 }
 \examples{
 \dontrun{
@@ -122,6 +148,5 @@ simulate(modelH0 = powerCFA$modelH0,
          simOptions = list(type = 'RK', 
                            distributions = distributions))
 }
-
 
 }

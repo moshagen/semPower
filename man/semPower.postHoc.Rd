@@ -86,13 +86,15 @@ summary(ph)
 
 # power analysis based on SigmaHat and Sigma (nonsense example)
 ph <- semPower.postHoc(alpha = .05, N = 1000, df = 5,  
-                       SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
+                       SigmaHat = diag(4), 
+                       Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
 summary(ph)
 
 # simulated power analysis (nonsense example)
 ph <- semPower.aPriori(alpha = .05, N = 500, df = 200,  
                        SigmaHat = list(diag(4), diag(4)), 
-                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), cov(matrix(rnorm(4*1000), ncol=4))),
+                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), 
+                                    cov(matrix(rnorm(4*1000), ncol=4))),
                        simulatedPower = TRUE, nReplications = 100)
 summary(ph)
 }

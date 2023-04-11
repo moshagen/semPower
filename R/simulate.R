@@ -29,18 +29,18 @@
 #' The details of the simulation are specified in `simOptions`, which is a list that may have the following components:
 #' * `nReplications`: The targeted number of valid simulation runs, defaults to 250.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RK'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
-#' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
+#' * `missingVars`: vector specifying the variables containing missing data (defaults to `NULL`).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
-#' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641\*skewness + p\*(p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
@@ -117,8 +117,8 @@
 #'                            distributions = distributions))
 #' }
 #' 
-#' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
+#' @importFrom stats median
 simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      Sigma = NULL, mu = NULL, 
                      N = NULL,
@@ -130,7 +130,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                        missingVars = NULL,
                        missingVarProp = 0,
                        missingProp = 0,
-                       missingMechanism = 'MCAR',
+                       missingMechanism = 'MCAR'
                      ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
@@ -371,6 +371,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' @param mu population means.
 #' @param nSets number of data sets to generate
 #' @param gIdx if not `NULL`, add gIdx as numeric group index as additional variable to generated data
+#' @param modelH0 a `lavaan` model string, only used to determine the number of factors when `type = 'RK'`
 #' @param simOptions additional arguments passed to specific data generation routine
 #' @return Returns the generated data
 #' @examples
@@ -378,6 +379,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 #' gen <- semPower.genSigma(Phi = .2, loadings = list(rep(.5, 3), rep(.7, 3)))
 #' data <- genData(N = 500, Sigma = gen$Sigma) 
 #' }
+#' @importFrom stats rbinom ecdf 
 genData <- function(type = 'normal', 
                     N = NULL, Sigma = NULL, mu = NULL, 
                     nSets = 1, gIdx = NULL, modelH0 = NULL, simOptions = NULL){
@@ -385,7 +387,7 @@ genData <- function(type = 'normal',
   type <- checkDataGenerationTypes(type)
   
   missingMechanism <- ifelse(!is.null(simOptions[['missingMechanism']]), simOptions[['missingMechanism']], 'mcar')
-  missingMechanism <- checkMissingTypes(simOptions[['missingMechanism']])
+  missingMechanism <- checkMissingTypes(missingMechanism)
   if(!is.null(simOptions[['missingVarsProp']]) && !is.null(simOptions[['missingVars']])) stop('Either set missingVarsProp or set missingVars, but not both.')
   missingVarsProp <- ifelse(!is.null(simOptions[['missingVarsProp']]), simOptions[['missingVarsProp']], 0)
   if(length(missingVarsProp) > 1) stop('missingVarsProp must be a single number.')
@@ -523,6 +525,7 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 #' @param skewness vector specifying skewness for each variable 
 #' @param kurtosis vector specifying excess kurtosis for each variable
 #' @return Returns the generated data
+#' @importFrom utils installed.packages
 genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,  
                        skewness = NULL, kurtosis = NULL){
   
@@ -555,6 +558,7 @@ genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,
 #' @param skewness multivariate skewness. May not be negative.
 #' @param kurtosis multivariate kurtosis. Must be >= 1.641 skewness + p (p + 0.774), where p is the number of variables.
 #' @return Returns the generated data
+#' @importFrom utils installed.packages
 genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,  
                        skewness = NULL, kurtosis = NULL){
   
@@ -614,6 +618,7 @@ genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,
 #'                        modelH0 = 'f1=~x1+x2+x3\nf2=~x4+x5+x6')
 #' 
 #'}
+#' @importFrom stats factanal cov2cor cor
 genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
                            distributions = NULL, modelH0 = NULL, maxIter = 10){
   

@@ -52,7 +52,86 @@ or (c) the equality of a correlation between two factors across two or more grou
 This requires the lavaan package.
 }
 \details{
+This function performs a power analysis to reject various hypotheses arising
+in a model including a bifactor structure:
+\itemize{
+\item \code{nullEffect = 'cor = 0'}: Tests the hypothesis that the correlation between a bifactor and another factor (which can also be a bifactor) is zero.
+\item \code{nullEffect = 'corX = corZ'}: Tests the hypothesis that two or more correlations involving one or more bifactors are equal to each other.
+\item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between the bifactor and another factor (which can also be a  bifactor) is equal in two or more groups (always assuming metric invariance).
+}
 
+A bifactor structure is defined by specifying the loadings on the general factor in \code{bfLoadings}, the comprised specific
+factors in \code{bfWhichFactors}, and the loadings on the specific factors in either \code{Lambda}, or \code{loadings},
+or \code{nIndicator} and \code{loadM}. The latter arguments also include the loadings defining the
+covariate(s).
+
+The correlations betwen the bifactor(s) and the covariate(s) are defined in \code{Phi}, which
+must omit the specific factors and only includes the bifactor(s) and the covariate(s) assuming
+the following order: (bifactor_1, bifactor_2, ..., bifactor_j, covariate_1,  covariate_2, ...,  covariate_k).
+
+For example, the following defines a single bifactor with 10 indicators loading by .5 each.
+The bifactor structure involves 3 specific factors measured by 3 indicators each, each loading by
+.3, .2, and .1 on the respective specific factor (in addition to the loadings on the bifactor).
+Furthermore, two covariate with 5 indicators each, all loading by .7, are defined. The correlation
+between the covariates is .5, the one between the bifactor and the first and second covariate are
+.3 and .2, respectively.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{bfLoadings <- rep(.5, 10)
+bfWhichFactors <- c(1, 2, 3)
+loadings <- list(
+  rep(.3, 3),   # specific factor 1
+  rep(.2, 3),   # specific factor 2
+  rep(.1, 3),   # specific factor 3
+  rep(.7, 5),   # covariate 1
+  rep(.7, 5)    # covariate 2
+)
+Phi <- matrix(c(
+  c(1, .3, .2),   # bifactor
+  c(.3, 1, .5),   # covariate 1
+  c(.2, .5, 1)   # covariate 2
+), ncol = 3, byrow = TRUE) 
+}\if{html}{\out{</div>}}
+
+Beyond the arguments explicitly contained in the function call, additional arguments
+are required specifying the factor model and the requested type of power analysis.
+
+Additional arguments related to the \strong{definition of the factor model} concerning the specific factors and the covariate(s):
+\itemize{
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
+}
+
+Additional arguments related to the requested type of \strong{power analysis}:
+\itemize{
+\item \code{alpha}: The alpha error probability. Required for \code{type = 'a-priori'} and \code{type = 'post-hoc'}.
+\item Either \code{beta} or \code{power}: The beta error probability and the statistical power (1 - beta), respectively. Only for \code{type = 'a-priori'}.
+\item \code{N}: The sample size. Always required for \code{type = 'post-hoc'} and \code{type = 'compromise'}. For \code{type = 'a-priori'} and multiple group analysis, \code{N} is a list of group weights.
+\item \code{abratio}: The ratio of alpha to beta. Only for \code{type = 'compromise'}.
+}
+
+If a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is requested, optional arguments can be provided as a list to \code{simOptions}:
+\itemize{
+\item \code{nReplications}: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RC'}).
+The approaches generating non-normal data require additional arguments detailed below.
+\item \code{missingVars}: vector specifying the variables containing missing data (defaults to NULL).
+\item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
+\item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
+\item \code{missingMechanism}: The missing data mechanism, one of \code{MCAR} (the default), \code{MAR}, or \code{NMAR}.
+}
+
+\code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+
+\code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+
+\code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
+of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
+Each component must specify the population distribution (e.g. \code{'rchisq'}) and additional arguments (\code{list(df = 2)}).
 }
 \examples{
 \dontrun{
@@ -84,9 +163,11 @@ powerbifactor <- semPower.powerBifactor(type = 'a-priori',
 summary(powerbifactor$power)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerbifactor$modelH1, sample.cov = powerbifactor$Sigma,
-            sample.nobs = powerbifactor$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerbifactor$power$requiredN, 
+            sample.cov.rescale = FALSE)
 lavaan::sem(powerbifactor$modelH0, sample.cov = powerbifactor$Sigma,
-            sample.nobs = powerbifactor$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerbifactor$power$requiredN, 
+            sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05
 powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
@@ -194,7 +275,8 @@ powerbifactor <- semPower.powerBifactor(type = 'a-priori',
                                         nullEffect = 'corA = corB',
                                         nullWhich = c(1, 2),
                                         loadings = loadings,
-                                        alpha = .05, beta = .05, N = list(1, 1))
+                                        alpha = .05, beta = .05, 
+                                        N = list(1, 1))
                                         
 # request a simulated post-hoc power analysis with 100 replications.
 bfLoadings <- rep(.6, 11)
@@ -215,7 +297,9 @@ powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
                                         nullWhich = c(1, 2),
                                         loadings = loadings,
                                         alpha = .05, N = 500, 
-                                        simulatedPower = TRUE, simOptions = list(nReplications = 100))
+                                        simulatedPower = TRUE, 
+                                        simOptions = list(
+                                                       nReplications = 100))
 }
 }
 \seealso{

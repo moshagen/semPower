@@ -12,6 +12,7 @@ getBetadiff(
   df,
   weights = NULL,
   simulatedPower = FALSE,
+  pkgEnv = NULL,
   ...
 )
 }
@@ -29,6 +30,8 @@ getBetadiff(
 \item{weights}{sample weights for multiple group models}
 
 \item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+
+\item{pkgEnv}{local pkgEnv containing iterationCounter.}
 
 \item{...}{other parameter passed to simulate()}
 }
