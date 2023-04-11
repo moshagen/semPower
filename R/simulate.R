@@ -31,8 +31,9 @@
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
 #' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'ruscio'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
-#' * `missingVarProp`: The proportion of variables containing missing data (defaults to zero).
-#' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero).
+#' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
+#' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
+#' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
@@ -126,6 +127,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                        nReplications = 250, 
                        minConvergenceRate = .5,
                        type = 'normal',
+                       missingVars = NULL,
                        missingVarProp = 0,
                        missingProp = 0,
                        missingMechanism = 'MCAR',
@@ -381,15 +383,24 @@ genData <- function(type = 'normal',
                     nSets = 1, gIdx = NULL, modelH0 = NULL, simOptions = NULL){
   
   type <- checkDataGenerationTypes(type)
-  missingProp <- ifelse(!is.null(simOptions[['missingProp']]), simOptions[['missingProp']], 0)
-  missingVarsProp <- ifelse(!is.null(simOptions[['missingVarsProp']]), simOptions[['missingVarsProp']], 0)
-  checkBounded(missingProp, inclusive = TRUE)
-  checkBounded(missingVarsProp, inclusive = TRUE)
-  if((missingProp > 0 && missingVarsProp == 0) || (missingProp == 0 && missingVarsProp > 0)) stop('Both missingVarProp and missingProp must be larger than zero to produce missings.')
+  
   missingMechanism <- ifelse(!is.null(simOptions[['missingMechanism']]), simOptions[['missingMechanism']], 'mcar')
   missingMechanism <- checkMissingTypes(simOptions[['missingMechanism']])
-  if(missingMechanism == 'mar' && missingVarsProp == 1) warning('For MAR, one variable must act as conditioner, so missingVarsProp cannot be 1. Omitting a single variable from missing list.')
-  
+  if(!is.null(simOptions[['missingVarsProp']]) && !is.null(simOptions[['missingVars']])) stop('Either set missingVarsProp or set missingVars, but not both.')
+  missingVarsProp <- ifelse(!is.null(simOptions[['missingVarsProp']]), simOptions[['missingVarsProp']], 0)
+  if(length(missingVarsProp) > 1) stop('missingVarsProp must be a single number.')
+  checkBounded(missingVarsProp, inclusive = TRUE)
+  if(!is.null(simOptions[['missingVars']])){
+    missingVars <- simOptions[['missingVars']] 
+  }else{
+    missingVars <- sample(seq(ncol(Sigma)), round(missingVarsProp*(ncol(Sigma)))) 
+  } 
+  if(!is.null(simOptions[['missingProp']])) missingProp  <- simOptions[['missingProp']] else missingProp <- 0  
+  if(length(missingProp) == 1) missingProp <- rep(missingProp, length(missingVars))
+  if(length(missingProp) != length(missingVars)) stop('Either specify a single value for missingProp or define a missingProp for each missingvar.')
+  lapply(missingProp, function(x) checkBounded(x, 'missingProp must lie', inclusive = TRUE))
+  if((any(missingProp > 0) && length(missingVars) == 0) || (any(missingProp == 0) && length(missingVars) > 0)) stop('missingProp and either missingVarProp or missingVars must be larger than zero to produce missings.')
+
   switch(type,
          # normal by cholesky decomposition
          normal = {
@@ -417,46 +428,48 @@ genData <- function(type = 'normal',
   ### missings
   # implementation based on https://psyarxiv.com/rq6yb/
   # always produces maximum number of missing patterns
-  if(missingProp > 0 && missingVarsProp > 0){
+  if(any(missingProp > 0) && missingVarsProp > 0){
 
     rdat <- lapply(rdat, function(x){
       
       if(missingMechanism == 'mcar'){
         
-        NAvars <- sample(seq(ncol(Sigma)), round(missingVarsProp*(ncol(Sigma)))) 
-        for(i in seq(NAvars)){
-          NArows <- as.logical(rbinom(ncol(x), 1, missingProp))
-          x[NArows, i] <- NA
+        for(i in seq(missingVars)){
+          NArows <- as.logical(rbinom(nrow(x), 1, missingProp[i]))
+          x[NArows, missingVars[i]] <- NA
         }
-        
+
       }else if(missingMechanism == 'mar'){
         
-        # pick as conditioning variable the one the correlates most strongly with all vars
-        predr <- rowSums(Sigma^2)
-        conditioningVar <- which(predr == max(predr))[1]
-        NAvars <- sample(seq(ncol(Sigma))[-conditioningVar], round(missingVarsProp*(ncol(Sigma)))) 
-        
-        pecdf <- ecdf(x[ ,conditioningVar])
-        for(i in seq(NAvars)){
+        # pick a conditioning variable
+        if(length(missingVars) < ncol(Sigma)){
+          conditioningVar <- sample(seq(ncol(Sigma))[!seq(ncol(Sigma)) %in% missingVars], 1)
+        }else{
+          warning('For MAR, one variable acts as conditioning variable and must not contain missings. Removing a single variable from missingVars.')
+          conditioningVar <- sample(ncol(Sigma), 1)
+          missingVars <- missingVars[-conditioningVar]
+        }
+
+        pecdf <- ecdf(x[ , conditioningVar])
+        for(i in seq(missingVars)){
           NArows <- logical()
           for(j in 1:nrow(x)){
             percentile <- pecdf(x[j, conditioningVar])
-            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp*percentile))
+            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp[i]*percentile))
           }
-          x[NArows, NAvars[i]] <- NA
+          x[NArows, missingVars[i]] <- NA
         }
         
       }else if(missingMechanism == 'nmar'){
         
-        NAvars <- sample(seq(ncol(Sigma)), round(missingVarsProp*(ncol(Sigma)))) 
-        for(i in seq(NAvars)){
-          pecdf <- ecdf(x[ , NAvars[i]])
+        for(i in seq(missingVars)){
+          pecdf <- ecdf(x[ , missingVars[i]])
           NArows <- logical()
           for(j in 1:nrow(x)){
-            percentile <- pecdf(x[j, NAvars[i]])
-            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp*percentile))
+            percentile <- pecdf(x[j, missingVars[i]])
+            NArows[j] <- as.logical(rbinom(1, 1, prob = 2*missingProp[i]*percentile))
           }
-          x[NArows, NAvars[i]] <- NA
+          x[NArows, missingVars[i]] <- NA
         }
         
       }

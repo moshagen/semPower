@@ -3025,6 +3025,15 @@ test_simulatePower <- function(doTest = TRUE){
                                               missingProp = .15,
                                               missingMechanism = 'MAR'
                             ))
+  ph14 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+                            comparison = 'restricted',
+                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            simulatedPower = TRUE,
+                            simOptions = list(nReplications = 100, 
+                                              missingVars = c(2, 4, 6),
+                                              missingProp = c(.1, .2, .3),
+                                              missingMechanism = 'MCAR'
+                            ))
 
   valid7 <- valid6 &&
     ph7$power$power - pha$power$power > .2 &&
