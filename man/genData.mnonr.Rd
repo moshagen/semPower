@@ -21,7 +21,7 @@ genData.mnonr(
 
 \item{skewness}{multivariate skewness. May not be negative.}
 
-\item{kurtosis}{multivariate kurtosis. Must be >= 1.641\\emph{MS + p\}(p + 0.774), where p is the number of variables.}
+\item{kurtosis}{multivariate kurtosis. Must be >= 1.641 skewness + p (p + 0.774), where p is the number of variables.}
 }
 \value{
 Returns the generated data
@@ -31,7 +31,7 @@ Generates random data from population variance-covariance matrix using
 the approach by Qu, Liu, & Zhang (2020) specifying Mardia's multivariate skewness and kurtosis.
 }
 \details{
-This function is a wrapper for the respective function of the ´mnonr´ package.
+This function is a wrapper for the respective function of the \code{mnonr} package.
 
 For details, see
 Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. \emph{Behavior Research Methods, 52}, 939-946. doi: 10.3758/s13428-019-01291-5

@@ -11,7 +11,8 @@ simulate(
   mu = NULL,
   N = NULL,
   alpha = NULL,
-  simOptions = list(nReplications = 250, minConvergenceRate = 0.5, type = "normal"),
+  simOptions = list(nReplications = 250, minConvergenceRate = 0.5, type = "normal",
+    missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR", ),
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
   returnFmin = TRUE

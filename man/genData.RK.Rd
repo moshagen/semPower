@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate.R
 \name{genData.RK}
 \alias{genData.RK}
-\title{genData.ruscio}
+\title{genData.RK}
 \usage{
 genData.RK(
   N = NULL,
