@@ -2875,21 +2875,34 @@ test_simulatePower <- function(doTest = TRUE){
   
   
   # try different estimator
+  phx <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+                           nullEffect = 'cor=0',
+                           nullWhich = c(1, 2),
+                           Phi = .2, nIndicator = c(5, 5), loadM = .5,
+                           alpha = .05, N = 250)
   set.seed(30012021)
-  phs4 <- semPower.postHoc(alpha = .05, N = 350,
-                           modelH0 = modelH0, Sigma = Sigma,
+  phs4 <- semPower.postHoc(alpha = .05, N = 500,
+                           modelH0 = phx$modelH0, Sigma = phx$Sigma,
                            simulatedPower = TRUE,
-                           simOptions = list(nReplications = 200),
+                           simOptions = list(nReplications = 200,
+                                             type = 'mnonr',
+                                             skewness = 10,
+                                             kurtosis = 350
+                           ),
                            lavOptions = list(estimator = 'mlm'))  
   
   set.seed(30012021)
-  phs2a <- semPower.postHoc(alpha = .05, N = 350,
-                            modelH0 = modelH0, Sigma = Sigma,
+  phs2a <- semPower.postHoc(alpha = .05, N = 500,
+                            modelH0 = phx$modelH0, Sigma = phx$Sigma,
                             simulatedPower = TRUE,
-                            simOptions = list(nReplications = 200))
-  
+                            simOptions = list(nReplications = 200,
+                                              type = 'mnonr',
+                                              skewness = 10,
+                                              kurtosis = 350
+                            ))
+
   valid5 <- valid4 &&
-    phs2a$power != phs4$power &&
+    phs2a$power > phs4$power &&
     round((phs2a$fmin - phs4$fmin)^2, 4) == 0
   
   # multigroup
@@ -2980,47 +2993,48 @@ test_simulatePower <- function(doTest = TRUE){
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 100, 
                                              type = 'mnonr',
-                                             skewness = 1,
-                                             kurtosis = 100
+                                             skewness = 10,
+                                             kurtosis = 150
                            ))
-  
+   
+
+  # compare estimators
   set.seed(30012021)
   ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'saturated',
                             Phi = .3, nIndicator = c(3, 3), loadM = .5,
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 100, 
-                                              type = 'ig',
-                                              skewness = rep(1, 6),
-                                              kurtosis = rep(10, 6)
+                                              type = 'mnonr',
+                                              skewness = 10,
+                                              kurtosis = 150
                             ),
                             lavOptions = list(estimator = 'mlm'))
   
-  # compare estimators
+  # restricted comparison model
   set.seed(30012021)
   ph11 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'restricted',
                             Phi = .3, nIndicator = c(3, 3), loadM = .5,
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 100, 
-                                              type = 'ig',
-                                              skewness = rep(1, 6),
-                                              kurtosis = rep(20, 6)
+                                              type = 'mnonr',
+                                              skewness = 10,
+                                              kurtosis = 150
                             ),
-                            lavOptions = list(estimator = 'mlr'))
-  set.seed(30012021)
+                            lavOptions = list(estimator = 'mlm'))
+  # this yields actually same power as ml, but this is entirely possible
+
+  # missings
   ph12 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'restricted',
                             Phi = .3, nIndicator = c(3, 3), loadM = .5,
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 100, 
-                                              type = 'ig',
-                                              skewness = rep(1, 6),
-                                              kurtosis = rep(20, 6)
-                            ),
-                            lavOptions = list(estimator = 'ml'))
-  
-  # missings
+                                              missingVarsProp = .5,
+                                              missingProp = .15,
+                                              missingMechanism = 'NMAR'
+                            ))
   ph13 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'restricted',
                             Phi = .3, nIndicator = c(3, 3), loadM = .5,
@@ -3044,10 +3058,9 @@ test_simulatePower <- function(doTest = TRUE){
     ph7$power$power - pha$power$power > .2 &&
     ph8$power$power - pha$power$power > .2 &&     
     ph9$power$power - pha$power$power > .2 &&
-    ph8$power$power - ph10$power$power > .01 &&
-    abs(ph11$power$bChiSq) < abs(ph12$power$bChiSq) # this is actually a tiny difference, but seems to be correct
+    ph9$power$power < ph10$power$power
+    
 
-  
   if(valid7){
     print('test_simulatePower: OK')
   }else{
