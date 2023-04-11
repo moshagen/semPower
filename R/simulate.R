@@ -572,6 +572,7 @@ genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,
                  ms = skewness, 
                  mk = kurtosis)
     colnames(rd) <- paste0('x', 1:ncol(Sigma))
+    rd
   })
   
 }
