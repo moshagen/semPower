@@ -2690,15 +2690,15 @@ Other hypotheses arising in multiple group settings are supported in most functi
 
 
 ## Simulated power {#simulatedPower}
-By default, power analysis are performed analytically relying on asymptotic theory. Alternatively, all [model-based](#modelBasedPower) a priori and post-hoc power analyses^[Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.] can also be performed using a simulation approach.
+By default, power analyses are performed analytically by relying on asymptotic theory. Alternatively, all [model-based](#modelBasedPower) a-priori and post-hoc power analyses^[Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.] can also be performed using a simulation approach.
 
-To request a simulated power analysis, add `simulatedPower = TRUE` as additional argument to **any** of the convenience functions performing a [model-based power analysis](#modelBasedPower) or to the `semPower.apriori` or `semPower.posthoc` functions when a covariance matrix and a model string is provided. The details of the simulation can be specified in `simOptions`, which is a list that may have the following components:
+To request a simulated power analysis, add `simulatedPower = TRUE` as an additional argument to **any** of the convenience functions performing a [model-based power analysis](#modelBasedPower) or to the `semPower.apriori` or `semPower.posthoc` functions when a covariance matrix and a model string is provided. The details of the simulation can be specified in `simOptions`, which is a list that may have the following components:
 
-* `nReplications`: The targeted number of valid simulation runs (defaults to 250). It is recommended to use a larger number of replications as this increases accuracy (at the expense of processing time). Note that an a priori power analysis will only be accurate when the number of replications is large (say, 500 or more). 
+* `nReplications`: The targeted number of valid simulation runs (defaults to 250). It is recommended to use a larger number of replications, as this increases accuracy (at the expense of processing time). Note that an a-priori power analysis will only be accurate when the number of replications is large (say, 500 or more). (??? warum machst du den default dann nicht gleich auf 500?)
 * `minConvergenceRate`: The minimum convergence rate required (defaults to .50). The maximum actual simulation runs are increased by a factor of 1/`minConvergenceRate`, so that this argument is only used to ensure that the requested number of (successful) replications as defined in `nReplications` is actually reached, while still having a stopping rule for the simulation. `semPower` still provides the results when the actual convergence rate is smaller than `minConvergenceRate`, but will issue a warning.
 * additional arguments related to ['non-normal data'](#simNonNormal) and ['missingness'](#simMissing)
 
-For instance, the following request a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e, 250 replications, minimum convergence rate of 50%, complete and normally distributed data, regular maximum-likelihood LRT) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. It is strongly recommended to seed the random generator to obtain reproducable results (`set.seed(300121)`).
+For instance, the following requests a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e., 250 replications, minimum convergence rate of 50%, complete and normally distributed data, regular maximum-likelihood LRT) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. It is strongly recommended to seed the random generator to obtain reproducible results (`set.seed(300121)`).
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2751,9 +2751,9 @@ summary(powerCFA$power)
 
 The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but are now based on the simulation results, rather than asymptotic theory. Of note, the simulated power estimate (of 82%) closely matches the power estimate of a corresponding analytical power analysis (of 81.6%; not reported here). 
 
-In addition, `semPower` also outputs a section entitled "Simulation results", where further results of the simulations are reported that help to evaluate whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspect in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the observed bias in the chi-square test statistic and the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The observed bias in the chi-square test-statistic gives a rough indication of the extent to which simulated power diverges from the analytical power (but this also depend on the bias of the chi-square test of the H0 model). The average parameter bias shows whether the model parameters are reliably recovered and thus should be close to zero.
+In addition, `semPower` also outputs a section entitled "Simulation results", where further results of the simulation are reported that help to evaluate whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the observed bias in the chi-square test statistic and the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The observed bias in the chi-square test-statistic gives a rough indication of the extent to which simulated power diverges from the analytical power (but this also depend on the bias of the chi-square test of the H0 model). The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero.
 
-To change the number of replicates and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`) and a minimum convergence rate of 90% (`minConvergenceRate = .90`).
+To change the number of replications and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`) and a minimum convergence rate of 90% (`minConvergenceRate = .90`).
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2781,9 +2781,9 @@ Simulated power analyses for all other convenience functions providing a [model-
 
 By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = normal` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an alternative [estimator or test-statistic](#simEstimators)).
 
-Generating non-normal data with given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore provides interfaces to three other approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
+Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore provides interfaces to three other approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
 
-* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (for each variable) akin the the Vale-Maurelli procedure.
+* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (for each variable) akin to the Vale-Maurelli procedure.
 * `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. 
 * `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
 
@@ -2805,11 +2805,11 @@ powerCFA <- semPower.powerCFA(
                               simOptions = list(
                                 type = 'IG',
                                 skewness = c(0, 0, 0, 0, 0, 2, 2, 2, 2),
-                                kurtosis = c(20, 15, 10, 15, 6, 5, 4, 5, 5)
+                                kurtosis = c(20, 15, 10, 15, 18, 5, 4, 5, 6)
                               ))
 ```
 
-Alternatively, one may specify Mardia's multivariate skewness and kurtosis using the mnonr approach (`type = 'mnonr'`). For instance, in the following data are sampled from a population with a multivariate skewness of  10 and a multivariate kurtosis of 200:    
+Alternatively, one may specify Mardia's multivariate skewness and kurtosis using the mnonr approach (`type = 'mnonr'`). For instance, in the following, data are sampled from a population with a multivariate skewness of  10 and a multivariate kurtosis of 200:    
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2831,7 +2831,7 @@ powerCFA <- semPower.powerCFA(
                               ))
 ```
 
-Instead of defining the marginal skewness and kurtosis as in the IG approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g. `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
+Instead of defining the marginal skewness and kurtosis as in the IG approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2873,7 +2873,7 @@ By default, complete data are generated and used in simulated power analyses. Gi
 
 To request missing data, the missing data mechanism, the proportion of missing data, and the variables on which missing data occur need to be defined by providing the following to `simOptions`:
 
-* `missingVars`: vector specifying the variables containing missing data, e.g. `missingVars = c(2, 4, 6)` to have the second, fourth, and sixth variable contain missings. The order of the variables reflects the one in the particular factor model defined (see [definition of the factor model](#factorDefinition)).
+* `missingVars`: vector specifying the variables containing missing data, e.g., `missingVars = c(2, 4, 6)` to have the second, fourth, and sixth variable contain missings. The order of the variables reflects the one in the particular factor model defined (see [definition of the factor model](#factorDefinition)).
 * `missingVarProp` can be used instead of `missingVars`: the proportion of variables containing missing data.
 * `missingProp`: The proportion of missingness for variables containing missing data, either a single value or a vector giving the probabilities for each variable.
 * `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
@@ -2948,7 +2948,7 @@ powerCFA <- semPower.powerCFA(
 
 ##### Changing the estimator and test-statistic{-#simEstimators}
 
-By default, simulated power analyses are performed using Maximum-Likelihood estimation with the standard LR test-statistic. When ['non-normal data'](#simNonNormal) are incorporated in the simulation process, the standard test-statistic will be positively biased and thus incur inflated power estimates, so it is  reasonable to employ corrected test-statistics. The test-statistic and the estimator can be changed by providing a list to the `lavOptions` argument, which is passed to `lavaan` and thus conforms to the standard `lavaan` conventions. For example:
+By default, simulated power analyses are performed using Maximum-Likelihood estimation with the standard LR test-statistic. When ['non-normal data'](#simNonNormal) are incorporated in the simulation process, the standard test-statistic will be positively biased and thus incur inflated power estimates, so it is reasonable to employ corrected test-statistics. The test-statistic and the estimator can be changed by providing a list to the `lavOptions` argument, which is passed to `lavaan` and thus conforms to the standard `lavaan` conventions. For example:
 
 * `list(estimator = 'mlm')`: requests ML estimation with the Satorra-Bentler scaled test-statistic
 * `list(estimator = 'mlr')`: requests ML estimation with a corrected test-statistic that is asymptotically equivalent to the Yuan-Bentler statistic 
@@ -2958,7 +2958,7 @@ By default, simulated power analyses are performed using Maximum-Likelihood esti
 See the `lavaan` manual for all available estimators and test-statistics.
 
 For instance, the following generates non-normal data with missings (see the preceeding chapters) and employs 
-ML estimation with test-statistic equivalent to the Yuan-Bentler statistic (`lavOptions = list(estimator = 'mlr')`).
+ML estimation with a test-statistic asymptotically equivalent to the Yuan-Bentler statistic (`lavOptions = list(estimator = 'mlr')`).
 
 ```{r eval=FALSE}
 set.seed(300121)
