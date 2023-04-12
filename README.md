@@ -462,6 +462,44 @@ summary(powerCLPM$power)
 ```
 
 
+#### Simulated power analysis
+
+Perform a simulated power-analysis with 500 replications and non-normal data with a population multivariate skewness of 10 and multivariate kurtosis of 200 to determine the sample size to detect that a correlation between the first and the second factor of at least .3 differs from zero:
+```
+Phi <- matrix(c(
+  c(1, .3, .4, .5),
+  c(.3, 1, .2, .6),
+  c(.4, .2, 1, .1),
+  c(.5, .6, .1, 1)
+), ncol = 4, byrow = TRUE)
+
+set.seed(1234)
+powerCFA <- semPower.powerCFA(
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Phi = Phi,
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 2),
+  # define measurement model
+  loadings = list(
+    c(.7, .6, .5),
+    c(.5, .8, .6),
+    c(.7, .6, .5),
+    c(.5, .8, .6)),
+  # request simulated power analysis
+  simulatedPower = TRUE,
+  simOptions = list(
+    nReplications = 500,
+    type = 'mnonr',
+    skewness = 10,
+    kurtosis = 200
+  ))
+  
+summary(powerCFA$power)
+```
+
+
 For more details, see the [manual](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf).
 
 
