@@ -1226,7 +1226,7 @@ Now, `summary(powerReg$power)` provides the same information as a model-free [po
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
-Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies a diagonal matrix for $\Psi$. (??? muesste es dann auch hier identity matrix heissen? falls ja, es gibt noch weitere stellen, wo diagonal matrix vorkommt. vllt koenntest du auch da ueberpruefen, ob es identity matrix heissen muesste?)
+Also, all slopes were treated as completely standardized parameters (by omitting the `standardized` argument, which defaults to `TRUE`). This implies that `semPower` defines the residual variances (in $\Psi$) such that all variances are 1. If the slopes should rather be treated as unstandardized, set `standardized = FALSE`, which implies an identity matrix for $\Psi$.
 
 If there are more than two predictors, the predictor intercorrelation matrix must be provided as argument to `corXX`. For instance, consider the regression $\hat{Y} = .3 \cdot X_1 + .2 \cdot X_2 + .1 \cdot X_3$, where all factors are measured by 3 indicators, all loadings equal .5, the interest lies in detecting that the slope for $X_2$ differs from zero (`nullWhich = 2`), and the predictors are correlated according to `corXX`:
 
@@ -1603,7 +1603,7 @@ powerPath <- semPower.powerPath(
                                 )
 ```
 
-Note that all examples above treated all parameters as completely standardized (by omitting the `standardized` argument, which defaults to `TRUE`). When `standardized = TRUE`, `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `Psi` is provided, the diagonal elements are ignored and all off-diagonal elements are treated as (residual-) correlations. When `standardized = FALSE`, `Psi` is unaltered (or replaced by a diagonal matrix, when `Psi = NULL`).
+Note that all examples above treated all parameters as completely standardized (by omitting the `standardized` argument, which defaults to `TRUE`). When `standardized = TRUE`, `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `Psi` is provided, the diagonal elements are ignored and all off-diagonal elements are treated as (residual-) correlations. When `standardized = FALSE`, `Psi` is unaltered (or replaced by an identity matrix, when `Psi = NULL`).
 
 Further, all examples above performed a power analysis by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
@@ -1994,7 +1994,7 @@ $$
 \hat{X_3} = .6 \cdot X_2 + .4 \cdot Y_2 \\
 \hat{Y_3} = .3 \cdot X_2 + .5 \cdot Y_2
 $$
-By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, a diagonal matrix is assumed for $\Psi$, in turn, leading to unstandardized parameters.
+By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, an identity matrix is assumed for $\Psi$, in turn, leading to unstandardized parameters.
 
 All of the above holds regardless of whether $X$ and $Y$ are latent factors or observed variables. To define the measurement model for $X$ and $Y$, and thereby also whether these are latent factors or observed variables, arguments [defining the factor model](#factorDefinition) are used assuming the order ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). For instance, when there are two waves (`nWaves = 2`), the following shows three equivalent ways to define three indicators for $X$ and four indicators for $Y$ at both waves, where the loadings of each indicator on $X$ are equal to .50 and the loadings on $Y$ are equal to .60:
 
@@ -2472,7 +2472,7 @@ Suppose that a correlation between two factors of $r > .9$ is considered as impl
 * Define an (incorrect) analysis model that reflects the null hypothesis of interest.
 * Optionally, define a (correct) analysis model that reflects the alternative hypothesis.
  
-##### Define the true affairs in the population {-} (??? bin mir nicht sicher, ob affairs wirklich ein passender begriff hier ist. vielleicht einfach nur "define the true model in the population"?)
+##### Define the true affairs in the population {-}
 
 One option to define the true affairs in the population is to use a `lavaan` model string specifying the values for each single (non-zero) parameter. Thus, recurring to the example above, one needs to define each loading, each residual variance, the variance of the factors as well as their covariance. Suppose the standardized loadings vary between .4 and .8, and that - in the population - the two factors correlate by .9. 
 
@@ -2690,7 +2690,299 @@ Other hypotheses arising in multiple group settings are supported in most functi
 
 
 ## Simulated power {#simulatedPower}
-to be written
+By default, power analysis are performed analytically relying on asymptotic theory. Alternatively, all [model-based](#modelBasedPower) a priori and post-hoc power analyses^[Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.] can also be performed using a simulation approach.
+
+To request a simulated power analysis, add `simulatedPower = TRUE` as additional argument to **any** of the convenience functions performing a [model-based power analysis](#modelBasedPower) or to the `semPower.apriori` or `semPower.posthoc` functions when a covariance matrix and a model string is provided. The details of the simulation can be specified in `simOptions`, which is a list that may have the following components:
+
+* `nReplications`: The targeted number of valid simulation runs (defaults to 250). It is recommended to use a larger number of replications as this increases accuracy (at the expense of processing time). Note that an a priori power analysis will only be accurate when the number of replications is large (say, 500 or more). 
+* `minConvergenceRate`: The minimum convergence rate required (defaults to .50). The maximum actual simulation runs are increased by a factor of 1/`minConvergenceRate`, so that this argument is only used to ensure that the requested number of (successful) replications as defined in `nReplications` is actually reached, while still having a stopping rule for the simulation. `semPower` still provides the results when the actual convergence rate is smaller than `minConvergenceRate`, but will issue a warning.
+* additional arguments related to ['non-normal data'](#simNonNormal) and ['missingness'](#simMissing)
+
+For instance, the following request a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e, 250 replications, minimum convergence rate of 50%, complete and normally distributed data, regular maximum-likelihood LRT) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. It is strongly recommended to seed the random generator to obtain reproducable results (`set.seed(300121)`).
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE)
+summary(powerCFA$power)
+```
+
+```{r eval=FALSE}
+## 
+##  semPower: Post-hoc power analysis
+## 
+##  Simulated power based on 250 successful replications.
+##                                   
+##  F0                       0.028249
+##  RMSEA                    0.168076
+##  Mc                       0.985975
+##  GFI                      0.993762
+##  AGFI                     0.719268
+##                                   
+##  df                       1       
+##  Num Observations         300     
+##  NCP                      8.446590
+##                                   
+##  Critical Chi-Square      3.841459
+##  Alpha                    0.050000
+##  Beta                     0.180000
+##  Power (1 - Beta)         0.820000
+##  Implied Alpha/Beta Ratio 0.277778
+## 
+## 
+##  Simulation results:
+##                                                    
+##  Convergence Rate (%) of the H0 model        100.00
+##                                                    
+##  Chi-Square Bias (%) of the H1 model         -6.78 
+##                                                    
+##  Average Parameter Bias (%) in the H1 Model:       
+##  Loadings                                    0.44  
+##  Variances/Covariances                       0.19
+```
+
+The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but are now based on the simulation results, rather than asymptotic theory. Of note, the simulated power estimate (of 82%) closely matches the power estimate of a corresponding analytical power analysis (of 81.6%; not reported here). 
+
+In addition, `semPower` also outputs a section entitled "Simulation results", where further results of the simulations are reported that help to evaluate whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspect in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the observed bias in the chi-square test statistic and the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The observed bias in the chi-square test-statistic gives a rough indication of the extent to which simulated power diverges from the analytical power (but this also depend on the bias of the chi-square test of the H0 model). The average parameter bias shows whether the model parameters are reliably recovered and thus should be close to zero.
+
+To change the number of replicates and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`) and a minimum convergence rate of 90% (`minConvergenceRate = .90`).
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                nReplications = 500,
+                                minConvergenceRate = .90
+                              ))
+```
+
+Simulated power analyses for all other convenience functions providing a [model-based power analysis](#modelBasedPower) are performed analogously.
+
+
+##### Non-normal data {-#simNonNormal}
+
+By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = normal` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an alternative [estimator or test-statistic](#simEstimators)).
+
+Generating non-normal data with given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore provides interfaces to three other approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
+
+* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (for each variable) akin the the Vale-Maurelli procedure.
+* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. 
+* `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
+
+For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a moderately strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a rather minor kurtosis between 4 - 6.    
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                type = 'IG',
+                                skewness = c(0, 0, 0, 0, 0, 2, 2, 2, 2),
+                                kurtosis = c(20, 15, 10, 15, 6, 5, 4, 5, 5)
+                              ))
+```
+
+Alternatively, one may specify Mardia's multivariate skewness and kurtosis using the mnonr approach (`type = 'mnonr'`). For instance, in the following data are sampled from a population with a multivariate skewness of  10 and a multivariate kurtosis of 200:    
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                type = 'mnonr',
+                                skewness = 10,
+                                kurtosis = 200
+                              ))
+```
+
+Instead of defining the marginal skewness and kurtosis as in the IG approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g. `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
+
+```{r eval=FALSE}
+set.seed(300121)
+distributions <- list(
+  list('rnorm', list(mean = 0, sd = 10)),          # normal
+  list('rnorm', list()),                           # standard normal
+  list('rt', list(df = 10)),                       # t
+  list('runif', list()),                           # uniform (0 - 1)
+  list('rbeta', list(shape1 = 1, shape2 = 2)),     # beta
+  list('rexp', list(rate = 1)),                    # exponential   
+  list('rpois', list(lambda = 4)),                 # poisson
+  list('rchisq', list(df = 4, ncp = 3)),           # chi-square
+  list('rbinom', list(size = 1, prob = .5))        # binomial   
+)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                type = 'RK',
+                                distributions = distributions
+                              ))
+```
+
+One may also just define a single distribution to apply to all variables. For instance, `distributions = list('rchisq', list(df = 2))` defines the population marginal distributions for all variables to be chi-square with 2 df.    
+
+
+
+##### Missing data{-#simMissing}
+
+By default, complete data are generated and used in simulated power analyses. Given that the presence of missing data also affects power, `semPower` also allows for generating data with missings, which are then analyzed resorting to full-information maximum likelihood.
+
+To request missing data, the missing data mechanism, the proportion of missing data, and the variables on which missing data occur need to be defined by providing the following to `simOptions`:
+
+* `missingVars`: vector specifying the variables containing missing data, e.g. `missingVars = c(2, 4, 6)` to have the second, fourth, and sixth variable contain missings. The order of the variables reflects the one in the particular factor model defined (see [definition of the factor model](#factorDefinition)).
+* `missingVarProp` can be used instead of `missingVars`: the proportion of variables containing missing data.
+* `missingProp`: The proportion of missingness for variables containing missing data, either a single value or a vector giving the probabilities for each variable.
+* `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
+
+For instance, recurring to the example above, the following defines a MAR missing mechanism (`missingMechanism = 'MAR'`), a proportion of missingness on the variables containing missings of .25 (`missingProp = .25`), and that variables 1, 2, 8, and 9 contain missing values (`missingVars = c(1, 2, 8, 9)`). In the present example, this means that the first and second indicator of the first factor as well as the final two indicators of the second factor contain missings.
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                missingVars = c(1, 2, 8, 9),
+                                missingProp = .25,
+                                missingMechanism = 'MAR'
+                              ))
+```
+
+Alternatively, one may also specify the proportion of missing values for each variable separately. For instance, the following defines the proportion of missingness to be .1, .2, .3, and .4 (`missingProp = c(.1, .2, .3, .4)`) for variables 1, 2, 8, and 9, respectively.
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                missingVars = c(1, 2, 8, 9),
+                                missingProp = c(.1, .2, .3, .4),
+                                missingMechanism = 'MAR'
+                              ))
+```
+
+
+Instead of defining specific variables that contain missings, it is also possible to just define the proportion of variables that contain missings (so that the specific variables containing missings are determined randomly). For instance, the following defines that 50% of the variables contain missings:
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                missingVarProp = .50,
+                                missingProp = .25,
+                                missingMechanism = 'MAR'
+                              ))
+```
+
+
+##### Changing the estimator and test-statistic{-#simEstimators}
+
+By default, simulated power analyses are performed using Maximum-Likelihood estimation with the standard LR test-statistic. When ['non-normal data'](#simNonNormal) are incorporated in the simulation process, the standard test-statistic will be positively biased and thus incur inflated power estimates, so it is  reasonable to employ corrected test-statistics. The test-statistic and the estimator can be changed by providing a list to the `lavOptions` argument, which is passed to `lavaan` and thus conforms to the standard `lavaan` conventions. For example:
+
+* `list(estimator = 'mlm')`: requests ML estimation with the Satorra-Bentler scaled test-statistic
+* `list(estimator = 'mlr')`: requests ML estimation with a corrected test-statistic that is asymptotically equivalent to the Yuan-Bentler statistic 
+* `list(estimator = 'wls')`: requests WLS estimation
+* `list(estimator = 'wlsmv')`: requests diagonal WLS estimation with a robust test-statistic
+
+See the `lavaan` manual for all available estimators and test-statistics.
+
+For instance, the following generates non-normal data with missings (see the preceeding chapters) and employs 
+ML estimation with test-statistic equivalent to the Yuan-Bentler statistic (`lavOptions = list(estimator = 'mlr')`).
+
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                type = 'mnonr',
+                                skewness = 10,
+                                kurtosis = 200,
+                                missingVars = c(1, 2, 8, 9),
+                                missingProp = c(.1, .2, .3, .4),
+                                missingMechanism = 'MAR'
+                              ),
+                              lavOptions = list(estimator = 'mlr'))
+```
 
 
 
@@ -2981,6 +3273,8 @@ summary(sem(gen$modelTrueCFA,
 
 * Browne, M. W., & Cudeck, R. (1992). Alternative ways of assessing model fit. *Sociological Methods & Research, 21*, 230–258.
 
+* Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. doi: 10.1080/00273171.2015.1133274
+
 * Jöreskog, K. G., & Sörbom, D. (1984). *LISREL VI user’s guide* (3rd ed.). Mooresville: Scientific Software.
 
 * Lin, J., & Bentler, P. M. (2012). A third moment adjusted test statistic for small sample factor analysis. *Multivariate Behavioral Research, 47(3),* 448-462.
@@ -2991,10 +3285,17 @@ summary(sem(gen$modelTrueCFA,
 
 * Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54–60.
 
+
+* Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. *Behavior Research Methods, 52*, 939-946. doi: 10.3758/s13428-019-01291-5
+
 * Rosseel, Y. (2012). lavaan: An R package for structural equation modeling. *Journal of Statistical Software, 48,* 1-36.
+
+* Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. *Multivariate Behavioral Research, 43*, 355-381. doi: 10.1080/00273170802285693
 
 * Steiger, J. H. (1990). Structural model evaluation and modification: An interval estimation approach. *Multivariate Behavioral Research, 25*, 173–180.
 
 * Steiger, J. H., & Lind, J. C. (1980). *Statistically based tests for the number of common factors*. Presented at the Annual meeting of the Psychometric Society, Iowa City.
 
-* Tofighi, D., & Kelley, K. (2020). Improved inference in mediation analysis: Introducing the model-based constrained optimization procedure. *Psychological Methods, 25(4)*, 496–515. 
+* Tofighi, D., & Kelley, K. (2020). Improved inference in mediation analysis: Introducing the model-based constrained optimization procedure. *Psychological Methods, 25*, 496–515. 
+
+* Vale, C. D., & Maurelli, V. A. (1983). Simulating Multivariate Nonnormal Distributions. *Psychometrika, 48*, 465–471. doi:10.1007/bf02293687.
