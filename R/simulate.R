@@ -230,7 +230,6 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
           if(lavresH1@optim[["converged"]]){
             
             if(lavresH0@Options[['test']] != 'standard'){
-              # TODO: check whether this works for estim other than the ml-m family
               mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
             }else{
               mcomp <- lavaan::anova(lavresH0, lavresH1) 
