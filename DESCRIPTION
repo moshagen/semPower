@@ -24,9 +24,10 @@ Imports:
     stats,
     utils
 Suggests: 
+    covsim,
+    doSNOW,
     knitr,
     lavaan,
-    covsim,
     mnonr,
     rmarkdown
 VignetteBuilder: 

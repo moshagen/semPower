@@ -2696,6 +2696,7 @@ To request a simulated power analysis, add `simulatedPower = TRUE` as an additio
 
 * `nReplications`: The targeted number of valid simulation runs (defaults to 250). It is recommended to use a larger number of replications, as this increases accuracy (at the expense of processing time). Note that an a-priori power analysis will only be accurate when the number of replications is large (say, 500 or more). 
 * `minConvergenceRate`: The minimum convergence rate required (defaults to .50). The maximum actual simulation runs are increased by a factor of 1/`minConvergenceRate`, so that this argument is only used to ensure that the requested number of (successful) replications as defined in `nReplications` is actually reached, while still having a stopping rule for the simulation. `semPower` still provides the results when the actual convergence rate is smaller than `minConvergenceRate`, but will issue a warning.
+* `nCores`: The number of CPU cores to use for parallel processing. Defaults to 1 for no parallel processing. Parallel processing requires that the `doSNOW` package is installed.
 * additional arguments related to ['non-normal data'](#simNonNormal) and ['missingness'](#simMissing)
 
 For instance, the following requests a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e., 250 replications, minimum convergence rate of 50%, complete and normally distributed data, regular maximum-likelihood LRT) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. It is strongly recommended to seed the random generator to obtain reproducible results (`set.seed(300121)`).
@@ -2753,7 +2754,7 @@ The results of the power analysis provide the same information as a model-free [
 
 In addition, `semPower` also outputs a section entitled "Simulation results", where further results of the simulation are reported that help to evaluate whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the observed bias in the chi-square test statistic and the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The observed bias in the chi-square test-statistic gives a rough indication of the extent to which simulated power diverges from the analytical power (but this also depend on the bias of the chi-square test of the H0 model). The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero.
 
-To change the number of replications and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`) and a minimum convergence rate of 90% (`minConvergenceRate = .90`).
+To change the number of replications and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`), a minimum convergence rate of 90% (`minConvergenceRate = .90`), and requests parallel computation using 8 cores (`nCores = 8`).
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2770,7 +2771,8 @@ powerCFA <- semPower.powerCFA(
                               # set simulation options
                               simOptions = list(
                                 nReplications = 500,
-                                minConvergenceRate = .90
+                                minConvergenceRate = .90,
+                                nCores = 8
                               ))
 ```
 

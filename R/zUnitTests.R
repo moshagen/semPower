@@ -2797,10 +2797,15 @@ test_simulatePower <- function(doTest = TRUE){
   phs <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
                            simulatedPower = TRUE, 
-                           simOptions = list(nReplications = 200))
-  
+                           simOptions = list(nReplications = 200, nCores = 8))
   set.seed(30012021)
   phs2 <- semPower.postHoc(alpha = .05, N = 250,
+                           modelH0 = modelH0, Sigma = Sigma,
+                           simulatedPower = TRUE,
+                           simOptions = list(nReplications = 200, nCores = 8))
+  # single core
+  set.seed(30012021)
+  phs2a <- semPower.postHoc(alpha = .05, N = 250,
                            modelH0 = modelH0, Sigma = Sigma,
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200))
@@ -2815,7 +2820,8 @@ test_simulatePower <- function(doTest = TRUE){
     round(phs$power$power - phs2$power, 4) == 0 &&
     round(pha2$power - pha$power$power, 4) == 0 &&
     round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
-    abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  # need some margin
+    abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  && # need some margin
+    phs2a$power - phs2$power < 1e-6
   
   # restricted comparison model
   set.seed(30012021)
@@ -2831,7 +2837,8 @@ test_simulatePower <- function(doTest = TRUE){
   phs3 <- semPower.powerLav('post-hoc', alpha = .05, N = 250,
                             modelH0 = modelH0, modelH1 = modelH1, Sigma = Sigma,
                             simulatedPower = TRUE,
-                            simOptions = list(nReplications = 200))
+                            simOptions = list(nReplications = 200, nCores = 8))
+  summary(phs3$power)
   
   valid2 <- valid &&
     phs3$power$df - pha3$power$df == 0 &&
@@ -2845,12 +2852,12 @@ test_simulatePower <- function(doTest = TRUE){
   aps <- semPower.aPriori(alpha = .05, power = .80,
                           Sigma = Sigma, modelH0 = modelH0,
                           simulatedPower = TRUE,
-                          simOptions = list(nReplications = 200))
+                          simOptions = list(nReplications = 200, nCores = 8))
   set.seed(30012021)
   aps2 <- semPower.powerLav('ap', alpha = .05,power = .80,
                             modelH0 = modelH0, Sigma = Sigma,
                             simulatedPower = TRUE,
-                            simOptions = list(nReplications = 200))
+                            simOptions = list(nReplications = 200, nCores = 8))
   
   valid3 <- valid2 &&
     apa$power$df == aps$df &&
@@ -2866,7 +2873,7 @@ test_simulatePower <- function(doTest = TRUE){
   aps3 <- semPower.aPriori(alpha = .05, power = .80,
                            Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1,
                            simulatedPower = TRUE,
-                           simOptions = list(nReplications = 200))
+                           simOptions = list(nReplications = 200, nCores = 8))
   
   valid4 <- valid3 &&
     apa2$power$df == aps3$df &&
@@ -2887,7 +2894,8 @@ test_simulatePower <- function(doTest = TRUE){
                            simOptions = list(nReplications = 200,
                                              type = 'mnonr',
                                              skewness = 10,
-                                             kurtosis = 350
+                                             kurtosis = 350, 
+                                             nCores = 8
                            ),
                            lavOptions = list(estimator = 'mlm'))  
   
@@ -2898,7 +2906,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 200,
                                               type = 'mnonr',
                                               skewness = 10,
-                                              kurtosis = 350
+                                              kurtosis = 350,
+                                              nCores = 8
                             ))
 
   valid5 <- valid4 &&
@@ -2920,21 +2929,21 @@ test_simulatePower <- function(doTest = TRUE){
                             lavOptions = list(group.equal = c('loadings')),
                             alpha = .05, N = list(500, 500),
                             simulatedPower = TRUE,
-                            simOptions = list(nReplications = 200))  
+                            simOptions = list(nReplications = 200, nCores = 8))  
   set.seed(30012021)
   phs5 <- semPower.postHoc(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
                            alpha = .05, N = list(500, 500),
                            simulatedPower = TRUE,
-                           simOptions = list(nReplications = 200))  
+                           simOptions = list(nReplications = 200, nCores = 8))  
   set.seed(30012021)
   aps5 <- semPower.aPriori(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
                            alpha = .05, power = pha5$power$power, N = list(1, 1),
                            simulatedPower = TRUE,
-                           simOptions = list(nReplications = 200))
+                           simOptions = list(nReplications = 200, nCores = 8))
   # add weights
   set.seed(30012021)
   apa6 <- semPower.powerLav('ap',
@@ -2949,7 +2958,7 @@ test_simulatePower <- function(doTest = TRUE){
                            lavOptions = list(group.equal = c('loadings')),
                            alpha = .05, power = apa6$power$impliedPower, N = list(1, 2),
                            simulatedPower = TRUE,
-                           simOptions = list(nReplications = 200))
+                           simOptions = list(nReplications = 200, nCores = 8))
   
   valid6 <- valid5 &&
     abs(pha5$power$power - phs5$power) < .05 &&
@@ -2972,7 +2981,8 @@ test_simulatePower <- function(doTest = TRUE){
                                 simulatedPower = TRUE,
                                 simOptions = list(nReplications = 100, 
                                                   type = 'rk',
-                                                  distributions = distributions
+                                                  distributions = distributions, 
+                                                  nCores = 8
                                 ))
 
   set.seed(30012021)
@@ -2983,7 +2993,8 @@ test_simulatePower <- function(doTest = TRUE){
                            simOptions = list(nReplications = 100, 
                                              type = 'ig',
                                              skewness = rep(1, 6),
-                                             kurtosis = rep(10, 6)
+                                             kurtosis = rep(10, 6), 
+                                             nCores = 8
                            ))
   
   set.seed(30012021)
@@ -2994,7 +3005,8 @@ test_simulatePower <- function(doTest = TRUE){
                            simOptions = list(nReplications = 100, 
                                              type = 'mnonr',
                                              skewness = 10,
-                                             kurtosis = 150
+                                             kurtosis = 150, 
+                                             nCores = 8
                            ))
    
 
@@ -3007,7 +3019,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 100, 
                                               type = 'mnonr',
                                               skewness = 10,
-                                              kurtosis = 150
+                                              kurtosis = 150, 
+                                              nCores = 8
                             ),
                             lavOptions = list(estimator = 'mlm'))
   
@@ -3020,7 +3033,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 100, 
                                               type = 'mnonr',
                                               skewness = 10,
-                                              kurtosis = 150
+                                              kurtosis = 150, 
+                                              nCores = 8
                             ),
                             lavOptions = list(estimator = 'mlm'))
   # this yields actually same power as ml, but this is entirely possible
@@ -3033,7 +3047,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 100, 
                                               missingVarsProp = .5,
                                               missingProp = .15,
-                                              missingMechanism = 'NMAR'
+                                              missingMechanism = 'NMAR', 
+                                              nCores = 8
                             ))
   ph13 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'restricted',
@@ -3042,7 +3057,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 100, 
                                               missingVarsProp = .5,
                                               missingProp = .15,
-                                              missingMechanism = 'MAR'
+                                              missingMechanism = 'MAR', 
+                                              nCores = 8
                             ))
   ph14 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
                             comparison = 'restricted',
@@ -3051,7 +3067,8 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 100, 
                                               missingVars = c(2, 4, 6),
                                               missingProp = c(.1, .2, .3),
-                                              missingMechanism = 'MCAR'
+                                              missingMechanism = 'MCAR', 
+                                              nCores = 8
                             ))
 
   valid7 <- valid6 &&

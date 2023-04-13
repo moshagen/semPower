@@ -719,6 +719,25 @@ orderLavCov <- function(lavCov = NULL){
   orderLavResults(lavCov = lavCov)
 }
 
+
+#' getKSdistance
+#'
+#' computes average absulute KS-distance between empirical and asympotic chi-square reference distribution.
+#' 
+#' @param chi empirical distribution  
+#' @param df df of reference distribution  
+#' @param ncp ncp of reference distribution  
+#' @return average absolute distance
+getKSdistance <- function(chi, df, ncp = 0){
+  sChi <- sort(chi)
+  cdfChi <- ecdf(sChi)(sChi)
+  pChi <- sapply(sChi, FUN = pchisq, df = df, ncp = ncp)
+  ks1 <- abs(pChi - cdfChi)
+  ks2 <- abs(pChi - c(0, cdfChi[-length(cdfChi)]))
+  mean(c(mean(ks1), mean(ks2)))
+}
+
+
 #' orderLavMu
 #'
 #' returns `lavaan` implied means in correct order.

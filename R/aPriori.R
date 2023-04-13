@@ -247,17 +247,9 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   )
   
   if(simulatedPower){
-    result <- append(result, list(
-      nrep = nrep,
-      convergenceRate = sim[['convergenceRate']],
-      bChiSq = sim[['bChiSq']],
-      bLambda = sim[['bLambda']],
-      bPhi = sim[['bPhi']],
-      bBeta = sim[['bBeta']],
-      bPsi = sim[['bPsi']]
-    ))
+    result <- append(result, sim)
   }
-  
+
   class(result) <- "semPower.aPriori"
   result
 

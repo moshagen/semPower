@@ -35,6 +35,7 @@
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
@@ -74,7 +75,9 @@
 #'          N = powerCFA$power$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE, 
-#'          simOptions = list(nReplications = 500, minConvergenceRate = .80))
+#'          simOptions = list(nReplications = 500, 
+#'                            minConvergenceRate = .80, 
+#'                            nCores = 8))
 #' 
 #' 
 #' # same with IG as data generation routine
@@ -130,14 +133,24 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                        missingVars = NULL,
                        missingVarProp = 0,
                        missingProp = 0,
-                       missingMechanism = 'MCAR'
+                       missingMechanism = 'MCAR',
+                       nCores = 1
                      ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
-  
+
+  nCores <- ifelse(!is.null(simOptions[['nCores']]), simOptions[['nCores']], 1)
+  if(nCores > 1){
+    if('doSNOW' %in% rownames(installed.packages())){
+      library(doSNOW)
+    }else{
+      stop('Parallel processing requires the doSNOW package, so install doSNOW first.')    
+    }
+  } 
   
   nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 250)
   minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .5)
+  maxReplications <- ceiling(nReplications / minConvergenceRate)
   
   if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
   if(nvar >= min(unlist(N))) stop('Simulated power is not possible when the number of variables exceeds N.')
@@ -171,11 +184,11 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                            list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
   }
   
-  # generate data 
+  # generate data. we always generate maxreplications, though this incurs a bit overhead 
   if(!is.list(Sigma)){
-    simData <- genData(N = N, Sigma = Sigma, mu = mu, gIdx = NULL, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions)
+    simData <- genData(N = N, Sigma = Sigma, mu = mu, gIdx = NULL, nSets = maxReplications, modelH0 = modelH0, simOptions = simOptions)
   }else{
-    simData <- lapply(seq_along(Sigma), function(x) genData(N = N[[x]], Sigma = Sigma[[x]], mu = mu[[x]], gIdx = x, nSets = nReplications / minConvergenceRate, modelH0 = modelH0, simOptions = simOptions))
+    simData <- lapply(seq_along(Sigma), function(x) genData(N = N[[x]], Sigma = Sigma[[x]], mu = mu[[x]], gIdx = x, nSets = maxReplications, modelH0 = modelH0, simOptions = simOptions))
   }
 
   # if we have missings, notify lav and check estimator 
@@ -185,125 +198,111 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     if(!is.null(modelH1)) lavOptionsH1 <- append(lavOptionsH1, list(missing = 'ml'))
   }
   
-  efmin <- efminGroups <- list()
-  rChiSq <- rLambda <- rPhi <- rPsi <- rBeta <- list()
-  ePower <- 0
-  r <- rr <- 1
-  progress <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
-  while(r <= nReplications && rr <= nReplications / minConvergenceRate){
-    setTxtProgressBar(progress, r)
-    tryCatch({
-      
-      if(!is.list(Sigma)){
-        cdata <- simData[[r]]
-      }else{
-        cdata <- rbind(simData[[1]][[r]], simData[[2]][[r]])
-      }
+  # parallel
+  if(nCores > 1){
 
-      lavArgs <- list(model = modelH0, data = cdata)
-      if(is.list(Sigma)) lavArgs <- append(lavArgs, list(group = 'gIdx'))
-      lavresH0 <- do.call(lavaan::lavaan, append(lavArgs, lavOptions))
-
-      if(lavresH0@optim[["converged"]]){
-        
-        # fmin by group
-        cfminGroups <- NULL
-        if(is.list(Sigma)) cfminGroups <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
-        
-        cfmin <- 2 * lavaan::fitMeasures(lavresH0, 'fmin') # lav reports .5*fmin
-        p <- lavaan::fitMeasures(lavresH0, 'pvalue')
-        df <- lavaan::fitMeasures(lavresH0, 'df')
-        if(lavresH0@Options[['test']] != 'standard'){
-          p <- lavaan::fitMeasures(lavresH0, 'pvalue.scaled')
-          df <- lavaan::fitMeasures(lavresH0, 'df.scaled')
-        }
-
-        # handle restricted comparison model 
-        # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
-        if(!is.null(modelH1)){
-          
-          lavArgs <- list(model = modelH1, data = cdata)
-          if(is.list(Sigma)) lavArgs <- append(lavArgs, list(group = 'gIdx'))
-          
-          lavresH1 <- do.call(lavaan::lavaan, append(lavArgs, lavOptionsH1))
-
-          if(lavresH1@optim[["converged"]]){
-            
-            if(lavresH0@Options[['test']] != 'standard'){
-              mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
-            }else{
-              mcomp <- lavaan::anova(lavresH0, lavresH1) 
-            }
-            
-            p <- mcomp$`Pr(>Chisq)`[2]
-            df <- mcomp$`Df diff`[2]
-            cfmin <- 2 * (lavaan::fitMeasures(lavresH0, 'fmin') - lavaan::fitMeasures(lavresH1, 'fmin'))
-            if(is.list(Sigma)) cfminGroups - lavresH1@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(N) - 1)
-            
-            # store param est
-            cChi <- lavaan::fitMeasures(lavresH1, 'chisq')
-            if(lavresH1@Options[['test']] != 'standard'){
-              cChi <- lavaan::fitMeasures(lavresH1, 'chisq.scaled')
-            }
-            rChiSq <- append(rChiSq, cChi)
-            cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
-            rLambda <- append(rLambda, list(unlist(lapply(cLambda, function(x) x[x != 0])))) # only non-zero loadings  
-            cPsi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')]
-            rPsi <- append(rPsi, list(unlist(cPsi)))
-            cBeta <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'beta')]
-            rBeta <- append(rBeta, list(unlist(cBeta)))
-            cPhi <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'phi')]
-            rPhi <- append(rPhi, list(unlist(cPhi)))
-          }
-        }
-      }
-
-      if(lavresH0@optim[["converged"]] && (is.null(modelH1)|| lavresH1@optim[["converged"]])){
-        efmin <- append(efmin, cfmin)
-        efminGroups <- append(efminGroups, list(cfminGroups)) 
-        
-        if(p < alpha)
-          ePower <- ePower + 1
-        
-        r <- r + 1 
-      }
-
-    }, warning = function(w) {
-      # print(paste('WARNING: ', w))
-    }, error = function(e) {
-       print(paste('ERROR: ', e))
-    })
-    rr <- rr + 1
-  }
-  close(progress)
-  
-  
-  if((r - 1) == 0) stop("Something went wrong during model estimation, no replication converged.")
-  ePower <- ePower / (r - 1)
-  if((r - 1) / (rr - 1) < minConvergenceRate){ 
-    warning(paste("Actual convergence rate of", round((r - 1) / (rr - 1), 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", (r - 1),"replications."))
+    cl <- makeCluster(nCores)
+    registerDoSNOW(cl)
+    progressBar <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
+    progress <- function(r) setTxtProgressBar(progressBar, r)
+    res <- foreach(r = seq(nReplications), .options.snow = list(progress = progress)) %dopar% {
+      doSim(r = r, 
+            simData = simData,
+            isMultigroup = is.list(Sigma),
+            modelH0 = modelH0, modelH1 = modelH1, 
+            lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+    }
+    close(progressBar)
+    stopCluster(cl)
+    
+    fit <- lapply(res, '[[', 1)
+    nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
+    
+  }else{
+    # single core case
+    res <- list()
+    nConverged <- 0
   }
   
-  if(returnFmin){
+  
+  ## check convergence and do additional non-parallel runs to reach target replications
+  if(nConverged < nReplications){
+    
+    # fit models
+    progressBar <- txtProgressBar(min = 0, max = (nReplications - nConverged), initial = 0, style = 3)
+    r <- rr <- (nConverged + 1)
+    while(r <= nReplications && rr <= maxReplications){
+      setTxtProgressBar(progressBar, r)
+      cr <- doSim(r = r, 
+                  simData = simData,
+                  isMultigroup = is.list(Sigma),
+                  modelH0 = modelH0, modelH1 = modelH1,
+                  lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+      if(!is.na(cr[[1]][[1]][1])){
+        res <- append(res, list(cr))
+        r <- r + 1
+      }
+      rr <- rr + 1
+    }
+    close(progressBar)
+  }
+  
+  # check convergence
+  fit <- lapply(res, '[[', 1)
+  nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
+  convergenceRate <- nConverged / length(res)
+  if(nConverged == 0) stop("Something went wrong during model estimation, no replication converged.")
+  if(convergenceRate < minConvergenceRate){ 
+    warning(paste("Actual convergence rate of", round(convergenceRate, 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", nConverged,"replications."))
+  }
+  
+  ## eval res
+  fitH0 <- do.call(rbind, lapply(fit, '[[', 1))
+  fitDiff <- do.call(rbind, lapply(fit, '[[', 3))
+  colnames(fitH0) <- colnames(fitDiff) <- c('fmin', 'chisq', 'df', 'p', paste0('fminGroup', seq(length(N))))
+  
+  fitH0 <- fitH0[!is.na(fitH0[ ,'fmin']), ]
+  fitDiff <- fitDiff[!is.na(fitDiff[ ,'fmin']), ]
+  
+  ePower <- sum(fitDiff[, 'p'] < alpha) / nConverged
+  
+  if(!returnFmin){
+    
+    ePower
+    
+  }else{
+    
     # sample fmin is biased, we need unbiased pop fmin
-    ubFmean <- mean(unlist(efmin) - df / sum(unlist(N)))
+    df <- fitDiff[1, 'df']
+    ubFmean <- mean(fitDiff[ , 'fmin'] - df / sum(unlist(N)))
     if(ubFmean <= 0) warning('Simulated estimate of F0 is zero or lower. Try to increase the number of replications.')
-    efminGroups <- do.call(rbind, efminGroups)
+    
+    efminGroups <- fitDiff[, paste0('fminGroup', seq(length(N)))]
     # we assume that each group contributes proportional df
     ubFmeanGroups <- NULL
-    if(!is.null(efminGroups)) ubFmeanGroups <- unlist(lapply(1:ncol(efminGroups), function(x) mean( efminGroups[ ,x] - (df / length(N)) / N[[x]] ))) / length(N)
+    if(!is.na(efminGroups[1])) ubFmeanGroups <- unlist(lapply(1:ncol(efminGroups), function(x) mean( efminGroups[ , x] - (df / length(N)) / N[[x]] ))) / length(N)
 
     out <- list(
       ePower = ePower,
       meanFmin = ubFmean,
       meanFminGroups = ubFmeanGroups,
       df = df,
-      nrep = (r - 1),
-      convergenceRate = (r - 1) / (rr - 1)
+      nrep = nConverged,
+      convergenceRate = convergenceRate
     )
     
-    # also store mean param estm and pop params
     if(!is.null(modelH1)){
+      fitH1 <- do.call(rbind, lapply(fit, '[[', 2))
+      fitH1 <- fitH1[!is.na(fitH1[ ,'fmin']), ]
+      
+      colnames(fitH1) <- colnames(fitH0) 
+      
+      # eval param bias
+      param <- lapply(res, '[[', 2)
+      rLambda <- do.call(rbind, lapply(param, '[[', 1))
+      rPsi <- do.call(rbind, lapply(param, '[[', 2))
+      rBeta <- do.call(rbind, lapply(param, '[[', 3))
+      rPhi <- do.call(rbind, lapply(param, '[[', 4))
       
       # assume that modelH1 is properly specified, so that fitting modelH1 to Sigma
       # yields population parameters
@@ -315,13 +314,15 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                                        sample.cov.rescale = FALSE),
                                   lavOptionsH1))
       if(lavresPop@optim[['fx']] > 1e-6) warning('H1 model is not properly specified.')
-
-      # calc bias
-      bChiSq <- (median(unlist(rChiSq)) - lavaan::fitMeasures(lavresPop, 'df')) / lavaan::fitMeasures(lavresPop, 'df')
       
+      # h1 chi bias. we compute this here, but cant do this for H0/diff because need the ncp
+      bChiSqH1 <- (mean(fitH1[, 'chisq']) - fitH1[1, 'df']) / fitH1[1, 'df']
+      ksChiSqH1 <- getKSdistance(fitH1[, 'chisq'], fitH1[1, 'df'])  
+
+      # parameter bias
       cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
       pLambda <- unlist(lapply(cLambda, function(x) x[x != 0]))
-      bLambda <- mean( (apply(do.call(rbind, rLambda), 2, median) -  pLambda) / pLambda )
+      bLambda <- mean( (apply(rLambda, 2, median) -  pLambda) / pLambda )
       
       bPhi <- bPsi <- bBeta <- NULL
       # for phi/psi/beta, we only consider population parameters that are larger than
@@ -330,39 +331,162 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       if(length(cPhi) > 0){
         nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
         pPhi <- unlist(lapply(cPhi, function(x) x[nonzero]))
-        if(!is.null(pPhi)) bPhi <- mean( (apply(do.call(rbind, rPhi), 2, median) -  pPhi) / pPhi ) else bPhi <- NULL
+        if(!is.null(pPhi)) bPhi <- mean( (apply(rPhi, 2, median) - pPhi) / pPhi ) else bPhi <- NULL
       }
-
+      
       cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
       if(length(cPsi) > 0){
         nonzero <- unlist(lapply(cPsi, function(x) which(abs(x) > .01)))
         pPsi <- unlist(lapply(cPsi, function(x) x[nonzero]))
-        if(!is.null(pPsi)) bPsi <- mean( (apply(do.call(rbind, rPsi)[, nonzero], 2, median) -  pPsi) / pPsi ) else bPsi <- NULL
+        if(!is.null(pPsi)) bPsi <- mean( (apply(rPsi[, nonzero], 2, median) - pPsi) / pPsi ) else bPsi <- NULL
       }
       
       cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
       if(length(cBeta) > 0){
         nonzero <- unlist(lapply(cBeta, function(x) which(abs(x) > .01)))
         pBeta <- unlist(lapply(cBeta, function(x) x[nonzero]))
-        if(!is.null(pBeta)) bBeta <- mean( (apply(do.call(rbind, rBeta)[, nonzero], 2, median) -  pBeta) / pBeta ) else bBeta <- NULL
-      }
+        if(!is.null(pBeta)) bBeta <- mean( (apply(rBeta[, nonzero], 2, median) - pBeta) / pBeta ) else bBeta <- NULL
+      }    
       
       out <- append(out, list(
-        bChiSq = bChiSq,
+        bChiSqH1 = bChiSqH1,
+        ksChiSqH1 = ksChiSqH1,
         bLambda = bLambda,
         bPhi = bPhi,
         bBeta = bBeta,
         bPsi = bPsi
       ))
+      
     }
     
     out
-    
-  }else{
-    ePower
   }
+  
 }
 
+#' doSim
+#' 
+#' Generates random data from population variance-covariance matrix and population means, either
+#' from a multivariate normal distribution, or using one of various approaches to generate 
+#' non-normal data.
+#'
+#' @param r replication id
+#' @param simData list of datafiles
+#' @param isMultigroup multigroup flag
+#' @param modelH0 `lavaan` model string defining the (incorrect) analysis model.
+#' @param modelH1 `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
+#' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation
+#' @param lavOptionsH1 lavoptions when fitting `modelH1`. If `NULL`, the same as `lavOptions`.
+#' @return list 
+doSim <- function(r, 
+                  simData,
+                  isMultigroup = FALSE,
+                  modelH0, modelH1, 
+                  lavOptions, lavOptionsH1){
+  
+  cres <- list(list(), list())
+  
+  tryCatch({
+    
+    if(!isMultigroup){
+      cdata <- simData[[r]]
+    }else{
+      cdata <- rbind(simData[[1]][[r]], simData[[2]][[r]])
+    }
+    
+    lavArgs <- list(model = modelH0, data = cdata)
+    if(isMultigroup) lavArgs <- append(lavArgs, list(group = 'gIdx'))
+    lavresH0 <- do.call(lavaan::lavaan, append(lavArgs, lavOptions))
+    
+    if(lavresH0@optim[["converged"]]){
+      
+      lavfitH0 <- lavaan::fitMeasures(lavresH0)
+      fitH0 <- lavfitH0[c('fmin','chisq', 'df', 'pvalue')]
+      if(lavresH0@Options[['test']] != 'standard'){
+        fitH0 <- lavfitH0[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
+      }
+      fitH0['fmin'] <- 2*fitH0['fmin'] # lav reports .5*fmin
+      
+      # fmin by group
+      cfminGroupsH0 <- NA
+      if(isMultigroup) cfminGroupsH0 <- lavresH0@Fit@test[[lavresH0@Options[['test']]]][['stat.group']] / (unlist(lavresH0@Data@nobs) - 1)
+      
+      fitH0 <- c(fitH0, cfminGroupsH0)
+      fitDiff <- fitH0
+      
+      # handle restricted comparison model 
+      # (modelH1 must always get fit because sampling error does not allow just using modelH0 estm with different df)
+      if(!is.null(modelH1)){
+        
+        lavArgs <- list(model = modelH1, data = cdata)
+        if(isMultigroup) lavArgs <- append(lavArgs, list(group = 'gIdx'))
+        
+        lavresH1 <- do.call(lavaan::lavaan, append(lavArgs, lavOptionsH1))
+        
+        if(lavresH1@optim[["converged"]]){
+          
+          lavfitH1 <- lavaan::fitMeasures(lavresH1)
+          fitH1 <- lavfitH1[c('fmin','chisq', 'df', 'pvalue')]
+          if(lavresH1@Options[['test']] != 'standard'){
+            fitH1 <- lavfitH1[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
+          }
+          fitH1['fmin'] <- 2*fitH1['fmin'] # lav reports .5*fmin
+          
+          cfminGroupsH1 <- NA
+          if(isMultigroup) cfminGroupsH1 <- lavresH1@Fit@test[[lavresH1@Options[['test']]]][['stat.group']] / (unlist(lavresH1@Data@nobs) - 1)
+          
+          fitH1 <- c(fitH1, cfminGroupsH1)
+          
+          if(lavresH1@Options[['test']] != 'standard'){
+            mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
+          }else{
+            mcomp <- lavaan::anova(lavresH0, lavresH1) 
+          }
+          
+          cfminDiff <- fitH0['fmin'] - fitH1['fmin']
+          cfminGroupsDiff <- NA
+          if(isMultigroup) cfminGroupsDiff <- cfminGroupsH0 - cfminGroupsH1
+          
+          fitDiff <- c(cfminDiff, 
+                       mcomp[['Pr(>Chisq)']][2], mcomp[['Df diff']][2], mcomp[['Pr(>Chisq)']][2], 
+                       cfminGroupsDiff)
+          
+          
+          # store param est
+          cLambda <- lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'lambda')]
+          cLambda <- unlist(lapply(cLambda, function(x) x[x != 0])) # only non-zero loadings  
+          cPsi <- unlist(lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'psi')])
+          cBeta <- unlist(lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'beta')])
+          cPhi <- unlist(lavresH1@Model@GLIST[which(names(lavresH1@Model@GLIST) %in% 'phi')])
+          
+          cres <- list(
+            list(fitH0, fitH1, fitDiff),
+            list(cLambda, cPsi, cBeta, cPhi)
+          )
+          
+        }
+        
+        # h0 model only  
+      }else{
+        
+        cres <- list(
+          list(fitH0, rep(NA, length(fitH0)), fitDiff),
+          list()
+        )
+        
+      }
+    }
+    
+    
+  }, warning = function(w) {
+     print(paste('WARNING: ', w))
+  }, error = function(e) {
+    print(paste('ERROR: ', e))
+  })
+  
+  cres
+  
+}
 
 #' genData
 #' 
