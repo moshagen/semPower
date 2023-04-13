@@ -728,6 +728,7 @@ orderLavCov <- function(lavCov = NULL){
 #' @param df df of reference distribution  
 #' @param ncp ncp of reference distribution  
 #' @return average absolute distance
+#' @importFrom stats ecdf pchisq mean
 getKSdistance <- function(chi, df, ncp = 0){
   sChi <- sort(chi)
   cdfChi <- ecdf(sChi)(sChi)

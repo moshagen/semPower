@@ -61,7 +61,7 @@
 #' summary(ap)
 #' }
 #' @seealso [semPower.postHoc()] [semPower.compromise()]
-#' @importFrom stats qchisq pchisq optim
+#' @importFrom stats qchisq pchisq optim mean
 #' @export
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
@@ -141,30 +141,74 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
     # N by group
     requiredN.g <- ceiling(weights * requiredN)
-
-    impliedNCP <- getNCP(fmin.g, requiredN.g)
-    impliedBeta <- pchisq(critChi, df, impliedNCP)
-    impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = FALSE)
     
-  # simulated power  
+  # first perform analytical even when simulated is requested, so both results can be provided and we get start N
   }else{
-    pkgEnv[['iterationCounter']] <- 1
 
-    ### determine starting N using analytical power
-    # set ml estm in case lavoptions request otherwise to avoid semPower complaining
-    if(!is.null(lavOptions[['estimator']])) lavOptions[['estimator']] <- 'ML'
-    if(!is.null(lavOptionsH1[['estimator']])) lavOptionsH1[['estimator']] <- 'ML'
+    # set ml estm in case lavoptions request otherwise, because here we perform analytical power analysis
+    aLavOptions <- lavOptions
+    aLavOptionsH1 <- lavOptionsH1
+    if(!is.null(aLavOptions[['estimator']])) aLavOptions[['estimator']] <- 'ML'
+    if(!is.null(aLavOptionsH1[['estimator']])) aLavOptionsH1[['estimator']] <- 'ML'
     ap <- semPower.powerLav(type = 'a-priori', 
                             alpha = alpha, beta = beta, power = power,
                             modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
                             Sigma = Sigma, mu = mu, 
-                            lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+                            lavOptions = aLavOptions, lavOptionsH1 = aLavOptionsH1)
+    
+    requiredN <- ap[['power']][['requiredN']]
+    requiredN.g <- ap[['power']][['requiredN.g']]
+    fmin <- ap[['power']][['fmin']]
+    fmin.g <- ap[['power']][['fmin.g']]
+    critChi <- ap[['power']][['chiCrit']]
+    df <- ap[['power']][['df']]
+    bPrecisionWarning <- ap[['power']][['bPrecisionWarning']]
+    
+  }
+
+  impliedNCP <- getNCP(fmin.g, requiredN.g)
+  impliedBeta <- pchisq(critChi, df, impliedNCP)
+  impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = FALSE)
+
+  # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
+  fit <- getIndices.F(fmin, df, p, pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], requiredN.g)
+  
+  result <- list(
+    type = "a-priori",
+    alpha = alpha,
+    desiredBeta = desiredBeta,
+    desiredPower = desiredPower,
+    impliedBeta = impliedBeta,
+    impliedPower = impliedPower,
+    impliedAbratio = alpha / impliedBeta,
+    impliedNCP = impliedNCP,
+    fmin = fmin,
+    fmin.g = fmin.g,
+    effect = pp[['effect']],
+    effect.measure = pp[['effect.measure']],
+    requiredN = requiredN,
+    requiredN.g = requiredN.g,
+    df = df,
+    p = pp[['p']],
+    chiCrit = critChi,
+    bPrecisionWarning = bPrecisionWarning,
+    simulated = FALSE,
+    plotShow = if('plotShow' %in% names(args)) args[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(args)) args[['plotLinewidth']] else 1,
+    plotShowLabels = if('plotShowLabels' %in% names(args)) args[['plotShowLabels']] else TRUE
+  )
+  
+  result <- append(result, fit)
+  
+  
+  if(simulatedPower){
+    
+    # use start N from analytical power
     startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
 
-    
     # for simulated power, we refuse to do anything when 2*p exceeds N
     bPrecisionWarning <- (ap[['power']][['requiredN']] <= 2*pp[['p']])  
-    if(bPrecisionWarning) stop(paste0("The required N of ", ap[['power']][['requiredN']], " is probably smaller than twice the number of variables. Simulated a priori power will probably not work in this case. If N exceeds p, you can try a simulated post-hoc analyses."))
+    if(bPrecisionWarning) stop(paste0("The required N of ", ap[['power']][['requiredN']], " is most likely smaller than twice the number of variables. Simulated a priori power will probably not work in this case. If N exceeds p, you can try a simulated post-hoc analyses."))
 
     # we need a pretty high tolerance because of sampling error: it doesn't make sense 
     # to suggest high accuracy when there it is in fact quite limited
@@ -172,6 +216,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     # pchisq(chiCrit +/- sqrt(df), df, ncp, lower.tail = T), but this leads to wide margins.
     # the option below increases tolerance with decreasing nrep and beta, but is more restrictive.
     tolerance <- logBetaTarget^2 * 2 / simOptions[['nReplications']]
+    
+    pkgEnv[['iterationCounter']] <- 1
     chiCritOptim <- optim(par = c(N = startN), fn = getBetadiff,
                           logBetaTarget = logBetaTarget, weights = weights,
                           modelH0 = modelH0, modelH1 = modelH1,
@@ -188,67 +234,59 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
     if(chiCritOptim$convergence != 0) warning('A priori power analyses did not converge, results may be inaccurate.')    
 
-    requiredN <- sum(ceiling(weights * chiCritOptim$par))
-    requiredN.g <- ceiling(weights * requiredN)
+    simRequiredN <- sum(ceiling(weights * chiCritOptim$par))
+    simRequiredN.g <- ceiling(weights * simRequiredN)
 
     # now call simulate with final N again to get all relevant parameters
     sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
                     Sigma = Sigma, mu = mu,
-                    alpha = alpha, N = requiredN.g,
+                    alpha = alpha, N = simRequiredN.g,
                     simOptions = simOptions,
                     lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
     
-    nrep <- sim[['nrep']]
-    df <- sim[['df']]
-    fmin <- fmin.g <- sim[['meanFmin']]
-    if(!is.null(sim[['meanFminGroups']])) fmin.g <- sim[['meanFminGroups']]
 
-    critChi <- qchisq(alpha, df = df, ncp = 0, lower.tail = FALSE)
+    simDf <- sim[['df']]
+    simFmin <- simFmin.g <- sim[['meanFmin']]
+    if(!is.null(sim[['meanFminGroups']])) simFmin.g <- sim[['meanFminGroups']]
+
+    simCritChi <- qchisq(alpha, df = simDf, ncp = 0, lower.tail = FALSE)
     
-    impliedNCP <- getNCP(fmin.g, requiredN.g)
-    impliedBeta <- 1 - sim[['ePower']]
-    impliedPower <- sim[['ePower']]
+    simImpliedNCP <- getNCP(simFmin.g, simRequiredN.g)
 
+    simFit <- getIndices.F(simFmin, simDf, p, pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], simRequiredN.g)
+    names(simFit) <- paste0('sim', names(simFit))
+
+    # also compute chi bias in model h0 and model diff, as we now have the (analytical) ncp
+    expValH0 <- sim[['dfH0']] + impliedNCP
+    bChiSqH0 <- (mean(sim[['chiSqH0']]) - expValH0) / expValH0
+    ksChiSqH0 <- getKSdistance(sim[['chiSqH0']], sim[['dfH0']], impliedNCP)  
+    expValDiff<- sim[['df']] + impliedNCP
+    bChiSqDiff <- (mean(sim[['chiSqDiff']]) - expValDiff) / expValDiff
+    ksChiSqDiff <- getKSdistance(sim[['chiSqDiff']], sim[['df']], impliedNCP)  
+    
+    simResult <- list(
+      simImpliedBeta = 1 - sim[['ePower']],
+      simImpliedPower = sim[['ePower']],
+      simImpliedAbratio = alpha / (1 - sim[['ePower']]),
+      simImpliedNCP = simImpliedNCP,
+      simFmin = simFmin,
+      simRequiredN = simRequiredN,
+      simRequiredN.g = simRequiredN.g,
+      simDf = simDf,
+      simChiCrit = simCritChi,
+      bChiSqH0 = bChiSqH0,
+      ksChiSqH0 = ksChiSqH0,
+      bChiSqDiff = bChiSqDiff,
+      ksChiSqDiff = ksChiSqDiff 
+    )
+    simResult <- append(simResult, simFit)
+    simResult <- append(simResult, sim[!names(sim) %in% c('df', 'chiSqH0', 'chiSqDiff')])
+    
+    result <- append(result, simResult)
+    result[['simulated']] <- TRUE
+    
   }
   
-  # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
-  fit <- getIndices.F(fmin, df, p, pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], requiredN.g)
-  
-  impliedAbratio <- alpha / impliedBeta
-
-  result <- list(
-    type = "a-priori",
-    alpha = alpha,
-    desiredBeta = desiredBeta,
-    desiredPower = desiredPower,
-    impliedBeta = impliedBeta,
-    impliedPower = impliedPower,
-    impliedAbratio = impliedAbratio,
-    impliedNCP = impliedNCP,
-    fmin = fmin,
-    effect = pp[['effect']],
-    effect.measure = pp[['effect.measure']],
-    requiredN = requiredN,
-    requiredN.g = requiredN.g,
-    df = df,
-    p = pp[['p']],
-    chiCrit = critChi,
-    rmsea = fit[['rmsea']],
-    mc = fit[['mc']],
-    gfi = fit[['gfi']],
-    agfi = fit[['agfi']],
-    srmr = fit[['srmr']],
-    cfi = fit[['cfi']],
-    bPrecisionWarning = bPrecisionWarning,
-    simulated = simulatedPower,
-    plotShow = if('plotShow' %in% names(args)) args[['plotShow']] else TRUE,
-    plotLinewidth = if('plotLinewidth' %in% names(args)) args[['plotLinewidth']] else 1,
-    plotShowLabels = if('plotShowLabels' %in% names(args)) args[['plotShowLabels']] else TRUE
-  )
-  
-  if(simulatedPower){
-    result <- append(result, sim)
-  }
 
   class(result) <- "semPower.aPriori"
   result

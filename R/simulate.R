@@ -27,8 +27,8 @@
 #' @details 
 #' 
 #' The details of the simulation are specified in `simOptions`, which is a list that may have the following components:
-#' * `nReplications`: The targeted number of valid simulation runs, defaults to 250.
-#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+#' * `nReplications`: The targeted number of valid simulation runs, defaults to 500.
+#' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .75. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
 #' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RK'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to `NULL`).
@@ -127,8 +127,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      N = NULL,
                      alpha = NULL,
                      simOptions = list(
-                       nReplications = 250, 
-                       minConvergenceRate = .5,
+                       nReplications = 500, 
+                       minConvergenceRate = .75,
                        type = 'normal',
                        missingVars = NULL,
                        missingVarProp = 0,
@@ -148,8 +148,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     }
   } 
   
-  nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 250)
-  minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .5)
+  nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 500)
+  minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .75)
   maxReplications <- ceiling(nReplications / minConvergenceRate)
   
   if(is.list(Sigma)) nvar <- ncol(Sigma[[1]]) else nvar <- ncol(Sigma) 
@@ -287,8 +287,11 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       meanFmin = ubFmean,
       meanFminGroups = ubFmeanGroups,
       df = df,
+      dfH0 = fitH0[1, 'df'],
       nrep = nConverged,
-      convergenceRate = convergenceRate
+      convergenceRate = convergenceRate,
+      chiSqH0 = fitH0[, 'chisq'],
+      chiSqDiff = fitDiff[, 'chisq']
     )
     
     if(!is.null(modelH1)){
@@ -448,7 +451,7 @@ doSim <- function(r,
           if(isMultigroup) cfminGroupsDiff <- cfminGroupsH0 - cfminGroupsH1
           
           fitDiff <- c(cfminDiff, 
-                       mcomp[['Pr(>Chisq)']][2], mcomp[['Df diff']][2], mcomp[['Pr(>Chisq)']][2], 
+                       mcomp[['Chisq diff']][2], mcomp[['Df diff']][2], mcomp[['Pr(>Chisq)']][2], 
                        cfminGroupsDiff)
           
           

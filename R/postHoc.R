@@ -54,7 +54,7 @@
 #' summary(ph)
 #' }
 #' @seealso [semPower.aPriori()] [semPower.compromise()]
-#' @importFrom stats qchisq pchisq 
+#' @importFrom stats qchisq pchisq mean
 #' @export
 semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df = NULL, p = NULL,
@@ -76,68 +76,105 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                      modelH0 = modelH0,
                      lavOptions = lavOptions)
 
+  
   if(!simulatedPower){
     
     df <- pp[['df']]
     fmin <- pp[['fmin']]
     fmin.g <- pp[['fmin.g']]
-    nrep <- NULL
-    
-    fit <- getIndices.F(fmin, df, pp[['p']], pp[['SigmaHat']], pp[['Sigma']], pp[['muHat']], pp[['mu']], pp[['N']])
-    ncp <- getNCP(fmin.g, pp[['N']])
-    
-    beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
-    power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp, lower.tail = FALSE)
-    
+
   }else{
+    # first perform analytical even when simulated is requested, so both results can be provided
+
+    # set ml estm in case lavoptions request otherwise, because here we perform analytical power analysis
+    aLavOptions <- lavOptions
+    aLavOptionsH1 <- lavOptionsH1
+    if(!is.null(aLavOptions[['estimator']])) aLavOptions[['estimator']] <- 'ML'
+    if(!is.null(aLavOptionsH1[['estimator']])) aLavOptionsH1[['estimator']] <- 'ML'
+    ph <- semPower.powerLav(type = 'post-hoc', 
+                            alpha = alpha, 
+                            modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
+                            Sigma = Sigma, mu = mu, 
+                            lavOptions = aLavOptions, lavOptionsH1 = aLavOptionsH1)
     
-    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
-                    Sigma = pp[['Sigma']], mu = pp[['mu']], N = pp[['N']], alpha = alpha,
-                    simOptions = simOptions,
-                    lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
-    nrep <- sim[['nrep']]
-    df <- sim[['df']]
-    fmin <- fmin.g <- sim[['meanFmin']]
-    if(!is.null(sim[['meanFminGroups']])) fmin.g <- sim[['meanFminGroups']]
-    
-    fit <- getIndices.F(fmin = fmin, df = df, p = pp[['p']], N = pp[['N']])
-    ncp <- getNCP(fmin.g, pp[['N']])
-    
-    beta <- 1 - sim[['ePower']]
-    power <- sim[['ePower']]
+    df <- ph[['power']][['df']]
+    fmin <- ph[['power']][['fmin']]
+    fmin.g <- ph[['power']][['fmin.g']]
     
   }
   
-  impliedAbratio <- alpha / beta
-
+  fit <- getIndices.F(fmin, df, pp[['p']], pp[['SigmaHat']], pp[['Sigma']], pp[['muHat']], pp[['mu']], pp[['N']])
+  ncp <- getNCP(fmin.g, pp[['N']])
+  
+  beta <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp)
+  power <- pchisq(qchisq(alpha, df, lower.tail = FALSE), df, ncp = ncp, lower.tail = FALSE)
+  
   result <- list(
     type = "post-hoc",
     alpha = alpha,
     beta = beta,
     power = power,
-    impliedAbratio = impliedAbratio,
+    impliedAbratio = alpha / beta,
     ncp = ncp,
     fmin = fmin,
+    fmin.g = fmin.g,
     effect = pp[['effect']],
     effect.measure = pp[['effect.measure']],
     N = pp[['N']],
     df = df,
     p = pp[['p']],
     chiCrit = qchisq(alpha, df, ncp = 0, lower.tail = FALSE),
-    rmsea = fit[['rmsea']],
-    mc = fit[['mc']],
-    gfi = fit[['gfi']],
-    agfi = fit[['agfi']],
-    srmr = fit[['srmr']],
-    cfi = fit[['cfi']],
-    simulated = simulatedPower,
+    simulated = FALSE,
     plotShow = if('plotShow' %in% names(args)) args[['plotShow']] else TRUE,
     plotLinewidth = if('plotLinewidth' %in% names(args)) args[['plotLinewidth']] else 1,
     plotShowLabels = if('plotShowLabels' %in% names(args)) args[['plotShowLabels']] else TRUE
   )
   
+  # add fit indices
+  result <- append(result, fit)
+
   if(simulatedPower){
-    result <- append(result, sim)
+      
+    sim <- simulate(modelH0 = modelH0, modelH1 = modelH1,
+                    Sigma = pp[['Sigma']], mu = pp[['mu']], N = pp[['N']], alpha = alpha,
+                    simOptions = simOptions,
+                    lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+
+
+    simFmin <- simFmin.g <- sim[['meanFmin']]
+    if(!is.null(sim[['meanFminGroups']])) simFmin.g <- sim[['meanFminGroups']]
+    
+    simFit <- getIndices.F(fmin = simFmin, df = sim[['df']], p = pp[['p']], N = pp[['N']])
+    names(simFit) <- paste0('sim', names(simFit))
+    simNcp <- getNCP(simFmin.g, pp[['N']])
+    
+    # also compute chi bias in model h0 and model diff, as we now have the  (analytical) ncp
+    expValH0 <- sim[['dfH0']] + ncp
+    bChiSqH0 <- (mean(sim[['chiSqH0']]) - expValH0) / expValH0
+    ksChiSqH0 <- getKSdistance(sim[['chiSqH0']], sim[['dfH0']], ncp)  
+    expValDiff<- sim[['df']] + ncp
+    bChiSqDiff <- (mean(sim[['chiSqDiff']]) - expValDiff) / expValDiff
+    ksChiSqDiff <- getKSdistance(sim[['chiSqDiff']], sim[['df']], ncp)  
+
+    simResult <- list(
+      simBeta = 1 - sim[['ePower']],
+      simPower = sim[['ePower']],
+      simImpliedAbratio = alpha / (1 - sim[['ePower']]),
+      simNcp = simNcp,
+      simFmin = simFmin,
+      simDf = sim[['df']],
+      simChiCrit = qchisq(alpha, sim[['df']], ncp = 0, lower.tail = FALSE),
+      bChiSqH0 = bChiSqH0,
+      ksChiSqH0 = ksChiSqH0,
+      bChiSqDiff = bChiSqDiff,
+      ksChiSqDiff = ksChiSqDiff 
+    )
+    simResult <- append(simResult, simFit)
+    simResult <- append(simResult, sim[!names(sim) %in% c('df', 'chiSqH0', 'chiSqDiff')])
+    
+    result <- append(result, simResult)
+    result[['simulated']] <- TRUE
+    
   }
 
   class(result) <- "semPower.postHoc"
