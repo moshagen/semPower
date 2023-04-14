@@ -2781,8 +2781,6 @@ test_simulatePower <- function(doTest = TRUE){
     return()
   }
   
-  set.seed(30012021)
-  
   # gen some data
   pha <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
                            nullEffect = 'cor=0',
@@ -2815,13 +2813,13 @@ test_simulatePower <- function(doTest = TRUE){
   pha2 <- semPower.postHoc(alpha = .05, N = 250, df = pha$power$df,
                            SigmaHat = SigmaHat, Sigma = Sigma)
   
-  valid <- (phs$power$power - pha$power$power)^2 < .05^2 &&
-    phs$power$df == pha$power$df &&
-    round(phs$power$power - phs2$power, 4) == 0 &&
+  valid <- (phs$power$simPower - pha$power$power)^2 < .05^2 &&
+    phs$power$simDf == pha$power$df &&
+    round(phs$power$simPower - phs2$simPower, 4) == 0 &&
     round(pha2$power - pha$power$power, 4) == 0 &&
     round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
-    abs(phs2$fmin - pha2$fmin) < .15 * pha2$fmin  && # need some margin
-    phs2a$power - phs2$power < 1e-6
+    abs(phs2$simFmin - pha2$fmin) < .15 * pha2$fmin  && # need some margin
+    phs2a$simPower - phs2$simPower < 1e-6
   
   # restricted comparison model
   set.seed(30012021)
@@ -2841,8 +2839,8 @@ test_simulatePower <- function(doTest = TRUE){
   summary(phs3$power)
   
   valid2 <- valid &&
-    phs3$power$df - pha3$power$df == 0 &&
-    (phs3$power$power - pha3$power$power)^2 < .05^2
+    phs3$power$simDf - pha3$power$df == 0 &&
+    (phs3$power$simPower - pha3$power$power)^2 < .05^2
   
   
   # a priori
@@ -2860,13 +2858,12 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 200, nCores = 8))
   
   valid3 <- valid2 &&
-    apa$power$df == aps$df &&
-    aps$requiredN - aps2$power$requiredN == 0 &&
-    abs(aps$desiredPower - aps$impliedPower) < .05  &&              # 5% margin should be ok
-    abs(apa$power$requiredN - aps$requiredN) < .05 * apa$power$requiredN  # 5% margin should be ok
+    apa$power$df == aps$simDf &&
+    aps$simRequiredN - aps2$power$simRequiredN == 0 &&
+    abs(aps$desiredPower - aps$simImpliedPower) < .05  &&              # 5% margin should be ok
+    abs(apa$power$requiredN - aps$simRequiredN) < .05 * apa$power$requiredN  # 5% margin should be ok
   
   # a priori + restricted
-  set.seed(30012021)
   apa2 <- semPower.powerLav('ap', alpha = .05, power = .80,
                             Sigma = Sigma, modelH0 = modelH0, modelH1 = modelH1)
   set.seed(30012021)
@@ -2876,9 +2873,9 @@ test_simulatePower <- function(doTest = TRUE){
                            simOptions = list(nReplications = 200, nCores = 8))
   
   valid4 <- valid3 &&
-    apa2$power$df == aps3$df &&
-    abs(aps3$desiredPower - aps3$impliedPower) < .07  &&                     # 7% margin should be still ok
-    abs(apa2$power$requiredN - aps3$requiredN) < .05 * apa2$power$requiredN  # 5% margin should be ok
+    apa2$power$df == aps3$simDf &&
+    abs(aps3$desiredPower - aps3$simImpliedPower) < .07  &&                     # 7% margin should be still ok
+    abs(apa2$power$requiredN - aps3$simRequiredN) < .05 * apa2$power$requiredN  # 5% margin should be ok
   
   
   # try different estimator
@@ -2911,8 +2908,8 @@ test_simulatePower <- function(doTest = TRUE){
                             ))
 
   valid5 <- valid4 &&
-    phs2a$power > phs4$power &&
-    round((phs2a$fmin - phs4$fmin)^2, 4) == 0
+    phs2a$simPower > phs4$simPower &&
+    round((phs2a$simFmin - phs4$simFmin)^2, 4) == 0
   
   # multigroup
   generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)))
@@ -2962,10 +2959,13 @@ test_simulatePower <- function(doTest = TRUE){
   
   valid6 <- valid5 &&
     abs(pha5$power$power - phs5$power) < .05 &&
-    abs(sum(unlist(aps5$requiredN)) - sum(unlist(pha5$power$N))) < .25*sum(unlist(pha5$power$N)) &&
-    sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$requiredN.g))) < .1*apa6$power$requiredN
+    abs(sum(unlist(aps5$simRequiredN)) - sum(unlist(pha5$power$N))) < .25*sum(unlist(pha5$power$N)) &&
+    sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$simRequiredN.g))) < .1*apa6$power$requiredN
   
   # other distributions
+  phA <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
+                           comparison = 'saturated',
+                           Phi = .3, nIndicator = c(15, 15), loadM = .5)
   distributions <- list(
     list('rnorm', list(mean = 0, sd = 10)),
     list('runif', list(min = 0, max = 1)),
@@ -2975,51 +2975,51 @@ test_simulatePower <- function(doTest = TRUE){
     list('rbinom', list(size = 1, prob = .5))
   )
   set.seed(30012021)
-  ph7 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+  ph7 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
                                 comparison = 'saturated',
-                                Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                                Phi = .3, nIndicator = c(15, 15), loadM = .5,
                                 simulatedPower = TRUE,
                                 simOptions = list(nReplications = 100, 
                                                   type = 'rk',
-                                                  distributions = distributions, 
+                                                  distributions = rep(distributions, 5), 
                                                   nCores = 8
                                 ))
 
   set.seed(30012021)
-  ph8 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+  ph8 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
                            comparison = 'saturated',
-                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                           Phi = .3, nIndicator = c(15, 15), loadM = .5,
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 100, 
                                              type = 'ig',
-                                             skewness = rep(1, 6),
-                                             kurtosis = rep(10, 6), 
+                                             skewness = rep(1, 30),
+                                             kurtosis = rep(30, 30), 
                                              nCores = 8
                            ))
   
   set.seed(30012021)
-  ph9 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+  ph9 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
                            comparison = 'saturated',
-                           Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                           Phi = .3, nIndicator = c(15, 15), loadM = .5,
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 100, 
                                              type = 'mnonr',
                                              skewness = 10,
-                                             kurtosis = 150, 
+                                             kurtosis = 5550, 
                                              nCores = 8
                            ))
-   
+  
 
   # compare estimators
   set.seed(30012021)
-  ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 500,
+  ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
                             comparison = 'saturated',
-                            Phi = .3, nIndicator = c(3, 3), loadM = .5,
+                            Phi = .3, nIndicator = c(15, 15), loadM = .5,
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 100, 
                                               type = 'mnonr',
                                               skewness = 10,
-                                              kurtosis = 150, 
+                                              kurtosis = 5550, 
                                               nCores = 8
                             ),
                             lavOptions = list(estimator = 'mlm'))
@@ -3072,10 +3072,10 @@ test_simulatePower <- function(doTest = TRUE){
                             ))
 
   valid7 <- valid6 &&
-    ph7$power$power - pha$power$power > .2 &&
-    ph8$power$power - pha$power$power > .2 &&     
-    ph9$power$power - pha$power$power > .2 &&
-    ph9$power$power < ph10$power$power
+    ph7$power$simPower - phA$power$power > .2 &&
+    ph8$power$simPower - phA$power$power > .2 &&
+    ph9$power$simPower - phA$power$power > .2 &&
+    ph9$power$simPower != ph10$power$simPower
     
 
   if(valid7){

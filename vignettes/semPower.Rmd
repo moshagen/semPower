@@ -2822,7 +2822,7 @@ These measures are provided for the H0 model and - if available - the H1 model a
 ##	H0 Model                                    25.80   
 ##	H1 Model                                    22.20  
 ```
-Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the alpha error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above).
+Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the alpha error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above). Stated differently, although the observed chi-square test-statistics are inflated under both the H0 and the H1 model, their differences sill matches the theoretical difference distribution. 
 
 
 
