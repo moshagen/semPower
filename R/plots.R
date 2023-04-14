@@ -65,6 +65,35 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 
 
 
+#' sempower.powerPlot
+#'
+#' Shows a plot showing power as function of N based given the output of a power analysis. 
+#' 
+#' @param semPowerRes results of a semPower analysis 
+#' @param ... other parameters passed to [sempower.powerPlot.byN()]
+#' @return powerplot
+#' @examples
+#' \dontrun{
+#' # perform a power analysis
+#' powerCFA <- semPower.powerCFA(type = 'post-hoc', alpha = .05, N = 300,
+#'                               Phi = .15, nIndicator = c(5, 4), loadM = c(.5, .6))
+#' # show plot
+#' semPower.powerPlot(powerCFA$power)
+#' }
+#' @export
+semPower.powerPlot <- function(semPowerRes, ...){
+  if(!is.null(semPowerRes[['simulated']]) && semPowerRes[['simulated']]){
+    semPower.powerPlot.byN(effect.measure = 'f0', effect = semPowerRes[['simFmin']], 
+                           alpha = semPowerRes[['alpha']], df = semPowerRes[['simDf']], 
+                           ...)
+  }else{
+    semPower.powerPlot.byN(effect.measure = 'f0', effect = semPowerRes[['fmin']], 
+                           alpha = semPowerRes[['alpha']], df = semPowerRes[['df']], 
+                           ...)
+  }
+}
+
+
 #' sempower.powerPlot.byN
 #'
 #' Shows a plot showing power as function of N for a given effect and alpha.
@@ -84,7 +113,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 #' @examples
 #' \dontrun{
 #' semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", 
-#'                        alpha = .05, power.min = .05, power.max = .999, df = 200)
+#'                        alpha = .05, power.min = .05, power.max = .99, df = 200)
 #' }
 #' @importFrom stats smooth.spline
 #' @importFrom graphics plot
@@ -92,7 +121,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
                                    alpha, df, p = NULL,
                                    SigmaHat = NULL, Sigma = NULL, 
-                                   power.min = alpha, power.max = .999,
+                                   power.min = alpha, power.max = .99,
                                    steps = 50, linewidth = 1){
   
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)

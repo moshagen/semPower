@@ -312,7 +312,7 @@ ap <- semPower(type = 'a-priori',
                alpha = .05, power = .80, df = 50)
 ```
 
-Calling the `summary` method on `ap` prints the results and a figure of the associated central and non-central chi-squared distributions.    
+Calling the `summary` method on `ap` prints the results and a figure of the associated central and non-central $\chi^2$ distributions.    
 
 ```{r}
 summary(ap)
@@ -1982,7 +1982,7 @@ $$
 \hat{X_3} = \beta_{X_3,X_2} \cdot X_2 + \beta_{X_3, Y_2} \cdot Y_2 \\
 \hat{Y_3} = \beta_{Y_3,X_2} \cdot X_2 + \beta_{Y_3, Y_2} \cdot Y_2
 $$
-so that there are now two autoregressive effects and two cross-lagged effects each for both $X$ and $Y$. Note that there are no lag-2 effects, meaning that neither $X_3$ nor $Y_3$ are predicted by $X1$ and $Y1$. This assumption cannot be relaxed in `semPower.powerCLPM`. Consider power analysis for [generic path models](#powerPath) when you need lag-2 effects. 
+so that there are now two autoregressive effects and two cross-lagged effects each for both $X$ and $Y$. Note that there are no lag-2 effects, meaning that neither $X_3$ nor $Y_3$ are predicted by $X_1$ and $Y_1$. This assumption cannot be relaxed in `semPower.powerCLPM`. Consider power analyses for [generic path models](#powerPath) when you need lag-2 effects. 
 
 The population values for the autoregressive effects, the cross-lagged effects, and the (residual-)correlations are defined in `autoregEffects`, `crossedEffects`, and `rXY`, respectively. When these effects are assumed to be constant across waves (as must be the case when there are two waves), `autoregEffects` and `crossedEffects` are vectors of size 2, giving the effects of $X$ and $Y$. For instance, `autoregEffects = c(.7, .6)` defines the autoregressive effect(s) of $X$ to be equal to .7, and those of $Y$ to be equal to .6. Similarly, `crossedEffects = c(.1, .2)` defines the cross-lagged effect of $X$ on $Y$ (`X -> Y`) to be .1, and the cross-lagged effect of $Y$ on $X$ (`Y -> X`) to be .20. Non-zero (residual) correlations always need to refer to each wave, so in case of two waves, `rXY` is a vector comprising two entries, the first giving the correlation between $X_1$ and $Y_1$, the second the residual correlation between $X_2$ and $Y_2$.
 
@@ -2396,7 +2396,7 @@ The arguments expected by `semPower.powerRICLPM` are identical to those expected
 * `nWaves` must be $\geq$ 3. 
 * `rBXBY` defines the correlation between the random intercept factors (or `NULL` for no correlation).
 * `nullEffect` also accepts `'corBXBY = 0'` to constrain the correlation between the random intercept factors to zero and `'corBXBYA = corBXBYB'` to constrain the correlation between the random intercept factors to be equal across groups.
-* Standardized (`standardized`) parameters are not available.
+* Standardized parameters (`standardized`) are not available.
 
 
 ##### Detect whether the correlation between the random intercept factors differs from zero {-}
@@ -2586,10 +2586,23 @@ Note that the `sample.nobs` are arbitrary and that `sample.cov.rescale = FALSE` 
 
 # Power Plots {#plots}
 
-Power plots show the implied power as a function of some other variable. `semPower` provides two different types of power plots. One can either plot the achieved power to detect a certain effect over a range of different sample sizes (`semPower.powerPlot.byN`). Alternatively, one can plot the achieved power with a given $N$ to detect a range of different effect size magnitudes (`semPower.powerPlot.byEffect`).   
+Power plots show the implied power as a function of some other variable. `semPower` provides two different types of power plots. One can either plot the achieved power to detect a certain effect over a range of different sample sizes (`semPower.powerPlot` and `semPower.powerPlot.byN`). Alternatively, one can plot the achieved power with a given $N$ to detect a range of different effect size magnitudes (`semPower.powerPlot.byEffect`).   
 
 ## Power by N for a given effect {#plotByN}
-The function `semPower.powerPlot.byN` creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose one is interested in how the power to detect an effect corresponding to RMSEA = .05 changes as a function of the number of observations N. The interest lies on the power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
+
+The result of any [model-based power analysis](#modelBasedPower) can be plugged into `semPower.powerPlot` to obtain a plot showing the achieved power to detect the effect of interest over a range of sample sizes. For instance, the following first performs a power analysis concerning the correlation between two CFA factors (see the [corresponding chapter](#powerCFA) for details), and then plugs the result into the `semPower.powerPlot` function.
+
+```{r figurePowerPlotByN, fig.cap = "Power as function of the N to detect the effect as defined in powerCFA"}
+# perform a power analysis
+powerCFA <- semPower.powerCFA(
+  type = 'post-hoc', alpha = .05, N = 300, 
+  Phi = .15, nIndicator = c(5, 4), loadM = c(.5, .6))
+# show plot
+semPower.powerPlot(powerCFA$power)
+```
+
+
+A more generic way is provided by the function `semPower.powerPlot.byN`, which creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose one is interested in how the power to detect an effect corresponding to RMSEA = .05 changes as a function of the number of observations N. The interest lies on the power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
 
 ```{r figurePowerPlotByN, fig.cap = "Power as function of the N to detect RMSEA >= .05"}
 semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', 
@@ -2670,7 +2683,7 @@ Power analyses always refer to a certain hypothesis (H0) that is to be rejected,
 
 For instance, consider a two-factor CFA model, where each factor is measured by 4 indicators, and suppose power is to be determined to detect a factor correlation of $r \geq .20$. A standard CFA model freely estimating the factor correlation involves 19 df. The relevant H0 model, however, would constrain the factor correlation to zero, and thus involves one additional and thus 20 df. 
 
-To determine the power to reject the H0 model, there are now two relevant comparison models defining the H1. One option would be to compare the H0 model against the saturated model (`comparison = 'saturated'`), so that the power analysis is based on 20 df. Practically speaking, one would just ask whether the model $\chi^2$ test associated with H0 model turns out significant. Alternatively, one might want to compare the H0 model against a model that is identical to the H0, except that it freely estimates the factor correlation (`comparison = 'restricted'`). The difference in the df between these two models (and the difference in model fit) now enter the power analysis, which then would be based on $20 - 19 = 1$ df.
+To determine the power to reject the H0 model, there are now two relevant comparison models defining the H1. One option would be to compare the H0 model against the saturated model (`comparison = 'saturated'`), so that the power analysis is based on 20 df. Practically speaking, one would just ask whether the model $\chi^2$ test associated with the H0 model turns out significant. Alternatively, one might want to compare the H0 model against a model that is identical to the H0, except that it freely estimates the factor correlation (`comparison = 'restricted'`). The difference in the df between these two models (and the difference in model fit) now enter the power analysis, which then would be based on $20 - 19 = 1$ df.
 
 Either approach is valid. Usually, however, it is more sensible to compare the H0 model against a less restricted H1 model that only differs in the parameter(s) relevant for the tested hypothesis, which has the added benefit of a generally higher power. Thus, the functions performing [model-based power analyses](#modelBasedPower) by default use `comparison = 'restricted'`. Of note, the measures of effect given in the output of a power analysis are based on the df provided to the respective power analysis. Thus, in case of a restricted comparison model, these will generally differ from the ones obtained by just fitting the H0 model to some data, and will, in general, also not reflect the simple differences between the indices of the H0 and the H1 model.
 
@@ -2793,11 +2806,11 @@ summary(powerCFA$power)
 
 The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. Of note, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). 
 
-In addition, `semPower` also outputs a section entitled `Simulation results`, where further results of the simulation are reported that help to evaluate whether the empirical chi-square distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
+In addition, `semPower` also outputs a section entitled `Simulation results`, where further results of the simulation are reported that help to evaluate whether the empirical $\chi^2$ distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
 
-Furthermore, the empirically observed chi-square distributions are compared against the expected chi-square distributions based on asymptotic theory (i.e., the distributions analytical power analysis are based on) using three measures:
+Furthermore, the empirically observed $\chi^2$ distributions are compared against the expected $\chi^2$ distributions based on asymptotic theory (i.e., the distributions analytical power analysis are based on) using three measures:
 
-* `Chi-Square Bias (%)`: The observed percentage bias ($(\chi^2 - df) / df$) concerning the mean of the empirical chi-square test. Note that whereas the empirical mean usually only exhibits a rather minor departure from the expected value, the tails might differ considerably.
+* `Chi-Square Bias (%)`: The observed percentage bias ($(\chi^2 - df) / df$) concerning the mean of the empirical $\chi^2$ test. Note that whereas the empirical mean usually only exhibits a rather minor departure from the expected value, the tails might differ considerably.
 * `Chi-Square KS-Distance`: The average KS distance is measure of the discrepancy between two cumulative distribution functions akin to the Kolmogorov–Smirnov test statistic. Unlike the KS-test, the average KS distance uses the mean absolute distance ($M(|F_n(x) - F(x)|)$) instead of the maximum absolute distance ($\sup |F_n(x) - F(x)|$), so it ranges between 0 (for no difference) to .50. As a rough guideline, an average KS-distance of $\geq .1$ indicates that the distributions differ substantially.
 * `Rejection Rate (%) `: The empirical rejection rate on the specified alpha error level is a measure of how strongly the tail of the empirical distribution differs from the asymptotic reference distribution. When computed for a correctly specified model (the H1 model), the empirical rejection rate should match the alpha error. If the H0 model is compared against the saturated (rather than the H1 model), the empirical rejection rate is equal to the empirical power estimate and thus not reported separately. 
 
@@ -2822,7 +2835,7 @@ These measures are provided for the H0 model and - if available - the H1 model a
 ##	H0 Model                                    25.80   
 ##	H1 Model                                    22.20  
 ```
-Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the alpha error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above). Stated differently, although the observed chi-square test-statistics are inflated under both the H0 and the H1 model, their differences sill matches the theoretical difference distribution. 
+Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the nominal alpha-error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above). Stated differently, although the observed $\chi^2$ test-statistics are inflated under both the H0 and the H1 model, the distribution of their differences still matches the theoretical difference distribution. 
 
 
 
@@ -2832,8 +2845,8 @@ By default, the data generated in a simulated power analysis are sampled from a 
 
 Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore provides interfaces to three other approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
 
-* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (for each variable) akin to the Vale-Maurelli procedure.
-* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. 
+* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure.
+* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. 
 * `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
 
 For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a moderately strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a rather minor kurtosis between 4 - 6.    
@@ -2915,7 +2928,7 @@ powerCFA <- semPower.powerCFA(
                               ))
 ```
 
-One may also just define a single distribution to apply to all variables. For instance, `distributions = list('rchisq', list(df = 2))` defines the population marginal distributions for all variables to be chi-square with 2 df.    
+One may also just define a single distribution to apply to all variables. For instance, `distributions = list('rchisq', list(df = 2))` defines the population marginal distributions for all variables to be $\chi^2$ with 2 df.    
 
 
 
@@ -3101,14 +3114,14 @@ summary(ph)
 
 The output (which is omitted here) indicates that fitting the hypothesized model to the population data is associated with a discrepancy of $F_0$ = 0.133 (or RMSEA = .121 or SRMR = .140 or ...) and that the power to reject the H0 model is very high, 1 - beta = .993. 
 
-It is instructive to compare the expected chi-square (computed via the obtained $F_0$) with the chi-square model test statistics as reported by `lavaan` when fitting the H0 model using the same number of observations as requested in the power analysis:
+It is instructive to compare the expected $\chi^2$ (computed via the obtained $F_0$) with the $\chi^2$ model test statistics as reported by `lavaan` when fitting the H0 model using the same number of observations as requested in the power analysis:
 
 ```{r eval=FALSE}
 fitmeasures(fitH0, 'chisq')
 ph$fmin * (ph$N-1)
 ```
 
-`fitmeasures(fitH0, 'chisq')` prints the model chi-square test as obtained by `lavaan` when fitting `modelH1` to the population data (`covPop`, see above). The line `ph$fmin * (ph$N-1)` computes the expected chi-square, i.e., $F_0$ multiplied by $(N - 1)$. Obviously, both values match (= 33.17).
+`fitmeasures(fitH0, 'chisq')` prints the model $\chi^2$ test as obtained by `lavaan` when fitting `modelH1` to the population data (`covPop`, see above). The line `ph$fmin * (ph$N-1)` computes the expected $\chi^2$, i.e., $F_0$ multiplied by $(N - 1)$. Obviously, both values match (= 33.17).
 
 ##### Using semPower.powerLav {-}
 
@@ -3233,7 +3246,7 @@ If any of the arguments is provided as a list (e.g., `Lambda = list(Lambda1, Lam
 If the model-implied covariance matrix is rather to be determined from a structural equation model (instead a CFA model), `semPower.genSigma` expects as arguments 
 `Beta`, `Psi`, and `Lambda` (or respective  [shortcuts](#factorDefinition)). In the structural equation model, the model-implied covariance matrix is given by
 
-$$\Sigma = \Lambda (I - \mathbf{B})^{-1} \Psi [(\mathbf{I} - \mathbf{B})^{-1}]'  \Lambda' + \Theta$$
+$$\Sigma = \Lambda (\mathbf{I} - \mathbf{B})^{-1} \Psi [(\mathbf{I} - \mathbf{B})^{-1}]'  \Lambda' + \Theta$$
 where $\mathbf{B}$ is the $m \times m$ matrix containing the regression slopes and $\Psi$ is the (residual) variance-covariance matrix of the $m$ factors. The means are
 $$\mu = \tau + \Lambda (\mathbf{I} - \mathbf{B})^{-1} \alpha$$
 
