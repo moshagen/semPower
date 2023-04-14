@@ -24,7 +24,7 @@ Read the manual by typing
 ```
 vignette("semPower")
 ```
-or [view the manual online](https://github.com/moshagen/semPower/blob/master/vignettes/semPower.pdf). I also warmly recommend this in-depth tutorial on power analyses in SEM using semPower:
+or [view the manual online](https://moshagen.github.io/semPower/). I also warmly recommend this in-depth tutorial on power analyses in SEM using semPower:
   
   Jobst, L., Bader, M., & Moshagen, M. (in press). A Tutorial on Assessing Statistical Power and Determining Sample Size for Structural Equation Models. *Psychological Methods*. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/vignettes/semPowerTutorial.pdf)
 
