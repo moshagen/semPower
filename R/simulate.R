@@ -264,6 +264,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   fitH0 <- fitH0[!is.na(fitH0[ ,'fmin']), ]
   fitDiff <- fitDiff[!is.na(fitDiff[ ,'fmin']), ]
   
+  rrH0 <- sum(fitH0[, 'p'] < alpha) / nConverged # same as epower when no h1 model is provided
   ePower <- sum(fitDiff[, 'p'] < alpha) / nConverged
   
   if(!returnFmin){
@@ -291,7 +292,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       nrep = nConverged,
       convergenceRate = convergenceRate,
       chiSqH0 = fitH0[, 'chisq'],
-      chiSqDiff = fitDiff[, 'chisq']
+      chiSqDiff = fitDiff[, 'chisq'],
+      rrH0 = rrH0
     )
     
     if(!is.null(modelH1)){
@@ -321,6 +323,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # h1 chi bias. we compute this here, but cant do this for H0/diff because need the ncp
       bChiSqH1 <- (mean(fitH1[, 'chisq']) - fitH1[1, 'df']) / fitH1[1, 'df']
       ksChiSqH1 <- getKSdistance(fitH1[, 'chisq'], fitH1[1, 'df'])  
+      rrH1 <- sum(fitH1[, 'p'] < alpha) / nConverged 
 
       # parameter bias
       cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
@@ -354,6 +357,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       out <- append(out, list(
         bChiSqH1 = bChiSqH1,
         ksChiSqH1 = ksChiSqH1,
+        rrH1 = rrH1,
         bLambda = bLambda,
         bPhi = bPhi,
         bBeta = bBeta,

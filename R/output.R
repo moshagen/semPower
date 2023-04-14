@@ -227,6 +227,10 @@ getFormattedSimulationResults <- function(object, digits = 2){
     if(!is.null(object[['bChiSqH1']])){
       simOut <- rbind(simOut, c('H1 Model', formatC(c(object[['ksChiSqH1']]), format = 'f', digits = 6)))
       simOut <- rbind(simOut, c('H0-H1 Difference', formatC(c(object[['ksChiSqDiff']]), format = 'f', digits = 6)))
+      simOut <- rbind(simOut, c('', ''))
+      simOut <- rbind(simOut, c('Rejection Rate (%)', ''))
+      simOut <- rbind(simOut, c('H0 Model', formatC(c(100*object[['rrH0']]), format = 'f', digits = digits)))
+      simOut <- rbind(simOut, c('H1 Model', formatC(c(100*object[['rrH1']]), format = 'f', digits = digits)))
     }
     simOut <- rbind(simOut, c('', ''))
   }

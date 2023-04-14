@@ -2692,14 +2692,16 @@ Other hypotheses arising in multiple group settings are supported in most functi
 ## Simulated power {#simulatedPower}
 By default, power analyses are performed analytically by relying on asymptotic theory. Alternatively, all [model-based](#modelBasedPower) a-priori and post-hoc power analyses^[Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.] can also be performed using a simulation approach.
 
+When all relevant assumptions are satisfied, a simulated power analysis with a sufficiently large number of replications will yield the same results as an analytical power analysis. Moreover (and perhaps surprisingly), there will also be - generally speaking - little differences whenever the H0 model is compared against a less restricted H1 model (see the [chapter on choosing the comparison model](#comparisonModel)) regardless of whether additional assumptions such as multivariate normality hold. Major differences are thus only to be expected when the H0 model is compared against the saturated model and the model is large or the data are non-normal or incomplete.
+
 To request a simulated power analysis, add `simulatedPower = TRUE` as an additional argument to **any** of the convenience functions performing a [model-based power analysis](#modelBasedPower) or to the `semPower.apriori` or `semPower.posthoc` functions when a covariance matrix and a model string is provided. The details of the simulation can be specified in `simOptions`, which is a list that may have the following components:
 
 * `nReplications`: The targeted number of valid simulation runs (defaults to 500). A larger number of replications increases accuracy (at the expense of processing time). Note that an a-priori power analysis will only be accurate when the number of replications is large (say, 500 or more). 
 * `minConvergenceRate`: The minimum convergence rate required (defaults to .75). The maximum actual simulation runs are increased by a factor of 1/`minConvergenceRate`, so that this argument is only used to ensure that the requested number of (successful) replications as defined in `nReplications` is actually reached, while still having a stopping rule for the simulation. `semPower` still provides the results when the actual convergence rate is smaller than `minConvergenceRate`, but will issue a warning.
 * `nCores`: The number of CPU cores to use for parallel processing. This vastly speeds up computations. Defaults to 1 for no parallel processing. Parallel processing requires that the `doSNOW` package is installed.
-* additional arguments related to ['non-normal data'](#simNonNormal) and ['missingness'](#simMissing)
+* additional arguments related to [non-normal data](#simNonNormal) and [missingness](#simMissing)
 
-For instance, the following requests a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e., 500 replications, minimum convergence rate of 75%, complete and normally distributed data, regular maximum-likelihood LRT, no parallel processing) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. It is strongly recommended to seed the random generator to obtain reproducible results (`set.seed(300121)`).
+For instance, the following requests a simulated (`simulatedPower = TRUE`) post-hoc power analysis with default settings (i.e., 500 replications, minimum convergence rate of 75%, complete and normally distributed data, regular maximum-likelihood LRT, no parallel processing) to detect that a factor correlation of at least .25 differs from zero on alpha = .05 with a sample of 300 observations. See the chapter on [CFA models](#powerCFA) for a description of the remaining arguments. Simulated power analyses for all other convenience functions providing a [model-based power analysis](#modelBasedPower) are performed analogously. It is strongly recommended to seed the random generator to obtain reproducible results (`set.seed(300121)`).
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2713,59 +2715,10 @@ powerCFA <- semPower.powerCFA(
                               nIndicator = c(5, 4), loadM = c(.5, .6),
                               # request simulated power
                               simulatedPower = TRUE)
-summary(powerCFA$power)
 ```
 
-```{r eval=FALSE}
-##	semPower: Post-hoc power analysis
-##	
-##	Simulated power based on 500 successful replications.
-##	                                             
-##	                         Analytical Simulated
-##	                                             
-##	F0                       0.027416   0.027803 
-##	RMSEA                    0.165577   0.166742 
-##	Mc                       0.986386   0.986195 
-##	GFI                      0.993945   0.993859 
-##	AGFI                     0.727503   0.723677 
-##	                                             
-##	df                       1          1        
-##	Num Observations         300        300      
-##	NCP                      8.197285   8.313111 
-##	                                             
-##	Critical Chi-Square      3.841459   3.841459 
-##	Alpha                    0.050000   0.050000 
-##	Beta                     0.183229   0.182000 
-##	Power (1 - Beta)         0.816771   0.818000 
-##	Implied Alpha/Beta Ratio 0.272883   0.274725 
-##	
-##	
-##	Simulation results:
-##	                                                    
-##	Convergence Rate (%) of the H0 model        100.00  
-##	                                                    
-##	Chi-Square Bias (%)                                 
-##	H0 Model                                    -0.49   
-##	H1 Model                                    -1.09   
-##	H0-H1 Difference                            1.22    
-##	                                                    
-##	Chi-Square KS-Distance                              
-##	H0 Model                                    0.006130
-##	H1 Model                                    0.015581
-##	H0-H1 Difference                            0.007333
-##	                                                    
-##	Average Parameter Bias (%) in the H1 Model:         
-##	Loadings                                    0.45    
-##	Variances/Covariances                       0.06
-```
 
-The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. Of note, the simulated power estimate (of 81.8%) closely matches the analytical result (81.7%). 
-
-In addition, `semPower` also outputs a section entitled "Simulation results", where further results of the simulation are reported that help to evaluate whether the empirical chi-square distributions match the asympotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
-
-Furthermore, the empirically observed chi-square distributions are compared against the expected chi-square distributions based on asymptotic theory (i.e., the distributions analytical power analysis are based on), thereby providing a rough indication of the extent to which simulated power diverges from analytical power. The observed bias in the chi-square test-statistic compares the empirically observed mean against its expected value and thus should approach zero. The average KS distance is measure of the discrepancy between two cumulative distribution functions akin to the Kolmogorov–Smirnov test statistic. Unlike the KS-test, the average KS distance uses the mean absolute distance instead of the maximum absolute distance, so it ranges between 0 (for no difference) to 1. Both information are provided separately for the H0 model and - if available - the H1 model as well as the difference between the H0 and the H1 model. To the extent that the empirical distributions only show little departures from the theoretical distributions, analytical and simulated power will be similar. 
-
-To change the number of replications and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 500 replications (`nReplications = 500`), a minimum convergence rate of 90% (`minConvergenceRate = .90`), and requests parallel computation using 8 cores (`nCores = 8`).
+To change the number of replications and/or the minimum convergence rate, further supply the `simOptions` argument as a list with corresponding components. For instance, the following uses 1,000 replications (`nReplications = 1000`), a minimum convergence rate of 90% (`minConvergenceRate = .90`), and requests parallel computation using 8 cores (`nCores = 8`).
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2781,13 +2734,96 @@ powerCFA <- semPower.powerCFA(
                               simulatedPower = TRUE,
                               # set simulation options
                               simOptions = list(
-                                nReplications = 500,
+                                nReplications = 1000,
                                 minConvergenceRate = .90,
                                 nCores = 8
                               ))
 ```
 
-Simulated power analyses for all other convenience functions providing a [model-based power analysis](#modelBasedPower) are performed analogously.
+As usual, the output of the power analysis is printed by calling the `summary` method on the results variable:
+
+```{r eval=FALSE}
+summary(powerCFA$power)
+
+##	semPower: Post-hoc power analysis
+##	
+##	Simulated power based on 1000 successful replications.
+##	                                             
+##	                         Analytical Simulated
+##	                                             
+##	F0                       0.027416   0.027677 
+##	RMSEA                    0.165577   0.166364 
+##	Mc                       0.986386   0.986257 
+##	GFI                      0.993945   0.993887 
+##	AGFI                     0.727503   0.724922 
+##	                                             
+##	df                       1          1        
+##	Num Observations         300        300      
+##	NCP                      8.197285   8.275404 
+##	                                             
+##	Critical Chi-Square      3.841459   3.841459 
+##	Alpha                    0.050000   0.050000 
+##	Beta                     0.183229   0.190000 
+##	Power (1 - Beta)         0.816771   0.810000 
+##	Implied Alpha/Beta Ratio 0.272883   0.263158 
+##	
+##	
+##	Simulation results:
+##	                                                    
+##	Convergence Rate (%) of the H0 model        100.00  
+##	                                                    
+##	Chi-Square Bias (%)                                 
+##	H0 Model                                    0.23    
+##	H1 Model                                    0.02    
+##	H0-H1 Difference                            0.81    
+##	                                                    
+##	Chi-Square KS-Distance                              
+##	H0 Model                                    0.008227
+##	H1 Model                                    0.007083
+##	H0-H1 Difference                            0.006270
+##	                                                    
+##	Rejection Rate (%)                                  
+##	H0 Model                                    28.00   
+##	H1 Model                                    5.20    
+##	                                                    
+##	Average Parameter Bias (%) in the H1 Model:         
+##	Loadings                                    0.27    
+##	Variances/Covariances                       0.06 
+```
+
+The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. Of note, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). 
+
+In addition, `semPower` also outputs a section entitled `Simulation results`, where further results of the simulation are reported that help to evaluate whether the empirical chi-square distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
+
+Furthermore, the empirically observed chi-square distributions are compared against the expected chi-square distributions based on asymptotic theory (i.e., the distributions analytical power analysis are based on) using three measures:
+
+* `Chi-Square Bias (%)`: The observed percentage bias ($(\chi^2 - df) / df$) concerning the mean of the empirical chi-square test. Note that whereas the empirical mean usually only exhibits a rather minor departure from the expected value, the tails might differ considerably.
+* `Chi-Square KS-Distance`: The average KS distance is measure of the discrepancy between two cumulative distribution functions akin to the Kolmogorov–Smirnov test statistic. Unlike the KS-test, the average KS distance uses the mean absolute distance ($M(|F_n(x) - F(x)|)$) instead of the maximum absolute distance ($\sup |F_n(x) - F(x)|$), so it ranges between 0 (for no difference) to .50. As a rough guideline, an average KS-distance of $\geq .1$ indicates that the distributions differ substantially.
+* `Rejection Rate (%) `: The empirical rejection rate on the specified alpha error level is a measure of how strongly the tail of the empirical distribution differs from the asymptotic reference distribution. When computed for a correctly specified model (the H1 model), the empirical rejection rate should match the alpha error. If the H0 model is compared against the saturated (rather than the H1 model), the empirical rejection rate is equal to the empirical power estimate and thus not reported separately. 
+
+These measures are provided for the H0 model and - if available - the H1 model as well as the difference between the H0 and the H1 model. Jointly, this gives an idea of whether and why a simulated power estimate might diverge from the analytical power estimate. Generally speaking, one would expect the difference between analytical and simulated power to increase with the extent to which the empirical distributions depart from their respective theoretical distribution. However, when the H0 model is compared against the H1 model (`type =  restricted`), it is also well possible that the empirical distributions under both the H0 and the H1 differ considerably from the respective reference distribution, but the difference distribution still follows the expected asympotic difference distribution. Consider the following example (which is based on a three factor model with a total of 45 indicators and severe non-normality):
+
+```{r eval=FALSE}
+##	Simulation results:
+##	                                                    
+##	Convergence Rate (%) of the H0 model        100.00  
+##	                                                    
+##	Chi-Square Bias (%)                                 
+##	H0 Model                                    3.88    
+##	H1 Model                                    3.90    
+##	H0-H1 Difference                            0.48    
+##	                                                    
+##	Chi-Square KS-Distance                              
+##	H0 Model                                    0.210252
+##	H1 Model                                    0.212962
+##	H0-H1 Difference                            0.008880
+##	                                                    
+##	Rejection Rate (%)                                  
+##	H0 Model                                    25.80   
+##	H1 Model                                    22.20  
+```
+Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the alpha error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above).
+
 
 
 ##### Non-normal data {-#simNonNormal}

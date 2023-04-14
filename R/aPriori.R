@@ -362,7 +362,7 @@ summary.semPower.aPriori <- function(object, ...){
   print(out, row.names = FALSE, right = FALSE)
 
   if(object[['simulated']]){
-    cat(paste("\n\n Simulation results:\n"))
+    cat(paste("\n\n Simulation Results:\n"))
     simOut <- getFormattedSimulationResults(object)
     
     print(simOut, row.names = FALSE, right = FALSE)
