@@ -51,14 +51,14 @@ semPower.powerCLPM(
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
 }
 \value{
-A list containing the following components is returned:
-\item{\code{power}}{the results of the power analysis. Use the \code{summary} method to obtain formatted results.}
+a list. Use the \code{summary} method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 \item{\code{Sigma}}{the population covariance matrix. A list for multiple group models.}
 \item{\code{mu}}{the population mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
 \item{\code{SigmaHat}}{the H0 model implied covariance matrix. A list for multiple group models.}
 \item{\code{muHat}}{the H0 model implied mean vector or \code{NULL} when no meanstructure is involved. A list for multiple group models.}
 \item{\code{modelH0}}{\code{lavaan} H0 model string.}
 \item{\code{modelH1}}{\code{lavaan} H1 model string or \code{NULL} when the comparison refers to the saturated model.}
+\item{\code{simRes}}{detailed simulation results when a simulated power analysis (\code{simulatedPower = TRUE}) was performed.}
 }
 \description{
 Convenience function for performing power analysis on effects in a cross-lagged panel model (CLPM).
@@ -116,23 +116,27 @@ If a \strong{simulated power analysis} (\code{simulatedPower = TRUE}) is request
 \itemize{
 \item \code{nReplications}: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 \item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RC'}).
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, \code{'RC'}, or \code{'VM'}).
 The approaches generating non-normal data require additional arguments detailed below.
 \item \code{missingVars}: vector specifying the variables containing missing data (defaults to NULL).
 \item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
 \item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 \item \code{missingMechanism}: The missing data mechanism, one of \code{MCAR} (the default), \code{MAR}, or \code{NMAR}.
+\item \code{nCores}: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the \code{doSNOW} package.
 }
 
 \code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors. This requires the \code{covsim} package.
 
 \code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
-skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the \code{mnonr} package.
 
 \code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
-Each component must specify the population distribution (e.g. \code{'rchisq'}) and additional arguments (\code{list(df = 2)}).
+Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
+
+\code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
 }
 \examples{
 \dontrun{

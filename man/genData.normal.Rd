@@ -17,5 +17,5 @@ genData.normal(N = NULL, Sigma = NULL, nSets = 1)
 Returns the generated data
 }
 \description{
-Generates multivariate normal random data from population variance-covariance matrix.
+Generates multivariate normal random data conforming to a population variance-covariance matrix.
 }

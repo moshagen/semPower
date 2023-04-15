@@ -13,5 +13,5 @@ checkDataGenerationTypes(type)
 Returns cleaned data generation type
 }
 \description{
-Checks whether data generation type is one of \code{'normal'}, \code{'IG'}, \code{'mnonr'}, or \code{'RK'}, stop otherwise.
+Checks whether data generation type is one of \code{'normal'}, \code{'IG'}, \code{'mnonr'}, \code{'RK'}, or \code{'VM'}, stop otherwise.
 }

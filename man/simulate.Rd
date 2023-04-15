@@ -62,7 +62,7 @@ The details of the simulation are specified in \code{simOptions}, which is a lis
 \itemize{
 \item \code{nReplications}: The targeted number of valid simulation runs, defaults to 500.
 \item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .75. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RK'}).
+\item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, \code{'RK'}, or \code{'VM'}).
 The approaches generating non-normal data require additional arguments detailed below.
 \item \code{missingVars}: vector specifying the variables containing missing data (defaults to \code{NULL}).
 \item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
@@ -72,20 +72,25 @@ The approaches generating non-normal data require additional arguments detailed 
 }
 
 \code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors. This requires the \code{covsim} package.
 
 \code{type = 'mnonr'} implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (\code{skewness})  and kurtosis  (\code{kurtosis}), where
-skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the \code{mnonr} package.
 
 \code{type = 'RK'} implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 of each variable (\code{distributions}). \code{distributions} must be a list (if all variables shall be based on the same population distribution) or a list of lists.
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
+
+\code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
 
 Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. \emph{Multivariate Behavioral Research, 51}, 207-219. doi: 10.1080/00273171.2015.1133274
 
 Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. \emph{Behavior Research Methods, 52}, 939-946. doi: 10.3758/s13428-019-01291-5
 
 Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. \emph{Multivariate Behavioral Research, 43}, 355-381. doi: 10.1080/00273170802285693
+
+Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. \emph{Psychometrika, 48}, 465-471.
 }
 \examples{
 \dontrun{
@@ -97,7 +102,7 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, beta = .05,
 # perform simulated power analysis using defaults       
 simulate(modelH0 = powerCFA$modelH0, 
          Sigma = powerCFA$Sigma,
-         N = powerCFA$power$requiredN,
+         N = powerCFA$requiredN,
          alpha = .05,
          simulatedPower = TRUE)
          
@@ -105,7 +110,7 @@ simulate(modelH0 = powerCFA$modelH0,
 # same with additional options       
 simulate(modelH0 = powerCFA$modelH0, 
          Sigma = powerCFA$Sigma,
-         N = powerCFA$power$requiredN,
+         N = powerCFA$requiredN,
          alpha = .05,
          simulatedPower = TRUE, 
          simOptions = list(nReplications = 500, 
@@ -116,7 +121,7 @@ simulate(modelH0 = powerCFA$modelH0,
 # same with IG as data generation routine
 simulate(modelH0 = powerCFA$modelH0, 
          Sigma = powerCFA$Sigma,
-         N = powerCFA$power$requiredN,
+         N = powerCFA$requiredN,
          alpha = .05,
          simulatedPower = TRUE, 
          simOptions = list(type = 'IG', 
@@ -127,7 +132,7 @@ simulate(modelH0 = powerCFA$modelH0,
 # same with mnonr as data generation routine
 simulate(modelH0 = powerCFA$modelH0, 
          Sigma = powerCFA$Sigma,
-         N = powerCFA$power$requiredN,
+         N = powerCFA$requiredN,
          alpha = .05,
          simulatedPower = TRUE, 
          simOptions = list(type = 'mnonr', 
@@ -146,7 +151,7 @@ distributions <- list(
 )
 simulate(modelH0 = powerCFA$modelH0, 
          Sigma = powerCFA$Sigma,
-         N = powerCFA$power$requiredN,
+         N = powerCFA$requiredN,
          alpha = .05,
          simulatedPower = TRUE, 
          simOptions = list(type = 'RK', 

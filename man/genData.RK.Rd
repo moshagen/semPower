@@ -30,7 +30,7 @@ genData.RK(
 Returns the generated data
 }
 \description{
-Generates random data from population variance-covariance matrix using
+Generates random data conforming to a population variance-covariance matrix using
 the approach by Ruscio & Kaczetow (2008)
 specifying distributions for the marginals.
 }

@@ -628,7 +628,7 @@ Whereas all convenience functions expect certain arguments (or values provided a
     + `Lambda` to provide a loading matrix.
     + `loadings` to provide a list of vectors defining the primary factor loadings.
     + `nIndicator` and `loadM` to define the number of indicators by factor and a single loading to apply for all indicators of a specific factor.
-* `comparison`: The relevant comparison model; one of `'saturated'`, or `'restricted'` (the default). See the [chapter on the definition of a comparison model](#comparisonModel) for details. 
+* `comparison`: The relevant comparison model; one of `'saturated'` or `'restricted'` (the default). See the [chapter on the definition of a comparison model](#comparisonModel) for details. 
 * `nullEffect`: Defines the relevant hypothesis depending on the specific convenience function.
 * `nullWhich`: Defines which parameters are targeted by the hypothesis specified in `nullEffect`.
 * `nullWhichGroups`: Defines which groups are targeted when `nullEffect` refers to cross-group constrains.
@@ -670,12 +670,13 @@ powerCFA <- semPower.powerCFA(
 * additional arguments [specifying the type of power analysis](#commonArgs).
 * additional arguments [defining the factor model](#factorDefinition). 
 
-`semPower.powerCFA` provides a list as result, which contains the following components:
+`semPower.powerCFA` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
 * `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
 
 ##### Detect whether a correlation differs from zero {-}
@@ -844,12 +845,14 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
 * additional arguments [specifying the type of power analysis](#commonArgs).
 * additional arguments [defining the factor model](#factorDefinition), which may only refer to specific factors (that are part of the bifactor) and additional covariate(s). The loadings on the bifactor are defined in `bfLoadings`.
 
-`semPower.powerBifactor` provides a list as result, which contains the following components:
+`semPower.powerBifactor` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
+
 
 
 ##### Definition of the bifactor structure {-}
@@ -1180,12 +1183,14 @@ powerBF <- semPower.powerBifactor(
 * additional arguments [specifying the type of power analysis](#commonArgs). 
 * additional arguments [defining the factor model](#factorDefinition), where the first factor represents the criterion $Y$ and the remaining factors the predictors $X_1$ to $X_k$. 
 
-`semPower.powerRegression` provides a list as result, which contains the following components:
+`semPower.powerRegression` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
-* `SigmaHat` and `muHat`: Model implied variance-covariance matrix and means.
+* `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
+
 
 
 ##### Detect whether a slope differs from zero {-}
@@ -1376,12 +1381,14 @@ Note that (for now) `semPower` only provides accurate power analyses for models 
 * additional arguments [specifying the type of power analysis](#commonArgs).
 * additional arguments [defining the factor model](#factorDefinition), assuming the order $X$, $M$, $Y$ in case of a simple mediation or the order given in `Beta`.  
 
-`semPower.powerMediation` provides a list as result, which contains the following components:
+`semPower.powerMediation` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
 * `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
+
 
 
 ##### Detect whether an indirect effect differs from zero {-}
@@ -1524,12 +1531,13 @@ powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80,
 * additional arguments [specifying the type of power analysis](#commonArgs).
 * additional arguments [defining the factor model](#factorDefinition) ordered as implied by `Beta`. 
 
-`semPower.powerPath` provides a list as result, which contains the following components:
+`semPower.powerPath` provides a list as result.  Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
 * `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
 
 ##### Detect whether a slope differs from zero {-}
@@ -1754,12 +1762,14 @@ Alternatively, the models can also be defined using `lavaan` style `group.equal`
 
 Note that `semPower.powerMI` implements variance scaling of the factors (the variances of all factors are equal to 1 in all groups), so invariance of variances (`'lv.variances'`) is always met.
 
-`semPower.powerMI` provides a list as result, which contains the following components:
+`semPower.powerMI` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
 * `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`). Note that multiple group constraints are provided to `lavaan` via its `group.equal` argument, which is not returned by `semPower.powerMI`.
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
+
 
 
 ##### Detect metric non-invariance {-}
@@ -1957,12 +1967,13 @@ powerMI <- semPower.powerMI(
 * additional arguments [specifying the type of power analysis](#commonArgs). 
 * additional arguments [defining the factor model](#factorDefinition), where the order of factors is ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). 
 
-`semPower.powerCLPM` provides a list as result, which contains the following components:
+`semPower.powerCLPM` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
-* `power`: The results of the power analysis, which contains the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). Use the `summary` method  to obtain formatted results.
+* The results of the power analysis, which contain the same information as the corresponding model-free counterpart (see [a-priori power analysis](#ap), [post-hoc power analysis](#ph), and [compromise hoc power analysis](#cp)). 
 * `Sigma` and `mu`: Variance-covariance matrix and means in the population.
 * `SigmaHat` and `muHat`: Model-implied variance-covariance matrix and means.
 * `modelH0` and `modelH1`: `lavaan` model strings defining the H0 and the H1 model (only if `type = 'restricted'`).
+* `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
 
 ##### Defining the CLPM structure {-#clpmDefinition}
@@ -2781,7 +2792,7 @@ summary(powerCFA)
 ##	Implied Alpha/Beta Ratio 0.272883   0.263158 
 ##	
 ##	
-##	Simulation results:
+##	Simulation Results:
 ##	                                                    
 ##	Convergence Rate (%) of the H0 model        100.00  
 ##	                                                    
@@ -2804,20 +2815,20 @@ summary(powerCFA)
 ##	Variances/Covariances                       0.06 
 ```
 
-The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. In this example, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). Note that all  measures of effect are computed based on the unbiased estimate of the population minimum of the fit function $F_0$ ($\hat{F_0} = \hat{F} - df / N$).
+The results of the power analysis provide the same information as a corresponding a model-free power analysis (here: a [post-hoc power analysis](#ph)), but now also include a column giving the the simulation results. In this example, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). Note that all  measures of effect are computed based on the unbiased estimate of the population minimum of the fit function $F_0$ ($\hat{F_0} = \hat{F} - df / N$).
 
-In addition, `semPower` also outputs a section entitled `Simulation results`, where further results of the simulation are reported that help to evaluate whether the empirical $\chi^2$ distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
+In addition, `semPower` also outputs a section entitled `Simulation Results`, where further results of the simulation are reported that help to evaluate whether the empirical $\chi^2$ distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
 
 Furthermore, the empirically observed $\chi^2$ distributions are compared against the expected $\chi^2$ distributions based on asymptotic theory (i.e., the distributions analytical power analysis are based on) using three measures:
 
-* `Chi-Square Bias (%)`: The observed percentage bias ($(\chi^2 - df) / df$) concerning the mean of the empirical $\chi^2$ test. Note that whereas the empirical mean usually only exhibits a rather minor departure from the expected value, the tails might differ considerably.
-* `Chi-Square KS-Distance`: The average KS distance is measure of the discrepancy between two cumulative distribution functions akin to the Kolmogorov–Smirnov test statistic. Unlike the KS-test, the average KS distance uses the mean absolute distance ($M(|F_n(x) - F(x)|)$) instead of the maximum absolute distance ($\sup |F_n(x) - F(x)|$), so it ranges between 0 (for no difference) to .50. As a rough guideline, an average KS-distance of $\geq .1$ indicates that the distributions differ substantially.
+* `Chi-Square Bias (%)`: The observed percentage bias ($(\chi^2 - df) / df$) concerning the mean of the observed $\chi^2$ test-statistics. Note that whereas the empirical mean usually only exhibits a rather minor departure from the expected value, the tails might differ considerably.
+* `Chi-Square KS-Distance`: The average KS distance is measure of the discrepancy between two cumulative distribution functions akin to the Kolmogorov–Smirnov test statistic. Unlike the KS-test, the average KS distance uses the mean absolute distance ($M(|F_n(x) - F(x)|)$) instead of the maximum absolute distance ($\sup |F_n(x) - F(x)|$), so it ranges between 0 (for no difference) to .50 (for completely non-overlapping distributions). As a rough guideline, an average KS-distance of $\geq .1$ indicates a substantial difference between the distributions.
 * `Rejection Rate (%) `: The empirical rejection rate on the specified alpha error level is a measure of how strongly the tail of the empirical distribution differs from the asymptotic reference distribution. When computed for a correctly specified model (the H1 model), the empirical rejection rate should match the alpha error. The rejection rate associated with the H0 model is the empirical power estimate when it is compared against the saturated (rather than the H1 model). If there is no H1 model, the empirical power estimate is thus not reported separately. 
 
-These measures are provided for the H0 model and - if available - the H1 model as well as the difference between the H0 and the H1 model. Jointly, this gives an idea of whether and why a simulated power estimate might diverge from the analytical power estimate. Generally speaking, one would expect the difference between analytical and simulated power to increase with the extent to which the empirical distributions depart from their respective theoretical distribution. However, when the H0 model is compared against the H1 model (`type =  restricted`), it is also well possible that the empirical distributions under both the H0 and the H1 differ considerably from the respective reference distribution, but the difference distribution still follows the expected asympotic difference distribution. Consider the following example (which is based on a three factor model with a total of 45 indicators and severe non-normality):
+These measures are provided for the H0 model and - if available - the H1 model as well as the difference between the H0 and the H1 model. Jointly, this gives an idea of whether and why a simulated power estimate might diverge from the analytical power estimate. Generally speaking, one would expect the difference between analytical and simulated power to increase with the extent to which the empirical distributions depart from their respective theoretical distribution. However, when the H0 model is compared against the H1 model (`type =  restricted`), it is also well possible that the empirical distributions under both the H0 and the H1 differ considerably from the respective reference distribution, whereas the difference distribution still follows the expected asympotic difference distribution. Consider the following example (which is based on a three factor model with a total of 45 indicators and severe non-normality):
 
 ```{r eval=FALSE}
-##	Simulation results:
+##	Simulation Results:
 ##	                                                    
 ##	Convergence Rate (%) of the H0 model        100.00  
 ##	                                                    
@@ -2835,18 +2846,19 @@ These measures are provided for the H0 model and - if available - the H1 model a
 ##	H0 Model                                    25.80   
 ##	H1 Model                                    22.20  
 ```
-Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the nominal alpha-error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (omitted above). Stated differently, although the observed $\chi^2$ test-statistics are inflated under both the H0 and the H1 model, the distribution of their differences still matches the theoretical difference distribution. 
+Here, the KS-Distances indicate strong departures of the empirical distributions from the respective asymptotic distribution, which is also mirrored by a rejection rate of the (correctly specified) H1 model that clearly exceeds the nominal alpha-error of 5%. However, the difference distribution closely follows the theoretically expected distribution, so in this example there is also virtually no difference between the analytical and the simulated power estimate (not shown in the output given above). Stated differently, although the observed $\chi^2$ test-statistics are inflated under both the H0 and the H1 model, the distribution of their differences still matches the theoretical difference distribution. 
 
 Finally, the results variable also contains a slot `simRes` comprising the generated data sets (`simRes$simData`; including those that led to non-convergence), the obtained model fit statistics (`simRes$fitH0`, `simRes$fitH1`, `simRes$fitDiff`), and the the parameter estimates associated with the H1 model (`simRes$paramEst`). For instance, the following compares the empirical distribution of the obtained $\chi^2$ statistics associated with the H1 model with the theoretically expected distribution. 
 
 ```{r include = FALSE}
-res <- matrix(26, ncol = 2, nrow = 1000)
-res[, 1] <- c(19.983222,25.152823,19.916811,19.680122,21.348671,23.222291,28.563645,21.060162,33.433140,35.875396,35.879040,35.370205,20.499564,33.271060,33.079700,23.391353,25.659513,34.297421,16.590207,36.905650,24.783617,23.174697,22.324963,26.660225,26.201700,15.969406,12.686358,23.785103,19.629397,30.455770,24.002044,21.009214,27.993184,28.040911,21.789489,25.019454,26.105522,23.216490,26.499183,37.383727,17.483622,14.741265,7.736171,36.678098,31.216518,25.826547,16.984868,44.781539,26.110478,29.225500,15.554693,35.693646,22.166142,28.352110,34.426595,43.646481,22.958229,27.095449,31.952209,15.716042,29.686520,34.511749,20.116079,19.028754,25.742643,24.874153,22.763790,14.085454,23.576692,15.239821,33.939240,17.203881,24.730210,25.501987,31.155805,17.500653,20.782464,18.018703,20.762590,23.031447,16.855685,16.891561,25.181263,30.537437,30.250190,37.022355,22.697926,16.903799,24.450180,20.260795,31.537895,12.794171,31.960777,22.724691,27.769551,18.000927,24.189438,34.823091,21.488171,11.147553,22.898277,16.081419,31.631832,25.029041,28.938504,19.755208,28.990953,19.423003,15.426890,30.121893,39.410360,20.090361,25.527378,30.701514,21.613557,34.090804,21.627209,24.194888,30.178504,35.693284,22.595137,44.233457,19.504896,29.223070,30.727873,23.678718,18.486859,41.282358,22.419134,21.201993,30.064346,18.919510,19.484879,19.916437,16.585068,18.485138,20.197459,21.561134,44.910662,28.114413,19.663040,19.564018,20.811764,45.627302,21.935081,29.907817,23.473710,34.413969,35.177112,32.484143,26.131608,29.003196,21.410694,19.675487,21.418422,13.295652,21.149260,25.220152,33.092491,28.268335,25.721502,15.790408,20.526585,25.947333,41.417689,22.156812,20.886851,31.158457,20.499272,22.881656,23.136377,23.893225,26.757453,23.419508,34.373994,29.610107,29.913795,26.212977,19.917764,23.374033,22.530449,25.493512,19.304784,35.649608,29.874866,21.706743,29.734359,21.436478,21.471685,16.849715,34.176028,27.780534,21.554815,27.897736,25.418287,30.286288,30.071129,32.642239,40.432505,10.972219,26.740133,22.795235,34.304922,24.279569,22.251203,15.089031,25.985962,27.803651,29.919517,34.754427,12.525129,16.517319,28.405233,20.124287,26.063247,20.783571,22.790708,20.434386,27.056392,32.637125,32.255911,20.148276,28.518329,24.441007,24.951417,28.799766,27.516723,24.811114,23.152543,29.814651,20.380162,23.657527,35.307149,15.159620,33.543183,23.012590,18.134394,15.805432,32.082132,29.566426,20.594213,21.744329,32.621095,21.522252,25.150320,23.373484,18.033998,22.315073,28.167385,17.011283,26.525949,22.231014,20.822156,17.322759,18.588064,20.388326,43.949787,17.393651,25.992102,14.027626,20.124377,35.298112,40.693918,22.778994,31.952283,28.475035,27.278826,32.246852,24.024584,31.770739,45.296271,28.085188,20.428943,17.755692,29.016665,22.106736,17.491338,39.314933,26.974380,19.918287,31.755509,41.953647,25.697439,31.542175,25.296518,21.909108,25.258079,17.872808,25.107932,28.284471,28.497009,21.672296,17.611035,29.106857,16.536170,22.029936,36.764236,33.499718,28.811671,21.667246,28.438928,37.521671,28.062523,26.899030,21.660746,33.240455,9.850134,28.256782,19.386015,10.698768,20.309560,39.430127,27.263979,26.300414,16.669785,29.067046,20.527322,31.904888,25.661515,11.759765,45.544363,28.970052,14.042093,14.783442,41.412705,24.111881,22.896790,33.441955,29.807315,22.669939,27.080825,33.378882,29.470092,17.557077,26.002109,15.364244,28.006054,26.256339,14.850899,14.723360,46.849185,40.963385,15.928154,24.740563,22.594866,31.227182,22.482890,21.578029,39.498724,13.357358,33.857934,18.736100,30.748225,24.074529,27.043307,47.820294,22.781695,27.540742,18.262325,15.693509,28.075017,26.602554,14.225792,38.728150,26.796290,30.910486,18.208982,19.915837,49.577944,21.699241,23.193037,25.860279,20.784204,14.154678,25.206770,11.584243,24.378886,11.918037,31.595182,30.378351,30.751932,17.189183,22.350647,28.627394,33.254270,32.496063,35.227006,28.069895,27.983666,20.587099,26.042120,18.397364,21.769615,14.476175,22.606987,21.964806,18.780205,22.717291,28.785483,30.148284,32.896890,27.516171,42.710037,24.428219,27.737181,32.708801,35.347406,15.710542,16.219184,35.053934,35.115237,23.691110,41.031324,41.927734,28.921136,16.354735,24.486688,22.512849,29.850563,40.442721,33.440679,23.867939,22.453769,32.841395,13.350951,38.631670,16.419281,36.411768,19.962147,37.987514,28.029852,28.039022,32.336048,16.093119,15.781649,14.308459,21.335341,17.136248,29.237377,14.739105,36.843471,31.196051,40.834064,28.937105,25.020573,37.130019,16.096596,17.736942,21.894419,14.141529,15.054635,20.469981,19.755324,18.381537,21.526462,36.780620,19.808915,41.560164,22.864940,29.456901,18.444377,32.010917,26.729859,18.782904,33.260658,14.109622,27.133070,33.354326,30.034413,42.399974,12.775179,24.182006,25.147631,29.275682,27.703123,14.640436,25.369341,38.437473,16.661187,22.236929,23.354301,22.148833,31.442951,28.239918,22.760608,29.205856,42.285326,22.605548,27.050353,17.974727,25.478470,20.789987,25.900607,31.982890,28.206333,38.777881,28.312233,29.992871,30.858909,32.663705,25.114398,16.191624,33.322536,33.499953,24.965196,23.743229,27.442556,26.600668,33.659914,22.682825,25.838727,19.280365,29.663387,25.608067,21.103128,27.851782,14.778448,19.164472,20.489084,33.648871,24.728849,23.589917,28.256074,24.141244,27.908325,15.148557,31.333169,25.534941,26.917876,23.493062,30.266114,20.140321,33.365808,18.840477,20.073438,35.989483,18.770762,27.243867,29.444792,22.235733,19.525642,23.966322,35.380025,35.376555,49.186057,24.743014,15.614404,33.891630,21.987602,35.002106,18.091942,33.561587,27.889958,22.550411,21.859703,39.245795,39.832867,25.338403,19.454287,36.427190,32.250063,33.444328,26.103348,22.893521,27.042429,17.489514,34.317205,20.030156,28.176381,19.182715,14.974437,15.665732,25.148927,24.994621,28.688144,22.288729,26.053286,23.884364,27.321844,24.256919,18.645038,22.225424,22.892433,26.509656,25.481500,27.994157,22.393872,22.535317,37.460980,31.564113,24.471721,22.068436,13.568762,30.213089,26.521903,21.843502,17.815212,44.671726,18.882379,17.792187,38.646518,20.292426,26.740335,34.474027,17.661959,31.026999,26.892556,41.778040,19.585536,34.316480,20.433278,25.289708,22.192669,26.144069,28.398308,19.266938,12.498558,23.544546,31.293373,33.354630,20.293961,16.106594,18.522479,32.404363,30.312313,37.579991,27.158706,30.204099,32.675727,22.627043,15.602313,24.677923,26.360296,31.694085,17.719583,25.612933,18.143687,45.339058,28.209019,31.152111,26.331716,26.338463,21.368941,21.431229,26.563952,38.572503,24.636786,19.671037,19.340515,16.007204,27.944398,22.495782,35.092966,31.233132,25.562633,25.732164,35.670895,33.229135,29.774964,44.156704,20.997304,26.913027,39.109192,20.676610,42.456649,36.072973,34.682498,27.875395,19.799777,33.598160,34.015554,36.648105,19.351253,27.082274,28.755986,33.865157,34.783369,29.274284,22.175718,31.826293,22.306550,13.346881,17.939633,20.294693,26.548012,17.668071,26.113449,23.422428,24.498046,48.247125,20.748614,21.436991,24.682576,23.609106,42.649140,31.354098,24.710937,34.177780,30.399879,36.121711,37.083675,32.229159,18.643654,16.842771,37.689156,24.867445,23.191919,19.951224,33.035142,16.394250,16.810953,11.577787,39.701537,30.717707,32.849639,44.593979,20.614471,13.988616,19.531195,21.617748,47.239565,23.213500,26.789899,13.888046,20.339432,34.799247,33.232617,21.775695,17.175543,39.353988,39.218891,23.232161,32.920568,18.360611,27.098482,32.863981,35.623932,35.448579,38.725396,29.306152,23.958602,28.212411,15.946986,32.220413,25.418635,16.545624,22.282012,51.835912,20.250039,22.505167,22.250252,38.931711,29.998150,19.781592,18.731343,17.970694,29.510417,30.550803,24.099224,29.059736,24.964425,27.736619,19.189575,25.915099,38.139000,23.334529,34.531623,24.052453,24.505909,19.486741,19.613812,21.737935,30.235845,26.120232,33.200375,28.374960,25.448587,25.000972,38.679674,21.705622,24.653036,25.956937,28.825463,29.132490,26.594875,24.762695,14.062510,20.542772,28.638545,33.471241,25.253921,23.400719,22.732394,23.959504,21.501466,26.179930,36.744859,18.075578,22.990169,30.626456,29.017467,23.623571,22.790513,37.859933,18.217996,16.414290,24.929276,35.171910,23.830326,29.447213,38.090110,20.102168,16.352927,22.006143,17.618234,35.600028,35.175570,22.966955,32.986285,18.094437,31.135111,25.906739,32.830741,23.785190,27.186787,30.014249,31.260150,27.716817,31.559243,20.687278,15.779016,19.327452,29.160429,28.607666,28.429906,38.293444,38.685785,30.859278,33.752778,22.334705,14.529591,29.119936,24.631832,19.046745,18.468716,27.365937,38.502307,36.084102,30.684410,45.366324,23.455740,30.409825,25.560149,28.818300,31.710365,35.695726,20.801906,19.681339,17.703873,35.965830,30.619656,27.687664,21.372563,19.518683,24.475671,26.768070,13.870992,25.709601,24.970537,20.770244,24.684762,38.202154,24.628755,26.575559,25.359717,25.569367,27.890592,16.571519,30.002735,37.838274,27.293296,24.883286,12.844451,33.085006,30.388505,18.126741,26.349349,21.260340,22.467235,20.254101,32.031532,21.472221,20.753919,20.544698,19.306307,29.717750,20.660287,34.071422,20.480577,27.358785,23.326503,37.765192,20.333698,26.893538,22.775925,26.125778,18.270767,17.838308,17.202477,17.495912,13.578349,28.226333,37.967286,17.399442,23.069235,23.875164,29.207414,17.806895,37.486208,16.324986,21.156734,39.721220,29.288527,24.025010,26.451849,36.801019,28.299355,36.234855,19.108362,21.328939,25.902847,17.268226,36.408131,24.405384,22.101860,37.922943,23.386116,29.420021,37.482634,27.540059,12.175052,37.168091,26.484198,27.517490,22.789974,28.630538,27.268752,34.451326,32.167277,26.297447,27.429153,43.827766,29.274336,19.508702,23.269054,17.406039,20.997166,33.039032,25.130885,32.976412,12.560717,9.582437,32.710902,23.598631,20.868370,21.039269,24.032579,21.553487,10.289252,15.892488,11.145682,25.502782,22.177015,28.509079,22.667053,24.088698,30.358734,25.328671,24.503816,22.409548,22.423504,45.323267,29.313453,17.683920,16.256101,31.517203,22.461675,15.018560,36.689317,21.228400,18.716572,16.644561,28.274082,25.347620,30.261722,25.075799,26.116948,23.777894,24.721992,27.942922)
+set.seed(30012021)
+res <- matrix(26, ncol = 2, nrow = 500)
+res[, 1] <- rchisq(nrow(res), df = 26, ncp = .1)
 colnames(res) <- c('chisq', 'df')
 powerCFA <- list('simRes' = list('fitH1' = res))
 ```
 
-```{r figureEmpExpChi, fig.cap = "Empirical versus expected chi-square distributions"}
+```{r figureEmpExpChi, fig.cap = "Empirical (solid) versus expected (dashed) chi-square distributions"}
 plot(dchisq(seq(max(powerCFA$simRes$fitH1[ , 'chisq'])), df = powerCFA$simRes$fitH1[1 , 'df']), type = 'l', lty = 2, xlab = 'chi square', ylab = 'density')
 lines(density(powerCFA$simRes$fitH1[ , 'chisq']))
 ```
@@ -2854,15 +2866,16 @@ lines(density(powerCFA$simRes$fitH1[ , 'chisq']))
 
 ##### Non-normal data {-#simNonNormal}
 
-By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = normal` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an alternative [estimator or test-statistic](#simEstimators)).
+By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = normal` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an [alternative estimator or test-statistic](#simEstimators)).
 
-Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore provides interfaces to three other approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
+Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the multivariate power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore also provides interfaces to three further approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
 
-* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure.
-* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. 
+* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the `covsim` package.
+* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. This requires the `mnonr` package.
 * `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
+* `type = VM` (Vale & Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be $\geq \text{skew}^2 - 2$. This requires the `SimDesign` package.
 
-For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a moderately strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a rather minor kurtosis between 4 - 6.    
+For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a quite strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a more moderate kurtosis between 4 - 6.    
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -2881,6 +2894,28 @@ powerCFA <- semPower.powerCFA(
                                 type = 'IG',
                                 skewness = c(0, 0, 0, 0, 0, 2, 2, 2, 2),
                                 kurtosis = c(20, 15, 10, 15, 18, 5, 4, 5, 6),
+                                nCores = 8
+                              ))
+```
+
+The following also specifies the marginal skewness and kurtosis, but relies on the VM approach (`type = 'VM'`): 
+```{r eval=FALSE}
+set.seed(300121)
+powerCFA <- semPower.powerCFA(
+                              # define type of power analysis
+                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+                              # define hypothesis
+                              Phi = .25,
+                              nullEffect = 'cor = 0',
+                              # define measurement model
+                              nIndicator = c(5, 4), loadM = c(.5, .6),
+                              # request simulated power
+                              simulatedPower = TRUE,
+                              # set simulation options
+                              simOptions = list(
+                                type = 'VM',
+                                skewness = c(1, 1, 1, 1, 1, 3, 3, 3, 3),
+                                kurtosis = c(4, 4, 4, 4, 4, 15, 15, 15, 15),
                                 nCores = 8
                               ))
 ```
@@ -2908,7 +2943,7 @@ powerCFA <- semPower.powerCFA(
                               ))
 ```
 
-Instead of defining the marginal skewness and kurtosis as in the IG approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
+Instead of defining the marginal skewness and kurtosis as in the IG or the VM approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -3029,7 +3064,7 @@ powerCFA <- semPower.powerCFA(
 
 ##### Changing the estimator and test-statistic{-#simEstimators}
 
-By default, simulated power analyses are performed using Maximum-Likelihood estimation with the standard LR test-statistic. When ['non-normal data'](#simNonNormal) are incorporated in the simulation process, the standard test-statistic will be positively biased and thus incur inflated power estimates, so it is reasonable to employ corrected test-statistics. The test-statistic and the estimator can be changed by providing a list to the `lavOptions` argument, which is passed to `lavaan` and thus conforms to the standard `lavaan` conventions. For example:
+By default, simulated power analyses are performed using Maximum-Likelihood estimation with the standard LR test-statistic. When [non-normal data](#simNonNormal) are incorporated in the simulation process, the standard test-statistic will be positively biased and thus may incur inflated power estimates, so it is reasonable to employ corrected test-statistics. The test-statistic and the estimator can be changed by providing a list to the `lavOptions` argument, which is passed to `lavaan` and thus conforms to the standard `lavaan` conventions. For example:
 
 * `list(estimator = 'mlm')`: requests ML estimation with the Satorra-Bentler scaled test-statistic
 * `list(estimator = 'mlr')`: requests ML estimation with a corrected test-statistic that is asymptotically equivalent to the Yuan-Bentler statistic 

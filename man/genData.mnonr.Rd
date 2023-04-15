@@ -27,7 +27,7 @@ genData.mnonr(
 Returns the generated data
 }
 \description{
-Generates random data from population variance-covariance matrix using
+Generates random data conforming to a population variance-covariance matrix using
 the approach by Qu, Liu, & Zhang (2020) specifying Mardia's multivariate skewness and kurtosis.
 }
 \details{
