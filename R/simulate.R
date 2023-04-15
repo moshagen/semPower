@@ -222,6 +222,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     # single core case
     res <- list()
     nConverged <- 0
+    rr <- 1
   }
   
   
@@ -232,12 +233,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     progressBar <- txtProgressBar(min = 0, max = (nReplications - nConverged), initial = 0, style = 3)
     r <- rr <- (nConverged + 1)
     while(r <= nReplications && rr <= maxReplications){
-      setTxtProgressBar(progressBar, r)
+      setTxtProgressBar(progressBar, (r - nConverged))
       cr <- doSim(r = r, 
                   simData = simData,
                   isMultigroup = is.list(Sigma),
                   modelH0 = modelH0, modelH1 = modelH1,
                   lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+      # [fit][fitH0][fmin] 
       if(!is.na(cr[[1]][[1]][1])){
         res <- append(res, list(cr))
         r <- r + 1
@@ -246,6 +248,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     }
     close(progressBar)
   }
+  usedDataIdx <- seq(nConverged + (rr - 1))
   
   # check convergence
   fit <- lapply(res, '[[', 1)
@@ -293,7 +296,11 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       convergenceRate = convergenceRate,
       chiSqH0 = fitH0[, 'chisq'],
       chiSqDiff = fitDiff[, 'chisq'],
-      rrH0 = rrH0
+      rrH0 = rrH0,
+      simRes = list(
+        simData = simData[usedDataIdx],
+        fitH0 = fitH0
+      )
     )
     
     if(!is.null(modelH1)){
@@ -363,6 +370,12 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         bBeta = bBeta,
         bPsi = bPsi
       ))
+      out[['simRes']] <- append(out[['simRes']], 
+                             list(
+                               fitH1 = fitH1, 
+                               fitDiff = fitDiff,
+                               paramEst = param
+                             ))
       
     }
     
