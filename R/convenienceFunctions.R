@@ -15,14 +15,14 @@
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation. Mostly useful in conjunction with `simulatedPower`. 
 #' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()]. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details
 #' Generic function to perform a power analysis based  on a true population covariance matrix Sigma 
 #' and a model implied covariance matrix SigmaHat (and optionally the associated mean vectors), 
@@ -41,22 +41,26 @@
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
-#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`) and kurtosis (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -105,7 +109,7 @@
 #'                               Sigma = Sigma, modelH0 = mH0,
 #'                               alpha = .05, beta = .05)
 #'
-#' # note all of the above is identical to the output provided by the powerCFA convenience function
+#' # note all of the above is identical to the output provided by the semPower.powerCFA function
 #' powerCFA <- semPower.powerCFA(type = 'a-priori',
 #'                               comparison = 'saturated',
 #'                               Phi = .2, 
@@ -285,14 +289,14 @@ semPower.powerLav <- function(type,
 #' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e., `nullWhich = c(1, 2)`.
 #' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details 
 #' 
 #' This function performs a power analysis to reject various hypotheses arising
@@ -326,22 +330,26 @@ semPower.powerLav <- function(type,
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
 #' The approaches generating non-normal data require additional arguments detailed below.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -557,14 +565,14 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' @param nullWhichGroups for `nullEffect = 'slopeA = slopeB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The first factor is treated as Y and the subsequent factors as the predictors X_k. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details 
 #' 
 #' This function performs a power analysis to reject various hypotheses arising
@@ -598,22 +606,26 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -959,14 +971,14 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' @param nullWhichGroups for `nullEffect = 'indA = indB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. In case of a simple mediation, the order of factors is X, M, Y. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details
 #' This function performs a power analysis to reject various hypotheses arising
 #' in the context of mediation:
@@ -1009,22 +1021,26 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -1345,14 +1361,14 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details
 #' This function performs a power analysis to reject various hypotheses arising
 #' in crossed-lagged panel models (CLPM). In a standard CLPM implemented here, 
@@ -1398,22 +1414,26 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -2131,14 +2151,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details 
 #' This function performs a power analysis to reject various hypotheses arising in a random intercept crossed-lagged panel model (RI-CLPM). 
 #' In a standard RI-CLPM implemented here, two variables X and Y are repeatedly assessed at three or more different time points (`nWaves`), 
@@ -2184,22 +2204,26 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -3065,14 +3089,14 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
 #' @param nullEffect defines the hypothesis (i.e., level of invariance) of interest. One of `'metric'`, `'scalar'`, `'residual'`, or a vector of restrictions in `lavaan` format. See details.   
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details
 #' This function performs a power analysis to reject various hypotheses arising
 #' in the context of multigroup measurement invariance. Multigroup invariance models 
@@ -3136,22 +3160,26 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -3409,14 +3437,14 @@ semPower.powerMI <- function(type,
 #' @param nullWhichGroups for `nullEffect = 'betaA = betaB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details
 #' This function performs a power analysis to reject a hypothesis arising
 #' in a generic structural equation model specifying regression relations between the factors via the Beta matrix:  
@@ -3496,22 +3524,26 @@ semPower.powerMI <- function(type,
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{
@@ -3718,14 +3750,14 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. 
 #' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model concerning the specific factors and the covariate(s). See details.
-#' @return A list containing the following components is returned:
-#' \item{`power`}{the results of the power analysis. Use the `summary` method to obtain formatted results.}
+#' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`SigmaHat`}{the H0 model implied covariance matrix. A list for multiple group models.}
 #' \item{`muHat`}{the H0 model implied mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
 #' \item{`modelH0`}{`lavaan` H0 model string.}
 #' \item{`modelH1`}{`lavaan` H1 model string or `NULL` when the comparison refers to the saturated model.}
+#' \item{`simRes`}{detailed simulation results when a simulated power analysis (`simulatedPower = TRUE`) was performed.}
 #' @details 
 #' 
 #' This function performs a power analysis to reject various hypotheses arising
@@ -3785,22 +3817,26 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' If a **simulated power analysis** (`simulatedPower = TRUE`) is requested, optional arguments can be provided as a list to `simOptions`:
 #' * `nReplications`: The targeted number of simulation runs. Defaults to 250, but larger numbers greatly improve accuracy at the expense of increased computation time.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RC'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RC'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to NULL).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `MCAR` (the default), `MAR`, or `NMAR`.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
-#'  Each component must specify the population distribution (e.g. `'rchisq'`) and additional arguments (`list(df = 2)`).
+#'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' @examples
 #' \dontrun{

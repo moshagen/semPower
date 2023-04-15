@@ -29,7 +29,8 @@ Suggests:
     knitr,
     lavaan,
     mnonr,
-    rmarkdown
+    rmarkdown,
+    SimDesign
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

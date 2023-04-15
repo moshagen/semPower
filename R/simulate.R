@@ -29,7 +29,7 @@
 #' The details of the simulation are specified in `simOptions`, which is a list that may have the following components:
 #' * `nReplications`: The targeted number of valid simulation runs, defaults to 500.
 #' * `minConvergenceRate`:  The minimum convergence rate required, defaults to .75. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
-#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, or `'RK'`). 
+#' * `type`: specifies whether the data should be generated from a population assuming multivariate normality (`'normal'`; the default), or based on an approach generating non-normal data (`'IG'`, `'mnonr'`, `'RK'`, or `'VM'`). 
 #' The approaches generating non-normal data require additional arguments detailed below.
 #' * `missingVars`: vector specifying the variables containing missing data (defaults to `NULL`).
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
@@ -38,14 +38,17 @@
 #' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
 #' 
 #' `type = 'mnonr'` implements the approach suggested by Qu, Liu, & Zhang (2020) and requires provision of  Mardia's multivariate skewness (`skewness`)  and kurtosis  (`kurtosis`), where 
-#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables.
+#' skewness must be non-negative and kurtosis must be at least 1.641 skewness + p (p + 0.774), where p is the number of variables. This requires the `mnonr` package.
 #' 
 #' `type = 'RK'` implements the approach suggested by Ruscio & Kaczetow (2008) and requires provision of the population distributions
 #'  of each variable (`distributions`). `distributions` must be a list (if all variables shall be based on the same population distribution) or a list of lists. 
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
+#' 
+#' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
 #' 
 #' 
 #' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. doi: 10.1080/00273171.2015.1133274
@@ -53,6 +56,8 @@
 #' Qu, W., Liu, H., & Zhang, Z. (2020). A method of generating multivariate non-normal random numbers with desired multivariate skewness and kurtosis. *Behavior Research Methods, 52*, 939-946. doi: 10.3758/s13428-019-01291-5
 #' 
 #' Ruscio, J., & Kaczetow, W. (2008). Simulating multivariate nonnormal data using an iterative algorithm. *Multivariate Behavioral Research, 43*, 355-381. doi: 10.1080/00273170802285693
+#' 
+#' Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. *Psychometrika, 48*, 465-471.
 #'  
 #' @examples
 #' \dontrun{
@@ -64,7 +69,7 @@
 #' # perform simulated power analysis using defaults       
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
-#'          N = powerCFA$power$requiredN,
+#'          N = powerCFA$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE)
 #'          
@@ -72,7 +77,7 @@
 #' # same with additional options       
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
-#'          N = powerCFA$power$requiredN,
+#'          N = powerCFA$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE, 
 #'          simOptions = list(nReplications = 500, 
@@ -83,7 +88,7 @@
 #' # same with IG as data generation routine
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
-#'          N = powerCFA$power$requiredN,
+#'          N = powerCFA$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE, 
 #'          simOptions = list(type = 'IG', 
@@ -94,7 +99,7 @@
 #' # same with mnonr as data generation routine
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
-#'          N = powerCFA$power$requiredN,
+#'          N = powerCFA$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE, 
 #'          simOptions = list(type = 'mnonr', 
@@ -113,7 +118,7 @@
 #' )
 #' simulate(modelH0 = powerCFA$modelH0, 
 #'          Sigma = powerCFA$Sigma,
-#'          N = powerCFA$power$requiredN,
+#'          N = powerCFA$requiredN,
 #'          alpha = .05,
 #'          simulatedPower = TRUE, 
 #'          simOptions = list(type = 'RK', 
@@ -218,11 +223,11 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     fit <- lapply(res, '[[', 1)
     nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
     
+    rr <- 1
   }else{
     # single core case
     res <- list()
     nConverged <- 0
-    rr <- 1
   }
   
   
@@ -564,6 +569,10 @@ genData <- function(N = NULL, Sigma = NULL, mu = NULL,
          mnonr = {
            rdat <- genData.mnonr(N, Sigma, nSets, simOptions[['skewness']], simOptions[['kurtosis']])
          },
+         # non-normal using vm
+         vm = {
+           rdat <- genData.VM(N, Sigma, nSets, simOptions[['skewness']], simOptions[['kurtosis']])
+         },
          # non-normal using ruscio
          rk = {
            rdat <- genData.RK(N, Sigma, nSets, simOptions[['distributions']], modelH0)
@@ -641,7 +650,7 @@ genData <- function(N = NULL, Sigma = NULL, mu = NULL,
 
 #' genData.normal
 #' 
-#' Generates multivariate normal random data from population variance-covariance matrix.
+#' Generates multivariate normal random data conforming to a population variance-covariance matrix.
 #'
 #' @param N sample size.
 #' @param Sigma population covariance matrix.
@@ -655,10 +664,52 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
   })
 }
 
+#' genData.VM
+#' 
+#' Generates random data conforming to a population variance-covariance matrix using 
+#' the third-order polynomial method  (Vale & Maurelli, 1983) 
+#' specifying third and fourth moments of the marginals.
+#' 
+#' This function is a wrapper for the respective function of the ´SimDesign´ package. 
+#' 
+#' For details, see 
+#' Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. *Psychometrika, 48*, 465-471.
+#'
+#' @param N sample size.
+#' @param Sigma population covariance matrix.
+#' @param nSets number of data sets to generate
+#' @param skewness vector specifying skewness for each variable 
+#' @param kurtosis vector specifying excess kurtosis for each variable
+#' @return Returns the generated data
+#' @importFrom utils installed.packages
+genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,  
+                       skewness = NULL, kurtosis = NULL){
+  
+  if(!'SimDesign' %in% rownames(installed.packages())) stop('Generation of non-normal random data using VM requires the SimDesign package, so install SimDesign first.')
+  if(is.null(skewness) || is.null(kurtosis)) stop('skewness and kurtosis must not be NULL.')
+  if(length(skewness) != ncol(Sigma)) stop('skewness must match ncol(Sigma), i.e., must be specified for each variable ')
+  if(length(kurtosis) != ncol(Sigma)) stop('kurtosis must match ncol(Sigma), i.e., must be specified for each variable ')
+  if(any(kurtosis < (skewness^2 - 2))) stop('each marginal kurtosis must be larger than its marginal skewness^2 - 2')
+
+  tryCatch({
+    lapply(seq(nSets), function(x){
+      rd <- SimDesign::rValeMaurelli(n = N,
+                                     sigma = Sigma, 
+                                     skew = skewness,
+                                     kurt = kurtosis
+      )  
+      colnames(rd) <- paste0('x', 1:ncol(Sigma))
+      rd
+    })
+  }, error = function(e) {
+    stop('Data generation via VM and the supplied arguments did not succeed. Either change the values for skewness and kurtosis, or try a different data generating routine such as IG.')
+  })
+
+}
 
 #' genData.IG
 #' 
-#' Generates random data from population variance-covariance matrix using 
+#' Generates random data conforming to a population variance-covariance matrix using 
 #' the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals.
 #' 
@@ -692,7 +743,7 @@ genData.IG <- function(N = NULL, Sigma = NULL, nSets = 1,
 
 #' genData.mnonr
 #' 
-#' Generates random data from population variance-covariance matrix using 
+#' Generates random data conforming to a population variance-covariance matrix using 
 #' the approach by Qu, Liu, & Zhang (2020) specifying Mardia's multivariate skewness and kurtosis.
 #' 
 #' This function is a wrapper for the respective function of the `mnonr` package. 
@@ -727,7 +778,7 @@ genData.mnonr <- function(N = NULL, Sigma = NULL, nSets = 1,
 
 #' genData.RK
 #' 
-#' Generates random data from population variance-covariance matrix using 
+#' Generates random data conforming to a population variance-covariance matrix using 
 #' the approach by Ruscio & Kaczetow (2008)
 #' specifying distributions for the marginals.
 #' 

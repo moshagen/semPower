@@ -3009,10 +3009,21 @@ test_simulatePower <- function(doTest = TRUE){
                                              nCores = 8
                            ))
   
+  set.seed(30012021)
+  ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
+                           comparison = 'saturated',
+                           Phi = .3, nIndicator = c(15, 15), loadM = .5,
+                           simulatedPower = TRUE,
+                           simOptions = list(nReplications = 100, 
+                                             type = 'vm',
+                                             skewness = rep(1, 30),
+                                             kurtosis = rep(30, 30), 
+                                             nCores = 8
+                           ))
 
   # compare estimators
   set.seed(30012021)
-  ph10 <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
+  ph9b <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
                             comparison = 'saturated',
                             Phi = .3, nIndicator = c(15, 15), loadM = .5,
                             simulatedPower = TRUE,
@@ -3075,7 +3086,8 @@ test_simulatePower <- function(doTest = TRUE){
     ph7$simPower - phA$power > .2 &&
     ph8$simPower - phA$power > .2 &&
     ph9$simPower - phA$power > .2 &&
-    ph9$simPower != ph10$simPower
+    ph10$simPower - phA$power > .2 &&
+    ph9$simPower != ph9b$simPower
     
 
   if(valid7){

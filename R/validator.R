@@ -475,7 +475,7 @@ checkNullEffect <- function(nullEffect, valid){
 
 #' checkDataGenerationTypes
 #'
-#' Checks whether data generation type is one of `'normal'`, `'IG'`, `'mnonr'`, or `'RK'`, stop otherwise.
+#' Checks whether data generation type is one of `'normal'`, `'IG'`, `'mnonr'`, `'RK'`, or `'VM'`, stop otherwise.
 #' 
 #' @param type type
 #' @return Returns cleaned data generation type
@@ -483,7 +483,7 @@ checkDataGenerationTypes <- function(type){
   if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Data generation type is invalid.')
   type <- tolower(trimws(type))
   if(type == 'norm') type <- 'normal'
-  if(!type %in% c('normal', 'ig', 'mnonr', 'rk')) stop('Data generation type must be one of "normal", "IG", "mnonr", or "RK"')
+  if(!type %in% c('normal', 'ig', 'mnonr', 'rk', 'vm')) stop('Data generation type must be one of "normal", "IG", "mnonr", "RK", or "VM"')
   type
 }
 
