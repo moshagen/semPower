@@ -61,7 +61,7 @@
 #' summary(ap)
 #' }
 #' @seealso [semPower.postHoc()] [semPower.compromise()]
-#' @importFrom stats qchisq pchisq optim mean
+#' @importFrom stats qchisq pchisq optim
 #' @export
 semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                              alpha, beta = NULL, power = NULL,
