@@ -156,13 +156,13 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 alpha = .05, beta = .05)
 
 # show summary
-summary(powerCLPM$power)
+summary(powerCLPM)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerCLPM$modelH1, sample.cov = powerCLPM$Sigma,
-            sample.nobs = powerCLPM$power$requiredN, 
+            sample.nobs = powerCLPM$requiredN, 
             sample.cov.rescale = FALSE)
 lavaan::sem(powerCLPM$modelH0, sample.cov = powerCLPM$Sigma,
-            sample.nobs = powerCLPM$power$requiredN, 
+            sample.nobs = powerCLPM$requiredN, 
             sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05

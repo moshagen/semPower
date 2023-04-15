@@ -112,12 +112,12 @@ powercfa <- semPower.powerCFA(type = 'a-priori',
                               nIndicator = c(5, 6), loadM = .5,
                               alpha = .05, beta = .05)
 # show summary
-summary(powercfa$power)
+summary(powercfa)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powercfa$modelH1, sample.cov = powercfa$Sigma, 
-sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powercfa$requiredN, sample.cov.rescale = FALSE)
 lavaan::sem(powercfa$modelH0, sample.cov = powercfa$Sigma, 
-sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powercfa$requiredN, sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05
 powercfa <- semPower.powerCFA(type = 'post-hoc',

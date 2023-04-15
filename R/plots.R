@@ -65,9 +65,9 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 
 
 
-#' sempower.powerPlot
+#' semPower.powerPlot
 #'
-#' Shows a plot showing power as function of N based given the output of a power analysis. 
+#' Shows a plot showing power as function of N given the output of a power analysis. 
 #' 
 #' @param semPowerRes results of a semPower analysis 
 #' @param ... other parameters passed to [sempower.powerPlot.byN()]
@@ -78,7 +78,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 #' powerCFA <- semPower.powerCFA(type = 'post-hoc', alpha = .05, N = 300,
 #'                               Phi = .15, nIndicator = c(5, 4), loadM = c(.5, .6))
 #' # show plot
-#' semPower.powerPlot(powerCFA$power)
+#' semPower.powerPlot(powerCFA)
 #' }
 #' @export
 semPower.powerPlot <- function(semPowerRes, ...){
@@ -94,7 +94,7 @@ semPower.powerPlot <- function(semPowerRes, ...){
 }
 
 
-#' sempower.powerPlot.byN
+#' semPower.powerPlot.byN
 #'
 #' Shows a plot showing power as function of N for a given effect and alpha.
 #' 
@@ -165,7 +165,7 @@ semPower.powerPlot.byN <- function(effect = NULL, effect.measure = NULL,
 
 
 
-#' sempower.powerPlot.byEffect
+#' semPower.powerPlot.byEffect
 #'
 #' Shows a plot showing power as function of the effect for a given N and alpha.
 #' 

@@ -160,13 +160,13 @@ powerbifactor <- semPower.powerBifactor(type = 'a-priori',
                                         loadings = loadings,
                                         alpha = .05, beta = .05)
 # show summary
-summary(powerbifactor$power)
+summary(powerbifactor)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerbifactor$modelH1, sample.cov = powerbifactor$Sigma,
-            sample.nobs = powerbifactor$power$requiredN, 
+            sample.nobs = powerbifactor$requiredN, 
             sample.cov.rescale = FALSE)
 lavaan::sem(powerbifactor$modelH0, sample.cov = powerbifactor$Sigma,
-            sample.nobs = powerbifactor$power$requiredN, 
+            sample.nobs = powerbifactor$requiredN, 
             sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05

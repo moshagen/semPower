@@ -122,7 +122,7 @@ mH0 <- '
 powerLav <- semPower.powerLav(type = 'a-priori', 
                               modelPop = mPop, modelH0 = mH0,
                               alpha = .05, beta = .05)
-summary(powerLav$power)
+summary(powerLav)
 
 # same as above, but also define an H1 comparison model 
 mH1 <- '

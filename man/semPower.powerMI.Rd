@@ -134,12 +134,12 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             alpha = .05, beta = .05, N = list(1, 1))
 
 # show summary
-summary(powerMI$power)
+summary(powerMI)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerMI$modelH1, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-            sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
+            sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 lavaan::sem(powerMI$modelH0, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-            sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
+            sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 in each group on alpha = .05
 powerMI <- semPower.powerMI(type = 'post-hoc',

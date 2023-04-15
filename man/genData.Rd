@@ -5,7 +5,6 @@
 \title{genData}
 \usage{
 genData(
-  type = "normal",
   N = NULL,
   Sigma = NULL,
   mu = NULL,
@@ -16,8 +15,6 @@ genData(
 )
 }
 \arguments{
-\item{type}{one of 'normal' (the default), 'IG', 'mnonr', or 'RK'.}
-
 \item{N}{sample size.}
 
 \item{Sigma}{population covariance matrix.}
@@ -30,7 +27,7 @@ genData(
 
 \item{modelH0}{a \code{lavaan} model string, only used to determine the number of factors when \code{type = 'RK'}}
 
-\item{simOptions}{additional arguments passed to specific data generation routine}
+\item{simOptions}{additional arguments specifying the data generation routine}
 }
 \value{
 Returns the generated data

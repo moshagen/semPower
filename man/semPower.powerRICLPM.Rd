@@ -161,12 +161,12 @@ powerRICLPM <- semPower.powerRICLPM(type = 'a-priori',
                                     alpha = .05, beta = .05)
 
 # show summary
-summary(powerRICLPM$power)
+summary(powerRICLPM)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerRICLPM$modelH1, sample.cov = powerRICLPM$Sigma,
-            sample.nobs = powerRICLPM$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerRICLPM$requiredN, sample.cov.rescale = FALSE)
 lavaan::sem(powerRICLPM$modelH0, sample.cov = powerRICLPM$Sigma,
-            sample.nobs = powerRICLPM$power$requiredN, sample.cov.rescale = FALSE)
+            sample.nobs = powerRICLPM$requiredN, sample.cov.rescale = FALSE)
 
 
 # same as above, but determine power with N = 500 on alpha = .05

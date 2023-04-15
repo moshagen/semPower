@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{semPower.powerPlot.byEffect}
 \alias{semPower.powerPlot.byEffect}
-\title{sempower.powerPlot.byEffect}
+\title{semPower.powerPlot.byEffect}
 \usage{
 semPower.powerPlot.byEffect(
   effect.measure = NULL,

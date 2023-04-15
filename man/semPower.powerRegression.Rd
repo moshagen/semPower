@@ -121,12 +121,12 @@ powerReg <- semPower.powerRegression(type = 'a-priori',
                                      loadM = c(.5, .6, .7),
                                      alpha = .05, beta = .05)
 # show summary
-summary(powerReg$power)
+summary(powerReg)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerReg$modelH1, sample.cov = powerReg$Sigma, 
-sample.nobs = powerReg$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 lavaan::sem(powerReg$modelH0, sample.cov = powerReg$Sigma, 
-sample.nobs = powerReg$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 on alpha = .05 
 powerReg <- semPower.powerRegression(type = 'post-hoc',

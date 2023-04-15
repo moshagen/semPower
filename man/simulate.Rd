@@ -11,8 +11,9 @@ simulate(
   mu = NULL,
   N = NULL,
   alpha = NULL,
-  simOptions = list(nReplications = 250, minConvergenceRate = 0.5, type = "normal",
-    missingVars = NULL, missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR"),
+  simOptions = list(nReplications = 500, minConvergenceRate = 0.75, type = "normal",
+    missingVars = NULL, missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR",
+    nCores = 1),
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
   returnFmin = TRUE
@@ -59,14 +60,15 @@ Estimates empirical power using a simulation approach.
 \details{
 The details of the simulation are specified in \code{simOptions}, which is a list that may have the following components:
 \itemize{
-\item \code{nReplications}: The targeted number of valid simulation runs, defaults to 250.
-\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .5. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
+\item \code{nReplications}: The targeted number of valid simulation runs, defaults to 500.
+\item \code{minConvergenceRate}:  The minimum convergence rate required, defaults to .75. The maximum actual simulation runs are increased by a factor of 1/minConvergenceRate.
 \item \code{type}: specifies whether the data should be generated from a population assuming multivariate normality (\code{'normal'}; the default), or based on an approach generating non-normal data (\code{'IG'}, \code{'mnonr'}, or \code{'RK'}).
 The approaches generating non-normal data require additional arguments detailed below.
 \item \code{missingVars}: vector specifying the variables containing missing data (defaults to \code{NULL}).
 \item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
 \item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 \item \code{missingMechanism}: The missing data mechanism, one of \code{'MCAR'} (the default), \code{'MAR'}, or \code{'NMAR'}.
+\item \code{nCores}: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the \code{doSNOW} package.
 }
 
 \code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
@@ -106,7 +108,9 @@ simulate(modelH0 = powerCFA$modelH0,
          N = powerCFA$power$requiredN,
          alpha = .05,
          simulatedPower = TRUE, 
-         simOptions = list(nReplications = 500, minConvergenceRate = .80))
+         simOptions = list(nReplications = 500, 
+                           minConvergenceRate = .80, 
+                           nCores = 8))
 
 
 # same with IG as data generation routine

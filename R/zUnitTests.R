@@ -3107,4 +3107,4 @@ test_all <- function(){
   test_simulatePower(doTest = FALSE)
 }
 
-test_all()
+#test_all()

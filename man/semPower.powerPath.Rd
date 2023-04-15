@@ -178,12 +178,12 @@ powerPath <- semPower.powerPath(type = 'a-priori',
                                 loadM = .5,
                                 alpha = .05, beta = .05)
 # show summary
-summary(powerPath$power)
+summary(powerPath)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerPath$modelH1, sample.cov = powerPath$Sigma,
-sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powerPath$requiredN, sample.cov.rescale = FALSE)
 lavaan::sem(powerPath$modelH0, sample.cov = powerPath$Sigma,
-sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
+sample.nobs = powerPath$requiredN, sample.cov.rescale = FALSE)
 
 # same as above, but detect that the slope f3 -> f4 is >= .30 
 powerPath <- semPower.powerPath(type = 'a-priori',

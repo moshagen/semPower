@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{semPower.powerPlot.byN}
 \alias{semPower.powerPlot.byN}
-\title{sempower.powerPlot.byN}
+\title{semPower.powerPlot.byN}
 \usage{
 semPower.powerPlot.byN(
   effect = NULL,
@@ -13,7 +13,7 @@ semPower.powerPlot.byN(
   SigmaHat = NULL,
   Sigma = NULL,
   power.min = alpha,
-  power.max = 0.999,
+  power.max = 0.99,
   steps = 50,
   linewidth = 1
 )
@@ -50,6 +50,6 @@ Shows a plot showing power as function of N for a given effect and alpha.
 \examples{
 \dontrun{
 semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", 
-                       alpha = .05, power.min = .05, power.max = .999, df = 200)
+                       alpha = .05, power.min = .05, power.max = .99, df = 200)
 }
 }
