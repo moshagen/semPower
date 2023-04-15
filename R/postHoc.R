@@ -97,9 +97,9 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                             Sigma = Sigma, mu = mu, 
                             lavOptions = aLavOptions, lavOptionsH1 = aLavOptionsH1)
     
-    df <- ph[['power']][['df']]
-    fmin <- ph[['power']][['fmin']]
-    fmin.g <- ph[['power']][['fmin.g']]
+    df <- ph[['df']]
+    fmin <- ph[['fmin']]
+    fmin.g <- ph[['fmin.g']]
     
   }
   

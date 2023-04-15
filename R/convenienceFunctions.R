@@ -85,7 +85,7 @@
 #' powerLav <- semPower.powerLav(type = 'a-priori', 
 #'                               modelPop = mPop, modelH0 = mH0,
 #'                               alpha = .05, beta = .05)
-#' summary(powerLav$power)
+#' summary(powerLav)
 #' 
 #' # same as above, but also define an H1 comparison model 
 #' mH1 <- '
@@ -249,10 +249,24 @@ semPower.powerLav <- function(type,
     muHat <- muHat[[1]]
   }
 
-  list(power = power,
-       SigmaHat = SigmaHat, Sigma = Sigma,
-       muHat = muHat, mu = mu,
-       modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
+  result <- append(power, 
+                list(SigmaHat = SigmaHat, Sigma = Sigma,
+                     muHat = muHat, mu = mu,
+                     modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1))
+  
+  switch(type, 
+         'a-priori'= {
+           class(result) <- "semPower.aPriori"
+         },
+         'post-hoc' = {
+           class(result) <- "semPower.postHoc"
+         },
+         'compromise' = {
+           class(result) <- "semPower.compromise"
+         }
+  )
+
+  result
 }
 
 
@@ -339,12 +353,12 @@ semPower.powerLav <- function(type,
 #'                               nIndicator = c(5, 6), loadM = .5,
 #'                               alpha = .05, beta = .05)
 #' # show summary
-#' summary(powercfa$power)
+#' summary(powercfa)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powercfa$modelH1, sample.cov = powercfa$Sigma, 
-#' sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powercfa$requiredN, sample.cov.rescale = FALSE)
 #' lavaan::sem(powercfa$modelH0, sample.cov = powercfa$Sigma, 
-#' sample.nobs = powercfa$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powercfa$requiredN, sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
 #' powercfa <- semPower.powerCFA(type = 'post-hoc',
@@ -616,12 +630,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      loadM = c(.5, .6, .7),
 #'                                      alpha = .05, beta = .05)
 #' # show summary
-#' summary(powerReg$power)
+#' summary(powerReg)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerReg$modelH1, sample.cov = powerReg$Sigma, 
-#' sample.nobs = powerReg$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 #' lavaan::sem(powerReg$modelH0, sample.cov = powerReg$Sigma, 
-#' sample.nobs = powerReg$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05 
 #' powerReg <- semPower.powerRegression(type = 'post-hoc',
@@ -1028,12 +1042,12 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'                                     loadM = c(.5, .6, .7),
 #'                                     alpha = .05, beta = .05)
 #' # show summary
-#' summary(powerMed$power)
+#' summary(powerMed)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerMed$modelH1, sample.cov = powerMed$Sigma,
-#' sample.nobs = powerMed$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerMed$requiredN, sample.cov.rescale = FALSE)
 #' lavaan::sem(powerMed$modelH0, sample.cov = powerMed$Sigma,
-#' sample.nobs = powerMed$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerMed$requiredN, sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
 #' powerMed <- semPower.powerMediation(type = 'post-hoc',
@@ -1423,13 +1437,13 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 alpha = .05, beta = .05)
 #' 
 #' # show summary
-#' summary(powerCLPM$power)
+#' summary(powerCLPM)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerCLPM$modelH1, sample.cov = powerCLPM$Sigma,
-#'             sample.nobs = powerCLPM$power$requiredN, 
+#'             sample.nobs = powerCLPM$requiredN, 
 #'             sample.cov.rescale = FALSE)
 #' lavaan::sem(powerCLPM$modelH0, sample.cov = powerCLPM$Sigma,
-#'             sample.nobs = powerCLPM$power$requiredN, 
+#'             sample.nobs = powerCLPM$requiredN, 
 #'             sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
@@ -2214,12 +2228,12 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'                                     alpha = .05, beta = .05)
 #' 
 #' # show summary
-#' summary(powerRICLPM$power)
+#' summary(powerRICLPM)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerRICLPM$modelH1, sample.cov = powerRICLPM$Sigma,
-#'             sample.nobs = powerRICLPM$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerRICLPM$requiredN, sample.cov.rescale = FALSE)
 #' lavaan::sem(powerRICLPM$modelH0, sample.cov = powerRICLPM$Sigma,
-#'             sample.nobs = powerRICLPM$power$requiredN, sample.cov.rescale = FALSE)
+#'             sample.nobs = powerRICLPM$requiredN, sample.cov.rescale = FALSE)
 #' 
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
@@ -3157,12 +3171,12 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             alpha = .05, beta = .05, N = list(1, 1))
 #' 
 #' # show summary
-#' summary(powerMI$power)
+#' summary(powerMI)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerMI$modelH1, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-#'             sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
+#'             sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 #' lavaan::sem(powerMI$modelH0, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-#'             sample.nobs = as.list(powerMI$power$requiredN.g), sample.cov.rescale = FALSE)
+#'             sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 in each group on alpha = .05
 #' powerMI <- semPower.powerMI(type = 'post-hoc',
@@ -3523,12 +3537,12 @@ semPower.powerMI <- function(type,
 #'                                 loadM = .5,
 #'                                 alpha = .05, beta = .05)
 #' # show summary
-#' summary(powerPath$power)
+#' summary(powerPath)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerPath$modelH1, sample.cov = powerPath$Sigma,
-#' sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerPath$requiredN, sample.cov.rescale = FALSE)
 #' lavaan::sem(powerPath$modelH0, sample.cov = powerPath$Sigma,
-#' sample.nobs = powerPath$power$requiredN, sample.cov.rescale = FALSE)
+#' sample.nobs = powerPath$requiredN, sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but detect that the slope f3 -> f4 is >= .30 
 #' powerPath <- semPower.powerPath(type = 'a-priori',
@@ -3815,13 +3829,13 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #'                                         loadings = loadings,
 #'                                         alpha = .05, beta = .05)
 #' # show summary
-#' summary(powerbifactor$power)
+#' summary(powerbifactor)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerbifactor$modelH1, sample.cov = powerbifactor$Sigma,
-#'             sample.nobs = powerbifactor$power$requiredN, 
+#'             sample.nobs = powerbifactor$requiredN, 
 #'             sample.cov.rescale = FALSE)
 #' lavaan::sem(powerbifactor$modelH0, sample.cov = powerbifactor$Sigma,
-#'             sample.nobs = powerbifactor$power$requiredN, 
+#'             sample.nobs = powerbifactor$requiredN, 
 #'             sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05

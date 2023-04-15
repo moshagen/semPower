@@ -693,9 +693,9 @@ powerCFA <- semPower.powerCFA(
                               nullEffect = 'cor = 0',
                               # define measurement model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
-summary(powerCFA$power)
+summary(powerCFA)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerCFA$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerCFA`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -708,7 +708,7 @@ powerCFA <- semPower.powerCFA(
                               # define measurement model
                               nIndicator = c(4, 3), loadM = c(.5, .6))
 ```
-Now, `summary(powerCFA$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerCFA)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
@@ -970,9 +970,9 @@ powerBF <- semPower.powerBifactor(
                                   Phi = Phi,
                                   loadings = loadings
                                   )
-summary(powerBF$power)
+summary(powerBF)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerBF$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerBF`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -989,7 +989,7 @@ powerBF <- semPower.powerBifactor(
                                   loadings = loadings
                                   )
 ```
-Now, `summary(powerBF$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerBF)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 If one is interested in detecting the correlation between a factor and an observed covariate, the only change refers to the definition of the factor model. Below, the fourth factor defined in `loadings` comprises a single indicator loading by 1 `c(1)`, which is then simply an observed variable:
 ```{r eval=FALSE}
@@ -1204,9 +1204,9 @@ powerReg <- semPower.powerRegression(
                                      # define measurement model
                                      nIndicator = c(3, 5, 4), 
                                      loadM = c(.5, .6, .7))
-summary(powerReg$power)
+summary(powerReg)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerReg$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerReg`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1222,7 +1222,7 @@ powerReg <- semPower.powerRegression(
                                      nIndicator = c(3, 5, 4), 
                                      loadM = c(.5, .6, .7))
 ```
-Now, `summary(powerReg$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerReg)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
@@ -1401,9 +1401,9 @@ powerMed <- semPower.powerMediation(
                                      nIndicator = c(3, 4, 5),
                                      loadM = c(.5, .6, .7)
                                      )
-summary(powerMed$power)
+summary(powerMed)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerMed$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerMed`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1420,7 +1420,7 @@ powerMed <- semPower.powerMediation(
                                      loadM = c(.5, .6, .7)
                                      )
 ```
-Now, `summary(powerMed$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerMed)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
@@ -1555,9 +1555,9 @@ powerPath <- semPower.powerPath(
                                 nIndicator = c(3, 4, 5, 6),
                                 loadM = c(.7, .5, .6, .8),
                                 )
-summary(powerPath$power)
+summary(powerPath)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerPath$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerPath`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -1573,7 +1573,7 @@ powerPath <- semPower.powerPath(
                                 loadM = c(.7, .5, .6, .8),
                                 )
 ```
-Now, `summary(powerPath$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerPath)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 In the example above, there were no correlations between the factors beyond those implied by the regression relations. The `Psi` argument can be used to add additional sources of covariation. For instance, the following defines four factors with a regression structure (`Beta`) corresponding to $F_3 = .2 \cdot F_1 + .3 \cdot F_2$ and $F_4 = .3 \cdot F_1 + .4 \cdot F_2$. In addition, `Psi` defines a correlation between $F_1$ and $F_2$ of .25 and a (residual) correlation between $F_3$ and $F_4$ of .3.
 ```{r eval=FALSE}
@@ -1777,9 +1777,9 @@ powerMI <- semPower.powerMI(
                            # define measurement model
                            nIndicator = list(5, 5),
                            loadM = list(.5, .6))
-summary(powerMI$power)
+summary(powerMI)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerMI$power`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerMI`, which in this example provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly, where `N` now provides the number of observations for each group:
 ```{r eval=FALSE}
@@ -1793,7 +1793,7 @@ powerMI <- semPower.powerMI(
                            nIndicator = list(5, 5),
                            loadM = list(.5, .6))
 ```
-Now, `summary(powerMI$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerMI)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 The values provided to the `comparison` and `nullEffect` arguments can also be specified according to `lavaan` conventions as vectors, so the following yields the same results as above: 
 ```{r eval=FALSE}
@@ -2064,9 +2064,9 @@ powerCLPM <- semPower.powerCLPM(
                                 nIndicator = c(5, 3, 5, 3),
                                 loadM = c(.5, .6, .5, .6)
                                 )
-summary(powerCLPM$power)
+summary(powerCLPM)
 ```
-The results of the power analysis are printed by calling the `summary` method on `powerCLPM$power`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
+The results of the power analysis are printed by calling the `summary` method on `powerCLPM`, which, in this example, provides the same information as a model-free [a-priori power analysis](#ap) counterpart.
 
 If a post-hoc power analysis is desired, the arguments related to the power analysis need to be adapted accordingly:
 ```{r eval=FALSE}
@@ -2084,7 +2084,7 @@ powerCLPM <- semPower.powerCLPM(
                                 loadM = c(.5, .6, .5, .6)
                                 )
 ```
-Now, `summary(powerCLPM$power)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
+Now, `summary(powerCLPM)` provides the same information as a model-free [post-hoc power analysis](#ph) counterpart. A  [compromise power analysis](#cp) (`type = 'compromise'`) is performed analogously.
 
 If the model does not include any factor, but is based on observed variables, the only change refers to the definition of the measurement model. Below, `Lambda = diag(4)` defines four dummy factors with a single indicator loading by 1, so these become observed variables:
 
@@ -2569,7 +2569,7 @@ ap <- semPower.powerLav(type = 'a-priori', alpha = .05, power = .80,
 # using the population covariance matrix 
 ap <- semPower.powerLav(type = 'a-priori', alpha = .05, power = .80,
                         Sigma = generated$Sigma, modelH0 = modelH0, modelH1 = modelH1)
-summary(ap$power)
+summary(ap)
 ```
 
 The output shows that 323 observations are required to detect a correlation between the factors of $r \leq .9$ with a power of 80% on alpha = .05. Note that there is only a single df, because the H1 model was also explicitly defined and just differs from the H0 model in a single parameter (namely the freely estimated correlation between the factors). If the H1 model is omitted from the function call, power will be determined relative to the saturated model, which in this example leads to 20 df and thus to a very different sample size required to detect the specified effect (namely 860 observations).
@@ -2598,18 +2598,18 @@ powerCFA <- semPower.powerCFA(
   type = 'post-hoc', alpha = .05, N = 300, 
   Phi = .15, nIndicator = c(5, 4), loadM = c(.5, .6))
 # show plot
-semPower.powerPlot(powerCFA$power)
+semPower.powerPlot(powerCFA)
 ```
 
+This shows that the power to detect the specified effect is high when N > 1,000, whereas power is small when N < 250.
 
 A more generic way is provided by the function `semPower.powerPlot.byN`, which creates a plot showing the achieved power to detect a given effect on a given alpha error over a range of sample sizes. However, because it is difficult to specify diagnostic sample sizes for a given effect, the `semPower.powerPlot.byN` instead asks to provide the desired power range. For example, suppose one is interested in how the power to detect an effect corresponding to RMSEA = .05 changes as a function of the number of observations N. The interest lies on the power ranging from .05 to .99 (note that the power cannot be smaller than alpha). This is achieved by setting the arguments `power.min = .05` and `power.max = .99`. In addition, as in any a-priori power analysis, the type and magnitude of effect, the df, and the alpha error need to be defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`, `df = 100`.
 
-```{r figurePowerPlotByN, fig.cap = "Power as function of the N to detect RMSEA >= .05"}
+```{r eval = FALSE"}
 semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', 
                        alpha = .05, df = 100, power.min = .05, power.max = .99)
 ```
 
-This shows that a model with an associated RMSEA = .05 is rejected with a very high power when N > 250, whereas power is small when N < 100. 
 
 
 
@@ -2756,7 +2756,7 @@ powerCFA <- semPower.powerCFA(
 As usual, the output of the power analysis is printed by calling the `summary` method on the results variable:
 
 ```{r eval=FALSE}
-summary(powerCFA$power)
+summary(powerCFA)
 
 ##	semPower: Post-hoc power analysis
 ##	
@@ -2804,7 +2804,7 @@ summary(powerCFA$power)
 ##	Variances/Covariances                       0.06 
 ```
 
-The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. Of note, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). 
+The results of the power analysis provide the same information as a model-free [post-hoc power analysis](#ph), but now also include a column giving the the simulation results. In this example, the simulated power estimate (of 81.0%) closely matches the analytical result (81.7%). Note that all  measures of effect are computed based on the unbiased estimate of the population minimum of the fit function $F_0$ ($\hat{F_0} = \hat{F} - df / N$).
 
 In addition, `semPower` also outputs a section entitled `Simulation results`, where further results of the simulation are reported that help to evaluate whether the empirical $\chi^2$ distributions match the asymptotically expected distributions and whether the realized sample size is sufficient to support parameter estimation of the model. [Recall](#ph) that power is only one of several aspects to consider in sample size planning. In particular, the achieved convergence rate of the H0 model is always provided (and should be close to 100%, as in the present example). When there is also an explicit comparison (H1) model (which is the case in the example; `comparison = 'restricted'`), the average parameter biases are also given. These information are only meaningful when the model under scrutiny fits the data, so these must refer to the H1 model. The average parameter bias shows whether the model parameters are reliably recovered and should thus be close to zero, so the parameter estimates are virtually unbiased in the present example. 
 
@@ -3131,7 +3131,7 @@ The process illustrated above can be simplified by calling [`semPower.powerLav`]
 ph <- semPower.powerLav(type = 'post-hoc',
                         modelPop = modelPop, modelH0 = modelH0,
                         alpha = .05, N = 250)
-summary(ph$power)
+summary(ph)
 ```
 
 which - of course - yields the same results.
@@ -3148,7 +3148,7 @@ generated <- semPower.genSigma(Phi = .50,
 ph <- semPower.powerLav(type = 'post-hoc', 
                         Sigma = generated$Sigma, modelH0 = modelH0, 
                         alpha = .05, N = 250)
-summary(ph$power)
+summary(ph)
 ```
 
 ##### Using semPower.powerCFA {-}
@@ -3163,7 +3163,7 @@ ph <- semPower.powerCFA(type = 'post-hoc',
                           c(.8, .7, .6),
                           c(.7, .6, .5)),
                         alpha = .05, N = 250)
-summary(ph$power)
+summary(ph)
 ```
 
 In the background, `semPower.powerCFA` performs all the necessary steps outlined above, so the results will - of course - be the same. Note the argument `comparison = 'saturated'` was set so to obtain the power to reject the H0 model when compared against the saturated model, which was also done in all examples above.

@@ -156,13 +156,13 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                             Sigma = Sigma, mu = mu, 
                             lavOptions = aLavOptions, lavOptionsH1 = aLavOptionsH1)
     
-    requiredN <- ap[['power']][['requiredN']]
-    requiredN.g <- ap[['power']][['requiredN.g']]
-    fmin <- ap[['power']][['fmin']]
-    fmin.g <- ap[['power']][['fmin.g']]
-    critChi <- ap[['power']][['chiCrit']]
-    df <- ap[['power']][['df']]
-    bPrecisionWarning <- ap[['power']][['bPrecisionWarning']]
+    requiredN <- ap[['requiredN']]
+    requiredN.g <- ap[['requiredN.g']]
+    fmin <- ap[['fmin']]
+    fmin.g <- ap[['fmin.g']]
+    critChi <- ap[['chiCrit']]
+    df <- ap[['df']]
+    bPrecisionWarning <- ap[['bPrecisionWarning']]
     
   }
 
@@ -204,11 +204,11 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   if(simulatedPower){
     
     # use start N from analytical power
-    startN <- ceiling(.95 * ap[['power']][['requiredN']]) # lets start a bit lower
+    startN <- ceiling(.95 * ap[['requiredN']]) # lets start a bit lower
 
     # for simulated power, we refuse to do anything when 2*p exceeds N
-    bPrecisionWarning <- (ap[['power']][['requiredN']] <= 2*pp[['p']])  
-    if(bPrecisionWarning) stop(paste0("The required N of ", ap[['power']][['requiredN']], " is most likely smaller than twice the number of variables. Simulated a priori power will probably not work in this case. If N exceeds p, you can try a simulated post-hoc analyses."))
+    bPrecisionWarning <- (ap[['requiredN']] <= 2*pp[['p']])  
+    if(bPrecisionWarning) stop(paste0("The required N of ", ap[['requiredN']], " is most likely smaller than twice the number of variables. Simulated a priori power will probably not work in this case. If N exceeds p, you can try a simulated post-hoc analyses."))
 
     # we need a pretty high tolerance because of sampling error: it doesn't make sense 
     # to suggest high accuracy when there it is in fact quite limited

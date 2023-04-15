@@ -615,7 +615,7 @@ test_powerLav <- function(){
   Sigma <- lavaan::fitted(lavaan::sem(mPop))$cov
   lavres <- helper_lav(mAna, Sigma)
   
-  valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0
+  valid <- round(ph$fmin - 2*lavres$fit['fmin'], 4) == 0
   
   # use other comparison model
   mAna2 <- '
@@ -632,7 +632,7 @@ test_powerLav <- function(){
   lavres2 <- helper_lav(mAna2, Sigma)
   
   valid2 <- valid && 
-    round(2*(lavres2$fit['fmin'] - lavres$fit['fmin']) - ph2$power$fmin, 4) == 0
+    round(2*(lavres2$fit['fmin'] - lavres$fit['fmin']) - ph2$fmin, 4) == 0
   
   # consistency with f difference
   SigmaHat1 <- lavaan::fitted(lavres$res)$cov
@@ -647,8 +647,8 @@ test_powerLav <- function(){
                           df = c(lavres$res@test$standard$df, lavres2$res@test$standard$df))
   
   valid3 <- valid2 && 
-    round(ph2$power$fmin - deltaF, 4) == 0 &&
-    round(ph2$power$power - ph3$power, 4) == 0 &&
+    round(ph2$fmin - deltaF, 4) == 0 &&
+    round(ph2$power - ph3$power, 4) == 0 &&
     round(ph3$power - ph4$power, 4) == 0
   
   if(valid3){
@@ -709,9 +709,9 @@ test_multigroup <- function(){
                            lavOptions = list(group.equal = c('loadings')))
 
   valid2 <- valid && 
-    round(ph5$power$power - ph$power, 4) == 0 &&
-    round(ph5$power$fmin - ph$fmin, 4) == 0 &&
-    round(ph5$power$power - ph2$power, 4) == 0    
+    round(ph5$power - ph$power, 4) == 0 &&
+    round(ph5$fmin - ph$fmin, 4) == 0 &&
+    round(ph5$power - ph2$power, 4) == 0    
 
   # scalar invariance model
   generated <- semPower.genSigma(loadings = list(c(.5, .6, .7)), tau = c(0, 0, 0))
@@ -785,13 +785,13 @@ test_multigroup <- function(){
                            mu = list(generated$mu, generated2$mu),
                            modelH0 = mScalar,
                            modelH1 = mMetric,
-                           alpha = .05, N = list(1, 1), power = ph7$power$power)
+                           alpha = .05, N = list(1, 1), power = ph7$power)
   
   valid4 <- valid3 &&
-    (lavress$fit['df'] - lavresm$fit['df']) == ph7$power$df &&
-    round(2*(lavress$fit['fmin'] - lavresm$fit['fmin']) - ph7$power$fmin, 4) == 0 &&
-    round(ap1$power$fmin - ph7$power$fmin, 4) == 0 &&
-    ap1$power$requiredN - sum(unlist(ph7$power$N)) < .05*sum(unlist(ph7$power$N))
+    (lavress$fit['df'] - lavresm$fit['df']) == ph7$df &&
+    round(2*(lavress$fit['fmin'] - lavresm$fit['fmin']) - ph7$fmin, 4) == 0 &&
+    round(ap1$fmin - ph7$fmin, 4) == 0 &&
+    ap1$requiredN - sum(unlist(ph7$N)) < .05*sum(unlist(ph7$N))
     
   if(valid4){
     print('test_multigroup: OK')
@@ -828,13 +828,13 @@ test_powerCFA <- function(){
                            alpha = .05, N = 250)
   
   valid <- round(lavres2$fit['fmin'], 4) == 0 &&
-    round(2*lavres$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    round(ph2$power$fmin - ph$power$fmin, 4) == 0 &&
-    round(ph3$fmin - ph$power$fmin, 4) == 0 &&
-    round(ph$power$power - ph2$power$power, 4) == 0 &&
-    ph$power$df == 1 &&
-    ph4$power$df == 44 &&
-    round(ph$power$power - ph4$power$power, 4) != 0
+    round(2*lavres$fit['fmin'] - ph$fmin, 4) == 0 &&
+    round(ph2$fmin - ph$fmin, 4) == 0 &&
+    round(ph3$fmin - ph$fmin, 4) == 0 &&
+    round(ph$power - ph2$power, 4) == 0 &&
+    ph$df == 1 &&
+    ph4$df == 44 &&
+    round(ph$power - ph4$power, 4) != 0
   
   # phi matrix
   Phi <- matrix(c(
@@ -866,7 +866,7 @@ test_powerCFA <- function(){
     par[par$lhs == 'f2' & par$rhs == 'f3', 'est'] != 0 &&
     par2[par2$lhs == 'f1' & par2$rhs == 'f1', 'est'] != 0 &&
     par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'est'] == 0 &&
-    round(ph6$power$power, 4) > round(ph5$power$power, 4)
+    round(ph6$power, 4) > round(ph5$power, 4)
   
   # corx=cory, two equal
   ph7 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted', 
@@ -887,13 +887,13 @@ test_powerCFA <- function(){
   par4 <- lavres8$par
 
   valid3 <- valid2 &&
-    round(2*lavres7$fit['fmin'] - ph7$power$fmin, 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph7$fmin, 4) == 0 &&
     round(par3[par3$lhs == 'f1' & par3$rhs == 'f2', 'std.all'] - par3[par3$lhs == 'f2' & par3$rhs == 'f3', 'std.all'], 4) == 0 &&
     length(unique(round(
       c(par4[par4$lhs == 'f1' & par4$rhs == 'f2', 'std.all'], 
         par4[par4$lhs == 'f2' & par4$rhs == 'f3', 'std.all'], 
         par4[par4$lhs == 'f1' & par4$rhs == 'f3', 'std.all']), 4))) == 1 &&
-    ph8$power$df == 2
+    ph8$df == 2
   
   
 
@@ -946,11 +946,11 @@ test_powerCFA <- function(){
     round(sum(abs(par9[par9$op == '~~' & par9$lhs != par9$rhs & par9$group == 2, 'est'] - c(Phi2[lower.tri(Phi2)]))), 4) == 0 &&
     length(unique(round(par9b[par9b$op == '~~' & par9b$lhs == 'f1' & par9b$rhs == 'f2', 'est'], 6))) == 1 &&
     round(lavres9a$fit['fmin'], 6) == 0  &&
-    (lavres9b$fit['df'] - lavres9a$fit['df']) == ph9$power$df &&
-    round(2*lavres9b$fit['fmin'] - ph9$power$fmin, 6) == 0 &&
+    (lavres9b$fit['df'] - lavres9a$fit['df']) == ph9$df &&
+    round(2*lavres9b$fit['fmin'] - ph9$fmin, 6) == 0 &&
     round(sum(abs(par10[par10$op == '=~' & par10$group == 1, 'est'] - par10[par10$op == '=~' & par10$group == 2, 'est'])), 4) == 0 &&
     round(sum(abs(par10[par10$op == '=~' & par10$group == 1, 'est'] - c(.5, .7, .6, .8, .5, .4))), 4) == 0 &&
-    round(2*lavres10b$fit['fmin'] - ph10$power$fmin, 6) == 0 &&
+    round(2*lavres10b$fit['fmin'] - ph10$fmin, 6) == 0 &&
     round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 1, 'est'] - .2, 4) == 0 &&
     round(par10[par10$op == '~~' & par10$lhs != par10$rhs & par10$group == 2, 'est'] - .1, 4) == 0 &&
     length(unique(round(par10b[par10b$op == '~~' & par10b$lhs == 'f1' & par10b$rhs == 'f2', 'est'], 6))) == 1
@@ -1047,22 +1047,22 @@ test_powerRegression <- function(){
   lavres8 <- helper_lav(ph7$modelH0, ph7$Sigma)
   lavres10 <- helper_lav('x1 ~ p1*x2 + p2*x3 \n p1==0', ph7$Sigma)
 
-  valid <- round(ph$power$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
-    round(ph2$power$fmin - 2*lavres3$fit['fmin'], 4) == 0 &&
-    round(ph3$power$fmin - 2*lavres4$fit['fmin'], 4) == 0 &&
+  valid <- round(ph$fmin - 2*lavres$fit['fmin'], 4) == 0 &&
+    round(ph2$fmin - 2*lavres3$fit['fmin'], 4) == 0 &&
+    round(ph3$fmin - 2*lavres4$fit['fmin'], 4) == 0 &&
     round(par2[par2$lhs == 'f1' & par2$rhs == 'f2', 'std.all'] - .2, 4) == 0 &&
     round(par2[par2$lhs == 'f1' & par2$rhs == 'f3', 'std.all'] - .3, 4) == 0 &&
     round(par2[par2$lhs == 'f2' & par2$rhs == 'f3', 'std.all'] - .4, 4) == 0 &&
-    lavres4$fit['df'] - ph3$power$df == 0 && 
+    lavres4$fit['df'] - ph3$df == 0 && 
     round(sum(par4[par4$op == '~~' & par4$lhs != par4$rhs, 'std.all'] - corXX[lower.tri(corXX)])^2, 4) == 0  &&
     round(sum(par4[par4$op == '~' & par4$lhs == 'f1', 'std.all'] - c(.2, .3, .4))^2, 4) == 0 && 
     length(unique(round(par5[par5$lhs == 'f1' & par5$rhs %in% c('f2', 'f3'), 'est'], 4))) == 1 &&
-    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$fmin, 4) == 0 &&
     length(unique(round(par6[par6$lhs == 'f1' & par6$rhs %in% c('f2', 'f3', 'f4'), 'est'], 4))) == 1 &&
-    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
-    ph5$power$df == 1 && ph6$power$df == 2 &&
-    round(ph7$power$fmin - 2*lavres8$fit['fmin'], 4) == 0 &&    
-    round(ph7$power$fmin - 2*lavres10$fit['fmin'], 4) == 0 &&    
+    round(2*lavres7$fit['fmin'] - ph6$fmin, 4) == 0 &&
+    ph5$df == 1 && ph6$df == 2 &&
+    round(ph7$fmin - 2*lavres8$fit['fmin'], 4) == 0 &&    
+    round(ph7$fmin - 2*lavres10$fit['fmin'], 4) == 0 &&    
     round(par7[par7$lhs == 'f1' & par7$rhs == 'f2', 'std.all'] - .2, 4) == 0 &&
     round(par7[par7$lhs == 'f1' & par7$rhs == 'f3', 'std.all'] - .3, 4) == 0 &&
     round(par7[par7$lhs == 'f2' & par7$rhs == 'f3', 'std.all'] - .4, 4) == 0 && 
@@ -1086,7 +1086,7 @@ test_powerRegression <- function(){
     round(sum(abs(par11[par11$op == '=~' & par11$group == 1, 'est'] - par11[par11$op == '=~' & par11$group == 2, 'est'])), 4) == 0 &&
     round(sum(abs(par11[par11$op == '=~' & par11$group == 1, 'est'] - c(rep(.5, 7), rep(.6, 5), rep(.7, 4)))), 4) == 0 &&
     round(sum(abs(par11[par11$lhs == 'f1' & par11$op == '~', 'est'] - c(.2, .3, .4, .2, .1, .4))), 4) == 0 &&
-    round(2*lavres11b$fit['fmin'] - ph11$power$fmin, 4) == 0 &&
+    round(2*lavres11b$fit['fmin'] - ph11$fmin, 4) == 0 &&
     round(par11b[par11b$lhs == 'f1' & par11b$rhs == 'f3' & par11b$group == 1, 'est'] - par11b[par11b$lhs == 'f1' & par11b$rhs == 'f3' & par11b$group == 2, 'est'], 4) == 0 &&
     round(sum(par11b[par11b$lhs == 'f1' & par11b$op == '~' & par11b$rhs != 'f3' & par11b$group == 1, 'est'] - par11b[par11b$lhs == 'f1' & par11b$op == '~' & par11b$rhs != 'f3' & par11b$group == 2, 'est']), 4) > 0
   
@@ -1133,10 +1133,10 @@ test_powerMediation <- function(){
     round(par[par$lhs == 'f3' & par$rhs == 'f2', 'std.all'] - .4, 4) == 0 &&
     round(par[par$lhs == 'ind', 'std.all'] - (.3*.4), 4) == 0  &&
     round(par2[par2$lhs == 'ind', 'std.all'], 4) == 0 &&
-    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    round(ph2$power$fmin - ph$power$fmin, 4) == 0 &&
-    ph$power$df == 1 && ph2$power$df == lavres2$res@Fit@test$standard$df &&
-    round(ph3$power$fmin - ph$power$fmin, 4) == 0
+    round(2*lavres2$fit['fmin'] - ph$fmin, 4) == 0 &&
+    round(ph2$fmin - ph$fmin, 4) == 0 &&
+    ph$df == 1 && ph2$df == lavres2$res@Fit@test$standard$df &&
+    round(ph3$fmin - ph$fmin, 4) == 0
   
   # more complex beta
   B <- matrix(c(
@@ -1157,7 +1157,7 @@ test_powerMediation <- function(){
   
   valid2 <- valid &&
     round(par3[par3$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 &&
-    round(2*lavres4$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph4$fmin, 4) == 0 &&
     round(par4[par4$lhs == 'f2' & par4$rhs == 'f1', 'std.all'], 4) == 0
 
   # observed variables
@@ -1186,7 +1186,7 @@ test_powerMediation <- function(){
   par6 <- lavres6$par  
 
   valid3 <- valid2 &&
-    round(2*lavres5$fit['fmin'] - ph5$power$fmin, 4) == 0 && 
+    round(2*lavres5$fit['fmin'] - ph5$fmin, 4) == 0 && 
     round(par5[par5$lhs == 'ind', 'std.all'] - .3*.4, 4) == 0 && 
     round(par6[par6$lhs == 'ind', 'std.all'] - .2*.3*.4, 4) == 0 
 
@@ -1242,7 +1242,7 @@ test_powerCLPM <- function(doTest = TRUE){
     round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4) == 0 &&
     round(par[par$lhs == 'f3' & par$rhs == 'f4', 'est'], 4) == 0 &&
     round(par2[par2$lhs == 'f4' & par$rhs == 'f1', 'est'], 4) == 0 &&
-    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    round(2*lavres2$fit['fmin'] - ph$fmin, 4) == 0 &&
     !any(!(par2[par2$lhs == 'f1' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f3' & par2$op == '=~', 'label'])) &&
     !any(!(par2[par2$lhs == 'f2' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f4' & par2$op == '=~', 'label']))  
 
@@ -1322,15 +1322,15 @@ test_powerCLPM <- function(doTest = TRUE){
   par7 <- lavres7$par     
   
   valid2 <- valid && 
-    round(2*lavres3$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
+    round(2*lavres3$fit['fmin'] - ph2$fmin, 4) == 0 &&
     round(par3[par3$lhs == 'f3' & par3$rhs == 'f2', 'est'], 4) == 0 &&
-    round(2*lavres4$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph3$fmin, 4) == 0 &&
     round(par4[par4$lhs == 'f3' & par4$rhs == 'f1', 'est'], 4) == 0 &&
-    round(2*lavres5$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
+    round(2*lavres5$fit['fmin'] - ph4$fmin, 4) == 0 &&
     round(par5[par5$lhs == 'f4' & par5$rhs == 'f2', 'est'], 4) == 0 &&
-    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$fmin, 4) == 0 &&
     round(par6[par6$lhs == 'f4' & par6$rhs == 'f2', 'est'] - par6[par6$lhs == 'f3' & par6$rhs == 'f1', 'est'], 4) == 0 &&
-    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph6$fmin, 4) == 0 &&
     round(par7[par7$lhs == 'f4' & par7$rhs == 'f1', 'est'] - par7[par7$lhs == 'f3' & par7$rhs == 'f2', 'est'], 4) == 0
     
   # 2 waves, crossedX=crossedY, cor XY
@@ -1505,25 +1505,25 @@ test_powerCLPM <- function(doTest = TRUE){
   par18 <- lavres19$par
 
   valid4 <- valid3 && 
-    round(sum((par10[par10$lhs %in% c('f3', 'f4') & par10$op == '~', 'est'] - par10[par10$lhs %in% c('f5', 'f6') & par10$op == '~', 'est'])^2), 4) == 0 &&  round(2*lavres11$fit['fmin'] - ph10$power$fmin, 4) == 0 &&
+    round(sum((par10[par10$lhs %in% c('f3', 'f4') & par10$op == '~', 'est'] - par10[par10$lhs %in% c('f5', 'f6') & par10$op == '~', 'est'])^2), 4) == 0 &&  round(2*lavres11$fit['fmin'] - ph10$fmin, 4) == 0 &&
     round(par11[par11$lhs == 'f4' & par11$rhs == 'f1', 'est'], 4) ==  0 &&
     round(par11[par11$lhs == 'f6' & par11$rhs == 'f3', 'est'], 4) ==  0 &&
-    ph10$power$fmin > ph11$power$fmin &&
+    ph10$fmin > ph11$fmin &&
     lavres12$res@Fit@test$standard$df < lavres11$res@Fit@test$standard$df &&
     round(sum((par12[par12$op == '~', 'est'] - c(.8, .3, .2, .7, .7, .1, .1, .6))^2), 4) == 0 && 
-    round(2*lavres14$fit['fmin'] - ph12$power$fmin, 4) == 0 &&
+    round(2*lavres14$fit['fmin'] - ph12$fmin, 4) == 0 &&
     round(par13[par13$lhs == 'f4' & par13$rhs == 'f1', 'est'], 4) != 0 &&
     round(par13[par13$lhs == 'f6' & par13$rhs == 'f3', 'est'], 4) == 0 &&
-    round(2*lavres15$fit['fmin'] - ph13$power$fmin, 4) == 0 &&
+    round(2*lavres15$fit['fmin'] - ph13$fmin, 4) == 0 &&
     round(par14[par14$lhs == 'f3' & par14$rhs == 'f1', 'est'] - par14[par14$lhs == 'f5' & par14$rhs == 'f3', 'est'], 4) == 0 &&
     round(par15[par15$lhs == 'f4' & par15$rhs == 'f2', 'est'] - par15[par15$lhs == 'f6' & par15$rhs == 'f4', 'est'], 4) == 0 &&
     round(par16[par16$lhs == 'f4' & par16$rhs == 'f1', 'est'] - par16[par16$lhs == 'f6' & par16$rhs == 'f3', 'est'], 4) == 0 &&
-    round(2*lavres17$fit['fmin'] - ph15$power$fmin, 4) == 0 &&
+    round(2*lavres17$fit['fmin'] - ph15$fmin, 4) == 0 &&
     round(par17[par17$lhs == 'f3' & par17$rhs == 'f2', 'est'] - par17[par17$lhs == 'f5' & par17$rhs == 'f4', 'est'], 4) == 0 &&
     round(sum((ph16$Sigma - ph15$Sigma)^2), 4) == 0 &&   
     round(sum((ph14$Sigma - ph13$Sigma)^2), 4) == 0 &&   
     round(sum((ph13$Sigma - ph16$Sigma)^2), 4) == 0 &&
-    round(2*lavres19$fit['fmin'] - ph17$power$fmin) == 0 &&
+    round(2*lavres19$fit['fmin'] - ph17$fmin) == 0 &&
     round(sum((par18[par18$lhs == 'f3' & par18$rhs == 'f4', 'est'] - par18[par18$lhs == 'f5' & par18$rhs == 'f6', 'est'])^2), 4) == 0  
   
   
@@ -1597,8 +1597,8 @@ test_powerCLPM <- function(doTest = TRUE){
     sum((par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 1, 'est']) - (par22[par22$lhs %in% c('f3', 'f5') & par22$rhs %in% c('f1', 'f3') & par22$op == '~' & par22$group == 2, 'est'])) > .1 &&
     length(unique(round(par21[par21$lhs %in% c('f3','f5') & par21$op == '~' & par21$rhs %in% c('f3','f1'), 'est'], 4))) == 1 &&
     lavres21$fit['df'] - lavres22$fit['df'] == 1 &&
-    ph21$power$fmin - 2*lavres21$fit['fmin'] < 1e-6 &&
-    ph23$power$fmin - ph21$power$fmin < 1e-8
+    ph21$fmin - 2*lavres21$fit['fmin'] < 1e-6 &&
+    ph23$fmin - ph21$fmin < 1e-8
 
 
   if(valid6){
@@ -1640,7 +1640,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(par[par$lhs == 'f5' & par$rhs == 'f6', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 2
     round(par[par$lhs == 'f7' & par$rhs == 'f8', 'est'], 4) == 0 && # correlation btw. residuals of factors at wave 3
     round(par2[par2$lhs == 'f6' & par2$rhs == 'f3', 'est'], 4) == 0 && # nullEffect
-    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
+    round(2*lavres2$fit['fmin'] - ph$fmin, 4) == 0 &&
     !any(!(par2[par2$lhs == 'f9' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f11' & par2$op == '=~', 'label'])) && # metricInvariance labels
     !any(!(par2[par2$lhs == 'f9' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f13' & par2$op == '=~', 'label'])) && 
     !any(!(par2[par2$lhs == 'f10' & par2$op == '=~', 'label'] == par2[par2$lhs == 'f12' & par2$op == '=~', 'label'])) && 
@@ -1761,12 +1761,12 @@ test_powerRICLPM <- function(doTest = TRUE){
   
   # check fmin
   valid <- valid && 
-    round(2*lavres2$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    round(2*lavres3$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
-    round(2*lavres4$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
-    round(2*lavres5$fit['fmin'] - ph4$power$fmin, 4) == 0 &&
-    round(2*lavres6$fit['fmin'] - ph5$power$fmin, 4) == 0 &&
-    round(2*lavres7$fit['fmin'] - ph6$power$fmin, 4) == 0 
+    round(2*lavres2$fit['fmin'] - ph$fmin, 4) == 0 &&
+    round(2*lavres3$fit['fmin'] - ph2$fmin, 4) == 0 &&
+    round(2*lavres4$fit['fmin'] - ph3$fmin, 4) == 0 &&
+    round(2*lavres5$fit['fmin'] - ph4$fmin, 4) == 0 &&
+    round(2*lavres6$fit['fmin'] - ph5$fmin, 4) == 0 &&
+    round(2*lavres7$fit['fmin'] - ph6$fmin, 4) == 0 
   
   
   
@@ -1825,7 +1825,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     !any(!(par9[par9$lhs == 'f9' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f13' & par9$op == '=~', 'label'])) && 
     !any(!(par9[par9$lhs == 'f10' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f12' & par9$op == '=~', 'label'])) && 
     !any(!(par9[par9$lhs == 'f10' & par9$op == '=~', 'label'] == par9[par9$lhs == 'f14' & par9$op == '=~', 'label'])) &&
-    round(2*lavres9$fit['fmin'] - ph8$power$fmin, 4) == 0
+    round(2*lavres9$fit['fmin'] - ph8$fmin, 4) == 0
   
   
   
@@ -1863,7 +1863,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     !any(!(par10[par10$lhs == 'f10' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f12' & par10$op == '=~', 'est'])) && 
     !any(!(par10[par10$lhs == 'f10' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f14' & par10$op == '=~', 'est'])) &&
     !any(!(par10[par10$lhs == 'f12' & par10$op == '=~', 'est'] != par10[par10$lhs == 'f14' & par10$op == '=~', 'est'])) &&
-    round(2*lavres10$fit['fmin'] - ph9$power$fmin, 4) == 0
+    round(2*lavres10$fit['fmin'] - ph9$fmin, 4) == 0
   
   
   
@@ -1915,7 +1915,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     !any(!(par11[par11$lhs == 'f10' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f12' & par11$op == '=~', 'est'])) && 
     !any(!(par11[par11$lhs == 'f10' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f14' & par11$op == '=~', 'est'])) &&
     !any(!(par11[par11$lhs == 'f12' & par11$op == '=~', 'est'] != par11[par11$lhs == 'f14' & par11$op == '=~', 'est'])) &&
-    round(2*lavres11$fit['fmin'] - ph10$power$fmin, 4) == 0
+    round(2*lavres11$fit['fmin'] - ph10$fmin, 4) == 0
   
   
   
@@ -1954,7 +1954,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     sum(round(par[par$lhs == 'f13' & par$op == '=~', 'est'], 4) - 1) == 0 &&
     sum(round(par[par$lhs == 'f14' & par$op == '=~', 'est'], 4) - 1) == 0 &&
     round(par12[par12$lhs == 'f5' & par12$rhs == 'f3', 'est'], 4) == round(par12[par12$lhs == 'f6' & par12$rhs == 'f4', 'est'], 4) && # nullEffect
-    round(2*lavres12$fit['fmin'] - ph11$power$fmin, 4) == 0
+    round(2*lavres12$fit['fmin'] - ph11$fmin, 4) == 0
   
   
   # 3 waves, corXY, corBXBY, crossedX = crossedY 
@@ -1990,7 +1990,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     !any(!(par13[par13$lhs == 'f9' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f13' & par13$op == '=~', 'label'])) && 
     !any(!(par13[par13$lhs == 'f10' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f12' & par13$op == '=~', 'label'])) && 
     !any(!(par13[par13$lhs == 'f10' & par13$op == '=~', 'label'] == par13[par13$lhs == 'f14' & par13$op == '=~', 'label'])) &&
-    round(2*lavres9$fit['fmin'] - ph12$power$fmin, 4) == 0
+    round(2*lavres9$fit['fmin'] - ph12$fmin, 4) == 0
   
   
   
@@ -2039,7 +2039,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     !any(!(par14[par14$lhs == 'f10' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f12' & par14$op == '=~', 'est'])) && 
     !any(!(par14[par14$lhs == 'f10' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f14' & par14$op == '=~', 'est'])) &&
     !any(!(par14[par14$lhs == 'f12' & par14$op == '=~', 'est'] != par14[par14$lhs == 'f14' & par14$op == '=~', 'est'])) &&
-    round(2*lavres14$fit['fmin'] - ph13$power$fmin, 4) == 0
+    round(2*lavres14$fit['fmin'] - ph13$fmin, 4) == 0
   
   
   
@@ -2082,7 +2082,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(par15[par15$lhs == 'f6' & par15$rhs == 'f3', 'est'], 4) == 0 && # nullEffect
     round(par15[par15$lhs == 'f8' & par15$rhs == 'f5', 'est'], 4) == 0 && 
     round(par15[par15$lhs == 'f10' & par15$rhs == 'f7', 'est'], 4) == 0 &&
-    round(2*lavres15$fit['fmin'] - ph14$power$fmin, 4) == 0
+    round(2*lavres15$fit['fmin'] - ph14$fmin, 4) == 0
   
   
   
@@ -2126,7 +2126,7 @@ test_powerRICLPM <- function(doTest = TRUE){
                                alpha = .05, N = 250)
   
   valid <- valid &&    
-    ph15$power$fmin > ph16$power$fmin # no wave-invariant constraints should lead to less power
+    ph15$fmin > ph16$fmin # no wave-invariant constraints should lead to less power
   
   
   
@@ -2163,7 +2163,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(par18[par18$lhs == 'f6' & par18$rhs == 'f3', 'est'], 4) != 0 && # nullEffect 
     round(par18[par18$lhs == 'f8' & par18$rhs == 'f5', 'est'], 4) == 0 && # nullWhich = 2
     round(par18[par18$lhs == 'f10' & par18$rhs == 'f7', 'est'], 4) != 0 &&
-    round(2*lavres18$fit['fmin'] - ph17$power$fmin, 4) == 0
+    round(2*lavres18$fit['fmin'] - ph17$fmin, 4) == 0
   
   
   
@@ -2198,7 +2198,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
     round(par19[par19$lhs == 'f5' & par19$rhs == 'f3', 'est'], 4) == round(par19[par19$lhs == 'f7' & par19$rhs == 'f5', 'est'], 4) && # nullEffect
     round(par19[par19$lhs == 'f5' & par19$rhs == 'f3', 'est'], 4) == round(par19[par19$lhs == 'f9' & par19$rhs == 'f7', 'est'], 4) && 
-    round(2*lavres19$fit['fmin'] - ph18$power$fmin, 4) == 0
+    round(2*lavres19$fit['fmin'] - ph18$fmin, 4) == 0
   
   
   # 4 waves, no wave-invariant constraints, autoregY equal 
@@ -2232,7 +2232,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
     round(par20[par20$lhs == 'f6' & par20$rhs == 'f4', 'est'], 4) == round(par20[par20$lhs == 'f8' & par20$rhs == 'f6', 'est'], 4) && # nullEffect
     round(par20[par20$lhs == 'f6' & par20$rhs == 'f4', 'est'], 4) == round(par20[par20$lhs == 'f10' & par20$rhs == 'f8', 'est'], 4) && 
-    round(2*lavres20$fit['fmin'] - ph19$power$fmin, 4) == 0
+    round(2*lavres20$fit['fmin'] - ph19$fmin, 4) == 0
   
   
   
@@ -2268,7 +2268,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
     round(par21[par21$lhs == 'f6' & par21$rhs == 'f3', 'est'], 4) == round(par21[par21$lhs == 'f8' & par21$rhs == 'f5', 'est'], 4) && # nullEffect
     round(par21[par21$lhs == 'f6' & par21$rhs == 'f3', 'est'], 4) == round(par21[par21$lhs == 'f10' & par21$rhs == 'f7', 'est'], 4) && 
-    round(2*lavres21$fit['fmin'] - ph20$power$fmin, 4) == 0
+    round(2*lavres21$fit['fmin'] - ph20$fmin, 4) == 0
   
   
   
@@ -2304,7 +2304,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
     round(par22[par22$lhs == 'f5' & par22$rhs == 'f4', 'est'], 4) == round(par22[par22$lhs == 'f7' & par22$rhs == 'f6', 'est'], 4) && # nullEffect
     round(par22[par22$lhs == 'f5' & par22$rhs == 'f4', 'est'], 4) == round(par22[par22$lhs == 'f9' & par22$rhs == 'f8', 'est'], 4) && 
-    round(2*lavres22$fit['fmin'] - ph21$power$fmin, 4) == 0
+    round(2*lavres22$fit['fmin'] - ph21$fmin, 4) == 0
   
   
   # 4 waves, no wave-invariant constraints, corXY equal 
@@ -2338,7 +2338,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     round(sum(par[par$lhs %in% paste0('f',11:18) & par$op == '=~', 'est'] - rep(.5, 24)), 4) == 0 && # factor loadings
     round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f7' & par23$rhs == 'f8', 'est'], 4) && # nullEffect
     round(par23[par23$lhs == 'f5' & par23$rhs == 'f6', 'est'], 4) == round(par23[par23$lhs == 'f9' & par23$rhs == 'f10', 'est'], 4) && 
-    round(2*lavres23$fit['fmin'] - ph22$power$fmin, 4) == 0
+    round(2*lavres23$fit['fmin'] - ph22$fmin, 4) == 0
 
   
   # multigroup case, crossedX 
@@ -2458,7 +2458,7 @@ test_powerPath <- function(){
 
   valid <- round(sum(abs(par1a[par1a$op == '~', 'std.all'] - c(.3, .25, .4))), 4) == 0 &&
     par1b[par1b$lhs == 'f3' & par1b$rhs == 'f1', 'std.all'] == 0 &&
-    round(2*lavres1b$fit['fmin'] - ph1$power$fmin, 4) == 0 &&
+    round(2*lavres1b$fit['fmin'] - ph1$fmin, 4) == 0 &&
     sum(abs(powerMed$Sigma - ph1$Sigma)) < 1e-6 &&
     sum(round(abs(par11a[par11a$op == '~', 'std.all'] - par11a[par11a$op == '~', 'est']), 4)) > 0 &&
     round(sum(abs(par1a[par1a$op == '~', 'est'] - c(.3, .25, .4))), 4) == 0
@@ -2523,10 +2523,10 @@ test_powerPath <- function(){
   valid2 <- valid && 
     par2a[par2a$lhs == 'f1' & par2a$rhs == 'f2', 'est'] - .2 < 1e-6 &&
     length(unique(round(par3a[par3a$lhs == 'f3' & par3a$op == '~', 'est'], 4))) == 1 &&
-    2*lavres3a$fit['fmin'] - ph3$power$fmin < 1e-6  &&
+    2*lavres3a$fit['fmin'] - ph3$fmin < 1e-6  &&
     length(unique(round(par4a[par4a$lhs == 'f3' & par4a$rhs == 'f1',  'est'], 4))) == 2 &&
     length(unique(round(par4b[par4b$lhs == 'f3' & par4b$rhs == 'f1',  'est'], 4))) == 1 &&
-    2*lavres4b$fit['fmin'] - ph4$power$fmin < 1e-6 &&
+    2*lavres4b$fit['fmin'] - ph4$fmin < 1e-6 &&
     sum(preg$Sigma[c(4:9, 1:3), c(4:9, 1:3)] - ph2$Sigma) == 0
   
   if(valid2){
@@ -2568,13 +2568,13 @@ test_powerMI <- function(){
   lavres3a <- helper_lav(ph3$modelH0, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings', 'intercepts'))
   lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma, sample.nobs = list(250, 250), sample.mean = ph3$mu, group.equal = c('loadings'))
   
-  valid <- round(2*lavres$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    lavres$fit['df'] - ph$power$df == 0 &&
-    ph2$power$fmin - ph$power$fmin < 1e-6 &&
-    ph2$power$df == (lavres2a$fit['df'] - lavres2b$fit['df']) &&
-    round(ph2$power$fmin - 2*(lavres2a$fit['fmin'] - lavres2b$fit['fmin']), 4) == 0 &&
-    ph3$power$df - (lavres3a$fit['df'] - lavres3b$fit['df']) == 0 &&
-    round(ph3$power$fmin - 2*(lavres3a$fit['fmin'] - lavres3b$fit['fmin']), 4) == 0
+  valid <- round(2*lavres$fit['fmin'] - ph$fmin, 4) == 0 &&
+    lavres$fit['df'] - ph$df == 0 &&
+    ph2$fmin - ph$fmin < 1e-6 &&
+    ph2$df == (lavres2a$fit['df'] - lavres2b$fit['df']) &&
+    round(ph2$fmin - 2*(lavres2a$fit['fmin'] - lavres2b$fit['fmin']), 4) == 0 &&
+    ph3$df - (lavres3a$fit['df'] - lavres3b$fit['df']) == 0 &&
+    round(ph3$fmin - 2*(lavres3a$fit['fmin'] - lavres3b$fit['fmin']), 4) == 0
   
   # metric vs saturated: lav model string
   ph4 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
@@ -2605,11 +2605,11 @@ test_powerMI <- function(){
   lavres7b <- helper_lav(ph7$modelH1, ph7$Sigma, sample.nobs = list(250, 250), sample.mean = ph7$mu, group.equal = c('loadings', 'intercepts'))
   
   valid2 <- valid &&
-    round(ph4$power$fmin - ph$power$fmin, 4) == 0 &&
-    round(ph5$power$fmin - ph2$power$fmin, 4) == 0 &&
-    round(ph6$power$fmin - ph3$power$fmin, 4) == 0 &&
-    ph7$power$df == (lavres7a$fit['df'] - lavres7b$fit['df']) &&
-    round(ph7$power$fmin - 2*(lavres7a$fit['fmin'] - lavres7b$fit['fmin']), 4) == 0 
+    round(ph4$fmin - ph$fmin, 4) == 0 &&
+    round(ph5$fmin - ph2$fmin, 4) == 0 &&
+    round(ph6$fmin - ph3$fmin, 4) == 0 &&
+    ph7$df == (lavres7a$fit['df'] - lavres7b$fit['df']) &&
+    round(ph7$fmin - 2*(lavres7a$fit['fmin'] - lavres7b$fit['fmin']), 4) == 0 
   
   if(valid2){
     print('test_powerMI: OK')
@@ -2660,14 +2660,14 @@ test_powerBifactor <- function(doTest = TRUE){
   par2 <- lavres2$par
   
   valid <- round(lavres1b$fit['fmin'], 4) == 0 &&
-    round(2*lavres1a$fit['fmin'] - ph$power$fmin, 4) == 0 &&
-    ph$power$df == 1 &&
+    round(2*lavres1a$fit['fmin'] - ph$fmin, 4) == 0 &&
+    ph$df == 1 &&
     par1a[par1a$lhs == 'f1' & par1a$rhs == 'f5', 'est'] == 0 &&
     abs(par1b[par1b$lhs == 'f1' & par1b$rhs == 'f5', 'std.all'] - Phi) < 1e-6 &&
     sum(par1b$rhs %in% paste0('x', 1:2) & par1b$op == '=~') == 2 &&
     sum(par1b$rhs %in% paste0('x', 3:11) & par1b$op == '=~') == 18 &&
     sum(par1b$rhs %in% paste0('x', 12:15) & par1b$op == '=~') == 4 &&
-    round(2*lavres2b$fit['fmin'] - ph2$power$fmin, 4) == 0 &&
+    round(2*lavres2b$fit['fmin'] - ph2$fmin, 4) == 0 &&
     sum(par2$rhs %in% paste0('x', 8:10) & par2$op == '=~') == 3 &&
     sum(par2$rhs %in% paste0('x', c(2:7, 11:14)) & par2$op == '=~') == 20
   
@@ -2711,8 +2711,8 @@ test_powerBifactor <- function(doTest = TRUE){
   
   valid2 <- valid &&
     round(lavres3b$fit['fmin'], 4) == 0 &&
-    round(2*lavres3a$fit['fmin'] - ph3$power$fmin, 4) == 0 &&
-    ph3$power$df == 1 &&
+    round(2*lavres3a$fit['fmin'] - ph3$fmin, 4) == 0 &&
+    ph3$df == 1 &&
     par3a[par3a$lhs == 'f1' & par3a$rhs == 'f2', 'est'] == 0 &&
     sum(par3b$rhs %in% paste0('x', 1) & par3b$op == '=~') == 1 &&
     sum(par3b$rhs %in% paste0('x', 2) & par3b$op == '=~') == 1 &&
@@ -2735,7 +2735,7 @@ test_powerBifactor <- function(doTest = TRUE){
   
   valid3 <- valid2 &&
     length(unique(round(par4a[par4a$lhs %in% c('f1','f2') & par4a$rhs == 'f9', 'est'], 4))) == 1 &&
-    round(2*lavres4a$fit['fmin'] - ph4$power$fmin, 4) == 0
+    round(2*lavres4a$fit['fmin'] - ph4$fmin, 4) == 0
   
   
   # multigroup 
@@ -2764,7 +2764,7 @@ test_powerBifactor <- function(doTest = TRUE){
   
   valid4 <- valid3 &&
     lavres5b$fit['fmin'] < 1e-8 &&
-    abs(2*lavres5a$fit['fmin'] - ph5$power$fmin) < 1e-8 &&
+    abs(2*lavres5a$fit['fmin'] - ph5$fmin) < 1e-8 &&
     sum(abs(par5b[par5b$lhs == 'f1' & par5b$rhs == 'f5', 'std.all'] - c(.3, .1))) < 1e-6 &&
     length(unique(round(par5a[par5a$lhs == 'f1' & par5a$rhs == 'f5', 'est'], 4))) == 1
   
@@ -2810,13 +2810,13 @@ test_simulatePower <- function(doTest = TRUE){
   
   lavres <- helper_lav(modelH0, Sigma, 250) 
   SigmaHat <- lavaan::fitted(lavres$res)$cov
-  pha2 <- semPower.postHoc(alpha = .05, N = 250, df = pha$power$df,
+  pha2 <- semPower.postHoc(alpha = .05, N = 250, df = pha$df,
                            SigmaHat = SigmaHat, Sigma = Sigma)
   
-  valid <- (phs$power$simPower - pha$power$power)^2 < .05^2 &&
-    phs$power$simDf == pha$power$df &&
-    round(phs$power$simPower - phs2$simPower, 4) == 0 &&
-    round(pha2$power - pha$power$power, 4) == 0 &&
+  valid <- (phs$simPower - pha$power)^2 < .05^2 &&
+    phs$simDf == pha$df &&
+    round(phs$simPower - phs2$simPower, 4) == 0 &&
+    round(pha2$power - pha$power, 4) == 0 &&
     round((2*lavres$fit['fmin'] - pha2$fmin)^2, 4) == 0 &&
     abs(phs2$simFmin - pha2$fmin) < .15 * pha2$fmin  && # need some margin
     phs2a$simPower - phs2$simPower < 1e-6
@@ -2839,8 +2839,8 @@ test_simulatePower <- function(doTest = TRUE){
   summary(phs3$power)
   
   valid2 <- valid &&
-    phs3$power$simDf - pha3$power$df == 0 &&
-    (phs3$power$simPower - pha3$power$power)^2 < .05^2
+    phs3$simDf - pha3$df == 0 &&
+    (phs3$simPower - pha3$power)^2 < .05^2
   
   
   # a priori
@@ -2858,10 +2858,10 @@ test_simulatePower <- function(doTest = TRUE){
                             simOptions = list(nReplications = 200, nCores = 8))
   
   valid3 <- valid2 &&
-    apa$power$df == aps$simDf &&
-    aps$simRequiredN - aps2$power$simRequiredN == 0 &&
+    apa$df == aps$simDf &&
+    aps$simRequiredN - aps2$simRequiredN == 0 &&
     abs(aps$desiredPower - aps$simImpliedPower) < .05  &&              # 5% margin should be ok
-    abs(apa$power$requiredN - aps$simRequiredN) < .05 * apa$power$requiredN  # 5% margin should be ok
+    abs(apa$requiredN - aps$simRequiredN) < .05 * apa$requiredN  # 5% margin should be ok
   
   # a priori + restricted
   apa2 <- semPower.powerLav('ap', alpha = .05, power = .80,
@@ -2873,9 +2873,9 @@ test_simulatePower <- function(doTest = TRUE){
                            simOptions = list(nReplications = 200, nCores = 8))
   
   valid4 <- valid3 &&
-    apa2$power$df == aps3$simDf &&
+    apa2$df == aps3$simDf &&
     abs(aps3$desiredPower - aps3$simImpliedPower) < .07  &&                     # 7% margin should be still ok
-    abs(apa2$power$requiredN - aps3$simRequiredN) < .05 * apa2$power$requiredN  # 5% margin should be ok
+    abs(apa2$requiredN - aps3$simRequiredN) < .05 * apa2$requiredN  # 5% margin should be ok
   
   
   # try different estimator
@@ -2938,7 +2938,7 @@ test_simulatePower <- function(doTest = TRUE){
   aps5 <- semPower.aPriori(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
-                           alpha = .05, power = pha5$power$power, N = list(1, 1),
+                           alpha = .05, power = pha5$power, N = list(1, 1),
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200, nCores = 8))
   # add weights
@@ -2953,14 +2953,14 @@ test_simulatePower <- function(doTest = TRUE){
   aps6 <- semPower.aPriori(modelH0 = generated$modelTrue,
                            Sigma = list(generated$Sigma, generated2$Sigma),
                            lavOptions = list(group.equal = c('loadings')),
-                           alpha = .05, power = apa6$power$impliedPower, N = list(1, 2),
+                           alpha = .05, power = apa6$impliedPower, N = list(1, 2),
                            simulatedPower = TRUE,
                            simOptions = list(nReplications = 200, nCores = 8))
   
   valid6 <- valid5 &&
-    abs(pha5$power$power - phs5$power) < .05 &&
-    abs(sum(unlist(aps5$simRequiredN)) - sum(unlist(pha5$power$N))) < .25*sum(unlist(pha5$power$N)) &&
-    sum(abs(unlist(apa6$power$requiredN.g) - unlist(aps6$simRequiredN.g))) < .1*apa6$power$requiredN
+    abs(pha5$power - phs5$power) < .05 &&
+    abs(sum(unlist(aps5$simRequiredN)) - sum(unlist(pha5$N))) < .25*sum(unlist(pha5$N)) &&
+    sum(abs(unlist(apa6$requiredN.g) - unlist(aps6$simRequiredN.g))) < .1*apa6$requiredN
   
   # other distributions
   phA <- semPower.powerCFA(type = 'ph', alpha = .05, N = 250,
@@ -3072,10 +3072,10 @@ test_simulatePower <- function(doTest = TRUE){
                             ))
 
   valid7 <- valid6 &&
-    ph7$power$simPower - phA$power$power > .2 &&
-    ph8$power$simPower - phA$power$power > .2 &&
-    ph9$power$simPower - phA$power$power > .2 &&
-    ph9$power$simPower != ph10$power$simPower
+    ph7$simPower - phA$power > .2 &&
+    ph8$simPower - phA$power > .2 &&
+    ph9$simPower - phA$power > .2 &&
+    ph9$simPower != ph10$simPower
     
 
   if(valid7){
@@ -3107,4 +3107,4 @@ test_all <- function(){
   test_simulatePower(doTest = FALSE)
 }
 
-#test_all()
+test_all()
