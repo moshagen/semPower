@@ -285,8 +285,8 @@ semPower.powerLav <- function(type,
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param Phi either a single number defining the correlation between exactly two factors or the factor correlation matrix. A list for multiple group models.
-#' @param nullEffect defines the hypothesis of interest, must be one of `'cor = 0'` (the default) to test whether a correlation is zero, `'corX = corZ'` to test for the equality of correlations, and `'corA = corB'` to test for the equality of a correlation across groups. Define the correlations to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
-#' @param nullWhich vector of size 2 indicating which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e., `nullWhich = c(1, 2)`.
+#' @param nullEffect defines the hypothesis of interest, must be one of `'cor = 0'` (the default) to test whether a correlation is zero, `'corX = corZ'` to test for the equality of correlations, `'corA = corB'` to test for the equality of a correlation across groups, and `loading = 0` to test whether a loading is zero. Define the correlations to be set to equality in `nullWhich` and the groups in `nullWhichGroups`. 
+#' @param nullWhich vector of size 2 indicating which element in Lambda should equal zero when `nullEffect = 'loading = 0'`, or which factor correlation in `Phi` is hypothesized to equal zero when `nullEffect = 'cor = 0'`, or to restrict to equality across groups when `nullEffect = 'corA = corB'`, or list of vectors defining which correlations to restrict to equality when `nullEffect = 'corX = corZ'`. Can also contain more than two correlations, e.g., `list(c(1, 2), c(1, 3), c(2, 3))` to set `Phi[1, 2] = Phi[1, 3] = Phi[2, 3]`. If omitted, the correlation between the first and the second factor is targeted, i. e., `nullWhich = c(1, 2)`.
 #' @param nullWhichGroups for `nullEffect = 'corA = corB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
@@ -301,6 +301,7 @@ semPower.powerLav <- function(type,
 #' 
 #' This function performs a power analysis to reject various hypotheses arising
 #' in standard CFA models:
+#' * `nullEffect = 'loading = 0'`: Tests the hypothesis that a loading is zero.
 #' * `nullEffect = 'cor = 0'`: Tests the hypothesis that the correlation between two factors is zero. 
 #' * `nullEffect = 'corX = corZ'`: Tests the hypothesis that two or more correlations between three or more factors are equal to each other.
 #' * `nullEffect = 'corA = corB'`: Tests the hypothesis that the correlation between two factors is equal in two or more groups (always assuming metric invariance).
@@ -396,7 +397,24 @@ semPower.powerLav <- function(type,
 #'                               loadings = list(c(.7, .6, .5), 
 #'                                               c(.5, .6, .4, .8)),
 #'                               alpha = .05, beta = .05)
-#'                               
+#'
+#' # detect that the loading of indicator 4 on the first factor differs from zero
+#' Lambda <- matrix(c(
+#'   c(.8, 0),
+#'   c(.4, 0),
+#'   c(.6, 0),
+#'   c(.1, .5),
+#'   c(0, .6),
+#'   c(0, .7)
+#' ), ncol = 2, byrow = TRUE)
+#' powercfa <- semPower.powerCFA(type = 'a-priori',
+#'                               Phi = .2,
+#'                               nullEffect = 'loading = 0', 
+#'                               nullWhich = c(4, 1), 
+#'                               Lambda = Lambda,
+#'                               alpha = .05, beta = .05)
+#'
+#'
 #' # get required N to detect a correlation of >= .3 between factors 1 and 3  
 #' # in a three factor model. Factors are measured by 3 indicators each, and all loadings 
 #' # on the first, second, and third factor are .5, .6, and .7, respectively.
@@ -466,9 +484,9 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   checkEllipsis(...)
   comparison <- checkComparisonModel(comparison)
   if(is.null(Phi)) stop('Phi must be defined')
-  nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb'))
+  nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb', 'loading=0'))
   if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
-  if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to muligroup analysis, so Phi must be a list.')
+  if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to multigroup analysis, so Phi must be a list.')
   if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, 'Each element in nullWhichGroups', bound = c(1, length(Phi)), inclusive = TRUE)) 
     
   # generate sigma 
@@ -476,19 +494,26 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   
   ### now do validation of nullWhich, since we now know Phi
   isMultigroup <- is.list(Phi)
-  if(isMultigroup) nfac <- ncol(generated[[1]][['Phi']]) else nfac <- ncol(generated[['Phi']]) 
-  if(is.null(nullWhich) && nfac == 2) nullWhich <- c(1, 2)
-  if(is.null(nullWhich)) stop('nullWhich must be defined.')
-  if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
-  if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
-  if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
-  if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 || x[2] < 1 || x[1] > nfac || x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
-  if(length(nullWhich) > 1){
-    for(i in 1:(length(nullWhich) - 1)){
-      for(j in (i + 1):length(nullWhich)){
-        if(nullWhich[[i]][1] == nullWhich[[j]][1] && nullWhich[[i]][2] == nullWhich[[j]][2]) stop('elements in nullWhich may not refer to the same correlation')
+  if(isMultigroup) nfac <- ncol(generated[[1]][['Phi']]) else nfac <- ncol(generated[['Phi']])
+  if(nullEffect != 'loading=0'){
+    if(is.null(nullWhich) && nfac == 2) nullWhich <- c(1, 2)
+    if(is.null(nullWhich)) stop('nullWhich must be defined.')
+    if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
+    if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
+    if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
+    if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 || x[2] < 1 || x[1] > nfac || x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')
+    if(length(nullWhich) > 1){
+      for(i in 1:(length(nullWhich) - 1)){
+        for(j in (i + 1):length(nullWhich)){
+          if(nullWhich[[i]][1] == nullWhich[[j]][1] && nullWhich[[i]][2] == nullWhich[[j]][2]) stop('elements in nullWhich may not refer to the same correlation')
+        }
       }
     }
+  }else{
+    if(is.null(nullWhich)) stop('nullWhich must be defined.')
+    if(length(nullWhich) != 2) stop('nullWhich must be a vector with two elements.')
+    if(nullWhich[1] > nrow(generated[['Lambda']]) || nullWhich[2] > ncol(generated[['Lambda']])  ) stop('nullWhich refers to an invalid element in Lambda. The first entry must be <= nIndicator, the second <= nFactors.')
+    if(generated[['Lambda']][nullWhich[1], nullWhich[2]] == 0) stop('nullWhich refers to a loading with a population value of zero. The loading referred by nullWhich must differ from zero.')
   }
   
   ### H0 model
@@ -520,6 +545,25 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     modelH0 <- paste(c(modelH0,
                        paste0('f', nullWhich[[1]], collapse = paste0(' ~~ ', lab))),
                        collapse = '\n')
+  }else if(nullEffect == 'loading=0'){
+    tInd <- paste0('x', nullWhich[1])
+    tFac <- paste0('f', nullWhich[2])
+    tok <- strsplit(modelH0, '\n', fixed = TRUE)[[1]]
+    tok <- lapply(tok, function(x){
+      if(startsWith(x, tFac) && grepl('=~', x)){
+        t <- lapply(strsplit(strsplit(x, '=~', fixed = TRUE)[[1]][2], '+', fixed = TRUE)[[1]], trimws)
+        idx <- which(unlist(t) %in% tInd)
+        if(grepl('NA', t[[idx]])){
+          t[[idx]] <- sub('NA', '0', t[[idx]])
+        }else{
+          t[[idx]] <- paste0('0*', t[[idx]])
+        }
+        paste0(tFac, ' =~ ', paste0(unlist(t), collapse = ' + '))
+      }else{
+        x
+      }
+    })
+    modelH0 <- paste(unlist(tok), collapse = '\n')
   }else{
     stop('nullEffect not defined')
   }

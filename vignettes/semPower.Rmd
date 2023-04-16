@@ -658,6 +658,7 @@ powerCFA <- semPower.powerCFA(
 * whether a correlation differs from zero (`nullEffect = 'cor = 0'`). 
 * whether two correlations differ from each other (`nullEffect = 'corX = corZ'`).
 * whether a correlation differs across two or more groups (`nullEffect = 'corA = corB'`).
+* whether a loading differs from zero (`nullEffect = 'loading = 0'`). 
 
 `semPower.powerCFA` only addresses hypotheses concerning correlation(s) involving one or more factors. `semPower` provides other convenience functions for hypothesis arising in [latent regression models](#powerRegression), models involving a [bifactor structure](#powerBifactor), [mediation models](#powerMediation), [generic path models](#powerPath), and [multigroup measurement invariance](#powerMI). For hypotheses regarding global model fit, a [model-free power analysis](#modelFreePower) should be performed. 
 
@@ -823,6 +824,35 @@ powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = l
                               loadM = c(.7, .5), 
                               nIndicator = c(5, 5))
 ```
+
+
+##### Detect whether a loading differs from zero {-}
+
+To perform a power analysis to detect whether a loading differs from zero, use `nullEffect = 'loading = 0'`. 
+
+For this type of hypothesis, it is often useful to define the loadings using the full loading matrix (`Lambda`), as the interest often lies in the power to detect secondary loadings. The `nullWhich` argument then is a vector defining which element in `Lambda` is hypothesized to equal zero.
+
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the loading of indicator 4 on factor 1 (of .1;  `nullWhich = c(4, 1)`) differs from zero (`nullEffect = 'loading = 0'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). A two factor model is defined with the loadings corresponding to the ones defined in `Lambda` and a factor correlation of .2 (`Phi = .2`).
+
+```{r eval=FALSE}
+
+Lambda <- matrix(c(
+   c(0.80, 0.00),
+   c(0.70, 0.00),
+   c(0.60, 0.00),
+   c(0.10, 0.50),
+   c(0.00, 0.50),
+   c(0.00, 0.80)
+ ), ncol = 2,byrow = TRUE)
+
+powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
+                              Phi = .2,
+                              nullEffect = 'loading = 0',
+                              nullWhich = c(4, 1),
+                              Lambda = Lambda)
+```
+
+
 
 ## Models involving a bifactor structure {#powerBifactor}
 
