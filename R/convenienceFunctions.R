@@ -483,8 +483,9 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
   # validate input
   checkEllipsis(...)
   comparison <- checkComparisonModel(comparison)
-  if(is.null(Phi)) stop('Phi must be defined')
   nullEffect <- checkNullEffect(nullEffect, c('cor=0', 'corx=corz', 'cora=corb', 'loading=0'))
+  if(nullEffect == 'loading=0' && is.null(Phi)) Phi <- diag(1)
+  if(is.null(Phi)) stop('Phi must be defined')
   if(!is.null(nullWhichGroups) && !is.list(Phi)) stop('Phi must be provided for each group.')
   if(nullEffect == 'cora=corb' && !is.list(Phi)) stop('corA=corB refers to multigroup analysis, so Phi must be a list.')
   if(is.list(Phi) && !is.null(nullWhichGroups)) lapply(as.list(nullWhichGroups), function(x) checkBounded(x, 'Each element in nullWhichGroups', bound = c(1, length(Phi)), inclusive = TRUE)) 
