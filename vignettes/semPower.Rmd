@@ -2035,7 +2035,7 @@ $$
 \hat{X_3} = .6 \cdot X_2 + .4 \cdot Y_2 \\
 \hat{Y_3} = .3 \cdot X_2 + .5 \cdot Y_2
 $$
-By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, an identity matrix is assumed for $\Psi$, in turn, leading to unstandardized parameters.
+By default, all defined parameters in `autoregEffects`, `crossedEffects`, and `corXY` are treated as completely standardized parameters (`standardized = TRUE`). In this case `semPower` defines the residual variances in $\Psi$ such that all variances are 1. When `standardized` is set to `FALSE`, all diagonal elements of $\Psi$ are equal to 1, in turn leading to unstandardized parameters.
 
 All of the above holds regardless of whether $X$ and $Y$ are latent factors or observed variables. To define the measurement model for $X$ and $Y$, and thereby also whether these are latent factors or observed variables, arguments [defining the factor model](#factorDefinition) are used assuming the order ($X_1$, $Y_1$, $X_2$, $Y_2$, ..., $X_{nWaves}$, $Y_{nWaves}$). For instance, when there are two waves (`nWaves = 2`), the following shows three equivalent ways to define three indicators for $X$ and four indicators for $Y$ at both waves, where the loadings of each indicator on $X$ are equal to .50 and the loadings on $Y$ are equal to .60:
 
