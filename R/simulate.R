@@ -696,6 +696,7 @@ genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,
     lapply(seq(nSets), function(x){
       rd <- semTools::mvrnonnorm(n = N, 
                                  Sigma = Sigma, 
+                                 mu = rep(0, ncol(Sigma)),
                                  skewness = skewness, 
                                  kurtosis = kurtosis)  
       colnames(rd) <- paste0('x', 1:ncol(Sigma))
