@@ -670,7 +670,8 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 #' the third-order polynomial method  (Vale & Maurelli, 1983) 
 #' specifying third and fourth moments of the marginals.
 #' 
-#' This function is a wrapper for the respective function of the ´semTools´ package. 
+#' This function is a wrapper for the respective function of the `semTools` package 
+#' (which is itself a wrapper for the respective function of the `lavaan`) 
 #' 
 #' For details, see 
 #' Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. *Psychometrika, 48*, 465-471.
@@ -714,7 +715,7 @@ genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,
 #' the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals.
 #' 
-#' This function is a wrapper for the respective function of the ´covsim´ package. 
+#' This function is a wrapper for the respective function of the `covsim` package. 
 #' 
 #' For details, see 
 #' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. 10.1080/00273171.2015.1133274
