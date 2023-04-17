@@ -48,7 +48,7 @@
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `SimDesign` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
 #' 
 #' 
 #' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. doi: 10.1080/00273171.2015.1133274
@@ -670,7 +670,7 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 #' the third-order polynomial method  (Vale & Maurelli, 1983) 
 #' specifying third and fourth moments of the marginals.
 #' 
-#' This function is a wrapper for the respective function of the ´SimDesign´ package. 
+#' This function is a wrapper for the respective function of the ´semTools´ package. 
 #' 
 #' For details, see 
 #' Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. *Psychometrika, 48*, 465-471.
@@ -685,7 +685,7 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,  
                        skewness = NULL, kurtosis = NULL){
   
-  if(!'SimDesign' %in% rownames(installed.packages())) stop('Generation of non-normal random data using VM requires the SimDesign package, so install SimDesign first.')
+  if(!'semTools' %in% rownames(installed.packages())) stop('Generation of non-normal random data using VM requires the semTools package, so install semTools first.')
   if(is.null(skewness) || is.null(kurtosis)) stop('skewness and kurtosis must not be NULL.')
   if(length(skewness) != ncol(Sigma)) stop('skewness must match ncol(Sigma), i.e., must be specified for each variable ')
   if(length(kurtosis) != ncol(Sigma)) stop('kurtosis must match ncol(Sigma), i.e., must be specified for each variable ')
@@ -693,14 +693,15 @@ genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,
 
   tryCatch({
     lapply(seq(nSets), function(x){
-      rd <- SimDesign::rValeMaurelli(n = N,
-                                     sigma = Sigma, 
-                                     skew = skewness,
-                                     kurt = kurtosis
-      )  
+      rd <- semTools::mvrnonnorm(n = N, 
+                                 Sigma = Sigma, 
+                                 skewness = skewness, 
+                                 kurtosis = kurtosis)  
       colnames(rd) <- paste0('x', 1:ncol(Sigma))
       rd
     })
+  }, warning = function(e) {
+    stop('Data generation via VM and the supplied arguments did not succeed. Either change the values for skewness and kurtosis, or try a different data generating routine such as IG.')
   }, error = function(e) {
     stop('Data generation via VM and the supplied arguments did not succeed. Either change the values for skewness and kurtosis, or try a different data generating routine such as IG.')
   })

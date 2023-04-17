@@ -194,7 +194,7 @@ To define the discrepancy between the H0 and the H1 model for power analysis, an
 
 $F_0$ is the population minimum of the Maximum Likelihood fitting function, defined as
 
-$$F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\hat{\Sigma}\Sigma) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
+$$F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\Sigma\hat{\Sigma}^{-1}) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
 where $\Sigma$ is the $p \times p$ population covariance matrix, $\hat{\Sigma}$ the $p \times p$ model-implied covariance matrix, $p$ the number of observed variables, $\mu$ the vector of population means, and $\hat{\mu}$ the model-implied means. If means are not part of the model, the last term becomes zero.
 
 If the model is correct, $\hat{\Sigma} = \Sigma$, $\hat{\mu} = \mu$, and thus $F_0 = 0$. Otherwise, $F_0 > 0$ with higher values expressing a larger discrepancy (misfit) of the model to the data. 
@@ -2903,7 +2903,7 @@ Generating non-normal data with a given covariance structure is a tricky issue, 
 * `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the `covsim` package.
 * `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. This requires the `mnonr` package.
 * `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
-* `type = VM` (Vale & Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be $\geq \text{skew}^2 - 2$. This requires the `SimDesign` package.
+* `type = VM` (Vale & Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be $\geq \text{skew}^2 - 2$. This requires the `semTools` package.
 
 For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a quite strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a more moderate kurtosis between 4 - 6.    
 
