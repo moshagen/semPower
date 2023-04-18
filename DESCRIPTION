@@ -24,13 +24,13 @@ Imports:
     stats,
     utils
 Suggests: 
+    bookdown,
     covsim,
     doSNOW,
     knitr,
     lavaan,
     mnonr,
     rmarkdown,
-    SimDesign
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

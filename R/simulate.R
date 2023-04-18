@@ -48,7 +48,7 @@
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' 
 #' Foldnes, N. & Olsson, U. H. (2016) A Simple Simulation Technique for Nonnormal Data with Prespecified Skewness, Kurtosis, and Covariance Matrix. *Multivariate Behavioral Research, 51*, 207-219. doi: 10.1080/00273171.2015.1133274
@@ -670,8 +670,9 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 #' the third-order polynomial method  (Vale & Maurelli, 1983) 
 #' specifying third and fourth moments of the marginals.
 #' 
-#' This function is a wrapper for the respective function of the `semTools` package 
-#' (which is itself a wrapper for the respective function of the `lavaan`) 
+#' This function is a slightly adapted copy of `lavaan`'s ValeMaurelli1983 implementation
+#' that avoids computing the intermediate correlation for each data sets
+#' and uses Sigma as input.
 #' 
 #' For details, see 
 #' Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. *Psychometrika, 48*, 465-471.
@@ -682,26 +683,91 @@ genData.normal <- function(N = NULL, Sigma = NULL, nSets = 1){
 #' @param skewness vector specifying skewness for each variable 
 #' @param kurtosis vector specifying excess kurtosis for each variable
 #' @return Returns the generated data
-#' @importFrom utils installed.packages
+#' @importFrom stats nlminb
 genData.VM <- function(N = NULL, Sigma = NULL, nSets = 1,  
                        skewness = NULL, kurtosis = NULL){
   
-  if(!'semTools' %in% rownames(installed.packages())) stop('Generation of non-normal random data using VM requires the semTools package, so install semTools first.')
   if(is.null(skewness) || is.null(kurtosis)) stop('skewness and kurtosis must not be NULL.')
-  if(length(skewness) != ncol(Sigma)) stop('skewness must match ncol(Sigma), i.e., must be specified for each variable ')
-  if(length(kurtosis) != ncol(Sigma)) stop('kurtosis must match ncol(Sigma), i.e., must be specified for each variable ')
-  if(any(kurtosis < (skewness^2 - 2))) stop('each marginal kurtosis must be larger than its marginal skewness^2 - 2')
-
+  if(length(skewness) != ncol(Sigma)) stop('skewness must match ncol(Sigma), i.e., must be specified for each variable.')
+  if(length(kurtosis) != ncol(Sigma)) stop('kurtosis must match ncol(Sigma), i.e., must be specified for each variable.')
+  if(any(kurtosis < (skewness^2 - 2))) stop('For VM, each marginal kurtosis must be larger than its marginal skewness^2 - 2')
+  
   tryCatch({
-    lapply(seq(nSets), function(x){
-      rd <- semTools::mvrnonnorm(n = N, 
-                                 Sigma = Sigma, 
-                                 mu = rep(0, ncol(Sigma)),
-                                 skewness = skewness, 
-                                 kurtosis = kurtosis)  
-      colnames(rd) <- paste0('x', 1:ncol(Sigma))
-      rd
-    })
+    
+    # the following is essentially a copy of lavaan's implementation
+    
+    fleishman1978_abcd <- function(skewness, kurtosis) {
+      system.function <- function(x, skewness, kurtosis) {
+        b.=x[1L]; c.=x[2L]; d.=x[3L]
+        eq1 <- b.*b. + 6*b.*d. + 2*c.*c. + 15*d.*d. - 1
+        eq2 <- 2*c.*(b.*b. + 24*b.*d. + 105*d.*d. + 2) - skewness
+        eq3 <- 24*(b.*d. + c.*c.*(1 + b.*b. + 28*b.*d.) +
+                     d.*d.*(12 + 48*b.*d. + 141*c.*c. + 225*d.*d.)) - kurtosis
+        eq <- c(eq1,eq2,eq3)
+        sum(eq*eq) ## SS
+      }
+      
+      out <- nlminb(start=c(1,0,0), objective=system.function,
+                    scale=10,
+                    control=list(trace=0),
+                    skewness=skewness, kurtosis=kurtosis)
+      if(out$convergence != 0 || out$objective > 1e-5) {
+        warning("lavaan WARNING: ValeMaurelli1983 method did not convergence, or it did not find the roots")
+      }
+      b. <- out$par[1L]; c. <- out$par[2L]; d. <- out$par[3L]; a. <- -c.
+      c(a.,b.,c.,d.)
+    }
+    
+    getICOV <- function(b1, c1, d1, b2, c2, d2, R) {
+      objectiveFunction <- function(x, b1, c1, d1, b2, c2, d2, R) {
+        rho=x[1L]
+        eq <- rho*(b1*b2 + 3*b1*d2 + 3*d1*b2 + 9*d1*d2) +
+          rho*rho*(2*c1*c2) + rho*rho*rho*(6*d1*d2) - R
+        eq*eq
+      }
+      
+      out <- nlminb(start=R, objective=objectiveFunction,
+                    scale=10, control=list(trace=0),
+                    b1=b1, c1=c1, d1=d1, b2=b2, c2=c2, d2=d2, R=R)
+      if(out$convergence != 0 || out$objective > 1e-5) warning("no convergence")
+      rho <- out$par[1L]
+      rho
+    }
+    
+    # number of variables
+    nvar <- ncol(Sigma)
+
+    # create Fleishman table
+    FTable <- matrix(0, nvar, 4L)
+    for(i in 1:nvar) {
+      FTable[i,] <- fleishman1978_abcd(skewness=skewness[i], kurtosis=kurtosis[i])
+    }
+    
+    # compute intermediate correlations between all pairs
+    ICOR <- diag(nvar)
+    for(j in 1:(nvar-1L)) {
+      for(i in (j+1):nvar) {
+        if(Sigma[i,j] == 0) next
+        ICOR[i,j] <- ICOR[j,i] <-
+          getICOV(FTable[i,2], FTable[i,3], FTable[i,4],
+                  FTable[j,2], FTable[j,3], FTable[j,4], R=Sigma[i,j])
+      }
+    }
+    
+    # generate all requested data sets rather than just a single one
+    # generate Z 
+    lX <- lZ <- genData.normal(N, ICOR, nSets)
+    for(d in seq(lX)){
+      Z <- lZ[[d]]
+      # transform Z using Fleishman constants
+      for(i in 1:nvar) {
+        lX[[d]][,i] <- FTable[i,1L] + FTable[i,2L]*Z[,i] + FTable[i,3L]*Z[,i]^2 + FTable[i,4L]*Z[,i]^3
+      }
+      colnames(lX[[d]]) <- paste0('x', 1:ncol(Sigma))
+    }
+    
+    lX
+    
   }, warning = function(e) {
     stop('Data generation via VM and the supplied arguments did not succeed. Either change the values for skewness and kurtosis, or try a different data generating routine such as IG.')
   }, error = function(e) {
