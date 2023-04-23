@@ -2775,6 +2775,255 @@ test_powerBifactor <- function(doTest = TRUE){
   }
 }
 
+test_powerAutoreg <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_powerAutoreg: NOT TESTED')
+    return()
+  }
+  
+  # 2waves, autoreg=0
+  ph1 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 2, autoregEffects = .6,
+                               nullEffect = 'autoreg=0',
+                               nullWhich = 1,
+                               nIndicator = c(3, 3), loadM = .5,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres1a <- helper_lav(ph1$modelH0, ph1$Sigma)
+  par1a <- lavres1a$par
+  
+  valid <- par1a[par1a$lhs == 'f2' & par1a$rhs == 'f1', 'est'] < 1e-8 &&
+    length(unique(round(par1a[par1a$op == '=~' & par1a$rhs %in% c('x1', 'x3'), 'est'], 6))) == 1 &&
+    length(unique(round(par1a[par1a$op == '=~' & par1a$rhs %in% c('x2', 'x4'), 'est'], 6))) == 1 &&    
+    length(unique(round(par1a[par1a$op == '=~' & par1a$rhs %in% c('x3', 'x5'), 'est'], 6))) == 1 && 
+    par1a[par1a$lhs == 'x1' & par1a$rhs == 'x4', 'est'] != 0 &&
+    par1a[par1a$lhs == 'x2' & par1a$rhs == 'x5', 'est'] != 0 &&
+    par1a[par1a$lhs == 'x3' & par1a$rhs == 'x6', 'est'] != 0
+
+
+  # 3waves, no-lagged effects, autoreg=0
+  ph2 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 3, autoregEffects = c(.6, .5),
+                               nullEffect = 'autoreg=0',
+                               nullWhich = 1,
+                               nIndicator = c(3, 3, 3), loadM = .5,
+                               estimateLag2Effects = FALSE,
+                               estimateLag3Effects = FALSE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres2a <- helper_lav(ph2$modelH0, ph2$Sigma)
+  par2a <- lavres2a$par
+  lavres2b <- helper_lav(ph2$modelH1, ph2$Sigma)
+  par2b <- lavres2b$par
+
+  # 3waves, estm lagged effects, autoreg=0
+  ph3 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 3, autoregEffects = c(.6, .5),
+                               nullEffect = 'autoreg=0',
+                               nullWhich = 1,
+                               nIndicator = c(3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma)
+  par3b <- lavres3b$par
+  
+  valid2 <- valid &&
+    par2a[par2a$lhs == 'f2' & par2a$rhs == 'f1', 'est'] < 1e-8 &&
+    abs(par2b[par2b$lhs == 'f2' & par2b$rhs == 'f1', 'est'] - .6) < 1e-8 &&    
+    abs(par2b[par2b$lhs == 'f3' & par2b$rhs == 'f2', 'est'] - .5) < 1e-8 &&
+    !'f1' %in% par2b[par2b$lhs == 'f3', 'rhs'] &&
+    'f1' %in% par3b[par3b$lhs == 'f3', 'rhs']
+  
+    
+  # 4 waves, lag 2-3 effects, autoreg=0, waveequal
+  ph4 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 4, 
+                               autoregEffects = c(.6, .6, .6),
+                               waveEqual = c('autoreg'),
+                               lag2Effects = c(.2, .1),
+                               lag3Effects = c(.05),
+                               nullEffect = 'autoreg=0',
+                               nIndicator = c(3, 3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres4a <- helper_lav(ph4$modelH0, ph4$Sigma)
+  par4a <- lavres4a$par
+  lavres4b <- helper_lav(ph4$modelH1, ph4$Sigma)
+  par4b <- lavres4b$par
+  
+  valid3 <- valid2 &&
+    abs(par4b[par4b$lhs == 'f2' & par4b$rhs == 'f1', 'est'] - .6) < 1e-6 &&
+    abs(par4b[par4b$lhs == 'f3' & par4b$rhs == 'f2', 'est'] - .6) < 1e-6 &&
+    abs(par4b[par4b$lhs == 'f4' & par4b$rhs == 'f3', 'est'] - .6) < 1e-6 &&
+    abs(par4b[par4b$lhs == 'f3' & par4b$rhs == 'f1', 'est'] - .2) < 1e-6 &&
+    abs(par4b[par4b$lhs == 'f4' & par4b$rhs == 'f2', 'est'] - .1) < 1e-6 &&
+    abs(par4b[par4b$lhs == 'f4' & par4b$rhs == 'f1', 'est'] - .05) < 1e-6 &&
+    length(unique(c(par4b[par4b$lhs == 'f2' & par4b$rhs == 'f1', 'label'], 
+      par4b[par4b$lhs == 'f3' & par4b$rhs == 'f2', 'label'],
+      par4b[par4b$lhs == 'f4' & par4b$rhs == 'f3', 'label']))) == 1
+    
+  
+  # 4 waves, lag 2-3 effects, lag2=0, waveequal
+  ph5 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 4, 
+                               autoregEffects = c(.6, .6, .6),
+                               waveEqual = c('autoreg', 'lag2'),
+                               lag2Effects = c(.2, .2),
+                               lag3Effects = c(.15),
+                               nullEffect = 'lag2=0',
+                               nIndicator = c(3, 3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres5a <- helper_lav(ph5$modelH0, ph5$Sigma)
+  par5a <- lavres5a$par
+  lavres5b <- helper_lav(ph5$modelH1, ph5$Sigma)
+  par5b <- lavres5b$par  
+
+  # 4 waves, lag 2-3 effects, lag3=0, waveequal
+  ph6 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 4, 
+                               autoregEffects = c(.6, .6, .6),
+                               waveEqual = c('autoreg', 'lag2'),
+                               lag2Effects = c(.2, .2),
+                               lag3Effects = c(.15),
+                               nullEffect = 'lag3=0',
+                               nIndicator = c(3, 3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres6a <- helper_lav(ph6$modelH0, ph6$Sigma)
+  par6a <- lavres6a$par
+
+  valid3 <- valid2 &&
+    length(unique(c(par5b[par5b$lhs == 'f3' & par5b$rhs == 'f1', 'label'], 
+                    par5b[par5b$lhs == 'f4' & par5b$rhs == 'f2', 'label']))) == 1 &&
+    abs(par5a[par5a$lhs == 'f3' & par5a$rhs == 'f1', 'est']) < 1e-8 &&
+    abs(par5a[par5a$lhs == 'f4' & par5a$rhs == 'f2', 'est']) < 1e-8 &&
+    abs(par5a[par5a$lhs == 'f4' & par5a$rhs == 'f1', 'est']) > 1e-8 &&
+    abs(par6a[par6a$lhs == 'f4' & par6a$rhs == 'f1', 'est']) < 1e-8 &&
+    abs(par6a[par6a$lhs == 'f3' & par6a$rhs == 'f1', 'est']) > 1e-8 &&
+    abs(par6a[par6a$lhs == 'f4' & par6a$rhs == 'f2', 'est']) > 1e-8 
+  
+  # 4 waves, lag 2-3 effects, lag2=0, no waveequal
+  ph7 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 4, 
+                               autoregEffects = c(.6, .6, .6),
+                               waveEqual = c('autoreg'),
+                               lag2Effects = c(.2, .3),
+                               lag3Effects = c(.05),
+                               nullEffect = 'lag2=0',
+                               nullWhich = 2,
+                               nIndicator = c(3, 3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres7a <- helper_lav(ph7$modelH0, ph7$Sigma)
+  par7a <- lavres7a$par
+  lavres7b <- helper_lav(ph7$modelH1, ph7$Sigma)
+  par7b <- lavres7b$par  
+  
+  valid4 <- valid3 &&
+    abs(par7a[par7a$lhs == 'f4' & par7a$rhs == 'f1', 'est']) > .05 &&
+    abs(par7a[par7a$lhs == 'f3' & par7a$rhs == 'f1', 'est']) > .05 &&
+    abs(par7a[par7a$lhs == 'f4' & par7a$rhs == 'f2', 'est']) < 1e-8 
+  
+  # multigroup, no wave equal
+  ph8 <- semPower.powerAutoreg('ph', N = list(500, 500), alpha = .05,
+                               nWaves = 3, 
+                               autoregEffects = list(c(.6, .6), 
+                                                     c(.5, .5)),
+                               lag2Effects = list(.1, .2),
+                               nullEffect = 'autorega=autoregb',
+                               nullWhich = 1,
+                               nIndicator = c(3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres8a <- helper_lav(ph8$modelH0, ph8$Sigma, sample.nobs = list(500, 500))
+  par8a <- lavres8a$par
+  lavres8b <- helper_lav(ph8$modelH1, ph8$Sigma, sample.nobs = list(500, 500))
+  par8b <- lavres8b$par
+
+  # multigroup, wave equal
+  ph9 <- semPower.powerAutoreg('ph', N = list(500, 500), alpha = .05,
+                               nWaves = 3, 
+                               autoregEffects = list(c(.6, .6), 
+                                                     c(.5, .5)),
+                               lag2Effects = list(.1, .2),
+                               waveEqual = c('autoreg'),
+                               nullEffect = 'autorega=autoregb',
+                               nIndicator = c(3, 3, 3), loadM = .5,
+                               estimateLag2Effects = TRUE,
+                               estimateLag3Effects = TRUE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres9a <- helper_lav(ph9$modelH0, ph9$Sigma, sample.nobs = list(500, 500))
+  par9a <- lavres9a$par
+  lavres9b <- helper_lav(ph9$modelH1, ph9$Sigma, sample.nobs = list(500, 500))
+  par9b <- lavres9b$par
+  
+  # 4 waves, no lagged effects, with variances, autoreg
+  ph10 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                               nWaves = 4, 
+                               autoregEffects = c(.6, .7, .6),
+                               variances = c(1, .5, 2, 1.5),
+                               nullEffect = 'var',
+                               nIndicator = c(3, 3, 3, 3), loadM = .5,
+                               standardized = FALSE,
+                               invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres10a <- helper_lav(ph10$modelH0, ph10$Sigma)
+  par10a <- lavres10a$par
+  lavres10b <- helper_lav(ph10$modelH1, ph10$Sigma)
+  par10b <- lavres10b$par  
+  
+  valid6 <- valid5 &&
+    sum(abs(par10b[par10b$lhs %in% paste0('f', 1:4) & par10b$lhs == par10b$rhs, 'est'] - c(1, .5, 2, 1.5))) < 1e-6 &&
+    sum(abs(par10b[par10b$lhs %in% paste0('f', 1:4) & par10b$op == '~', 'est'] - c(.6, .7, .6))) < 1e-6 &&
+    length(unique(par10a[par10a$lhs %in% paste0('f', 2:4) & par10a$lhs == par10a$rhs, 'label'])) == 1
+    
+
+  # 4 waves, no lagged effects, autoreg equal, var equal, means
+  ph11 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
+                                nWaves = 4, 
+                                autoregEffects = c(.6, .6, .6),
+                                variances = c(.5, .5, .5, .5),
+                                means = c(0, .1, .2, .3),
+                                waveEqual = c('autoreg', 'var'),
+                                nullEffect = 'mean',
+                                nIndicator = c(3, 3, 3, 3), loadM = .5,
+                                standardized = FALSE,
+                                invariance = TRUE, autocorResiduals = TRUE)
+  
+  lavres11a <- helper_lav(ph11$modelH0, ph11$Sigma, sample.mean = ph11$mu)
+  par11a <- lavres11a$par
+  lavres11b <- helper_lav(ph11$modelH1, ph11$Sigma, sample.mean = ph11$mu)
+  par11b <- lavres11b$par  
+  
+  valid6 <- valid5 &&
+    abs(2*(lavres11a$fit['fmin'] - lavres11b$fit['fmin']) - ph11$fmin) < 1e-8 &&
+    length(unique(par11b[par11b$lhs %in% paste0('f', 1:4) & par11b$op == '~~' , 'label'])) == 2 &&
+    length(unique(par11b[par11b$lhs %in% paste0('f', 1:4) & par11b$op == '~' , 'label'])) == 1 &&
+    length(unique(par11b[par11b$lhs %in% paste0('f', 1:4) & par11b$op == '~1' , 'label'])) == 4 &&
+    length(unique(par11a[par11a$lhs %in% paste0('f', 1:4) & par11a$op == '~1' , 'label'])) == 2 &&
+    mean(abs(par11b[par11b$lhs %in% paste0('f', 1:4) & par11b$op == '~1' , 'est'] - c(0, .1, .2, .3))) < 1e-6
+    
+  if(valid6){
+    print('test_powerAutoreg: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
 test_simulatePower <- function(doTest = TRUE){
   if(!doTest){
     print('test_simulatePower: NOT TESTED')
@@ -3116,6 +3365,7 @@ test_all <- function(){
   test_powerPath()
   test_powerMI()
   test_powerBifactor(doTest = TRUE)
+  test_powerAutoreg(doTest = TRUE)
   test_simulatePower(doTest = FALSE)
 }
 
