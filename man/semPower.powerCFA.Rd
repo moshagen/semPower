@@ -21,9 +21,9 @@ semPower.powerCFA(
 
 \item{Phi}{either a single number defining the correlation between exactly two factors or the factor correlation matrix. A list for multiple group models.}
 
-\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'cor = 0'} (the default) to test whether a correlation is zero, \code{'corX = corZ'} to test for the equality of correlations, and \code{'corA = corB'} to test for the equality of a correlation across groups. Define the correlations to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
+\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'cor = 0'} (the default) to test whether a correlation is zero, \code{'corX = corZ'} to test for the equality of correlations, \code{'corA = corB'} to test for the equality of a correlation across groups, and \code{loading = 0} to test whether a loading is zero. Define the correlations to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
-\item{nullWhich}{vector of size 2 indicating which factor correlation in \code{Phi} is hypothesized to equal zero when \code{nullEffect = 'cor = 0'}, or to restrict to equality across groups when \code{nullEffect = 'corA = corB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'corX = corZ'}. Can also contain more than two correlations, e.g., \code{list(c(1, 2), c(1, 3), c(2, 3))} to set \code{Phi[1, 2] = Phi[1, 3] = Phi[2, 3]}. If omitted, the correlation between the first and the second factor is targeted, i. e., \code{nullWhich = c(1, 2)}.}
+\item{nullWhich}{vector of size 2 indicating which element in Lambda should equal zero when \code{nullEffect = 'loading = 0'}, or which factor correlation in \code{Phi} is hypothesized to equal zero when \code{nullEffect = 'cor = 0'}, or to restrict to equality across groups when \code{nullEffect = 'corA = corB'}, or list of vectors defining which correlations to restrict to equality when \code{nullEffect = 'corX = corZ'}. Can also contain more than two correlations, e.g., \code{list(c(1, 2), c(1, 3), c(2, 3))} to set \code{Phi[1, 2] = Phi[1, 3] = Phi[2, 3]}. If omitted, the correlation between the first and the second factor is targeted, i. e., \code{nullWhich = c(1, 2)}.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'corA = corB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
@@ -49,6 +49,7 @@ This requires the lavaan package.
 This function performs a power analysis to reject various hypotheses arising
 in standard CFA models:
 \itemize{
+\item \code{nullEffect = 'loading = 0'}: Tests the hypothesis that a loading is zero.
 \item \code{nullEffect = 'cor = 0'}: Tests the hypothesis that the correlation between two factors is zero.
 \item \code{nullEffect = 'corX = corZ'}: Tests the hypothesis that two or more correlations between three or more factors are equal to each other.
 \item \code{nullEffect = 'corA = corB'}: Tests the hypothesis that the correlation between two factors is equal in two or more groups (always assuming metric invariance).
@@ -104,7 +105,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -151,7 +152,24 @@ powercfa <- semPower.powerCFA(type = 'a-priori',
                               loadings = list(c(.7, .6, .5), 
                                               c(.5, .6, .4, .8)),
                               alpha = .05, beta = .05)
-                              
+
+# detect that the loading of indicator 4 on the first factor differs from zero
+Lambda <- matrix(c(
+  c(.8, 0),
+  c(.4, 0),
+  c(.6, 0),
+  c(.1, .5),
+  c(0, .6),
+  c(0, .7)
+), ncol = 2, byrow = TRUE)
+powercfa <- semPower.powerCFA(type = 'a-priori',
+                              Phi = .2,
+                              nullEffect = 'loading = 0', 
+                              nullWhich = c(4, 1), 
+                              Lambda = Lambda,
+                              alpha = .05, beta = .05)
+
+
 # get required N to detect a correlation of >= .3 between factors 1 and 3  
 # in a three factor model. Factors are measured by 3 indicators each, and all loadings 
 # on the first, second, and third factor are .5, .6, and .7, respectively.
@@ -199,6 +217,7 @@ powercfa <- semPower.powerCFA(type = 'a-priori',
                               alpha = .05, beta = .05, N = list(1, 1))
 
 # request a simulated post-hoc power analysis with 500 replications.
+set.seed(300121)
 powercfa <- semPower.powerCFA(type = 'post-hoc',
                               Phi = .2, 
                               nIndicator = c(5, 6), loadM = .5,

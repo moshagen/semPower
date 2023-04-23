@@ -23,7 +23,7 @@ semPower.powerPath(
 
 \item{Beta}{matrix of regression slopes between latent variables (all-Y notation). A list for multiple group models. Exogenous variables must occupy the first rows in \code{Beta} when \code{standardized = TRUE}. See details.}
 
-\item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{standardized = TRUE}, the diagonal is ignored and all off-diagonal elements are treated as correlations. If \code{NULL}, a diagonal matrix is assumed. A list for multiple group models. See details.}
+\item{Psi}{variance-covariance matrix of latent (residual) factors. If \code{standardized = TRUE}, the diagonal is ignored and all off-diagonal elements are treated as correlations. If \code{NULL}, an identity matrix is assumed. A list for multiple group models. See details.}
 
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'beta = 0'} (the default) to test whether a regression slope is zero, \code{'betaX = betaZ'} to test for the equality of slopes, and \code{'betaX = betaZ'} to test for the equality of a slope across groups. Define the slopes to be set to equality in \code{nullWhich} and the groups in \code{nullWhichGroups}.}
 
@@ -156,7 +156,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{

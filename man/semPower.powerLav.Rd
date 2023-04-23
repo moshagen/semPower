@@ -97,7 +97,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -153,11 +153,14 @@ powerCFA <- semPower.powerCFA(type = 'a-priori',
                               loadings = list(c(.5, .6, .4), c(.7, .8, .3)), 
                               alpha = .05, beta = .05)
 
-# same as above, but use simulated power analysis based on a robust ML estimator
+# same as above, but perform simulated power analysis
+# with 250 replications using a robust ML test-statistic
+set.seed(300121)
 powerLav <- semPower.powerLav(type = 'a-priori', 
                               Sigma = Sigma, modelH0 = mH0,
                               alpha = .05, beta = .05, 
-                              simulatedPower = TRUE, nReplications = 500,
+                              simulatedPower = TRUE,
+                              simOptions = list(nReplications = 250)
                               lavOptions = list(estimator = 'MLM'))
 }
 }

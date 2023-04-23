@@ -136,7 +136,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -355,10 +355,8 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
                                 crossedEffects = list(
-                                   # Wave 1
-                                  c(.20, .10),   # X
-                                   # Wave 2
-                                  c(.05, .10)),  # Y
+                                  c(.20, .10),   # X1 -> Y2, X2 -> Y3
+                                  c(.05, .10)),  # Y1 -> X2, Y2 -> X3
                                 rXY = c(.2, .3, .4),
                                 nullEffect = 'crossedX',
                                 waveEqual = c('autoregX', 'autoregY'),
@@ -372,10 +370,8 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
                                 crossedEffects = list(
-                                   # Wave 1
-                                  c(.20, .10),   # X
-                                   # Wave 2
-                                  c(.05, .10)),  # Y
+                                  c(.20, .10),   # X1 -> Y2, X2 -> Y3
+                                  c(.05, .10)),  # Y1 -> X2, Y2 -> X3
                                 rXY = c(.2, .3, .4),
                                 nullEffect = 'crossedX',
                                 nullWhich = 2,
@@ -392,10 +388,8 @@ powerCLPM <- semPower.powerCLPM(type = 'a-priori',
                                 nWaves = 3,
                                 autoregEffects = c(.8, .7), 
                                 crossedEffects = list(
-                                   # Wave 1
-                                  c(.20, .10),   # X
-                                   # Wave 2
-                                  c(.05, .10)),  # Y
+                                  c(.20, .10),   # X1 -> Y2, X2 -> Y3
+                                  c(.05, .10)),  # Y1 -> X2, Y2 -> X3
                                 rXY = c(.2, .3, .4),
                                 nullEffect = 'corXY',
                                 waveEqual = c('autoregX', 'autoregY'),
@@ -419,11 +413,11 @@ powerCLPM <- semPower.powerCLPM(type = 'post-hoc', alpha = .05, N = list(500, 50
                                 nWaves = 3,
                                 autoregEffects = list(
                                 # group 1
-                                list(c(.8, .8),    # x 
-                                     c(.7, .7)),   # y
+                                list(c(.8, .8),    # X1 -> X2, X2 -> X3 
+                                     c(.7, .7)),   # Y1 -> Y2, Y2 -> Y3
                                 # group 2
-                                list(c(.6, .6),    # x 
-                                     c(.7, .7))    # y
+                                list(c(.6, .6),    # X1 -> X2, X2 -> X3 
+                                     c(.7, .7))    # Y1 -> Y2, Y2 -> Y3
                                 ),
                                 crossedEffects = c(.2, .1),
                                 waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
@@ -434,6 +428,7 @@ powerCLPM <- semPower.powerCLPM(type = 'post-hoc', alpha = .05, N = list(500, 50
                                 
 
 # request a simulated post-hoc power analysis with 500 replications.
+set.seed(300121)
 powerCLPM <- semPower.powerCLPM(type = 'post-hoc',
                                 nWaves = 2,
                                 autoregEffects = c(.8, .7),

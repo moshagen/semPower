@@ -108,7 +108,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -244,6 +244,7 @@ powerReg <- semPower.powerRegression(type = 'a-priori',
 
 # request a simulated post-hoc power analysis with 500 replications 
 # to detect that the slope of X1 differs from zero.
+set.seed(300121)
 powerReg <- semPower.powerRegression(type = 'post-hoc',
                                      slopes = c(.2, .1), 
                                      nullWhich = 1,

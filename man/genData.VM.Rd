@@ -26,7 +26,9 @@ the third-order polynomial method  (Vale & Maurelli, 1983)
 specifying third and fourth moments of the marginals.
 }
 \details{
-This function is a wrapper for the respective function of the ´SimDesign´ package.
+This function is a slightly adapted copy of \code{lavaan}'s ValeMaurelli1983 implementation
+that avoids computing the intermediate correlation for each data sets
+and uses Sigma as input.
 
 For details, see
 Vale, C. & Maurelli, V. (1983). Simulating multivariate nonnormal distributions. \emph{Psychometrika, 48}, 465-471.

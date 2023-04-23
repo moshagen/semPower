@@ -136,7 +136,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -505,8 +505,8 @@ powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500
                                         c(.01, .10)    # Y 
                                       )
                                     ),
-                                    rXY = NULL,        # diagonal
-                                    rBXBY = NULL,      # diagonal 
+                                    rXY = NULL,        # identity
+                                    rBXBY = NULL,      # identity 
                                     nullEffect = 'crossedXA = crossedXB',
                                     nullWhich = 1,
                                     nIndicator = rep(3, 6), 
@@ -525,6 +525,7 @@ powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc', alpha = .05, N = list(500
 # the autoregressive effects of X are .8 (equal across waves),
 # the autoregressive effects of Y are .7 (equal across waves), and
 # the crossed effects of Y (Y1 -> X2 and Y2 -> X3) are .1 (equal across waves).
+set.seed(300121)
 powerRICLPM <- semPower.powerRICLPM(type = 'post-hoc',
                                     nWaves = 3,
                                     autoregEffects = c(.8, .7),

@@ -135,7 +135,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{SimDesign} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
 }
 \examples{
 \dontrun{
@@ -282,7 +282,7 @@ powerbifactor <- semPower.powerBifactor(type = 'a-priori',
                                         alpha = .05, beta = .05, 
                                         N = list(1, 1))
                                         
-# request a simulated post-hoc power analysis with 100 replications.
+# request a simulated post-hoc power analysis with 500 replications.
 bfLoadings <- rep(.6, 11)
 bfWhichFactors <- c(1, 2, 3)
 loadings <- list(
@@ -294,6 +294,7 @@ loadings <- list(
   rep(.7, 5)
 )
 Phi <- .2  
+set.seed(300121)
 powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
                                         bfLoadings = bfLoadings,
                                         bfWhichFactors = bfWhichFactors,
@@ -301,9 +302,9 @@ powerbifactor <- semPower.powerBifactor(type = 'post-hoc',
                                         nullWhich = c(1, 2),
                                         loadings = loadings,
                                         alpha = .05, N = 500, 
-                                        simulatedPower = TRUE, 
-                                        simOptions = list(
-                                                       nReplications = 100))
+                                        simulatedPower = TRUE,
+                                        simOptions = list(nReplications = 500)
+                                        )
 }
 }
 \seealso{
