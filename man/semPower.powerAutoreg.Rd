@@ -2,7 +2,7 @@
 % Please edit documentation in R/convenienceFunctions.R
 \name{semPower.powerAutoreg}
 \alias{semPower.powerAutoreg}
-\title{semPower.powerCLPM}
+\title{semPower.powerAutoreg}
 \usage{
 semPower.powerAutoreg(
   type,
@@ -33,7 +33,7 @@ semPower.powerAutoreg(
 
 \item{nWaves}{number of waves, must be >= 2.}
 
-\item{autoregEffects}{vector of the autoregressive effects, e.g. \code{c(.7, .6)} for  autoregressive effects of .7 for \code{X1 -> X2} and .6 for \code{X2 -> X3}. Must be a list of lists for multiple groups models.}
+\item{autoregEffects}{vector of the autoregressive effects, e.g. \code{c(.7, .6)} for  autoregressive effects of .7 for \code{X1 -> X2} and .6 for \code{X2 -> X3}. Must be a list for multiple groups models.}
 
 \item{lag1Effects}{alternative name for \code{autoregEffects}.}
 
@@ -76,7 +76,7 @@ a list. Use the \code{summary} method to obtain formatted results. Beyond the re
 \item{\code{simRes}}{detailed simulation results when a simulated power analysis (\code{simulatedPower = TRUE}) was performed.}
 }
 \description{
-Convenience function for performing power analysis on effects in a cross-lagged panel model (CLPM).
+Convenience function for performing power analysis on effects in an autoregressive model.
 This requires the lavaan package.
 }
 \details{
@@ -98,7 +98,7 @@ Relevant hypotheses in arising in an autogressive model are:
 \item \code{autoregA = autoregB}: Tests the hypothesis that the autoregressive effect of X is equal across groups.
 }
 
-This function only consider autoregressive models. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.
+For hypotheses regarding in a ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.

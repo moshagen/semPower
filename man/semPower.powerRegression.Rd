@@ -58,7 +58,7 @@ in SEM models involving a simple regression relation of the form \code{Y = b_1*X
 \item \code{nullEffect = 'slopeA = slopeB'}: Tests the hypothesis that the slope for a predictor is equal in two or more groups (always assuming metric invariance).
 }
 
-For hypotheses regarding mediation effects, see \code{\link[=semPower.powerMediation]{semPower.powerMediation()}}.
+For hypotheses regarding mediation effects, see \code{\link[=semPower.powerMediation]{semPower.powerMediation()}}. For hypothesis in autoregressive models, see  \code{\link[=semPower.powerAutoregressive]{semPower.powerAutoregressive()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
