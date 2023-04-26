@@ -216,6 +216,7 @@ semPower.powerLav <- function(type,
                              orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
         deltaF <- fminH0 - fminH1
       }
+      if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(fminH1[which(fminH1 > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
       df <- df - semPower.getDf(modelH1)
@@ -726,11 +727,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'
 #' # same as above, but define unstandardized slopes
 #' powerReg <- semPower.powerRegression(type = 'a-priori',
-#'                                     slopes = c(.2, .3), corXX = .4,
-#'                                     standardized = FALSE,
-#'                                     nIndicator = c(3, 5, 4), 
-#'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, beta = .05)
+#'                                      slopes = c(.2, .3), corXX = .4,
+#'                                      nullWhich = 2, 
+#'                                      standardized = FALSE,
+#'                                      nIndicator = c(3, 5, 4), 
+#'                                      loadM = c(.5, .6, .7),
+#'                                      alpha = .05, beta = .05)
 #'                                      
 #' # same as above, but compare to the saturated model
 #' # (rather than to the less restricted model)
@@ -805,8 +807,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      corXX = corXX, 
 #'                                      nullEffect = 'slopeA = slopeB', 
 #'                                      nullWhich = 2,
-#'                                      nIndicator = c(4, 5, 3, 5),
-#'                                      loadM = c(.5, .6, .7, .6), 
+#'                                      nIndicator = list(
+#'                                         c(4, 5, 3, 5), 
+#'                                         c(4, 5, 3, 5)),
+#'                                      loadM = list(
+#'                                         c(.5, .6, .7, .6),
+#'                                         c(.5, .6, .7, .6)), 
 #'                                      alpha = .05, beta = .05, 
 #'                                      N = list(1, 1))
 #'
@@ -1681,8 +1687,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'                                 crossedEffects = c(.2, .1),
 #'                                 rXY = c(.2, .2, .2),
 #'                                 waveEqual = c('autoregX', 'autoregY', 
-#'                                               'crossedX', 'crossedY', 
-#'                                               'corXY'),
+#'                                               'crossedX', 'crossedY'),
 #'                                 nullEffect = 'crossedX = 0',
 #'                                 nIndicator = c(5, 3, 5, 3, 5, 3),
 #'                                 loadM = c(.5, .6, .5, .6, .5, .6),
@@ -2166,7 +2171,6 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
-  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
@@ -3058,7 +3062,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     if('corxy' %in% waveEqual){
       modelH0 <- gsub(paste(pCorXY, collapse = ''), '0', modelH0)
     }else{
-      p.corxy <- c('pf0403', p.corxy)   # add exog cor
+      pCorXY <- c('pf0403', pCorXY)   # add exog cor
       modelH0 <- gsub(pCorXY[nullWhich], '0', modelH0)
     }
   }
@@ -3116,7 +3120,6 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models 
   # when there are additional constraints (waveequal or invariance)
-  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
@@ -4944,7 +4947,6 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
-  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
@@ -5913,7 +5915,6 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   # here we actually fit modelH1 in case of a restricted comparison
   # because we cannot be sure that user input yields perfectly fitting h1 models, 
   # when there are additional constraints (waveequal or invariance)
-  # maybe it makes sense to throw a warning if the h1 model yields f > 0 
   if(comparison == 'saturated') modelH1 <- NULL
   
   if(isMultigroup) Sigma <- lapply(generated, '[[', 'Sigma') else Sigma <- generated[['Sigma']] 
