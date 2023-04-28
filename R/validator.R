@@ -292,6 +292,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
       stop("Sigma must be positive definite")
     
     if(length(Sigma) == 1) Sigma <- Sigma[[1]]
+    if(!is.null(mu) && length(mu) == 1) mu <- mu[[1]]
     if(is.list(Sigma)){
       if(!is.null(mu) && length(mu) != length(Sigma))
         stop("Multiple group power analyses require specification of mu for each group.")
