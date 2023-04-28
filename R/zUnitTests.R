@@ -3530,6 +3530,120 @@ test_powerARMA <- function(doTest = TRUE){
   }
 }
 
+test_powerLI <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_powerLI: NOT TESTED')
+    return()
+  }
+  
+  # check model definition consistency
+  ph1a <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = 'configural',
+    nullEffect = 'metric',
+    nIndicator = c(3, 3),
+    loadM = c(.5, .6)  
+  )
+  ph1b <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = 'saturated',
+    nullEffect = 'metric',
+    nIndicator = c(3, 3),
+    loadM = c(.5, .6)
+  )
+  ph1c <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = 'metric',
+    nullEffect = 'scalar',
+    nIndicator = c(3, 3),
+    loadM = c(.5, .5),
+    tau = c(0, 0, 0, .1, .1, .1)
+  )  
+  ph1d <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = c('loadings'),
+    nullEffect = c('loadings', 'intercepts'),
+    nIndicator = c(3, 3),
+    loadM = c(.5, .5),
+    tau = c(0, 0, 0, .1, .1, .1)
+  )  
+  Phi <- diag(3)
+  Phi[1, 2] <- Phi[2, 1] <- .3
+  ph1e <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = 'residual',
+    nullEffect = 'covariances',
+    nIndicator = c(3, 3, 3),
+    loadM = c(.5, .5, .5),
+    Phi = Phi,
+    tau = rep(0, 9)
+  )    
+  ph1f <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = c('loadings', 'intercepts', 'residuals'),
+    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
+    nIndicator = c(3, 3, 3),
+    loadM = c(.5, .5, .5),
+    Phi = Phi,
+    tau = rep(0, 9)
+  )    
+  ph1g <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = 'covariances',
+    nullEffect = 'means',
+    nIndicator = c(3, 3, 3),
+    loadM = c(.5, .5, .5),
+    Phi = diag(3),
+    tau = rep(0, 9),
+    Alpha = c(0, .2, .3)
+  )    
+  ph1h <- semPower.powerLI(
+    type = 'a-priori', alpha = .05, power = .80,
+    comparison = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
+    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.covariances', 'means'),
+    nIndicator = c(3, 3, 3),
+    loadM = c(.5, .5, .5),
+    Phi = diag(3),
+    tau = rep(0, 9),
+    Alpha = c(0, .2, .3)
+  )      
+
+  valid <- ph1a$df < ph1b$df &&
+    abs(ph1a$fmin - ph1b$fmin) < 1e-8 &&
+    abs(ph1c$fmin - ph1d$fmin) < 1e-8 &&
+    abs(ph1e$fmin - ph1f$fmin) < 1e-8 &&
+    abs(ph1g$fmin - ph1h$fmin) < 1e-8
+    
+  
+  
+  # check model definition consistency
+  getPar <- function(ph, mean = TRUE, H0 = TRUE){
+    if(H0){
+      helper_lav(ph$modelH0, ph$Sigma, sample.nobs = 500, sample.mean = if(mean) ph$mu else NULL)$par
+    }else{
+      helper_lav(ph$modelH1, ph$Sigma, sample.nobs = 500, sample.mean = if(mean) ph$mu else NULL)$par
+    }
+  }
+
+  par1a <- getPar(ph1a, FALSE)
+  par1c <- getPar(ph1c)
+  par1f <- getPar(ph1f)
+  par1h <- getPar(ph1h)
+  
+  valid2 <- valid &&
+    length(unique(par1a[par1a$op == '=~', 'label'])) == 3 &&
+    length(unique(par1c[par1c$op == '~1' & par1c$lhs %in% paste0('x', 1:6), 'label'])) == 3 &&
+    length(unique(par1f[par1f$op == '~~' & par1f$lhs %in% paste0('x', 1:6) & par1f$lhs == par1f$rhs, 'label'])) == 3 &&
+    length(unique(par1f[par1f$op == '~~' & par1f$lhs %in% paste0('f', 1:3) & par1f$lhs != par1f$rhs, 'label'])) == 1 &&
+    mean(abs(par1h[par1h$op == '~1' & par1h$lhs %in% paste0('f', 1:3), 'est'])) < 1e-6
+
+  if(valid2){
+    print('test_powerLI: OK')
+  }else{
+    warning('Invalid')
+  }  
+}
+
 
 test_simulatePower <- function(doTest = TRUE){
   if(!doTest){
@@ -3874,6 +3988,7 @@ test_all <- function(){
   test_powerBifactor(doTest = TRUE)
   test_powerAutoreg(doTest = TRUE)
   test_powerARMA(doTest = TRUE)
+  test_powerLI(doTest = TRUE)
   test_simulatePower(doTest = FALSE)
 }
 
