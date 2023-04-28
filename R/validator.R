@@ -462,9 +462,10 @@ checkComparisonModel <- function(comparison){
 #' 
 #' @param nullEffect nullEffect
 #' @param valid vector of valid effects 
+#' @param message message 
 #' @return Returns cleaned nullEffect
-checkNullEffect <- function(nullEffect, valid){
-  message <- deparse(substitute(nullEffect))
+checkNullEffect <- function(nullEffect, valid, message = NULL){
+  if(is.null(message)) message <- deparse(substitute(nullEffect))
   if(is.null(nullEffect)) stop(paste(message, 'must be defined.'))
   if(length(nullEffect) > 1) stop(paste(message, 'must contain a single hypothesis'))
   nullEffect <- unlist(lapply(nullEffect, function(x) tolower(trimws(x))))
