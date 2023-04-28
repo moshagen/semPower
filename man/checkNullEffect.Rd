@@ -4,12 +4,14 @@
 \alias{checkNullEffect}
 \title{checkNullEffect}
 \usage{
-checkNullEffect(nullEffect, valid)
+checkNullEffect(nullEffect, valid, message = NULL)
 }
 \arguments{
 \item{nullEffect}{nullEffect}
 
 \item{valid}{vector of valid effects}
+
+\item{message}{message}
 }
 \value{
 Returns cleaned nullEffect
