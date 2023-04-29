@@ -3505,7 +3505,7 @@ semPower.powerMI <- function(type,
 #' compared against the previous level (e.g., scalar vs. metric). Power analysis provides  
 #' the power (or the required N) to reject a particular level of invariance.
 #' 
-#' For hypotheses regarding multiple group invariance, see [semPower.powerMI()]. For hypotheses regarding autoregressive models, see [semPower.powerAutoregressive()]. For hypotheses regarding ARMA models, see [semPower.powerARMA()].
+#' For hypotheses regarding multiple group invariance, see [semPower.powerMI()]. For hypotheses regarding autoregressive models, see [semPower.powerAutoregressive()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
 #'  
 #' There are two ways to specify the models defined in the `comparison` and the `nullEffect` arguments. Either, one may
 #' specify a specific level of invariance that includes all previous levels:
@@ -4736,7 +4736,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateLag2Effects whether lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateLag3Effects whether lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
+#' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
@@ -4762,7 +4762,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #' * `lag2 = 0` and `lag3 = 0`: Tests the hypothesis that a lag-2 or a lag-3 effect is zero.
 #' * `autoregA = autoregB`: Tests the hypothesis that the autoregressive effect of X is equal across groups.
 #' 
-#' For hypotheses regarding in a ARMA model, see [semPower.powerARMA()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()].
+#' For hypotheses in an ARMA model, see [semPower.powerARMA()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()]. For hypotheses regarding longitudinal measurement invariance, see [semPower.powerLI()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -5444,7 +5444,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' @param estimateAutoregLag3 whether the autoregressive lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateMvAvgLag2 whether the moving average lag-2 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateMvAvgLag3 whether the moving average lag-3 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
+#' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
 #' \item{`mu`}{the population mean vector or `NULL` when no meanstructure is involved. A list for multiple group models.}
@@ -5475,7 +5475,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' * `varA = varB`: Tests the hypothesis that the variance of the noise factors are equal across groups.
 #' * `meanA = meanB`: Tests the hypothesis that latent means are equal across groups.
 #' 
-#' For hypotheses regarding a simple autoregression, see [semPower.powerAutoregressive()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()].
+#' For hypotheses regarding a simple autoregression, see [semPower.powerAutoregressive()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()].  For hypotheses regarding longitudinal measurement invariance, see [semPower.powerLI()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
