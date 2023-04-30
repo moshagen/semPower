@@ -237,6 +237,13 @@ semPower.genSigma <- function(Lambda = NULL,
   }
   # compute theta
   if(is.null(Theta)){
+    # the following also works (at least approximately) for factor variances > 1 
+    cv <- diag(Lambda %*% t(Lambda))
+    Theta <- diag((1 - cv)/cv * diag(SigmaND))
+    # but fails for secondary loadings
+    if(any(apply(Lambda, 1, function(x) sum(x != 0)) > 1)){
+      Theta <- diag(1 - diag(SigmaND))
+    }
     # catch observed only models
     if(!any(nIndicator > 1)){
       Theta <- matrix(0, ncol = ncol(SigmaND), nrow = nrow(SigmaND))
@@ -245,15 +252,11 @@ semPower.genSigma <- function(Lambda = NULL,
       fLat <- which(nIndicator > 1)
       indLat <- unlist(lapply(fLat, function(x) which(Lambda[, x] != 0)))
       indObs <- (1:nrow(Lambda))[-indLat]
-      Theta <- diag(1 - diag(SigmaND))
       diag(Theta)[indObs] <- 0
-    }else{
-      Theta <- diag(1 - diag(SigmaND))
     }
   }
   # see whether there are negative variances
-  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta). Make sure the sum of squared standardized 
-loadings by indicator does not exceed 1.')
+  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta). Make sure the sum of squared standardized loadings by indicator does not exceed 1.')
   
   Sigma <- SigmaND + Theta
   colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
