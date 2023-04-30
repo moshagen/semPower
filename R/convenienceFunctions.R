@@ -170,12 +170,23 @@ semPower.powerLav <- function(type,
     if(!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) != "ML") stop('Analytical power is only available with ML estimation. Note that power based on ML derivatives (mlm etc) is asymptotically identical.')
 
     # get H0 sigmaHat / muHat
-    modelH0Fit <- do.call(lavaan::lavaan,
+    modelH0Fit <- suppressWarnings(  # suppress here, throw warnings in second try
+      do.call(lavaan::lavaan,
                           append(list(model = modelH0,
                                       sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
                                       sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
                                  lavOptions))
-    if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
+      )
+    if(!modelH0Fit@optim[['converged']]){
+      # try again using starting values from previous run
+      modelH0Fit <- do.call(lavaan::lavaan,
+                            append(list(model = modelH0,
+                                        sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
+                                        sample.mean = if(length(Sigma) > 1) mu else mu[[1]], 
+                                        start = modelH0Fit),
+                                   lavOptions))
+      if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
+    } 
     if(length(Sigma) > 1){
       # multigroup case
       SigmaHat <- lapply(1:length(Sigma), function(x) orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]))
@@ -190,12 +201,24 @@ semPower.powerLav <- function(type,
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
       lavOptionsH1 <- getLavOptions(lavOptionsH1, nGroups = length(Sigma))
-      modelH1Fit <- do.call(lavaan::lavaan,
-                            append(list(model = modelH1,
-                                        sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
-                                        sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
-                                   lavOptionsH1))
-      if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
+      modelH1Fit <- suppressWarnings(  # suppress here, throw warnings in second try
+        do.call(lavaan::lavaan,
+                append(list(model = modelH1,
+                            sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
+                            sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
+                       lavOptionsH1))        
+      )
+      if(!modelH1Fit@optim[['converged']]){
+        # try again using starting values from previous run
+        modelH1Fit <- do.call(lavaan::lavaan,
+                              append(list(model = modelH1,
+                                          sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
+                                          sample.mean = if(length(Sigma) > 1) mu else mu[[1]], 
+                                          start = modelH1Fit),
+                                     lavOptionsH1))
+        
+        if(!modelH1Fit@optim[['converged']]) stop('The H1 model did not converge.')
+      }
       dfH1 <- modelH1Fit@test[['standard']][['df']]
       if(dfH1 >= dfH0) stop('The df of the H0 model are not larger than the df of the H1 model, as they should be.')
       # get delta F
@@ -216,7 +239,7 @@ semPower.powerLav <- function(type,
                              orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
         deltaF <- fminH0 - fminH1
       }
-      if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(fminH1[which(fminH1 > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
+      if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(unlist(fminH1)[which(unlist(fminH1) > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
       df <- df - semPower.getDf(modelH1)
@@ -1374,7 +1397,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 
   # enforce invariance constraints in the multigroup case
   if(isMultigroup){
-    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings', 'lv.variances')))
+    args[['lavOptions']] <- append(args[['lavOptions']], list(group.equal = c('loadings')))
   } 
   
   modelH1 <- NULL
@@ -3394,7 +3417,7 @@ semPower.powerMI <- function(type,
   
   # validate input
   checkEllipsis(...)
-  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.variances', 'lv.covariances','regressions', 'means')
+  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.covariances','regressions', 'means')
   useLavOptions <- any(grepl(paste(lavGroupStrings, collapse = '|'), comparison)) || any(grepl(paste(lavGroupStrings, collapse = '|'), nullEffect))
   # we only check typos etc when not using lavstrings
   if(!useLavOptions){
@@ -3403,6 +3426,7 @@ semPower.powerMI <- function(type,
     if(which(c('saturated', 'configural', 'metric', 'scalar') %in% comparison) >= 
        (2 + which(c('metric', 'scalar', 'residuals') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
   }else{
+    if('lv.variances' %in% comparison || 'lv.variances' %in% nullEffect) stop('Variance scaling is used, so invariance of latent variances is always met.')
     if(!any(c('saturated', 'none') %in% comparison) && !all(comparison %in% nullEffect)) stop('Comparison model is not nested in hypothesized model; all restrictions in comparison must also be present in nullEffect.')
   }
   
@@ -6381,3 +6405,4 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
                     modelH1 = modelH1, 
                     ...)
 }
+
