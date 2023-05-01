@@ -63,7 +63,7 @@ semPower.powerAutoreg(
 
 \item{estimateLag3Effects}{whether lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
-\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.}
+\item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.}
 }
 \value{
 a list. Use the \code{summary} method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
@@ -98,7 +98,7 @@ Relevant hypotheses in arising in an autogressive model are:
 \item \code{autoregA = autoregB}: Tests the hypothesis that the autoregressive effect of X is equal across groups.
 }
 
-For hypotheses regarding in a ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.
+For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}. For hypotheses regarding longitudinal measurement invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
