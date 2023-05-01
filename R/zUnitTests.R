@@ -3589,6 +3589,880 @@ test_powerLI <- function(doTest = TRUE){
   }  
 }
 
+test_powerLGCM <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_powerLGCM: NOT TESTED')
+    return()
+  }
+  
+  getPar <- function(ph, H0 = TRUE, nGroups = 1){
+    if(H0){
+      helper_lav(ph$modelH0, ph$Sigma, sample.nobs = rep(list(500), nGroups), sample.mean = ph$mu)$par
+    }else{
+      helper_lav(ph$modelH1, ph$Sigma, sample.nobs = rep(list(500), nGroups), sample.mean = ph$mu)$par
+    }
+  }
+
+  # 3 waves, linear, imean
+  ph1 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(5, .25),
+    variances = c(2, .3),
+    covariances = c(.3),
+    nullEffect = 'iMean = 0',
+    loadings = list(
+      c(.6, .7, .8),
+      c(.6, .7, .8),
+      c(.6, .7, .8)
+    )
+  )
+
+  lavres1 <- helper_lav(ph1$modelH1, ph1$Sigma, sample.nobs = 500, sample.mean = ph1$mu)
+  par1 <- lavres1$par
+  par1a <- getPar(ph1)
+  
+  # 3 waves, linear, smean
+  ph1b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(5, .25),
+    variances = c(2, .3),
+    covariances = c(.3),
+    nullEffect = 'sMean = 0',
+    loadings = list(
+      c(.6, .7, .8),
+      c(.6, .7, .8),
+      c(.6, .7, .8)
+    )
+  )
+  par1b <- getPar(ph1b)
+  
+  # 3 waves, linear, ivar
+  ph1c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(5, .25),
+    variances = c(2, .3),
+    covariances = c(.3),
+    nullEffect = 'iVar = 0',
+    loadings = list(
+      c(.6, .7, .8),
+      c(.6, .7, .8),
+      c(.6, .7, .8)
+    )
+  )
+  par1c <- suppressWarnings(getPar(ph1c))  # not positive definite
+  
+  # 3 waves, linear, svar
+  ph1d <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(5, .25),
+    variances = c(2, .3),
+    covariances = c(.3),
+    nullEffect = 'sVar = 0',
+    loadings = list(
+      c(.6, .7, .8),
+      c(.6, .7, .8),
+      c(.6, .7, .8)
+    )
+  )
+  par1d <- suppressWarnings(getPar(ph1d))  # not positive definite  
+
+  # 3 waves, linear, iscov
+  ph1e <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(5, .25),
+    variances = c(2, .3),
+    covariances = c(.3),
+    nullEffect = 'isCov = 0',
+    loadings = list(
+      c(.6, .7, .8),
+      c(.6, .7, .8),
+      c(.6, .7, .8)
+    )
+  )
+  par1e <- suppressWarnings(getPar(ph1e))  # negative lv var
+
+  valid <- lavres1$fit['fmin'] < 1e-8 &&
+    mean(abs(par1[par1$lhs == 'f1' & par1$op == '=~', 'est'] - c(.6, .7, .8))) < 1e-6 &&
+    mean(abs(par1[par1$lhs %in% c('i', 's') & par1$op == '~~'  & par1$lhs == par1$rhs, 'est'] - c(2, .3))) < 1e-6 &&
+    abs(par1[par1$lhs %in% c('i', 's') & par1$op == '~~'  & par1$lhs != par1$rhs, 'est'] - .3) < 1e-6 &&
+    mean(abs(par1[par1$lhs %in% c('i', 's') & par1$op == '~1', 'est'] - c(5, .25))) < 1e-6 &&
+    abs(par1a[par1a$lhs == 'i' & par1a$op == '~1', 'est']) < 1e-6 &&
+    abs(par1b[par1b$lhs == 's' & par1b$op == '~1', 'est']) < 1e-6 &&
+    abs(par1c[par1c$lhs == 'i' & par1c$rhs == 'i', 'est']) < 1e-6 &&
+    abs(par1d[par1d$lhs == 's' & par1d$rhs == 's', 'est']) < 1e-6 &&
+    abs(par1e[par1e$lhs == 'i' & par1e$rhs == 's', 'est']) < 1e-6 
+  
+  
+  # 4 waves, quadr, s2mean
+  ph2 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 's2Mean = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  
+  lavres2 <- suppressWarnings(helper_lav(ph2$modelH1, ph2$Sigma, sample.nobs = 500, sample.mean = ph2$mu))
+  par2 <- lavres2$par
+  par2a <- suppressWarnings(getPar(ph2)) # not positive def
+  
+  # 4 waves, quadr, s2var
+  ph2b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 's2var = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par2b <- suppressWarnings(getPar(ph2b)) # neg lv var
+  
+  # 4 waves, quadr, is2covar
+  ph2c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'is2cov = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par2c <- suppressWarnings(getPar(ph2c)) # neg lv var
+
+  # 4 waves, quadr, is2covar
+  ph2d <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'ss2cov = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par2d <- suppressWarnings(getPar(ph2d)) # neg lv var
+  
+  valid2 <- valid &&
+    lavres2$fit['fmin'] < 1e-8 &&
+    mean(abs(par2[par2$lhs == 'f1' & par2$op == '=~', 'est'] - c(.5, .6, .5))) < 1e-6 &&
+    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs == par2$rhs, 'est'] - c(.5, .3, .1))) < 1e-6 &&
+    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs != par2$rhs, 'est'] - c(.3, .2, .4))) < 1e-6 &&
+    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~1', 'est'] - c(.8, .25, .1))) < 1e-6 &&
+    abs(par2a[par2a$lhs == 's2' & par2a$op == '~1', 'est']) < 1e-6 &&
+    abs(par2b[par2b$lhs == 's2' & par2b$rhs == 's2', 'est']) < 1e-6 &&
+    abs(par2c[par2c$lhs == 'i' & par2c$rhs == 's2', 'est']) < 1e-6 &&
+    abs(par2d[par2c$lhs == 's' & par2d$rhs == 's2', 'est']) < 1e-6
+    
+
+  # 4 waves, quadr, ticExog, bi = 0
+  ph3 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticExogSlopes = c(.5, .4, .3),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaIT = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  lavres3 <- suppressWarnings(helper_lav(ph3$modelH1, ph3$Sigma, sample.nobs = 500, sample.mean = ph3$mu))
+  par3 <- lavres3$par
+  par3a <- suppressWarnings(getPar(ph3)) # not positive def
+
+  # 4 waves, quadr, ticPredictor, bs = 0
+  ph3b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticExogSlopes = c(.5, .4, .3),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaST = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  par3b <- suppressWarnings(getPar(ph3b)) # not positive def
+  
+  # 4 waves, quadr, ticPredictor, bs2 = 0
+  ph3c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticExogSlopes = c(.5, .4, .3),
+    covariances = matrix(c(
+      c(1, .3, .2),
+      c(.3, 1, .4),
+      c(.2, .4, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaS2T = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  par3c <- suppressWarnings(getPar(ph3c)) # not positive def
+  
+  valid3 <- valid2 &&
+    lavres3$fit['fmin'] < 1e-8 &&
+    mean(abs(par3[par3$lhs == 'f8' & par3$op == '=~', 'est'] - c(.6, .6, .7, .7))) < 1e-6 &&
+    mean(abs(par3[par3$lhs %in% c('i', 's', 's2') & par3$op == '~'  & par3$rhs == 'f8', 'est'] - c(.5, .4, .3))) < 1e-6 &&
+    abs(par3a[par3a$lhs == 'i' & par3a$rhs == 'f8', 'est']) < 1e-6 &&
+    abs(par3b[par3b$lhs == 's' & par3b$rhs == 'f8', 'est']) < 1e-6 &&
+    abs(par3c[par3c$lhs == 's2' & par3c$rhs == 'f8', 'est']) < 1e-6
+
+  # 4 waves, quadr, ticEndog, bi = 0
+  ph4 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticEndogSlopes = c(.2, .3, .4),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTI = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  lavres4 <- suppressWarnings(helper_lav(ph4$modelH1, ph4$Sigma, sample.nobs = 500, sample.mean = ph4$mu))
+  par4 <- lavres4$par
+  par4a <- suppressWarnings(getPar(ph4)) # not positive def
+
+  # 4 waves, quadr, ticPredictor, bs = 0
+  ph4b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticEndogSlopes = c(.2, .3, .4),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTS = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  par4b <- suppressWarnings(getPar(ph4b)) # not positive def
+  
+  # 4 waves, quadr, ticPredictor, bs2 = 0
+  ph4c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticEndogSlopes = c(.2, .3, .4),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTS2 = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.6, .6, .7, .7)
+    )
+  )
+  par4c <- suppressWarnings(getPar(ph4c)) # not positive def
+  
+  valid4 <- valid3 &&
+    lavres4$fit['fmin'] < 1e-8 &&
+    mean(abs(par4[par4$lhs == 'f8' & par4$op == '=~', 'est'] - c(.6, .6, .7, .7))) < 1e-6 &&
+    mean(abs(par4[par4$rhs %in% c('i', 's', 's2') & par4$op == '~'  & par4$lhs == 'f8', 'est'] - c(.2, .3, .4))) < 1e-6 &&
+    abs(par4a[par4a$rhs == 'i' & par4a$lhs == 'f8', 'est']) < 1e-6 &&
+    abs(par4b[par4b$rhs == 's' & par4b$lhs == 'f8', 'est']) < 1e-6 &&
+    abs(par4c[par4c$rhs == 's2' & par4c$lhs == 'f8', 'est']) < 1e-6
+  
+  # 4 waves, quadr, ticEndog  ticExogog, bi = 0
+  ph5 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .25, .1),
+    variances = c(.5, .3, .1),
+    ticEndogSlopes = c(.4, .2, .1),
+    ticExogSlopes = c(.2, .1, .05),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTI = 0',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.8, .7, .6, .5),
+      c(.3, .4, .5, .6)
+    )
+  )
+  lavres5 <- suppressWarnings(helper_lav(ph5$modelH1, ph5$Sigma, sample.nobs = 500, sample.mean = ph5$mu))
+  par5 <- lavres5$par
+  
+  valid5 <- valid4 &&
+    lavres5$fit['fmin'] < 1e-8 &&
+    mean(abs(par5[par5$lhs == 'f8' & par5$op == '=~', 'est'] - c(.8, .7, .6, .5))) < 1e-6 &&
+    mean(abs(par5[par5$lhs == 'f9' & par5$op == '=~', 'est'] - c(.3, .4, .5, .6))) < 1e-6 &&
+    mean(abs(par5[par5$rhs %in% c('i', 's', 's2') & par5$op == '~'  & par5$lhs == 'f9', 'est'] - c(.4, .2, .1))) < 1e-6 &&
+    mean(abs(par5[par5$lhs %in% c('i', 's', 's2') & par5$op == '~'  & par5$rhs == 'f8', 'est'] - c(.2, .1, .05))) < 1e-6
+  
+  # mgroup: 4 waves, quadr, imean 
+  ph6 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = list(
+      c(.8, .3, .15),
+      c(.6, .1, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'iMeanA = iMeanB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  lavres6 <- suppressWarnings(helper_lav(ph6$modelH1, ph6$Sigma, sample.nobs = list(500, 500), sample.mean = ph6$mu))
+  par6 <- lavres6$par  
+  par6a <- getPar(ph6, nGroups = 2)
+
+  # mgroup: 4 waves, quadr, smean 
+  ph6b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = list(
+      c(.8, .3, .15),
+      c(.6, .1, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'sMeanA = sMeanB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6b <- getPar(ph6b, nGroups = 2)
+
+  # mgroup: 4 waves, quadr, ivar 
+  ph6c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = list(
+      c(.5, .3, .2),
+      c(.3, .1, .1)
+    ),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'iVarA = iVarB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6c <- getPar(ph6c, nGroups = 2)
+  
+  # mgroup: 4 waves, quadr, svar 
+  ph6d <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = list(
+      c(.5, .3, .2),
+      c(.3, .1, .1)
+    ),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'sVarA = sVarB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6d <- getPar(ph6d, nGroups = 2)
+  
+  # mgroup: 4 waves, quadr, s2var 
+  ph6e <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = list(
+      c(.5, .3, .2),
+      c(.3, .1, .1)
+    ),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 's2VarA = s2VarB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6e <- suppressWarnings(getPar(ph6e, nGroups = 2))
+
+  
+  # mgroup: 4 waves, quadr, iscov
+  cv1 <- matrix(c(
+    c(1, .1, .05),
+    c(.1, 1, .01),
+    c(.05, .01, 1)
+  ), ncol = 3, byrow = TRUE)
+  cv2 <- matrix(c(
+    c(1, .15, .10),
+    c(.15, 1, .05),
+    c(.10, .05, 1)
+  ), ncol = 3, byrow = TRUE)
+  ph6f <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = c(.5, .3, .1),
+    covariances = list(cv1, cv2),
+    nullEffect = 'iscovA = iscovB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6f <- suppressWarnings(getPar(ph6f, nGroups = 2))
+  
+  # mgroup: 4 waves, quadr, is2cov
+  ph6g <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = c(.5, .3, .1),
+    covariances = list(cv1, cv2),
+    nullEffect = 'is2covA = is2covB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6g <- suppressWarnings(getPar(ph6g, nGroups = 2))
+  
+  # mgroup: 4 waves, quadr, ss2cov
+  ph6h <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = c(.5, .3, .1),
+    covariances = list(cv1, cv2),
+    nullEffect = 'ss2covA = ss2covB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  par6h <- suppressWarnings(getPar(ph6h, nGroups = 2))  
+  
+  valid6 <- valid5 &&
+    lavres6$fit['fmin'] < 1e-8 &&
+    length(unique(par6[par6$lhs %in% paste0('f', 1:4) & par6$op == '=~', 'label'])) == 3 &&
+    mean(abs(par6[par6$lhs == 'f1' & par6$op == '=~', 'est'] - c(.5, .6, .5, .5, .6, .5))) < 1e-6 &&
+    length(unique(par6[par6$lhs %in% c('i', 's', 's2') & par6$lhs == par6$rhs, 'label'])) == 6 &&
+    mean(abs(par6[par6$lhs %in% c('i', 's', 's2') & par6$lhs == par6$rhs, 'est'] - c(.5, .3, .1, .5, .3, .1))) < 1e-6 &&
+    length(unique(par6[par6$lhs %in% c('i', 's', 's2') & par6$op == '~~' & par6$lhs != par6$rhs, 'label'])) == 6 &&
+    mean(abs(par6[par6$lhs %in% c('i', 's', 's2') & par6$op == '~~' & par6$lhs != par6$rhs, 'est'] - c(.1, .05, .01, .1, .05, .01))) < 1e-6 &&
+    length(unique(par6[par6$lhs %in% c('i', 's', 's2') & par6$op == '~1', 'label'])) == 6 &&
+    mean(abs(par6[par6$lhs %in% c('i', 's', 's2') & par6$op == '~1', 'est'] - c(.8, .3, .15, .6, .10, .05))) < 1e-6 &&
+    length(unique(par6a[par6a$lhs %in% c('i', 's', 's2') & par6a$op == '~1', 'label'])) == 5 &&
+    length(unique(par6a[par6a$lhs == 'i' & par6a$op == '~1', 'label'])) == 1 &&
+    length(unique(par6b[par6b$lhs %in% c('i', 's', 's2') & par6b$op == '~1', 'label'])) == 5 &&
+    length(unique(par6b[par6b$lhs == 's' & par6b$op == '~1', 'label'])) == 1 &&
+    length(unique(par6c[par6c$lhs %in% c('i', 's', 's2') & par6c$op == '~~' & par6c$lhs == par6c$rhs, 'label'])) == 5 &&
+    length(unique(par6c[par6c$lhs == 'i' & par6c$rhs == par6c$lhs, 'label'])) == 1 &&
+    length(unique(par6d[par6d$lhs %in% c('i', 's', 's2') & par6d$op == '~~' & par6d$lhs == par6d$rhs, 'label'])) == 5 &&
+    length(unique(par6d[par6d$lhs == 's' & par6d$rhs == par6d$lhs, 'label'])) == 1 &&
+    length(unique(par6e[par6e$lhs %in% c('i', 's', 's2') & par6e$op == '~~' & par6e$lhs == par6e$rhs, 'label'])) == 5 &&
+    length(unique(par6e[par6e$lhs == 's2' & par6e$rhs == par6e$lhs, 'label'])) == 1 &&
+    length(unique(par6f[par6f$lhs %in% c('i', 's', 's2') & par6f$op == '~~' & par6f$lhs != par6f$rhs, 'label'])) == 5 &&
+    length(unique(par6f[par6f$lhs == 'i' & par6f$rhs == 's', 'label'])) == 1 &&
+    length(unique(par6g[par6g$lhs %in% c('i', 's', 's2') & par6g$op == '~~' & par6g$lhs != par6g$rhs, 'label'])) == 5 &&
+    length(unique(par6g[par6g$lhs == 'i' & par6g$rhs == 's2', 'label'])) == 1 &&
+    length(unique(par6h[par6h$lhs %in% c('i', 's', 's2') & par6h$op == '~~' & par6h$lhs != par6h$rhs, 'label'])) == 5 &&
+    length(unique(par6h[par6h$lhs == 's' & par6h$rhs == 's2', 'label'])) == 1
+  
+  
+  # mgroup: 4 waves, quadr, ticExog, betaIT 
+  ph7 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticExogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaITA = betaITB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  lavres7 <- suppressWarnings(helper_lav(ph7$modelH1, ph7$Sigma, sample.nobs = list(500, 500), sample.mean = ph7$mu))
+  par7 <- lavres7$par  
+  par7a <- getPar(ph7, nGroups = 2)
+  
+  # mgroup: 3 waves, quadr, ticExog, betaST 
+  ph7b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticExogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaSTA = betaSTB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  par7b <- getPar(ph7b, nGroups = 2)  
+
+  
+  # mgroup: 3 waves, quadr, ticExog, betaS2T 
+  ph7c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticExogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaS2TA = betaS2TB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  par7c <- getPar(ph7c, nGroups = 2)    
+  
+  valid7 <- valid6 &&
+    lavres7$fit['fmin'] < 1e-8 &&
+    length(unique(par7[par7$lhs == 'f8' & par7$op == '=~', 'label'])) == 1 &&
+    mean(abs(par7[par7$lhs == 'f8' & par7$op == '=~', 'est'] - c(.7, .7, .8, .8))) < 1e-6 &&
+    mean(abs(par7[par7$rhs == 'f8' & par7$op == '~', 'est'] - c(.4, .3, .2, .1, .15, .05))) < 1e-6 &&
+    length(unique(par7a[par7a$rhs == 'f8' & par7a$op == '~', 'label'])) == 5 &&
+    length(unique(par7a[par7a$rhs == 'f8' & par7a$lhs == 'i', 'label'])) == 1 &&
+    length(unique(par7b[par7b$rhs == 'f8' & par7b$op == '~', 'label'])) == 5 &&
+    length(unique(par7b[par7b$rhs == 'f8' & par7b$lhs == 's', 'label'])) == 1 &&
+    length(unique(par7c[par7c$rhs == 'f8' & par7c$op == '~', 'label'])) == 5 &&
+    length(unique(par7c[par7c$rhs == 'f8' & par7c$lhs == 's2', 'label'])) == 1
+    
+  
+  # mgroup: 4 waves, quadr, ticEndog, betaTI 
+  ph8 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticEndogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTIA = betaTIB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  lavres8 <- suppressWarnings(helper_lav(ph8$modelH1, ph8$Sigma, sample.nobs = list(500, 500), sample.mean = ph8$mu))
+  par8 <- lavres8$par  
+  par8a <- suppressWarnings(getPar(ph8, nGroups = 2))
+  
+  # mgroup: 3 waves, quadr, ticExog, betaTS 
+  ph8b <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticEndogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTSA = betaTSB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  par8b <- suppressWarnings(getPar(ph8b, nGroups = 2))
+
+  # mgroup: 3 waves, quadr, ticExog, betaS2T 
+  ph8c <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.6, .1, .05),
+    ticEndogSlopes = list(
+      c(.4, .3, .2),
+      c(.1, .15, .05)
+    ),
+    variances = c(.5, .3, .1),
+    covariances = matrix(c(
+      c(1, .1, .05),
+      c(.1, 1, .01),
+      c(.05, .01, 1)
+    ), ncol = 3, byrow = TRUE),
+    nullEffect = 'betaTS2A = betaTS2B',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.7, .7, .8, .8)
+    )
+  )
+  par8c <- suppressWarnings(getPar(ph8c, nGroups = 2))
+  
+  valid8 <- valid7 &&
+    lavres7$fit['fmin'] < 1e-8 &&
+    length(unique(par7[par7$lhs == 'f8' & par7$op == '=~', 'label'])) == 1 &&
+    mean(abs(par7[par7$lhs == 'f8' & par7$op == '=~', 'est'] - c(.7, .7, .8, .8))) < 1e-6 &&
+    mean(abs(par7[par7$rhs == 'f8' & par7$op == '~', 'est'] - c(.4, .3, .2, .1, .15, .05))) < 1e-6 &&
+    length(unique(par7a[par7a$rhs == 'f8' & par7a$op == '~', 'label'])) == 5 &&
+    length(unique(par7a[par7a$rhs == 'f8' & par7a$lhs == 'i', 'label'])) == 1 &&
+    length(unique(par7b[par7b$rhs == 'f8' & par7b$op == '~', 'label'])) == 5 &&
+    length(unique(par7b[par7b$rhs == 'f8' & par7b$lhs == 's', 'label'])) == 1 &&
+    length(unique(par7c[par7c$rhs == 'f8' & par7c$op == '~', 'label'])) == 5 &&
+    length(unique(par7c[par7c$rhs == 'f8' & par7c$lhs == 's2', 'label'])) == 1
+  
+
+  # 3 waves, linear, imean, observed only
+  ph9 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = 500,
+    nWaves = 3,
+    means = c(50, 2),
+    variances = c(10, 4),
+    covariances = c(3),
+    nullEffect = 'iMean = 0',
+    Lambda = diag(3)
+  )  
+  lavres9 <- suppressWarnings(helper_lav(ph9$modelH1, ph9$Sigma, sample.nobs = 500, sample.mean = ph9$mu))
+  par9 <- lavres9$par  
+  
+  valid9 <- valid8 &&
+    abs(lavres9$fit['fmin']) < 1e-8 &&
+    mean(abs(par9[par9$lhs %in% c('i', 's') & par9$op == '~1', 'est'] - c(50, 2))) < 1e-6 &&
+    abs(par9[par9$lhs %in% c('i', 's') & par9$op == '~~' & par9$lhs != par9$rhs, 'est'] - 3) < 1e-6 &&
+    mean(abs(par9[par9$lhs %in% c('i', 's') & par9$op == '~~' & par9$lhs == par9$rhs, 'est'] - c(10, 4))) < 1e-6
+    
+  
+  # mgroup: 4 waves, quadr, groupequal, iscov
+  ph10 <- semPower.powerLGCM(
+    'ph', alpha = .05, N = list(500, 500),
+    nWaves = 4,
+    quadratic = TRUE,
+    means = c(.8, .3, .15),
+    variances = c(.5, .3, .1),
+    covariances = list(cv1, cv2),
+    groupEqual = c('ivar', 'svar', 's2var'),
+    nullEffect = 'iscovA = iscovB',
+    loadings = list(
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5),
+      c(.5, .6, .5)
+    )
+  )
+  lavres10 <- suppressWarnings(helper_lav(ph10$modelH1, ph10$Sigma, sample.nobs = list(500, 500), sample.mean = ph10$mu))
+  par10 <- lavres10$par  
+
+  valid10 <- valid9 &&
+    abs(lavres10$fit['fmin']) < 1e-8 &&
+    length(unique(par10[par10$lhs %in% c('i', 's', 's2') & par10$lhs == par10$rhs, 'label'])) == 3
+
+  if(valid10){
+    print('test_powerLGCM: OK')
+  }else{
+    warning('Invalid')
+  }  
+}
+
 
 test_simulatePower <- function(doTest = TRUE){
   if(!doTest){
@@ -3934,6 +4808,7 @@ test_all <- function(){
   test_powerAutoreg(doTest = TRUE)
   test_powerARMA(doTest = TRUE)
   test_powerLI(doTest = TRUE)
+  test_powerLGCM(doTest = TRUE)
   test_simulatePower(doTest = FALSE)
 }
 
