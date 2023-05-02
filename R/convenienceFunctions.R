@@ -3161,8 +3161,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' This requires the lavaan package.
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
-#' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
-#' @param nullEffect defines the hypothesis (i.e., level of invariance) of interest. One of `'metric'`, `'scalar'`, `'residual'`, or a vector of restrictions in `lavaan` format. See details.   
+#' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, `'covariances'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
+#' @param nullEffect defines the hypothesis (i.e., level of invariance) of interest. One of `'metric'`, `'scalar'`, `'residual'`, `'covariances'`, `'means'` or a vector of restrictions in `lavaan` format. See details.   
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -3190,6 +3190,8 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' \item `'metric'`: all loadings are restricted to equality. 
 #' \item `'scalar'`: all loadings and (indicator-)intercepts are restricted to equality. 
 #' \item `'residual'`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
+#' \item `'covariances'`: all loadings, (indicator-)intercepts, and (indicator-)residuals, and latent covariances are restricted to equality.
+#' \item `'means'`: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = 'metric'` and `nullEffect = 'scalar'` determines power 
@@ -3220,11 +3222,12 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' * `loadings`: Can be used instead of `Lambda`: Defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
 #' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`. Defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
 #' * `loadM`: Can be used instead of `Lambda`: Used in conjunction with `nIndicator`. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
+#' * `Theta`: Variance-covariance matrix of the indicator residuals, which should be a diagonal matrix. Required when residual non-invariance is to be detected. When `NULL`, Theta is a diagonal matrix with elements such that all variances are 1. 
 #' * `tau`: Defines the item intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If `NULL` and `Alpha` is set, all intercepts are assumed to equal zero.
 #' * `Alpha`: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If `NULL` and `tau` is set, all latent means are assumed to equal zero. Because variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
 #' 
 #' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` always need to be defined, 
-#' and `tau` and `Alpha` need to be defined for particular levels of invariance. 
+#' and `Theta`, `tau` and `Alpha` need to be defined for particular levels of invariance. 
 #' As this function operates on multiple groups, either argument is a list whenever there are 
 #' group differences in the respective parameters. When no list is provided, the same 
 #' parameter values are assumed for all groups.
@@ -3417,14 +3420,14 @@ semPower.powerMI <- function(type,
   
   # validate input
   checkEllipsis(...)
-  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.covariances','regressions', 'means')
+  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.covariances','regressions')
   useLavOptions <- any(grepl(paste(lavGroupStrings, collapse = '|'), comparison)) || any(grepl(paste(lavGroupStrings, collapse = '|'), nullEffect))
   # we only check typos etc when not using lavstrings
   if(!useLavOptions){
-    comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar'))
-    nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual'))
-    if(which(c('saturated', 'configural', 'metric', 'scalar') %in% comparison) >= 
-       (2 + which(c('metric', 'scalar', 'residuals') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
+    comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar', 'covariances'))
+    nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual', 'covariances', 'means'))
+    if(which(c('saturated', 'configural', 'metric', 'scalar', 'covariances') %in% comparison) >= 
+       (2 + which(c('metric', 'scalar', 'residuals', 'covariances', 'means') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
   }else{
     if('lv.variances' %in% comparison || 'lv.variances' %in% nullEffect) stop('Variance scaling is used, so invariance of latent variances is always met.')
     if(!any(c('saturated', 'none') %in% comparison) && !all(comparison %in% nullEffect)) stop('Comparison model is not nested in hypothesized model; all restrictions in comparison must also be present in nullEffect.')
@@ -3444,7 +3447,7 @@ semPower.powerMI <- function(type,
     if(useLavOptions){
       inv <- any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect))
     }else{
-      inv <- (nullEffect == 'scalar' || nullEffect == 'residuals')
+      inv <- any(c('scalar', 'residuals', 'covariances', 'means') %in% nullEffect)
     }
     if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
   }
@@ -3458,13 +3461,17 @@ semPower.powerMI <- function(type,
     lavOptionsH0 <- list(group.equal = switch(nullEffect,
                                               'metric' = c('loadings'),
                                               'scalar' = c('loadings', 'intercepts'),
-                                              'residual' = c('loadings', 'intercepts', 'residuals')
+                                              'residual' = c('loadings', 'intercepts', 'residuals'),
+                                              'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
+                                              'means' = c('loadings', 'intercepts', 'residuals', 'lv.covariances', 'means')
+                                              
     ))
-    if(comparison %in% c('metric', 'scalar', 'residuals')){
+    if(comparison %in% c('metric', 'scalar', 'residuals', 'covariances')){
       lavOptionsH1 <- list(group.equal = switch(comparison,
                                                 'metric' = c('loadings'),
                                                 'scalar' = c('loadings', 'intercepts'),
-                                                'residual' = c('loadings', 'intercepts', 'residuals')
+                                                'residual' = c('loadings', 'intercepts', 'residuals'),
+                                                'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.covariances')
       ))
     }
   }else{
@@ -3479,7 +3486,7 @@ semPower.powerMI <- function(type,
   Sigma <- lapply(generated, '[[', 'Sigma')
   mu <- NULL
   if(!useLavOptions){
-    if(nullEffect == 'scalar' || nullEffect == 'residuals')
+    if(any(c('scalar', 'residuals', 'covariances', 'means') %in% nullEffect))
       mu <- lapply(generated, '[[', 'mu')
   }else{
     if(any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect)))
@@ -3539,7 +3546,7 @@ semPower.powerMI <- function(type,
 #' \item `'scalar'`: all loadings and (indicator-)intercepts are restricted to equality. 
 #' \item `'residual'`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 #' \item `'covariances'`: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent covariances are restricted to equality.
-#' \item `'means'`: all loadings, (indicator-)intercepts, (indicator-)residuals, atent covariances, and latent means are restricted to equality.
+#' \item `'means'`: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = 'metric'` and `nullEffect = 'scalar'` determines power 
@@ -3557,7 +3564,7 @@ semPower.powerMI <- function(type,
 #' \item `c('loadings', 'intercepts', 'residuals')`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 #' \item `c('loadings', 'residuals')`: all loadings and (indicator-)residuals are restricted to equality.
 #' \item `c('loadings', 'intercepts', 'means')`: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
-#' \item `c('loadings', 'intercepts', 'means')`: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
+#' \item `c('loadings', 'residuals', 'lv.covariances')`: all loadings, (indicator-)residuals, and latent factor covariances are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = c('loadings')` and `nullEffect = 'c('loadings', 'intercepts')'` 
@@ -3573,11 +3580,12 @@ semPower.powerMI <- function(type,
 #' * `loadings`: Can be used instead of `Lambda`: Defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
 #' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`. Defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
 #' * `loadM`: Can be used instead of `Lambda`: Used in conjunction with `nIndicator`. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-#' * `tau`: Defines the item intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If `NULL` and `Alpha` is set, all intercepts are assumed to equal zero.
+#' * `Theta`: Variance-covariance matrix of the indicator residuals, which should be a diagonal matrix. Required when residual non-invariance is to be detected. When `NULL`, Theta is a diagonal matrix with elements such that all variances are 1. 
+#' * `tau`: Defines the indicator intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If `NULL` and `Alpha` is set, all intercepts are assumed to equal zero.
 #' * `Alpha`: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If `NULL` and `tau` is set, all latent means are assumed to equal zero. Because variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
 #' 
 #' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` always need to be defined, 
-#' and `tau` and `Alpha` need to be defined for particular levels of invariance.
+#' and `Theta`, `tau` and `Alpha` need to be defined for particular levels of invariance.
 #' 
 #' 
 #' Additional arguments related to the requested type of **power analysis**:
@@ -3771,7 +3779,6 @@ semPower.powerMI <- function(type,
 #'   simulatedPower = TRUE,
 #'   simOptions = list(nReplications = 250)  
 #' )
-#' 
 #' }
 #' @seealso [semPower.genSigma()] [semPower.aPriori()] [semPower.postHoc()] [semPower.compromise()]
 #' @export
@@ -6451,8 +6458,8 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
 #' * `iMeanA = iMeanB`, `sMeanA = sMeanB`, `s2MeanA = s2MeanB`: Tests the hypothesis that the means of the intercept, linear slope, and quadratic slope factors, respectively, are equal across groups.
 #' * `iVarA = iVarB`, `sVarA = sVarB`, `s2VarA = s2VarB`: Tests the hypothesis that the variances of the intercept, linear slope, and quadratic slope factors, respectively, are equal across groups.
 #' * `isCovA = isCovA`: Tests the hypothesis that covariance between the intercept and linear slope factor is equal across groups.
-#' * `is2CovA = is2CovA`: Tests the hypothesis that covariance between the intercept and quadratic slope factor is equal across groups.
-#' * `ss2CovA = ss2CovA`: Tests the hypothesis that covariance between the linear and quadratic slope factor is equal across groups.
+#' * `is2CovA = is2CovA`: Tests the hypothesis that the covariance between the intercept and quadratic slope factor is equal across groups.
+#' * `ss2CovA = ss2CovA`: Tests the hypothesis that the covariance between the linear and quadratic slope factor is equal across groups.
 #' * `betaITA = betaITB`, `betaSTA = betaSTB`, `betaS2TA = betaS2TB`: Tests the hypothesis that the slopes for the time-invariant covariate in the prediction of the intercept, the linear slope, and the quadratic slope factor, respectively, are equal across groups (`TIC -> I, S, S2`). 
 #' * `betaTIA = betaTIB`, `betaTSA = betaTSB`, `betaTS2A = betaTS2B`: Tests the hypothesis that the slope the intercept, the linear slope, and the quadratic slope factor, respectively, in the prediction of the time-invariant covariate are equal across groups (`I, S, S2 -> TIC`).
 #' 
