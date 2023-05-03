@@ -5917,18 +5917,23 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(is.null(waveEqual)) stop('ARMA models without wave-equality constraints on any parameter are likely not identified, so specify at least one wave-constant parameter in waveEqual (e.g. autoreg, mvAvg) ')
 
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.') 
-  
   if(is.null(autoregEffects)) autoregEffects <- autoregLag1
-  
-  # we determine number of groups by length of autoregEffects
-  # [[groups]][[waves]]
-  isMultigroup <- is.list(autoregEffects)
-  if(!is.list(autoregEffects)) autoregEffects <- list(autoregEffects)
-  nGroups <- length(autoregEffects)
-  
+
+  # determine whether we have a multigroup model
+  nGroups <- 1
+  cargs <- list(autoregEffects, mvAvgLag1, means, variances)
+  cargs <- cargs[!sapply(cargs, is.null)]
+  isMultigroup <- any(unlist(lapply(cargs, is.list)))
+  if(isMultigroup){
+    cargs <- cargs[sapply(cargs, is.list)]
+    ig <- unlist(lapply(cargs, length))
+    if(length(unique(ig[ig != 1])) > 1) stop('Non-null list arguments supplied to autoregEffects, mvAvgLag1, means, or variances imply a different number of groups. Make sure all lists have the same length or provide no list for no group differences.')
+    nGroups <- max(ig)
+    if(is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
+  }
+
   if(isMultigroup && !nullEffect %in% c('autorega=autoregb','mvavga=mvavgb','vara=varb','meana=meanb')) stop('Multigroup analysis are only supported for nullEffect = autoregA=autoregB, mvavgA=mvavgaB, varA=varB, meanA=meanB')
   if(!isMultigroup && nullEffect %in% c('autorega=autoregb','mvavga=mvavgb','vara=varb','meana=meanb')) stop('nullEffect = autoregA=autoregB, mvavgA=mvavgaB, varA=varB, meanA=meanB imply multigroup analyses, but no list structure for any relevant parameter provided.')
-  if(isMultigroup && is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
   if(isMultigroup && !is.null(groupEqual)){
     groupEqualValid <- c('autoreg', 'mvavg', 'var', 'mean')  
     groupEqual <- unlist(lapply(groupEqual, function(x) tolower(trimws(x))))
@@ -5937,28 +5942,21 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   
   if(nullEffect %in% waveEqual) stop('You cannot set the same parameters in nullEffect and waveEqual')
   if(nullEffect %in% groupEqual) stop('You cannot set the same parameters in nullEffect and groupEqual')
+  if(is.null(means) && (nullEffect %in% c('meana=meanb', 'mean') || 'mean' %in% waveEqual)) stop('Either nullEffect or waveEqual refer to means, but no means provided.')
   
   if(is.null(autoregLag2)) autoregLag2 <- rep(0, nWaves - 2)
   if(is.null(mvAvgLag2)) mvAvgLag2 <- rep(0, nWaves - 2)
   if(is.null(autoregLag3)) if(nWaves > 2) autoregLag3 <- rep(0, nWaves - 3) else autoregLag3 <- 0 # just to init properly, never actually used
   if(is.null(mvAvgLag3)) if(nWaves > 2) mvAvgLag3 <- rep(0, nWaves - 3) else mvAvgLag3 <- 0
-  
-  if(is.null(means) && (nullEffect %in% c('meana=meanb', 'mean') || 'mean' %in% waveEqual)) stop('Either nullEffect or waveEqual refer to means, but no means provided.')
 
+  if(!is.list(autoregEffects)) autoregEffects <- rep(list(autoregEffects), nGroups)
+  if(!is.list(autoregLag2)) autoregLag2 <- rep(list(autoregLag2), nGroups)
+  if(!is.list(autoregLag3)) autoregLag3 <- rep(list(autoregLag3), nGroups)
   if(!is.list(mvAvgLag1)) mvAvgLag1 <- rep(list(mvAvgLag1), nGroups)
   if(!is.list(mvAvgLag2)) mvAvgLag2 <- rep(list(mvAvgLag2), nGroups)
   if(!is.list(mvAvgLag3)) mvAvgLag3 <- rep(list(mvAvgLag3), nGroups)
-  if(!is.list(autoregLag2)) autoregLag2 <- rep(list(autoregLag2), nGroups)
-  if(!is.list(autoregLag3)) autoregLag3 <- rep(list(autoregLag3), nGroups)
-  if(!is.null(means) && !is.list(means)) means <- rep(list(means), nGroups)
   if(!is.list(variances)) variances <- rep(list(variances), nGroups)
-  if(length(mvAvgLag1) != nGroups) stop('mvAvgLag1 must be provided for each group.')
-  if(length(mvAvgLag2) != nGroups) stop('mvAvgLag2 must be provided for each group.')
-  if(length(mvAvgLag3) != nGroups) stop('mvAvgLag3 must be provided for each group.')
-  if(length(autoregLag2) != nGroups) stop('autoregLag2 must be provided for each group.')
-  if(length(autoregLag3) != nGroups) stop('autoregLag3 must be provided for each group.')
-  if(!is.null(means) && length(means) != nGroups) stop('means must be provided for each group.')
-  if(length(variances) != nGroups) stop('variances must be provided for each group.')
+  if(!is.null(means) && !is.list(means)) means <- rep(list(means), nGroups)
   
   if(any(unlist(lapply(autoregEffects, function(x) length(x) != (nWaves - 1))))) stop('autoregEffects must be of length nWaves - 1.')
   if(any(unlist(lapply(autoregLag2, function(x) length(x) != (nWaves - 2))))) stop('autoregLag2 must be of length nWaves - 2.')
@@ -6815,6 +6813,7 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
   if(is.null(variances) && is.null(covariances)) stop('Variances (or a covariance matrix) must be provided.') 
   if(is.null(timeCodes)) timeCodes <- seq(nWaves) - 1
   
+  # determine whether we have a multigroup model
   nGroups <- 1
   cargs <- list(means, variances, covariances, ticExogSlopes, ticEndogSlopes)
   cargs <- cargs[!sapply(cargs, is.null)]
@@ -6824,7 +6823,7 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
     ig <- unlist(lapply(cargs, length))
     if(length(unique(ig[ig != 1])) > 1) stop('Non-null list arguments supplied to means, variances, covariances, ticPredictor, ticCriterion imply a different number of groups. Make sure all lists have the same length or provide no list for no group differences.')
     nGroups <- max(ig)
-    nullWhichGroups <- seq(nGroups)
+    if(is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
   }
   
   if(isMultigroup && 
