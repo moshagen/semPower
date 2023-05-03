@@ -5460,11 +5460,12 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param nWaves number of waves, must be >= 2.
 #' @param autoregEffects vector of the lag-1 autoregressive effects, e.g. `c(.7, .6)` for  autoregressive effects of .7 for `X1 -> X2` and .6 for `X2 -> X3`. Must be a list for multiple groups models.
-#' @param lag2Effects vector of lag-2 effects, e.g. `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
-#' @param lag3Effects vector of lag-3 effects, e.g. `c(.2)` for a lag-3 effect of .2 for `X1 -> X4`.
-#' @param movingAvgEffects vector of the lag-1 moving average parameters, e.g. `c(.4, .3)` for moving average parameters of .4 for `N1 -> X2` and .3 for `N2 -> X3`. Must be a list for multiple groups models.
-#' @param lag2MovingAvgEffects vector of the lag-2 moving average parameters, e.g. `c(.3, .2)` for moving average parameters effects of .2 for `N1 -> X3` and .2 for `N2 -> X4`. Must be a list for multiple groups models.
-#' @param lag3MovingAvgEffects vector of the lag-3  moving average parameters, e.g. `c(.2)` for a moving average parameter of .2 for `N1 -> X4`. Must be a list for multiple groups models.
+#' @param autoregLag1 alternative name for autoregEffects.
+#' @param autoregLag2 vector of lag-2 effects, e.g. `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
+#' @param autoregLag3 vector of lag-3 effects, e.g. `c(.2)` for a lag-3 effect of .2 for `X1 -> X4`.
+#' @param mvAvgLag1 vector of the lag-1 moving average parameters, e.g. `c(.4, .3)` for moving average parameters of .4 for `N1 -> X2` and .3 for `N2 -> X3`. Must be a list for multiple groups models.
+#' @param mvAvgLag2 vector of the lag-2 moving average parameters, e.g. `c(.3, .2)` for moving average parameters effects of .2 for `N1 -> X3` and .2 for `N2 -> X4`. Must be a list for multiple groups models.
+#' @param mvAvgLag3 vector of the lag-3  moving average parameters, e.g. `c(.2)` for a moving average parameter of .2 for `N1 -> X4`. Must be a list for multiple groups models.
 #' @param means vector of means of `X`. May be `NULL` for no meanstructure.
 #' @param variances vector of variances of the noise factors `N` (= residual variances of `X`).
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, this may not be empty. Valid are `'autoreg'`, `'autoregLag2'`, and  `'autoregLag3'` for autoregressive effects, `'mvAvg'`, `'mvAvgLag2'`, and  `'mvAvgLag3'` for moving average effects, `var` for the variance of the noise factors, `mean` for the means of X.
@@ -5476,8 +5477,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateAutoregLag2 whether the autoregressive lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param estimateAutoregLag3 whether the autoregressive lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateMovingAvgLag2 whether the moving average lag-2 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateMovingAvgLag3 whether the moving average lag-3 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
+#' @param estimateMvAvgLag2 whether the moving average lag-2 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
+#' @param estimateMvAvgLag3 whether the moving average lag-3 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -5569,8 +5570,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5594,8 +5595,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'post-hoc', alpha = .05, N = 250,
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5608,8 +5609,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'compromise', abratio = 1, N = 250,
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5623,8 +5624,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80, comparison = 'saturated',
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5638,8 +5639,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5653,8 +5654,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5682,8 +5683,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = rep(.5, 9),
-#'   movingAvgEffects = c(.1, .05, .2, .1, .1, .3, .4, .4, .4),
+#'   autoregLag1 = rep(.5, 9),
+#'   mvAvgLag1 = c(.1, .05, .2, .1, .1, .3, .4, .4, .4),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('autoreg'),
 #'   nullEffect = 'mvAvg',
@@ -5702,8 +5703,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = rep(.5, 9),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = rep(.5, 9),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = c(1, .5, .7, .6, .7, .9, 1.2, 1.7, 2.0, 1.5),
 #'   waveEqual = c('autoreg', 'mvAvg'),
 #'   nullEffect = 'var',
@@ -5725,8 +5726,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = rep(.5, 9),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = rep(.5, 9),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   means = c(0, .1, .2, .3, .4, .5, .3, .4, .5, .5),
 #'   waveEqual = c('autoreg', 'mvAvg', 'var'),
@@ -5750,10 +5751,10 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = rep(.5, 9),
-#'   lag2Effects = rep(.2, 8),
-#'   lag3Effects = rep(.1, 7),
-#'   movingAvgEffects = rep(.3, 9),
+#'   autoregLag1 = rep(.5, 9),
+#'   autoregLag2 = rep(.2, 8),
+#'   autoregLag3 = rep(.1, 7),
+#'   mvAvgLag1 = rep(.3, 9),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg', 'autoreg', 'var', 'autoreglag2', 'autoreglag3'),
 #'   nullEffect = 'autoreglag2 = 0',
@@ -5769,17 +5770,17 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80,
 #'   nWaves = 10,
-#'   autoregEffects = rep(.5, 9),
-#'   lag2Effects = rep(.2, 8),
-#'   movingAvgEffects = rep(.3, 9),
-#'   lag2MovingAvgEffects = c(.1, .2, .3, .1, .2, .3, .1, .1),
+#'   autoregLag1 = rep(.5, 9),
+#'   autoregLag2 = rep(.2, 8),
+#'   mvAvgLag1 = rep(.3, 9),
+#'   mvAvgLag2 = c(.1, .2, .3, .1, .2, .3, .1, .1),
 #'   variances = rep(1, 10),
 #'   waveEqual = c('mvAvg', 'autoreg', 'var', 'autoreglag2'),
 #'   nullEffect = 'mvAvgLag2',
 #'   nIndicator = rep(3, 10), loadM = .5,
 #'   invariance = TRUE, 
 #'   autocorResiduals = TRUE,
-#'   estimateMovingAvgLag2 = TRUE
+#'   estimateMvAvgLag2 = TRUE
 #' )
 #' 
 #' 
@@ -5799,10 +5800,10 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80, N = list(1, 1),
 #'   nWaves = 5,
-#'   autoregEffects = list(
+#'   autoregLag1 = list(
 #'     c(.5, .5, .5, .5),   # group 1
 #'     c(.6, .6, .6, .6)),  # group 2
-#'   movingAvgEffects = rep(.25, 4),
+#'   mvAvgLag1 = rep(.25, 4),
 #'   variances = rep(1, 5),
 #'   waveEqual = c('autoreg', 'var', 'mvavg'),
 #'   nullEffect = 'autoregA = autoregB',
@@ -5829,10 +5830,10 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'a-priori', alpha = .05, power = .80, N = list(1, 1),
 #'   nWaves = 5,
-#'   autoregEffects = list(
+#'   autoregLag1 = list(
 #'     c(.5, .5, .5, .5),   # group 1
 #'     c(.5, .5, .5, .5)),  # group 2
-#'   movingAvgEffects = rep(.25, 4),
+#'   mvAvgLag1 = rep(.25, 4),
 #'   variances = rep(1, 5),
 #'   means = list(
 #'     c(0, .1, .1, .1, .1),  # group 1
@@ -5852,8 +5853,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' powerARMA <- semPower.powerARMA(
 #'   'post-hoc', alpha = .05, N = 500,
 #'   nWaves = 5,
-#'   autoregEffects = c(.3, .7, .6, .3),
-#'   movingAvgEffects = rep(.3, 4),
+#'   autoregLag1 = c(.3, .7, .6, .3),
+#'   mvAvgLag1 = rep(.3, 4),
 #'   variances = rep(1, 5),
 #'   waveEqual = c('mvAvg'),
 #'   nullEffect = 'autoreg',
@@ -5869,11 +5870,12 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 semPower.powerARMA <- function(type, comparison = 'restricted',
                                nWaves = NULL, 
                                autoregEffects = NULL, 
-                               lag2Effects = NULL, 
-                               lag3Effects = NULL,
-                               movingAvgEffects = NULL,
-                               lag2MovingAvgEffects = NULL,
-                               lag3MovingAvgEffects = NULL,
+                               autoregLag1 = autoregEffects, 
+                               autoregLag2 = NULL, 
+                               autoregLag3 = NULL,
+                               mvAvgLag1 = NULL,
+                               mvAvgLag2 = NULL,
+                               mvAvgLag3 = NULL,
                                means = NULL,
                                variances = NULL,
                                waveEqual = NULL, 
@@ -5885,8 +5887,8 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
                                autocorResiduals = TRUE,
                                estimateAutoregLag2 = FALSE,
                                estimateAutoregLag3 = FALSE,
-                               estimateMovingAvgLag2 = FALSE,
-                               estimateMovingAvgLag3 = FALSE,
+                               estimateMvAvgLag2 = FALSE,
+                               estimateMvAvgLag3 = FALSE,
                                ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -5915,7 +5917,9 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(is.null(waveEqual)) stop('ARMA models without wave-equality constraints on any parameter are likely not identified, so specify at least one wave-constant parameter in waveEqual (e.g. autoreg, mvAvg) ')
 
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 2) stop('nWaves must be >= 2.') 
-
+  
+  if(is.null(autoregEffects)) autoregEffects <- autoregLag1
+  
   # we determine number of groups by length of autoregEffects
   # [[groups]][[waves]]
   isMultigroup <- is.list(autoregEffects)
@@ -5934,34 +5938,34 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(nullEffect %in% waveEqual) stop('You cannot set the same parameters in nullEffect and waveEqual')
   if(nullEffect %in% groupEqual) stop('You cannot set the same parameters in nullEffect and groupEqual')
   
-  if(is.null(lag2Effects)) lag2Effects <- rep(0, nWaves - 2)
-  if(is.null(lag2MovingAvgEffects)) lag2MovingAvgEffects <- rep(0, nWaves - 2)
-  if(is.null(lag3Effects)) if(nWaves > 2) lag3Effects <- rep(0, nWaves - 3) else lag3Effects <- 0 # just to init properly, never actually used
-  if(is.null(lag3MovingAvgEffects)) if(nWaves > 2) lag3MovingAvgEffects <- rep(0, nWaves - 3) else lag3MovingAvgEffects <- 0
+  if(is.null(autoregLag2)) autoregLag2 <- rep(0, nWaves - 2)
+  if(is.null(mvAvgLag2)) mvAvgLag2 <- rep(0, nWaves - 2)
+  if(is.null(autoregLag3)) if(nWaves > 2) autoregLag3 <- rep(0, nWaves - 3) else autoregLag3 <- 0 # just to init properly, never actually used
+  if(is.null(mvAvgLag3)) if(nWaves > 2) mvAvgLag3 <- rep(0, nWaves - 3) else mvAvgLag3 <- 0
   
   if(is.null(means) && (nullEffect %in% c('meana=meanb', 'mean') || 'mean' %in% waveEqual)) stop('Either nullEffect or waveEqual refer to means, but no means provided.')
 
-  if(!is.list(movingAvgEffects)) movingAvgEffects <- rep(list(movingAvgEffects), nGroups)
-  if(!is.list(lag2MovingAvgEffects)) lag2MovingAvgEffects <- rep(list(lag2MovingAvgEffects), nGroups)
-  if(!is.list(lag3MovingAvgEffects)) lag3MovingAvgEffects <- rep(list(lag3MovingAvgEffects), nGroups)
-  if(!is.list(lag2Effects)) lag2Effects <- rep(list(lag2Effects), nGroups)
-  if(!is.list(lag3Effects)) lag3Effects <- rep(list(lag3Effects), nGroups)
+  if(!is.list(mvAvgLag1)) mvAvgLag1 <- rep(list(mvAvgLag1), nGroups)
+  if(!is.list(mvAvgLag2)) mvAvgLag2 <- rep(list(mvAvgLag2), nGroups)
+  if(!is.list(mvAvgLag3)) mvAvgLag3 <- rep(list(mvAvgLag3), nGroups)
+  if(!is.list(autoregLag2)) autoregLag2 <- rep(list(autoregLag2), nGroups)
+  if(!is.list(autoregLag3)) autoregLag3 <- rep(list(autoregLag3), nGroups)
   if(!is.null(means) && !is.list(means)) means <- rep(list(means), nGroups)
   if(!is.list(variances)) variances <- rep(list(variances), nGroups)
-  if(length(movingAvgEffects) != nGroups) stop('movingAvgEffects must be provided for each group.')
-  if(length(lag2MovingAvgEffects) != nGroups) stop('lag2MovingAvgEffects must be provided for each group.')
-  if(length(lag3MovingAvgEffects) != nGroups) stop('lag3MovingAvgEffects must be provided for each group.')
-  if(length(lag2Effects) != nGroups) stop('lag2Effects must be provided for each group.')
-  if(length(lag3Effects) != nGroups) stop('lag3Effects must be provided for each group.')
+  if(length(mvAvgLag1) != nGroups) stop('mvAvgLag1 must be provided for each group.')
+  if(length(mvAvgLag2) != nGroups) stop('mvAvgLag2 must be provided for each group.')
+  if(length(mvAvgLag3) != nGroups) stop('mvAvgLag3 must be provided for each group.')
+  if(length(autoregLag2) != nGroups) stop('autoregLag2 must be provided for each group.')
+  if(length(autoregLag3) != nGroups) stop('autoregLag3 must be provided for each group.')
   if(!is.null(means) && length(means) != nGroups) stop('means must be provided for each group.')
   if(length(variances) != nGroups) stop('variances must be provided for each group.')
   
   if(any(unlist(lapply(autoregEffects, function(x) length(x) != (nWaves - 1))))) stop('autoregEffects must be of length nWaves - 1.')
-  if(any(unlist(lapply(lag2Effects, function(x) length(x) != (nWaves - 2))))) stop('lag2Effects must be of length nWaves - 2.')
-  if(any(unlist(lapply(lag3Effects, function(x) length(x) != (nWaves - 3))))) stop('lag3Effects must be of length nWaves - 3.')
-  if(any(unlist(lapply(movingAvgEffects, function(x) length(x) != (nWaves - 1))))) stop('movingAvgEffects must be of length nWaves - 1.')
-  if(any(unlist(lapply(lag2MovingAvgEffects, function(x) length(x) != (nWaves - 2))))) stop('lag2MovingAvgEffects must be of length nWaves - 2.')
-  if(any(unlist(lapply(lag3MovingAvgEffects, function(x) length(x) != (nWaves - 3))))) stop('lag3MovingAvgEffects must be of length nWaves - 3.')
+  if(any(unlist(lapply(autoregLag2, function(x) length(x) != (nWaves - 2))))) stop('autoregLag2 must be of length nWaves - 2.')
+  if(any(unlist(lapply(autoregLag3, function(x) length(x) != (nWaves - 3))))) stop('autoregLag3 must be of length nWaves - 3.')
+  if(any(unlist(lapply(mvAvgLag1, function(x) length(x) != (nWaves - 1))))) stop('mvAvgLag1 must be of length nWaves - 1.')
+  if(any(unlist(lapply(mvAvgLag2, function(x) length(x) != (nWaves - 2))))) stop('mvAvgLag2 must be of length nWaves - 2.')
+  if(any(unlist(lapply(mvAvgLag3, function(x) length(x) != (nWaves - 3))))) stop('mvAvgLag3 must be of length nWaves - 3.')
   if(!is.null(means) && any(unlist(lapply(means, function(x) length(x) != nWaves)))) stop('means must be of length nWaves.')
   if(any(unlist(lapply(variances, function(x) length(x) != nWaves)))) stop('variances must be of length nWaves.')
 
@@ -5973,13 +5977,13 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
     warning('Autoregressive lag-3 effects must be estimated, when nullEffect refers to lag-3 effects.')
     estimateLag3Effects <- TRUE
   }
-  if(!estimateMovingAvgLag2 && nullEffect %in% c('mvavglag2=0', 'mvavglag2')){
+  if(!estimateMvAvgLag2 && nullEffect %in% c('mvavglag2=0', 'mvavglag2')){
     warning('Moving average lag-2 parameters must be estimated, when nullEffect refers to lag-2 effects.')
-    estimateMovingAvgLag2 <- TRUE
+    estimateMvAvgLag2 <- TRUE
   }
-  if(!estimateMovingAvgLag3 && nullEffect %in% c('mvavglag3=0', 'mvavglag3')){
+  if(!estimateMvAvgLag3 && nullEffect %in% c('mvavglag3=0', 'mvavglag3')){
     warning('Moving average lag-3 parameters must be estimated, when nullEffect refers to lag-3 effects.')
-    estimateMovingAvgLag3 <- TRUE
+    estimateMvAvgLag3 <- TRUE
   }
   if((nullEffect == 'var' || 'var' %in% waveEqual) && !invariance) stop('When nullEffect or waveEqual  refer to variances, invariance must be TRUE.')
   if((nullEffect == 'mean' || 'mean' %in% waveEqual) && !invariance) stop('When nullEffect or waveEqual refer to latent means, invariance must be TRUE.')
@@ -6026,32 +6030,32 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
     # lag-2 effects
     if(nWaves > 2){
       for(i in seq(nWaves - 2)){
-        B[(i + 2), i] <- lag2Effects[[x]][i]
+        B[(i + 2), i] <- autoregLag2[[x]][i]
       }
     }
     # lag-3 effects
     if(nWaves > 3){
       for(i in seq(nWaves - 3)){
-        B[(i + 3), i] <- lag3Effects[[x]][i]
+        B[(i + 3), i] <- autoregLag3[[x]][i]
       }
     }
     # lag-1 mov avgs
     for(i in seq(nWaves - 1)){
       idx <- nWaves + i
-      B[(i + 1), idx] <- movingAvgEffects[[x]][i]
+      B[(i + 1), idx] <- mvAvgLag1[[x]][i]
     }
     # lag-2 mov avgs
     if(nWaves > 2){
       for(i in seq(nWaves - 2)){
         idx <- nWaves + i
-        B[(i + 2), idx] <- lag2MovingAvgEffects[[x]][i]
+        B[(i + 2), idx] <- mvAvgLag2[[x]][i]
       }
     }
     # lag-3 mov avgs
     if(nWaves > 3){
       for(i in seq(nWaves - 3)){
         idx <- nWaves + i
-        B[(i + 3), idx] <- lag3MovingAvgEffects[[x]][i]
+        B[(i + 3), idx] <- mvAvgLag3[[x]][i]
       }
     }
     # noise factors
@@ -6131,8 +6135,8 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   # mv avg
   for(f in 2:nWaves){     # omit first row
     fidx <- (f - 1)
-    if(estimateMovingAvgLag2 && f > 2) fidx <- c(fidx, (f - 2)) # estm lag2 effects regardless of these are zero
-    if(estimateMovingAvgLag3 && f > 3) fidx <- c(fidx, (f - 3)) # estm lag3 effects regardless of these are zero
+    if(estimateMvAvgLag2 && f > 2) fidx <- c(fidx, (f - 2)) # estm lag2 effects regardless of these are zero
+    if(estimateMvAvgLag3 && f > 3) fidx <- c(fidx, (f - 3)) # estm lag3 effects regardless of these are zero
     tok <- paste0('f', f, ' ~ ', paste(paste0('pn', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('n', fidx), sep = '', collapse = ' + '))
     model <- paste(model, tok, sep='\n')
   }
