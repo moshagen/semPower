@@ -3808,9 +3808,9 @@ semPower.powerLI <- function(type,
   # check and translate to lavstring
   if(length(nullEffect) > 1 || nullEffect == 'loadings'){
     if(any(unlist(lapply(nullEffect, function(x) x %in% nullValid[-5])))) stop('Either use lavaan-type strings or use predefined strings, but do not mix.')
-    if(any(unlist(lapply(comparison, function(x) x %in% c(nullValid, 'configural'))))) stop('Either use lavaan-type strings or use predefined strings, but do not mix.')
-    if(length(nullEffect) <= length(comparison)) stop('The H0 model must contain all restrictions of the comparison model plus one additional restriction.')
-    if(!any('saturated' %in% comparison) && any(unlist(lapply(comparison, function(x) !x %in% nullEffect)))) stop('The H0 model must contain all restrictions of the comparison model plus one additional restriction.')
+    if(any(unlist(lapply(comparison, function(x) x %in% c(nullValid))))) stop('Either use lavaan-type strings or use predefined strings, but do not mix.')
+    if((length(nullEffect) == 1 && nullEffect != 'loadings') && length(nullEffect) <= length(comparison)) stop('The H0 model must contain all restrictions of the comparison model plus one additional restriction.')
+    if(!any(c('saturated', 'configural') %in% comparison) && any(unlist(lapply(comparison, function(x) !x %in% nullEffect)))) stop('The H0 model must contain all restrictions of the comparison model plus one additional restriction.')
   }else{
     if(nullEffect %in% nullValidLav[-5]) stop('Either use lavaan-type strings or use predefined strings, but do not mix.')
     if(comparison %in% nullValidLav[-5]) stop('Either use lavaan-type strings or use predefined strings, but do not mix.')
@@ -3847,7 +3847,10 @@ semPower.powerLI <- function(type,
   if(is.null(generated[['Lambda']])) stop('powerLI does not support multiple group models (do not define lists for measurement parameters).')
   if(ncol(generated[['Lambda']]) == nrow(generated[['Lambda']])) stop('Longitudinal invariance requires latent variables with multiple indicators.')
   if(ncol(generated[['Lambda']]) < 3 && 'lv.covariances' %in% c(comparison, nullEffect)) stop('Equality of covariances is only meaningful for at least 3 factors (measurements).')
-  if(!is.null(Phi) && ncol(Phi) != ncol(generated[['Lambda']])) stop('The dimensions of Phi must equal the number of factors.')
+  if(!is.null(Phi)){
+    if(!is.matrix(Phi) && length(Phi) > 1) stop('If there are more than two factors, Phi must be a matrix.')
+    if(is.matrix(Phi) && ncol(Phi) != ncol(generated[['Lambda']])) stop('The dimensions of Phi must equal the number of factors.')
+  }
   
   metricInvarianceFactors <- list(seq(ncol(generated[['Lambda']])))  
   
