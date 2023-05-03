@@ -583,7 +583,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     tok <- lapply(tok, function(x){
       if(startsWith(x, tFac) && grepl('=~', x)){
         t <- lapply(strsplit(strsplit(x, '=~', fixed = TRUE)[[1]][2], '+', fixed = TRUE)[[1]], trimws)
-        idx <- which(unlist(t) %in% tInd)
+        idx <- grep(tInd, unlist(t))
         if(grepl('NA', t[[idx]])){
           t[[idx]] <- sub('NA', '0', t[[idx]])
         }else{
