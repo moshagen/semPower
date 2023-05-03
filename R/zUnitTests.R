@@ -3167,8 +3167,8 @@ test_powerARMA <- function(doTest = TRUE){
                             waveEqual = c('autoreg', 'var'),
                             nullEffect = 'mvavg',
                             nIndicator = rep(3, 5), loadM = .5,
-                            estimateMvAvgLag2 = TRUE,
-                            estimateMvAvgLag3 = TRUE,
+                            estimateMovingAvgLag2 = TRUE,
+                            estimateMovingAvgLag3 = TRUE,
                             invariance = TRUE, 
                             autocorResiduals = TRUE)
   
@@ -3196,8 +3196,8 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'mvavglag2',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateMvAvgLag2 = TRUE,
-                             estimateMvAvgLag3 = TRUE,
+                             estimateMovingAvgLag2 = TRUE,
+                             estimateMovingAvgLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
@@ -3217,8 +3217,8 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'mvavglag3',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateMvAvgLag2 = TRUE,
-                             estimateMvAvgLag3 = TRUE,
+                             estimateMovingAvgLag2 = TRUE,
+                             estimateMovingAvgLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
