@@ -831,12 +831,8 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'                                      corXX = corXX, 
 #'                                      nullEffect = 'slopeA = slopeB', 
 #'                                      nullWhich = 2,
-#'                                      nIndicator = list(
-#'                                         c(4, 5, 3, 5), 
-#'                                         c(4, 5, 3, 5)),
-#'                                      loadM = list(
-#'                                         c(.5, .6, .7, .6),
-#'                                         c(.5, .6, .7, .6)), 
+#'                                      nIndicator = c(4, 5, 3, 5),
+#'                                      loadM = c(.5, .6, .7, .6),
 #'                                      alpha = .05, beta = .05, 
 #'                                      N = list(1, 1))
 #'
@@ -911,14 +907,11 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   # get temporary Lambda so that we can check whether number of factors matches slopes + 1
   tLambda  <- args[['Lambda']]
   if(is.null(tLambda)){
-    if(!isMultigroup){
-      tLambda <- genLambda(args[['loadings']], args[['nIndicator']],
-                           args[['loadM']], args[['loadSD']], args[['loadMinMax']])
-    }else{
-      tLambda <- genLambda(args[['loadings']][[1]], args[['nIndicator']][[1]],
-                           args[['loadM']][[1]], args[['loadSD']][[1]], args[['loadMinMax']][[1]])
-      
-    }
+      tLambda <- genLambda(if(is.list(args[['loadings']])) args[['loadings']][[1]] else args[['loadings']], 
+                           if(is.list(args[['nIndicator']])) args[['nIndicator']][[1]] else args[['nIndicator']],
+                           if(is.list(args[['loadM']])) args[['loadM']][[1]] else args[['loadM']], 
+                           if(is.list(args[['loadSD']])) args[['loadSD']][[1]] else args[['loadSD']], 
+                           if(is.list(args[['loadMinMax']])) args[['loadMinMax']][[1]] else args[['loadMinMax']])
   }
   if(ncol(tLambda) != (1 + nrow(slopes[[1]]))) stop('The number of factors does not match the number of slopes + 1. Remember to define a measurement model including both the criterion (Y) and all predictors (X).')
   
@@ -4148,9 +4141,7 @@ semPower.powerLI <- function(type,
 #'                                 Beta = Beta,
 #'                                 nullEffect = 'betaA = betaB',
 #'                                 nullWhich = c(2, 1),
-#'                                 nIndicator = list(
-#'                                   c(3, 4, 5, 6), 
-#'                                   c(3, 4, 5, 6)), 
+#'                                 nIndicator = c(3, 4, 5, 6), 
 #'                                 loadM = .5,
 #'                                 alpha = .05, beta = .05, N = list(1, 1))
 #' }
@@ -4499,7 +4490,6 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #' # differs from the one in group 2 (of r = .1)
 #' bfLoadings <- rep(.6, 10)
 #' bfWhichFactors <- c(1, 2, 3)
-#' 
 #' loadings <- list(
 #'   # specific factors
 #'   rep(.2, 3),
