@@ -5459,10 +5459,6 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param invariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). When means are part of the model, invariant intercepts are also assumed. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateAutoregLag2 whether the autoregressive lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateAutoregLag3 whether the autoregressive lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateMvAvgLag2 whether the moving average lag-2 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateMvAvgLag3 whether the moving average lag-3 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -5744,9 +5740,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #'   nullEffect = 'autoreglag2 = 0',
 #'   nIndicator = rep(3, 10), loadM = .5,
 #'   invariance = TRUE, 
-#'   autocorResiduals = TRUE,
-#'   estimateAutoregLag2 = TRUE,
-#'   estimateAutoregLag3 = TRUE
+#'   autocorResiduals = TRUE
 #' )
 #' 
 #' # similar as above, but get required N to detect that 
@@ -5762,9 +5756,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #'   waveEqual = c('mvAvg', 'autoreg', 'var', 'autoreglag2'),
 #'   nullEffect = 'mvAvgLag2',
 #'   nIndicator = rep(3, 10), loadM = .5,
-#'   invariance = TRUE, 
-#'   autocorResiduals = TRUE,
-#'   estimateMvAvgLag2 = TRUE
+#'   invariance = TRUE
 #' )
 #' 
 #' 
@@ -5869,10 +5861,6 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
                                nullWhichGroups = NULL,
                                invariance = TRUE,
                                autocorResiduals = TRUE,
-                               estimateAutoregLag2 = FALSE,
-                               estimateAutoregLag3 = FALSE,
-                               estimateMvAvgLag2 = FALSE,
-                               estimateMvAvgLag3 = FALSE,
                                ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -5928,6 +5916,11 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(nullEffect %in% groupEqual) stop('You cannot set the same parameters in nullEffect and groupEqual')
   if(is.null(means) && (nullEffect %in% c('meana=meanb', 'mean') || 'mean' %in% waveEqual)) stop('Either nullEffect or waveEqual refer to means, but no means provided.')
   
+  estimateAutoregLag2 <- !is.null(autoregLag2)
+  estimateAutoregLag3 <- !is.null(autoregLag3)
+  estimateMvAvgLag2 <- !is.null(mvAvgLag2)
+  estimateMvAvgLag3 <- !is.null(mvAvgLag3)
+  
   if(is.null(autoregLag2)) autoregLag2 <- rep(0, nWaves - 2)
   if(is.null(mvAvgLag2)) mvAvgLag2 <- rep(0, nWaves - 2)
   if(is.null(autoregLag3)) if(nWaves > 2) autoregLag3 <- rep(0, nWaves - 3) else autoregLag3 <- 0 # just to init properly, never actually used
@@ -5951,22 +5944,6 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(!is.null(means) && any(unlist(lapply(means, function(x) length(x) != nWaves)))) stop('means must be of length nWaves.')
   if(any(unlist(lapply(variances, function(x) length(x) != nWaves)))) stop('variances must be of length nWaves.')
 
-  if(!estimateAutoregLag2 && nullEffect %in% c('autoreglag2=0','autoreglag2')){
-    warning('Autoregressive lag-2 effects must be estimated, when nullEffect refers to lag-2 effects.')
-    estimateAutoregLag2 <- TRUE
-  } 
-  if(!estimateAutoregLag3 && nullEffect %in% c('autoreglag3=0', 'autoreglag3')){
-    warning('Autoregressive lag-3 effects must be estimated, when nullEffect refers to lag-3 effects.')
-    estimateLag3Effects <- TRUE
-  }
-  if(!estimateMvAvgLag2 && nullEffect %in% c('mvavglag2=0', 'mvavglag2')){
-    warning('Moving average lag-2 parameters must be estimated, when nullEffect refers to lag-2 effects.')
-    estimateMvAvgLag2 <- TRUE
-  }
-  if(!estimateMvAvgLag3 && nullEffect %in% c('mvavglag3=0', 'mvavglag3')){
-    warning('Moving average lag-3 parameters must be estimated, when nullEffect refers to lag-3 effects.')
-    estimateMvAvgLag3 <- TRUE
-  }
   if((nullEffect == 'var' || 'var' %in% waveEqual) && !invariance) stop('When nullEffect or waveEqual  refer to variances, invariance must be TRUE.')
   if((nullEffect == 'mean' || 'mean' %in% waveEqual) && !invariance) stop('When nullEffect or waveEqual refer to latent means, invariance must be TRUE.')
 
