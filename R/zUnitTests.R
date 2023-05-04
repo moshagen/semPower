@@ -2765,11 +2765,10 @@ test_powerAutoreg <- function(doTest = TRUE){
   # 3waves, estm lagged effects, autoreg=0
   ph3 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
                                nWaves = 3, autoregEffects = c(.6, .5),
+                               lag2Effects = c(0),
                                nullEffect = 'autoreg=0',
                                nullWhich = 1,
                                nIndicator = c(3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres3b <- helper_lav(ph3$modelH1, ph3$Sigma)
@@ -2792,8 +2791,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                lag3Effects = c(.05),
                                nullEffect = 'autoreg=0',
                                nIndicator = c(3, 3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres4a <- helper_lav(ph4$modelH0, ph4$Sigma)
@@ -2822,8 +2819,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                lag3Effects = c(.15),
                                nullEffect = 'lag2=0',
                                nIndicator = c(3, 3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres5a <- helper_lav(ph5$modelH0, ph5$Sigma)
@@ -2840,8 +2835,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                lag3Effects = c(.15),
                                nullEffect = 'lag3=0',
                                nIndicator = c(3, 3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres6a <- helper_lav(ph6$modelH0, ph6$Sigma)
@@ -2867,8 +2860,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                nullEffect = 'lag2=0',
                                nullWhich = 2,
                                nIndicator = c(3, 3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres7a <- helper_lav(ph7$modelH0, ph7$Sigma)
@@ -2890,8 +2881,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                nullEffect = 'autorega=autoregb',
                                nullWhich = 1,
                                nIndicator = c(3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres8a <- helper_lav(ph8$modelH0, ph8$Sigma, sample.nobs = list(500, 500))
@@ -2908,8 +2897,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                waveEqual = c('autoreg'),
                                nullEffect = 'autorega=autoregb',
                                nIndicator = c(3, 3, 3), loadM = .5,
-                               estimateLag2Effects = TRUE,
-                               estimateLag3Effects = TRUE,
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres9a <- helper_lav(ph9$modelH0, ph9$Sigma, sample.nobs = list(500, 500))
@@ -2932,7 +2919,7 @@ test_powerAutoreg <- function(doTest = TRUE){
   lavres10b <- helper_lav(ph10$modelH1, ph10$Sigma)
   par10b <- lavres10b$par  
   
-  valid6 <- valid5 &&
+  valid5 <- valid4 &&
     sum(abs(par10b[par10b$lhs %in% paste0('f', 1:4) & par10b$lhs == par10b$rhs, 'est'] - c(1, .5, 2, 1.5))) < 1e-6 &&
     sum(abs(par10b[par10b$lhs %in% paste0('f', 1:4) & par10b$op == '~', 'est'] - c(.6, .7, .6))) < 1e-6 &&
     length(unique(par10a[par10a$lhs %in% paste0('f', 2:4) & par10a$lhs == par10a$rhs, 'label'])) == 1
@@ -3038,7 +3025,7 @@ test_powerARMA <- function(doTest = TRUE){
     length(unique(par2b[par2b$lhs %in% paste0('f', 2:5) & par2b$op == '~' & par2b$rhs %in% paste0('n', 1:5), 'label'])) == 1 &&
     abs(par2a[par2a$lhs == 'f2' & par2a$rhs == 'f1', 'est']) < 1e-6 &&
     mean(abs(par2a[par2a$lhs %in% paste0('f', 3:5) & par2a$op == '~' & par2a$rhs %in% paste0('f', 2:5), 'est'])) > .1 &&
-    length(unique(par3b[par3b$lhs %in% paste0('n', 1:5) & par3b$rhs == par3b$lhs, 'label'])) == 1
+    length(unique(par3b[par3b$lhs %in% paste0('n', 1:5) & par3b$rhs == par3b$lhs, 'label'])) == 2
   
 
   # wavequ=mvavg+var autoreg
@@ -3134,7 +3121,7 @@ test_powerARMA <- function(doTest = TRUE){
     mean(abs(par5b[par5b$lhs %in% paste0('f', 2:5) & par5b$op == '~' & par5b$rhs %in% paste0('n', 1:5), 'est'] - c(.15, .25, .35, .45))) < 1e-6 &&
     length(unique(par5a[par5a$lhs %in% paste0('f', 2:5) & par5a$op == '~' & par5a$rhs %in% paste0('n', 1:5), 'label'])) == 1 &&
     mean(abs(par6b[par6b$lhs %in% paste0('n', 1:5) & par6b$rhs == par6b$lhs, 'est'] - c(.5, 1, 1.5, 2, 2.5))) < 1e-6 &&
-    length(unique(par6a[par6a$lhs %in% paste0('n', 1:5) & par6a$rhs == par6a$lhs, 'label'])) == 1 && 
+    length(unique(par6a[par6a$lhs %in% paste0('n', 1:5) & par6a$rhs == par6a$lhs, 'label'])) == 2 && 
     mean(abs(par7b[par7b$lhs %in% paste0('f', 1:5) & par7b$op == '~1', 'est'] - c(0, .1, .2, .3, .4))) < 1e-6 &&
     length(unique(par7a[par7a$lhs %in% paste0('f', 2:5) & par7a$op == '~1', 'label'])) == 1 &&
     mean(abs(par10b[par10b$lhs %in% paste0('f', 1:5) & par10b$op == '~1', 'est'] - c(0, .1, .2, .3, .4))) < 1e-6 &&
@@ -3145,13 +3132,13 @@ test_powerARMA <- function(doTest = TRUE){
   ph8 <- semPower.powerARMA('ph', N = 500, alpha = .05,
                             nWaves = 5, 
                             autoregEffects = c(.5, .5, .5, .5),
+                            autoregLag2 = c(0, 0, 0),
+                            autoregLag3 = c(0, 0),
                             mvAvgLag1 = c(.15, .25, .35, .45),
                             variances = c(1, 1, 1, 1, 1),
                             waveEqual = c('autoreg', 'var'),
                             nullEffect = 'mvavg',
                             nIndicator = rep(3, 5), loadM = .5,
-                            estimateAutoregLag2 = TRUE,
-                            estimateAutoregLag3 = TRUE,
                             invariance = TRUE, 
                             autocorResiduals = TRUE)
   
@@ -3163,12 +3150,12 @@ test_powerARMA <- function(doTest = TRUE){
                             nWaves = 5, 
                             autoregEffects = c(.5, .5, .5, .5),
                             mvAvgLag1 = c(.15, .25, .35, .45),
+                            mvAvgLag2 = c(0, 0, 0),
+                            mvAvgLag3 = c(0, 0),
                             variances = c(1, 1, 1, 1, 1),
                             waveEqual = c('autoreg', 'var'),
                             nullEffect = 'mvavg',
                             nIndicator = rep(3, 5), loadM = .5,
-                            estimateMvAvgLag2 = TRUE,
-                            estimateMvAvgLag3 = TRUE,
                             invariance = TRUE, 
                             autocorResiduals = TRUE)
   
@@ -3196,8 +3183,6 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'mvavglag2',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateMvAvgLag2 = TRUE,
-                             estimateMvAvgLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
@@ -3217,8 +3202,6 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'mvavglag3',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateMvAvgLag2 = TRUE,
-                             estimateMvAvgLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
@@ -3238,8 +3221,6 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'autoreglag2',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateAutoregLag2 = TRUE,
-                             estimateAutoregLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
@@ -3260,8 +3241,6 @@ test_powerARMA <- function(doTest = TRUE){
                              waveEqual = c('autoreg', 'var'),
                              nullEffect = 'autoreglag3',
                              nIndicator = rep(3, 5), loadM = .5,
-                             estimateAutoregLag2 = TRUE,
-                             estimateAutoregLag3 = TRUE,
                              invariance = TRUE, 
                              autocorResiduals = TRUE)
   
@@ -3448,8 +3427,8 @@ test_powerARMA <- function(doTest = TRUE){
     length(unique(par17b[par17b$lhs %in% paste0('f', 2:5) & par17b$op == '~' & par17b$rhs %in% paste0('n', 1:5), 'label'])) == 2 &&
     mean(abs(par17b[par17b$lhs %in% paste0('f', 2:5) & par17b$op == '~' & par17b$rhs %in% paste0('n', 1:5) & par17b$group == 1, 'est'] - .25)) < 1e-6 &&
     mean(abs(par17b[par17b$lhs %in% paste0('f', 2:5) & par17b$op == '~' & par17b$rhs %in% paste0('n', 1:5) & par17b$group == 2, 'est'] - .15)) < 1e-6 &&
-    length(unique(par18a[par18a$lhs %in% paste0('n', 1:5) & par18a$op == '~~' & par18a$lhs == par18a$rhs, 'label'])) == 1 &&
-    length(unique(par18b[par18b$lhs %in% paste0('n', 1:5) & par18b$op == '~~' & par18b$lhs == par18b$rhs, 'label'])) == 2 &&
+    length(unique(par18a[par18a$lhs %in% paste0('n', 1:5) & par18a$op == '~~' & par18a$lhs == par18a$rhs, 'label'])) == 3 &&
+    length(unique(par18b[par18b$lhs %in% paste0('n', 1:5) & par18b$op == '~~' & par18b$lhs == par18b$rhs, 'label'])) == 4 &&
     mean(abs(par18b[par18b$lhs %in% paste0('n', 1:5) & par18b$op == '~~' & par18b$lhs == par18b$rhs & par18b$group == 1, 'est'])) - 1 < 1e-6 &&
     mean(abs(par18b[par18b$lhs %in% paste0('n', 1:5) & par18b$op == '~~' & par18b$lhs == par18b$rhs & par18b$group == 2, 'est'])) - .5 < 1e-6 &&
     length(unique(par19a[par19a$lhs %in% paste0('f', 2:5) & par19a$op == '~1', 'label'])) == 1 &&
