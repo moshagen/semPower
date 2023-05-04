@@ -2334,7 +2334,7 @@ test_powerRICLPM <- function(doTest = TRUE){
                                alpha = .05, N = list(500, 500))
   
   lavres <- helper_lav(ph25$modelH1, ph25$Sigma, sample.nobs = list(1000, 1000))
-  par <- lavres$par
+  par25a <- lavres$par
   lavres25 <- helper_lav(ph25$modelH0, ph25$Sigma, sample.nobs = list(1000, 1000))
   par25 <- lavres25$par  
 
@@ -2344,7 +2344,7 @@ test_powerRICLPM <- function(doTest = TRUE){
     length(unique(round(par[par$lhs %in% c('f5', 'f7') & par$rhs %in% c('f4', 'f6') & par$op == '~', 'est'], 4))) == 4 &&
     length(unique(round(par24[par24$lhs %in% c('f6') & par24$rhs %in% c('f3') & par24$op == '~', 'est'], 4))) == 1 &&
     length(unique(round(par24[par24$lhs %in% c('f8') & par24$rhs %in% c('f5') & par24$op == '~', 'est'], 4))) == 2 &&
-    length(unique(round(par[par$lhs == 'f1' & par$rhs == 'f2', 'est'], 4))) == 2 &&
+    length(unique(round(par25a[par25a$lhs == 'f1' & par25a$rhs == 'f2', 'est'], 4))) == 2 &&
     length(unique(round(par25[par25$lhs == 'f1' & par25$rhs == 'f2', 'est'], 4))) == 1
 
   

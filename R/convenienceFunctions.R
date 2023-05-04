@@ -1428,7 +1428,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nWaves number of waves, must be >= 2.
 #' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for a autoregressive effect of .7 for `X1 -> X2` and .6 for `X2 -> X3` and autoregressive effects of .5 for `Y1 -> Y2` and `Y2 -> Y3`. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed. 
 #' @param crossedEffects vector of crossed effects of X on Y `(X -> Y)` and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for `X1 - > Y2` = .2, `X2 -> Y3` = .3, `Y1 -> Y2` = .1, and `Y2 -> Y3` = .1. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.
-#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. Can be a list for multiple groups models, otherwise no no group differences are assumed.
+#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. Can be a list for multiple groups models, otherwise no group differences are assumed.
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups. 
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
@@ -1849,13 +1849,14 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                  'autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb'
   )
   nullEffect <- checkNullEffect(nullEffect, nullValid)
-  
+
   # create list structure for autoregEffects, crossedEffects, and corXY
-  # assume multigroup when list structure is present for either autoreg or crossed effects
   ngA <- ifelse(is.list(autoregEffects[[1]]), length(autoregEffects), 1)
   ngX <- ifelse(is.list(crossedEffects[[1]]), length(crossedEffects), 1)
-  if(sum(c(ngA, ngX) > 1) > 1  && ngA != ngX) stop('Specify the same number of groups for both autoregEffects and crossedEffects.')
-  nGroups <- max(c(ngA, ngX))
+  ngR <- ifelse(is.list(rXY), length(rXY), 1)
+  ig <- unique(c(ngA, ngX, ngR))
+  if(length(ig[ig > 1]) > 1) stop('Non-null list arguments supplied to autoregEffects, crossedEffects, or rXY imply a different number of groups. Make sure all lists have the same length or provide no list for no group differences.')
+  nGroups <- max(ig)
   isMultigroup <- nGroups > 1
   
   if(isMultigroup && !nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb')) stop('Multigroup analysis are only supported for nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb')
@@ -1871,7 +1872,6 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   if(length(crossedEffects[[1]][[1]]) == 1) crossedEffects <- lapply(crossedEffects, function(x) lapply(x, function(y) rep(y, nWaves - 1)))
 
   if(is.null(rXY)) rXY <- rep(0, nWaves)
-  if(is.list(rXY) && length(rXY) != nGroups) stop('corXY implies a different number of groups as autoregEffects or crossedEffects.')
   if(!is.list(rXY)) rXY <- rep(list(rXY), nGroups)
 
   if(any(unlist(lapply(rXY, function(x) length(x) != nWaves)))) stop('rXY must be of length nWaves')
@@ -2209,10 +2209,10 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
 #' @param comparison comparison model, one of `'saturated'` or `'restricted'` (the default). This determines the df for power analyses. `'saturated'` provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. `'restricted'` provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in `nullEffect`, so the df equal the number of restrictions.
 #' @param nWaves number of waves, must be >= 3.
-#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3.
-#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.
-#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero. 
-#' @param rBXBY correlation between random intercept factors. If `NULL`, the correlation is zero. 
+#' @param autoregEffects vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.
+#' @param crossedEffects vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. `list(c(.2, .3), c(.1, .1))` for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.
+#' @param rXY vector of (residual-)correlations between X and Y for each wave. If `NULL`, all (residual-)correlations are zero.  Can be a list for multiple groups models, otherwise no group differences are assumed.
+#' @param rBXBY correlation between random intercept factors. If `NULL`, the correlation is zero. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.
 #' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'autoregX'` and `'autoregY'` for autoregressive effects, `'crossedX'` and `'crossedY'` for crossed effects, `'corXY'` for residual correlations, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`). 
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'`, and `corBXBYA = corBXBYB` to constrain them to be equal across groups.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
@@ -2731,11 +2731,13 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   nullEffect <- checkNullEffect(nullEffect, nullValid)
   
   # create list structure for autoregEffects, crossedEffects, and corXY
-  # assume multigroup when list structure is present for either autoreg or crossed effects
   ngA <- ifelse(is.list(autoregEffects[[1]]), length(autoregEffects), 1)
   ngX <- ifelse(is.list(crossedEffects[[1]]), length(crossedEffects), 1)
-  if(sum(c(ngA, ngX) > 1) > 1  && ngA != ngX) stop('Specify the same number of groups for both autoregEffects and crossedEffects.')
-  nGroups <- max(c(ngA, ngX))
+  ngR <- ifelse(is.list(rXY), length(rXY), 1)
+  ngC <- ifelse(is.list(rBXBY), length(rBXBY), 1)
+  ig <- unique(c(ngA, ngX, ngR, ngR))
+  if(length(ig[ig > 1]) > 1) stop('Non-null list arguments supplied to autoregEffects, crossedEffects, rXY, or rBXBY imply a different number of groups. Make sure all lists have the same length or provide no list for no group differences.')
+  nGroups <- max(ig)
   isMultigroup <- nGroups > 1
   
   if(isMultigroup && !nullEffect %in% c('autoregxa=autoregxb', 'autoregya=autoregyb', 'crossedxa=crossedxb', 'crossedya=crossedyb','corbxbya=corbxbyb')) stop('Multigroup analysis are only supported for nullEffect = autoregxa=autoregxb, autoregya=autoregyb, crossedxa=crossedxb, crossedya=crossedyb, corbxbya=corbxbyb')
