@@ -239,6 +239,7 @@ semPower.powerLav <- function(type,
                              orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
         deltaF <- fminH0 - fminH1
       }
+      if(any(deltaF < 1e-10)) warning(paste0('The H0 model fits shows the same discrepancy as the H1 model. This usually happens when the H0 model contains restrictions that are valid in the population. Check the definition of the population values and the H0 constraints.'))
       if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(unlist(fminH1)[which(unlist(fminH1) > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
@@ -5147,12 +5148,14 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(isMultigroup && !is.null(lag2Effects) && length(lag2Effects) != nGroups) stop('lag2Effects must be provided for each group.')
   if(isMultigroup && !is.null(lag3Effects) && length(lag3Effects) != nGroups) stop('lag3Effects must be provided for each group.')
   if(nWaves > 2){
+    if(!is.null(lag2Effects) && !estimateLag2Effects) warning('Lag-2 effects specified, but not estimated. Verify that this is intended, or add estimateLag2Effects = TRUE.')
     if(is.null(lag2Effects)) lag2Effects <- rep(0, nWaves - 2)
     if(!is.list(lag2Effects)) lag2Effects <- rep(list(lag2Effects), nGroups)
     if(any(unlist(lapply(lag2Effects, function(x) length(x) != (nWaves - 2))))) stop('lag2Effects must be of length nWaves - 2.')
     invisible(lapply(lag2Effects, function(x) lapply(x, function(x) checkBounded(x, 'All lag2 effects ', bound = c(-1, 1), inclusive = FALSE))))
   }
   if(nWaves > 3){
+    if(!is.null(lag3Effects) && !estimateLag3Effects) warning('Lag-3 effects specified, but not estimated. Verify that this is intended, or add estimateLag3Effects = TRUE.')
     if(is.null(lag3Effects)) lag3Effects <- rep(0, nWaves - 3)
     if(!is.list(lag3Effects)) lag3Effects <- rep(list(lag3Effects), nGroups)
     if(any(unlist(lapply(lag3Effects, function(x) length(x) != (nWaves - 3))))) stop('lag3Effects must be of length nWaves - 3.')
@@ -5185,11 +5188,11 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(nWaves == 3 && nullEffect %in% c('lag2')) stop('For three waves, there is only one lag2 effect. Did you mean lag2 = 0?')
   if(nWaves == 4 && nullEffect %in% c('lag3')) stop('For three waves, there is only one lag3 effect. Did you mean lag3 = 0?')
   if(!estimateLag2Effects && nullEffect %in% c('lag2=0', 'lagged=0', 'lag2')){
-    warning('Lag-2  must be estimated, when nullEffect refers to lagged effects.')
+    warning('Lag-2 must be estimated, when nullEffect refers to lagged effects.')
     estimateLag2Effects <- TRUE
   } 
   if(!estimateLag3Effects && nullEffect %in% c('lag3=0', 'lagged=0','lag3')){
-    warning('Lag-3  must be estimated, when nullEffect refers to lagged effects.')
+    warning('Lag-3 must be estimated, when nullEffect refers to lagged effects.')
     estimateLag3Effects <- TRUE
   }
   if((nullEffect == 'var' || 'var' %in% waveEqual) && is.null(variances)) stop('Either nullEffect or waveEqual refer to variances, but no variances are provided.')
@@ -5468,7 +5471,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' @param mvAvgLag3 vector of the lag-3  moving average parameters, e.g. `c(.2)` for a moving average parameter of .2 for `N1 -> X4`. Must be a list for multiple groups models.
 #' @param means vector of means of `X`. May be `NULL` for no meanstructure.
 #' @param variances vector of variances of the noise factors `N` (= residual variances of `X`).
-#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, this may not be empty. Valid are `'autoreg'`, `'autoregLag2'`, and  `'autoregLag3'` for autoregressive effects, `'mvAvg'`, `'mvAvgLag2'`, and  `'mvAvgLag3'` for moving average effects, `var` for the variance of the noise factors, `mean` for the means of X.
+#' @param waveEqual parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, this may not be empty. Valid are `'autoreg'`, `'autoregLag2'`, and  `'autoregLag3'` for autoregressive effects, `'mvAvg'`, `'mvAvgLag2'`, and  `'mvAvgLag3'` for moving average effects, `var` for the variance of the noise factors (starting at wave 2), `mean` for the conditional means of X  (starting at wave 2).
 #' @param groupEqual parameters that are restricted across groups in both the H0 and the H1 model, when `nullEffect` implies a multiple group model. Valid are `autoreg`, `mvAvg`, `var`, `mean`.
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoreg = 0'`, `'autoregLag2 = 0'`, `'autoregLag3 = 0'`, `'mvAvg = 0'`, `'mvAvgLag2 = 0'`, `'mvAvgLag3 = 0'`,  to constrain the autoregressive or moving average effects to zero, and `'autoregA = autoregB'`, `'mvAvgA = mvAvgB'`, `'varA = varB'`, `'meanA = meanB'` to constrain the autoregressive (lag-1) effects, moving average (lag-1) effects, variances of the noise factors, or means of the X to be equal across groups. 
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are multiple waves and parameters are not constant across waves. For example, `nullEffect = 'autoreg = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
@@ -5501,8 +5504,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' * `mvAvg`: Tests the hypothesis that the moving average lag-1 parameters are equal across waves (stationarity of moving average lag-1 effects).
 #' * `mvAvgLag2`: Tests the hypothesis that the moving average lag-2 parameters are equal across waves (stationarity of moving average lag-2 effects).
 #' * `mvAvgLag3`: Tests the hypothesis that the moving average lag-3 parameters are equal across waves (stationarity of moving average lag-3 effects).
-#' * `var`: Tests the hypothesis that the variances of the noise factors N (= the residual variances of X) are equal across waves (stationarity of variance).
-#' * `mean`: Tests the hypothesis that the conditional means of X (of waves > 1, i.e., X_2, ..., X_nWaves) are equal across waves (stationarity of means).
+#' * `var`: Tests the hypothesis that the variances of the noise factors N (= the residual variances of X) are equal across waves 2 to nWaves (stationarity of variance).
+#' * `mean`: Tests the hypothesis that the conditional means of X are equal across waves 2 to nWaves (stationarity of means).
 #' * `autoreg = 0`, `autoregLag2 = 0`, `autoregLag3 = 0`: Tests the hypothesis that the autoregressive effects of the specified lag is zero. 
 #' * `mvAvg = 0`, `mvAvgLag2 = 0`, `mvAvgLag3 = 0`: Tests the hypothesis that the moving average parameter of the specified lag is zero. 
 #' * `autoregA = autoregB`: Tests the hypothesis that the autoregressive lag-1 effect is equal across groups.
@@ -6295,8 +6298,9 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(c('mvavg') %in% waveEqual) modelH1 <- gsub(paste(pMvAvg, collapse = '|'), 'pn', modelH1)
   if(c('mvavglag2') %in% waveEqual) modelH1 <- gsub(paste(pMvAvgLag2, collapse = '|'), 'pn2', modelH1)
   if(c('mvavglag3') %in% waveEqual) modelH1 <- gsub(paste(pMvAvgLag3, collapse = '|'), 'pn3', modelH1)
-  if(c('var') %in% waveEqual) modelH1 <- gsub(paste(pNoiseVar, collapse = '|'), 'pvn', modelH1)
-  if(c('mean') %in% waveEqual) modelH1 <- gsub(paste(pMeans, collapse = '|'), 'pmf', modelH1)
+  # wave-equal contraints for means and vars do not include first measurement
+  if(c('var') %in% waveEqual) modelH1 <- gsub(paste(pNoiseVar[-1], collapse = '|'), 'pvn', modelH1)
+  if(c('mean') %in% waveEqual) modelH1 <- gsub(paste(pMeans[-1], collapse = '|'), 'pmf', modelH1)
   
   
   # add additional constraints to H0 model
@@ -6309,8 +6313,9 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(c('mvavg') %in% nullEffect) modelH0 <- gsub(paste(pMvAvg, collapse = '|'), 'pn', modelH0)
   if(c('mvavglag2') %in% nullEffect) modelH0 <- gsub(paste(pMvAvgLag2, collapse = '|'), 'pn2', modelH0)
   if(c('mvavglag3') %in% nullEffect) modelH0 <- gsub(paste(pMvAvgLag3, collapse = '|'), 'pn3', modelH0)
-  if(c('var') %in% nullEffect) modelH0 <- gsub(paste(pNoiseVar, collapse = '|'), 'pvn', modelH0)
-  if(c('mean') %in% nullEffect) modelH0 <- gsub(paste(pMeans, collapse = '|'), 'pmf', modelH0)
+  # wave-equal contraints for means and vars do not include first measurement
+  if(c('var') %in% nullEffect) modelH0 <- gsub(paste(pNoiseVar[-1], collapse = '|'), 'pvn', modelH0)
+  if(c('mean') %in% nullEffect) modelH0 <- gsub(paste(pMeans[-1], collapse = '|'), 'pmf', modelH0)
   
   # zero constraints:
   if('autoreg=0' %in% nullEffect){
