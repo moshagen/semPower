@@ -350,7 +350,7 @@ summary.semPower.aPriori <- function(object, ...){
 
   out <- getFormattedResults('a-priori', object)
 
-  cat("\n semPower: A-priori power analysis\n")
+  cat("\n semPower: A priori power analysis\n")
 
   if(object[['simulated']]){
     cat(paste("\n Simulated power based on", object[['nrep']], "successful replications.\n Note that simulated a-priori power analyses are only approximate,\n unless the number of replications is large.\n"))

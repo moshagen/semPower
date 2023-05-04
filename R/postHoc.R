@@ -194,7 +194,7 @@ summary.semPower.postHoc <- function(object, ...){
 
   out <- getFormattedResults('post-hoc', object)
 
-  cat("\n semPower: Post-hoc power analysis\n")
+  cat("\n semPower: Post hoc power analysis\n")
   if(object[['simulated']]){
     cat(paste("\n Simulated power based on", object[['nrep']], "successful replications.\n"))
   }
