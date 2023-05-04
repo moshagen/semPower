@@ -4769,8 +4769,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
 #' @param invariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). When means are part of the model, invariant intercepts are also assumed. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateLag2Effects whether lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
-#' @param estimateLag3Effects whether lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to `FALSE`. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -4959,8 +4957,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #'   waveEqual = c('autoreg'),
 #'   nullEffect = 'autoreg=0',
 #'   nIndicator = rep(3, 4), loadM = .5,
-#'   estimateLag2Effects = TRUE,
-#'   estimateLag3Effects = TRUE,
 #'   invariance = TRUE, autocorResiduals = TRUE)
 #' 
 #' 
@@ -4975,8 +4971,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #'   nullEffect = 'lag2=0',
 #'   nullWhich = 1,
 #'   nIndicator = rep(3, 4), loadM = .5,
-#'   estimateLag2Effects = TRUE,
-#'   estimateLag3Effects = TRUE,
 #'   invariance = TRUE, autocorResiduals = TRUE)
 #' 
 #' 
@@ -4990,8 +4984,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #'   waveEqual = c('autoreg', 'lag2'),
 #'   nullEffect = 'lag2=0',
 #'   nIndicator = rep(3, 4), loadM = .5,
-#'   estimateLag2Effects = TRUE,
-#'   estimateLag3Effects = TRUE,
 #'   invariance = TRUE, autocorResiduals = TRUE)
 #' 
 #' 
@@ -5005,8 +4997,6 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #'   waveEqual = c('autoreg', 'lag2'),
 #'   nullEffect = 'lag3=0',
 #'   nIndicator = rep(3, 4), loadM = .5,
-#'   estimateLag2Effects = TRUE,
-#'   estimateLag3Effects = TRUE,
 #'   invariance = TRUE, autocorResiduals = TRUE)
 #' 
 #' 
@@ -5107,8 +5097,6 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
                                   standardized = TRUE,
                                   invariance = TRUE,
                                   autocorResiduals = TRUE,
-                                  estimateLag2Effects = FALSE,
-                                  estimateLag3Effects = FALSE,
                                   ...){
   
   comparison <- checkComparisonModel(comparison)
@@ -5147,15 +5135,16 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(isMultigroup && !is.null(lag3Effects) && !is.list(lag3Effects)) stop('For multigroup models, lag3Effects must be a list')
   if(isMultigroup && !is.null(lag2Effects) && length(lag2Effects) != nGroups) stop('lag2Effects must be provided for each group.')
   if(isMultigroup && !is.null(lag3Effects) && length(lag3Effects) != nGroups) stop('lag3Effects must be provided for each group.')
+
+  estimateLag2Effects <- !is.null(lag2Effects)
   if(nWaves > 2){
-    if(!is.null(lag2Effects) && !estimateLag2Effects) warning('Lag-2 effects specified, but not estimated. Verify that this is intended, or add estimateLag2Effects = TRUE.')
     if(is.null(lag2Effects)) lag2Effects <- rep(0, nWaves - 2)
     if(!is.list(lag2Effects)) lag2Effects <- rep(list(lag2Effects), nGroups)
     if(any(unlist(lapply(lag2Effects, function(x) length(x) != (nWaves - 2))))) stop('lag2Effects must be of length nWaves - 2.')
     invisible(lapply(lag2Effects, function(x) lapply(x, function(x) checkBounded(x, 'All lag2 effects ', bound = c(-1, 1), inclusive = FALSE))))
   }
+  estimateLag3Effects <- !is.null(lag3Effects)
   if(nWaves > 3){
-    if(!is.null(lag3Effects) && !estimateLag3Effects) warning('Lag-3 effects specified, but not estimated. Verify that this is intended, or add estimateLag3Effects = TRUE.')
     if(is.null(lag3Effects)) lag3Effects <- rep(0, nWaves - 3)
     if(!is.list(lag3Effects)) lag3Effects <- rep(list(lag3Effects), nGroups)
     if(any(unlist(lapply(lag3Effects, function(x) length(x) != (nWaves - 3))))) stop('lag3Effects must be of length nWaves - 3.')
@@ -5187,14 +5176,6 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(nWaves == 2 && nullEffect %in% c('autoreg')) stop('For two waves, there is only one one autoregressive effect. Did you mean autoreg = 0?')
   if(nWaves == 3 && nullEffect %in% c('lag2')) stop('For three waves, there is only one lag2 effect. Did you mean lag2 = 0?')
   if(nWaves == 4 && nullEffect %in% c('lag3')) stop('For three waves, there is only one lag3 effect. Did you mean lag3 = 0?')
-  if(!estimateLag2Effects && nullEffect %in% c('lag2=0', 'lagged=0', 'lag2')){
-    warning('Lag-2 must be estimated, when nullEffect refers to lagged effects.')
-    estimateLag2Effects <- TRUE
-  } 
-  if(!estimateLag3Effects && nullEffect %in% c('lag3=0', 'lagged=0','lag3')){
-    warning('Lag-3 must be estimated, when nullEffect refers to lagged effects.')
-    estimateLag3Effects <- TRUE
-  }
   if((nullEffect == 'var' || 'var' %in% waveEqual) && is.null(variances)) stop('Either nullEffect or waveEqual refer to variances, but no variances are provided.')
   if((nullEffect == 'mean' || 'mean' %in% waveEqual) && is.null(variances)) stop('Either nullEffect or waveEqual refer to means, but no means are provided.')
   if((nullEffect == 'mean' || 'mean' %in% waveEqual) && !invariance) stop('When hypothesis include latent means, invariance must be TRUE.')
