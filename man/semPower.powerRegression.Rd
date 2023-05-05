@@ -238,12 +238,8 @@ powerReg <- semPower.powerRegression(type = 'a-priori',
                                      corXX = corXX, 
                                      nullEffect = 'slopeA = slopeB', 
                                      nullWhich = 2,
-                                     nIndicator = list(
-                                        c(4, 5, 3, 5), 
-                                        c(4, 5, 3, 5)),
-                                     loadM = list(
-                                        c(.5, .6, .7, .6),
-                                        c(.5, .6, .7, .6)), 
+                                     nIndicator = c(4, 5, 3, 5),
+                                     loadM = c(.5, .6, .7, .6),
                                      alpha = .05, beta = .05, 
                                      N = list(1, 1))
 

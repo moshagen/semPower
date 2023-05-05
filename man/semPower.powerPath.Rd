@@ -222,9 +222,7 @@ powerPath <- semPower.powerPath(type = 'a-priori',
                                 Beta = Beta,
                                 nullEffect = 'betaA = betaB',
                                 nullWhich = c(2, 1),
-                                nIndicator = list(
-                                  c(3, 4, 5, 6), 
-                                  c(3, 4, 5, 6)), 
+                                nIndicator = c(3, 4, 5, 6), 
                                 loadM = .5,
                                 alpha = .05, beta = .05, N = list(1, 1))
 }

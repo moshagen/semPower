@@ -21,8 +21,6 @@ semPower.powerAutoreg(
   standardized = TRUE,
   invariance = TRUE,
   autocorResiduals = TRUE,
-  estimateLag2Effects = FALSE,
-  estimateLag3Effects = FALSE,
   ...
 )
 }
@@ -43,13 +41,13 @@ semPower.powerAutoreg(
 
 \item{means}{vector of means for \code{X}. Can be omitted for no meanstructure.}
 
-\item{variances}{vector of (residual-)variances for \code{X}. When omitted, all variances are equal. When provided, \code{standardized} must be \code{FALSE}.}
+\item{variances}{vector of (residual-)variances for \code{X}. When omitted and \code{standardized = FALSE}, all (residual-)variances are equal to 1. When omitted and \code{standardized = TRUE}, the (residual-)variances are determined so that all variances are 1, and will thus typically differ from each other. When provided, \code{standardized} must be \code{FALSE}.}
 
-\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'autoreg'}, \code{'lag2'}, and  \code{'lag3'}, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
+\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'lag1'} (or equivalently \code{'autoreg'}), \code{'lag2'}, and  \code{'lag3'}, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
 
-\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in \code{waveEqual} and additionally \code{'autoregX = 0'}, \code{'lag2 = 0'}, \code{'lag3 = 0'} to constrain the autoregressive, lag-2, or lag-3 effects to zero, and \code{'autoregA = autoregB'} to the autoregressive effects be equal across groups.}
+\item{nullEffect}{defines the hypothesis of interest. Valid are the same arguments as in \code{waveEqual} and additionally \code{'lag1 = 0'} (or equivalently \code{'autoregX = 0'}) \code{'lag2 = 0'}, \code{'lag3 = 0'} to constrain the autoregressive, lag-2, or lag-3 effects to zero, and \code{'autoregA = autoregB'} to the autoregressive effects be equal across groups.}
 
-\item{nullWhich}{used in conjunction with \code{nullEffect} to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, \code{nullEffect = 'autoreg = 0'} with \code{nullWhich = 2} would constrain the second autoregressive effect for X to zero.}
+\item{nullWhich}{used in conjunction with \code{nullEffect} to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, \code{nullEffect = 'lag1 = 0'} with \code{nullWhich = 2} would constrain the second autoregressive effect for X to zero.}
 
 \item{nullWhichGroups}{for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
@@ -58,10 +56,6 @@ semPower.powerAutoreg(
 \item{invariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). When means are part of the model, invariant intercepts are also assumed. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
 \item{autocorResiduals}{whether the residuals of the indicators of latent variables are autocorrelated over waves (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateLag2Effects}{whether lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateLag3Effects}{whether lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.}
 }
@@ -95,7 +89,7 @@ Relevant hypotheses in arising in an autogressive model are:
 \item \code{mean}: Tests the hypothesis that the conditional means of X (i.e., X_2, ..., X_nWaves) are equal across waves (stationarity of means).
 \item \code{autoreg = 0} or \code{lag1 = 0}: Tests the hypothesis that the autoregressive (lag-1) effect of X is zero.
 \item \code{lag2 = 0} and \code{lag3 = 0}: Tests the hypothesis that a lag-2 or a lag-3 effect is zero.
-\item \code{autoregA = autoregB}: Tests the hypothesis that the autoregressive effect of X is equal across groups.
+\item \code{autoregA = autoregB} or \code{lag1A = lag1B}: : Tests the hypothesis that the autoregressive effect of X is equal across groups.
 }
 
 For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}. For hypotheses regarding longitudinal measurement invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}.
@@ -266,8 +260,6 @@ powerAutoreg <- semPower.powerAutoreg(
   waveEqual = c('autoreg'),
   nullEffect = 'autoreg=0',
   nIndicator = rep(3, 4), loadM = .5,
-  estimateLag2Effects = TRUE,
-  estimateLag3Effects = TRUE,
   invariance = TRUE, autocorResiduals = TRUE)
 
 
@@ -282,8 +274,6 @@ powerAutoreg <- semPower.powerAutoreg(
   nullEffect = 'lag2=0',
   nullWhich = 1,
   nIndicator = rep(3, 4), loadM = .5,
-  estimateLag2Effects = TRUE,
-  estimateLag3Effects = TRUE,
   invariance = TRUE, autocorResiduals = TRUE)
 
 
@@ -297,8 +287,6 @@ powerAutoreg <- semPower.powerAutoreg(
   waveEqual = c('autoreg', 'lag2'),
   nullEffect = 'lag2=0',
   nIndicator = rep(3, 4), loadM = .5,
-  estimateLag2Effects = TRUE,
-  estimateLag3Effects = TRUE,
   invariance = TRUE, autocorResiduals = TRUE)
 
 
@@ -312,8 +300,6 @@ powerAutoreg <- semPower.powerAutoreg(
   waveEqual = c('autoreg', 'lag2'),
   nullEffect = 'lag3=0',
   nIndicator = rep(3, 4), loadM = .5,
-  estimateLag2Effects = TRUE,
-  estimateLag3Effects = TRUE,
   invariance = TRUE, autocorResiduals = TRUE)
 
 

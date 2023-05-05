@@ -28,13 +28,13 @@ semPower.powerRICLPM(
 
 \item{nWaves}{number of waves, must be >= 3.}
 
-\item{autoregEffects}{vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. \code{list(c(.7, .6), c(.5, .5))} for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3.}
+\item{autoregEffects}{vector of the autoregressive effects of X and Y (constant across waves), or a list of vectors of autoregressive effects for X and Y from wave to wave, e.g. \code{list(c(.7, .6), c(.5, .5))} for an autoregressive effect of .7 for X1->X2 and .6 for X2->X3 and autoregressive effects of .5 for Y1->Y2 and Y2->Y3. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.}
 
-\item{crossedEffects}{vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. \code{list(c(.2, .3), c(.1, .1))} for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1.}
+\item{crossedEffects}{vector of crossed effects of X on Y (X -> Y) and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. \code{list(c(.2, .3), c(.1, .1))} for X1->Y2 = .2, X2->Y3 = .3, Y1->Y2 = .1, and Y2->Y3 = .1. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.}
 
-\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If \code{NULL}, all (residual-)correlations are zero.}
+\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If \code{NULL}, all (residual-)correlations are zero.  Can be a list for multiple groups models, otherwise no group differences are assumed.}
 
-\item{rBXBY}{correlation between random intercept factors. If \code{NULL}, the correlation is zero.}
+\item{rBXBY}{correlation between random intercept factors. If \code{NULL}, the correlation is zero. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.}
 
 \item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'autoregX'} and \code{'autoregY'} for autoregressive effects, \code{'crossedX'} and \code{'crossedY'} for crossed effects, \code{'corXY'} for residual correlations, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
 

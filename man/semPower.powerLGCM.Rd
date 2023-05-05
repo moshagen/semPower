@@ -27,7 +27,7 @@ semPower.powerLGCM(
 
 \item{comparison}{comparison model, one of \code{'saturated'} or \code{'restricted'} (the default). This determines the df for power analyses. \code{'saturated'} provides power to reject the model when compared to the saturated model, so the df equal the one of the hypothesized model. \code{'restricted'} provides power to reject the hypothesized model when compared to an otherwise identical model that just omits the restrictions defined in \code{nullEffect}, so the df equal the number of restrictions.}
 
-\item{nWaves}{number of waves, must be >= 2 for linear and > 3 for quadratic trends.}
+\item{nWaves}{number of waves, must be >= 3 for linear and > 3 for quadratic trends.}
 
 \item{means}{vector providing the means of the intercept and the linear slope factor (and the quadratic slope factor, if \code{quadratic = TRUE}). A list for multiple group models.}
 
@@ -85,8 +85,8 @@ Relevant hypotheses in arising in a LCGM are:
 \item \code{iMeanA = iMeanB}, \code{sMeanA = sMeanB}, \code{s2MeanA = s2MeanB}: Tests the hypothesis that the means of the intercept, linear slope, and quadratic slope factors, respectively, are equal across groups.
 \item \code{iVarA = iVarB}, \code{sVarA = sVarB}, \code{s2VarA = s2VarB}: Tests the hypothesis that the variances of the intercept, linear slope, and quadratic slope factors, respectively, are equal across groups.
 \item \code{isCovA = isCovA}: Tests the hypothesis that covariance between the intercept and linear slope factor is equal across groups.
-\item \code{is2CovA = is2CovA}: Tests the hypothesis that covariance between the intercept and quadratic slope factor is equal across groups.
-\item \code{ss2CovA = ss2CovA}: Tests the hypothesis that covariance between the linear and quadratic slope factor is equal across groups.
+\item \code{is2CovA = is2CovA}: Tests the hypothesis that the covariance between the intercept and quadratic slope factor is equal across groups.
+\item \code{ss2CovA = ss2CovA}: Tests the hypothesis that the covariance between the linear and quadratic slope factor is equal across groups.
 \item \code{betaITA = betaITB}, \code{betaSTA = betaSTB}, \code{betaS2TA = betaS2TB}: Tests the hypothesis that the slopes for the time-invariant covariate in the prediction of the intercept, the linear slope, and the quadratic slope factor, respectively, are equal across groups (\verb{TIC -> I, S, S2}).
 \item \code{betaTIA = betaTIB}, \code{betaTSA = betaTSB}, \code{betaTS2A = betaTS2B}: Tests the hypothesis that the slope the intercept, the linear slope, and the quadratic slope factor, respectively, in the prediction of the time-invariant covariate are equal across groups (\verb{I, S, S2 -> TIC}).
 }

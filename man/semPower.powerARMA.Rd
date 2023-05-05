@@ -9,11 +9,12 @@ semPower.powerARMA(
   comparison = "restricted",
   nWaves = NULL,
   autoregEffects = NULL,
-  lag2Effects = NULL,
-  lag3Effects = NULL,
-  movingAvgEffects = NULL,
-  lag2MovingAvgEffects = NULL,
-  lag3MovingAvgEffects = NULL,
+  autoregLag1 = autoregEffects,
+  autoregLag2 = NULL,
+  autoregLag3 = NULL,
+  mvAvgLag1 = NULL,
+  mvAvgLag2 = NULL,
+  mvAvgLag3 = NULL,
   means = NULL,
   variances = NULL,
   waveEqual = NULL,
@@ -23,10 +24,6 @@ semPower.powerARMA(
   nullWhichGroups = NULL,
   invariance = TRUE,
   autocorResiduals = TRUE,
-  estimateAutoregLag2 = FALSE,
-  estimateAutoregLag3 = FALSE,
-  estimateMvAvgLag2 = FALSE,
-  estimateMvAvgLag3 = FALSE,
   ...
 )
 }
@@ -39,21 +36,23 @@ semPower.powerARMA(
 
 \item{autoregEffects}{vector of the lag-1 autoregressive effects, e.g. \code{c(.7, .6)} for  autoregressive effects of .7 for \code{X1 -> X2} and .6 for \code{X2 -> X3}. Must be a list for multiple groups models.}
 
-\item{lag2Effects}{vector of lag-2 effects, e.g. \code{c(.2, .1)} for lag-2 effects of .2 for \code{X1 -> X3} and .1 for \code{X2 -> X4}.}
+\item{autoregLag1}{alternative name for autoregEffects.}
 
-\item{lag3Effects}{vector of lag-3 effects, e.g. \code{c(.2)} for a lag-3 effect of .2 for \code{X1 -> X4}.}
+\item{autoregLag2}{vector of lag-2 effects, e.g. \code{c(.2, .1)} for lag-2 effects of .2 for \code{X1 -> X3} and .1 for \code{X2 -> X4}.}
 
-\item{movingAvgEffects}{vector of the lag-1 moving average parameters, e.g. \code{c(.4, .3)} for  moving average parameters of .4 for \code{N1 -> X2} and .3 for \code{N2 -> X3}. Must be a list for multiple groups models.}
+\item{autoregLag3}{vector of lag-3 effects, e.g. \code{c(.2)} for a lag-3 effect of .2 for \code{X1 -> X4}.}
 
-\item{lag2MovingAvgEffects}{vector of the lag-2 moving average parameters, e.g. \code{c(.3, .2)} for moving average parameters effects of .2 for \code{N1 -> X3} and .2 for \code{N2 -> X4}. Must be a list for multiple groups models.}
+\item{mvAvgLag1}{vector of the lag-1 moving average parameters, e.g. \code{c(.4, .3)} for moving average parameters of .4 for \code{N1 -> X2} and .3 for \code{N2 -> X3}. Must be a list for multiple groups models.}
 
-\item{lag3MovingAvgEffects}{vector of the lag-3  moving average parameters, e.g. \code{c(.2)} for a moving average parameter of .2 for \code{N1 -> X4}. Must be a list for multiple groups models.}
+\item{mvAvgLag2}{vector of the lag-2 moving average parameters, e.g. \code{c(.3, .2)} for moving average parameters effects of .2 for \code{N1 -> X3} and .2 for \code{N2 -> X4}. Must be a list for multiple groups models.}
+
+\item{mvAvgLag3}{vector of the lag-3  moving average parameters, e.g. \code{c(.2)} for a moving average parameter of .2 for \code{N1 -> X4}. Must be a list for multiple groups models.}
 
 \item{means}{vector of means of \code{X}. May be \code{NULL} for no meanstructure.}
 
 \item{variances}{vector of variances of the noise factors \code{N} (= residual variances of \code{X}).}
 
-\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, this may not be empty. Valid are \code{'autoreg'}, \code{'autoregLag2'}, and  \code{'autoregLag3'} for autoregressive effects, \code{'mvAvg'}, \code{'mvAvgLag2'}, and  \code{'mvAvgLag3'} for moving average effects, \code{var} for the variance of the noise factors, \code{mean} for the means of X.}
+\item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, this may not be empty. Valid are \code{'autoreg'}, \code{'autoregLag2'}, and  \code{'autoregLag3'} for autoregressive effects, \code{'mvAvg'}, \code{'mvAvgLag2'}, and  \code{'mvAvgLag3'} for moving average effects, \code{var} for the variance of the noise factors (starting at wave 2), \code{mean} for the conditional means of X  (starting at wave 2).}
 
 \item{groupEqual}{parameters that are restricted across groups in both the H0 and the H1 model, when \code{nullEffect} implies a multiple group model. Valid are \code{autoreg}, \code{mvAvg}, \code{var}, \code{mean}.}
 
@@ -66,14 +65,6 @@ semPower.powerARMA(
 \item{invariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). When means are part of the model, invariant intercepts are also assumed. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
 \item{autocorResiduals}{whether the residuals of the indicators of latent variables are autocorrelated over waves (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateAutoregLag2}{whether the autoregressive lag-2 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateAutoregLag3}{whether the autoregressive lag-3 effects are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateMvAvgLag2}{whether the moving average lag-2 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
-
-\item{estimateMvAvgLag3}{whether the moving average lag-3 parameters are estimated in both the H0 and the H1 model (regardless of whether the lagged effects differ from zero). Defaults to \code{FALSE}. This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. The order of factors is (X1, X2, ..., X_nWaves). See details.}
 }
@@ -105,8 +96,8 @@ Relevant hypotheses in arising in an ARMA model are:
 \item \code{mvAvg}: Tests the hypothesis that the moving average lag-1 parameters are equal across waves (stationarity of moving average lag-1 effects).
 \item \code{mvAvgLag2}: Tests the hypothesis that the moving average lag-2 parameters are equal across waves (stationarity of moving average lag-2 effects).
 \item \code{mvAvgLag3}: Tests the hypothesis that the moving average lag-3 parameters are equal across waves (stationarity of moving average lag-3 effects).
-\item \code{var}: Tests the hypothesis that the variances of the noise factors N (= the residual variances of X) are equal across waves (stationarity of variance).
-\item \code{mean}: Tests the hypothesis that the conditional means of X (of waves > 1, i.e., X_2, ..., X_nWaves) are equal across waves (stationarity of means).
+\item \code{var}: Tests the hypothesis that the variances of the noise factors N (= the residual variances of X) are equal across waves 2 to nWaves (stationarity of variance).
+\item \code{mean}: Tests the hypothesis that the conditional means of X are equal across waves 2 to nWaves (stationarity of means).
 \item \code{autoreg = 0}, \code{autoregLag2 = 0}, \code{autoregLag3 = 0}: Tests the hypothesis that the autoregressive effects of the specified lag is zero.
 \item \code{mvAvg = 0}, \code{mvAvgLag2 = 0}, \code{mvAvgLag3 = 0}: Tests the hypothesis that the moving average parameter of the specified lag is zero.
 \item \code{autoregA = autoregB}: Tests the hypothesis that the autoregressive lag-1 effect is equal across groups.
@@ -181,8 +172,8 @@ specifying third and fourth moments of the marginals, and thus requires that ske
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -206,8 +197,8 @@ lavaan::sem(powerARMA$modelH0, sample.cov = powerARMA$Sigma,
 powerARMA <- semPower.powerARMA(
   'post-hoc', alpha = .05, N = 250,
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -220,8 +211,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'compromise', abratio = 1, N = 250,
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -235,8 +226,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80, comparison = 'saturated',
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -250,8 +241,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -265,8 +256,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = c(.5, .7, .6, .5, .7, .6, .6, .5, .6),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',
@@ -294,8 +285,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = rep(.5, 9),
-  movingAvgEffects = c(.1, .05, .2, .1, .1, .3, .4, .4, .4),
+  autoregLag1 = rep(.5, 9),
+  mvAvgLag1 = c(.1, .05, .2, .1, .1, .3, .4, .4, .4),
   variances = rep(1, 10),
   waveEqual = c('autoreg'),
   nullEffect = 'mvAvg',
@@ -314,8 +305,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = rep(.5, 9),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = rep(.5, 9),
+  mvAvgLag1 = rep(.3, 9),
   variances = c(1, .5, .7, .6, .7, .9, 1.2, 1.7, 2.0, 1.5),
   waveEqual = c('autoreg', 'mvAvg'),
   nullEffect = 'var',
@@ -337,8 +328,8 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = rep(.5, 9),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = rep(.5, 9),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   means = c(0, .1, .2, .3, .4, .5, .3, .4, .5, .5),
   waveEqual = c('autoreg', 'mvAvg', 'var'),
@@ -362,18 +353,16 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = rep(.5, 9),
-  lag2Effects = rep(.2, 8),
-  lag3Effects = rep(.1, 7),
-  movingAvgEffects = rep(.3, 9),
+  autoregLag1 = rep(.5, 9),
+  autoregLag2 = rep(.2, 8),
+  autoregLag3 = rep(.1, 7),
+  mvAvgLag1 = rep(.3, 9),
   variances = rep(1, 10),
   waveEqual = c('mvAvg', 'autoreg', 'var', 'autoreglag2', 'autoreglag3'),
   nullEffect = 'autoreglag2 = 0',
   nIndicator = rep(3, 10), loadM = .5,
   invariance = TRUE, 
-  autocorResiduals = TRUE,
-  estimateAutoregLag2 = TRUE,
-  estimateAutoregLag3 = TRUE
+  autocorResiduals = TRUE
 )
 
 # similar as above, but get required N to detect that 
@@ -381,17 +370,15 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80,
   nWaves = 10,
-  autoregEffects = rep(.5, 9),
-  lag2Effects = rep(.2, 8),
-  movingAvgEffects = rep(.3, 9),
-  lag2MovingAvgEffects = c(.1, .2, .3, .1, .2, .3, .1, .1),
+  autoregLag1 = rep(.5, 9),
+  autoregLag2 = rep(.2, 8),
+  mvAvgLag1 = rep(.3, 9),
+  mvAvgLag2 = c(.1, .2, .3, .1, .2, .3, .1, .1),
   variances = rep(1, 10),
   waveEqual = c('mvAvg', 'autoreg', 'var', 'autoreglag2'),
   nullEffect = 'mvAvgLag2',
   nIndicator = rep(3, 10), loadM = .5,
-  invariance = TRUE, 
-  autocorResiduals = TRUE,
-  estimateMvAvgLag2 = TRUE
+  invariance = TRUE
 )
 
 
@@ -411,10 +398,10 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80, N = list(1, 1),
   nWaves = 5,
-  autoregEffects = list(
+  autoregLag1 = list(
     c(.5, .5, .5, .5),   # group 1
     c(.6, .6, .6, .6)),  # group 2
-  movingAvgEffects = rep(.25, 4),
+  mvAvgLag1 = rep(.25, 4),
   variances = rep(1, 5),
   waveEqual = c('autoreg', 'var', 'mvavg'),
   nullEffect = 'autoregA = autoregB',
@@ -441,10 +428,10 @@ powerARMA <- semPower.powerARMA(
 powerARMA <- semPower.powerARMA(
   'a-priori', alpha = .05, power = .80, N = list(1, 1),
   nWaves = 5,
-  autoregEffects = list(
+  autoregLag1 = list(
     c(.5, .5, .5, .5),   # group 1
     c(.5, .5, .5, .5)),  # group 2
-  movingAvgEffects = rep(.25, 4),
+  mvAvgLag1 = rep(.25, 4),
   variances = rep(1, 5),
   means = list(
     c(0, .1, .1, .1, .1),  # group 1
@@ -464,8 +451,8 @@ set.seed(300121)
 powerARMA <- semPower.powerARMA(
   'post-hoc', alpha = .05, N = 500,
   nWaves = 5,
-  autoregEffects = c(.3, .7, .6, .3),
-  movingAvgEffects = rep(.3, 4),
+  autoregLag1 = c(.3, .7, .6, .3),
+  mvAvgLag1 = rep(.3, 4),
   variances = rep(1, 5),
   waveEqual = c('mvAvg'),
   nullEffect = 'autoreg',

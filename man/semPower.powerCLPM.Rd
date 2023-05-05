@@ -32,7 +32,7 @@ semPower.powerCLPM(
 
 \item{crossedEffects}{vector of crossed effects of X on Y \code{(X -> Y)} and vice versa (both constant across waves), or a list of vectors of crossed effects giving the crossed effect of X on Y (and vice versa) for each wave, e.g. \code{list(c(.2, .3), c(.1, .1))} for \verb{X1 - > Y2} = .2, \code{X2 -> Y3} = .3, \code{Y1 -> Y2} = .1, and \code{Y2 -> Y3} = .1. Must be a list of lists for multiple groups models. If the list structure is omitted, no group differences are assumed.}
 
-\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If \code{NULL}, all (residual-)correlations are zero. Can be a list for multiple groups models, otherwise no no group differences are assumed.}
+\item{rXY}{vector of (residual-)correlations between X and Y for each wave. If \code{NULL}, all (residual-)correlations are zero. Can be a list for multiple groups models, otherwise no group differences are assumed.}
 
 \item{waveEqual}{parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are \code{'autoregX'} and \code{'autoregY'} for autoregressive effects, \code{'crossedX'} and \code{'crossedY'} for crossed effects, \code{'corXY'} for residual correlations, or \code{NULL} for none (so that all parameters are freely estimated, subject to the constraints defined in \code{nullEffect}).}
 

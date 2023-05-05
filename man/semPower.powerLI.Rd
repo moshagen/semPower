@@ -59,7 +59,7 @@ specify a specific level of invariance that includes all previous levels:
 \item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality.
 \item \code{'residual'}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 \item \code{'covariances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent covariances are restricted to equality.
-\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, atent covariances, and latent means are restricted to equality.
+\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
 }
 
 For example, setting \code{comparison = 'metric'} and \code{nullEffect = 'scalar'} determines power
@@ -77,7 +77,7 @@ For instance:
 \item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 \item \code{c('loadings', 'residuals')}: all loadings and (indicator-)residuals are restricted to equality.
 \item \code{c('loadings', 'intercepts', 'means')}: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
-\item \code{c('loadings', 'intercepts', 'means')}: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
+\item \code{c('loadings', 'residuals', 'lv.covariances')}: all loadings, (indicator-)residuals, and latent factor covariances are restricted to equality.
 }
 
 For example, setting \code{comparison = c('loadings')} and \verb{nullEffect = 'c('loadings', 'intercepts')'}
@@ -94,12 +94,13 @@ Additional arguments related to the \strong{definition of the factor model}:
 \item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
 \item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
 \item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
-\item \code{tau}: Defines the item intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If \code{NULL} and \code{Alpha} is set, all intercepts are assumed to equal zero.
+\item \code{Theta}: Variance-covariance matrix of the indicator residuals, which should be a diagonal matrix. Required when residual non-invariance is to be detected. When \code{NULL}, Theta is a diagonal matrix with elements such that all variances are 1.
+\item \code{tau}: Defines the indicator intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If \code{NULL} and \code{Alpha} is set, all intercepts are assumed to equal zero.
 \item \code{Alpha}: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If \code{NULL} and \code{tau} is set, all latent means are assumed to equal zero. Because variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
 }
 
 So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} always need to be defined,
-and \code{tau} and \code{Alpha} need to be defined for particular levels of invariance.
+and \code{Theta}, \code{tau} and \code{Alpha} need to be defined for particular levels of invariance.
 
 Additional arguments related to the requested type of \strong{power analysis}:
 \itemize{
@@ -296,7 +297,6 @@ powerLI <- semPower.powerLI(
   simulatedPower = TRUE,
   simOptions = list(nReplications = 250)  
 )
-
 }
 }
 \seealso{

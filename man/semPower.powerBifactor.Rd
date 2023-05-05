@@ -259,7 +259,6 @@ powerbifactor <- semPower.powerBifactor(type = 'a-priori',
 # differs from the one in group 2 (of r = .1)
 bfLoadings <- rep(.6, 10)
 bfWhichFactors <- c(1, 2, 3)
-
 loadings <- list(
   # specific factors
   rep(.2, 3),
