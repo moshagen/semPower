@@ -15,7 +15,7 @@ semPower is an R-package that provides several functions to perform a-priori, co
 `semPower` can be installed via [CRAN](https://CRAN.R-project.org/package=semPower). The CRAN version often lags behind the development version, which can be installed as follows:
 
 ```
-install.packages("devtools")
+# install.packages("devtools")
 devtools::install_github("moshagen/semPower")
 ```
 
