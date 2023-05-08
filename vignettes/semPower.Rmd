@@ -2033,8 +2033,7 @@ powerMI <- semPower.powerMI(
 
 
 ## Longitudinal invariance {#powerLI}
-`semPower.powerLI` is used to perform power analyses for hypotheses arising in models assessing longitudinal invariance involving the repeated assessment of a single attribute. The typical - but not in all parts necessary -
-sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance concerning the measurement part, and (e) latent variances, (f) latent covariances, and (g) latent means concerning the structural part, where each level of invariance is usually compared against the previous level (e.g., scalar vs. metric). `semPower.powerLI` provides interfaces to perform power analyses concerning the hypothesis whether a particular level of invariance is tenable, implementing a model-based approach, so that non-invariant parameters need to be specified. When one does not expect (or is not interested in or does not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assumes that non-invariance spreads across multiple parameters (say, across most or all loadings), one should consider to perform model-free power analysis concerning the [overall difference](#diffPower) between two models.
+`semPower.powerLI` is used to perform power analyses for hypotheses arising in models assessing longitudinal invariance involving the repeated assessment of a single attribute. The typical - but not in all parts necessary - sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance concerning the measurement part, and (e) latent variances, (f) latent covariances, and (g) latent means concerning the structural part, where each level of invariance is usually compared against the previous level (e.g., scalar vs. metric). `semPower.powerLI` provides interfaces to perform power analyses concerning the hypothesis whether a particular level of invariance is tenable, implementing a model-based approach, so that non-invariant parameters need to be specified. When one does not expect (or is not interested in or does not have sufficiently specific hypotheses on) measurement non-invariance for certain parameters, but rather assumes that non-invariance spreads across multiple parameters (say, across most or all loadings), one should consider to perform model-free power analysis concerning the [overall difference](#diffPower) between two models.
 
 `semPower.powerLI` only addresses hypotheses concerning longitudinal measurement invariance. For multigroup invariance, see the [`semPower.powerMI`](#powerMI).
 
@@ -2076,7 +2075,7 @@ Alternatively, the models can also be defined using `lavaan` style restrictions 
 * `simRes`: Detailed simulation results when a [simulated power analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
 ##### Detect metric non-invariance {-}
-To perform a power analysis to detect whether a metric invariance model is significantly worse than a configural invariance model, use `nullEffect = 'metric'` in conjunction with `comparison = 'configural'`, and define the factor model in a way that at least one loading differs across measurement occasions (so that metric invariance is violated to the extent as defined by the difference in the loadings across measurements).
+To perform a power analysis to detect whether a metric invariance model is significantly worse than a configural invariance model, use `nullEffect = 'metric'` in conjunction with `comparison = 'configural'`, and define the factor model in a way that at least one loading differs across measurement occasions (so that metric invariance is violated to the extent defined by the difference in the loadings across measurements).
 
 For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises an attribute measured at two time points which are correlated by .3 (`Phi = .3`). The attribute is measured by 5 indicators (at both the first and the second measurement, `nIndicator = c(5, 5)`). At the first measurement, all indicators load by .5, whereas at the second measurement, all indicators load by .6 (`loadM = c(.5, .6)`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. In addition, the model comprises autocorrelated indicator residuals across time, because the `autocorResiduals` (which defaults to `TRUE`) argument is omitted.
 
@@ -2127,7 +2126,7 @@ powerLI <- semPower.powerLI(
 )
 ```
 
-In the example above, all indicators exhibited measurement non-invariance. If only a subset of indicators should show a different loading across time, [specify the factor model](#factorDefinition) using the `loadings` argument. For instance, the following defines a single-factor model measured by three indicators at three time points. At the first measurement occasion, the loadings are .7, .6, and .5, at the second .7, .5, .5, and at the third .7, .4, .5.  Thus, there are differences concerning the loadings of the second indicator. In addition, because the factor is measured at three time points, `Phi` now becomes a factor correlation matrix, in this case specifying correlations between the first and second measurement as well as the second and third measurement of .3, and between the first and third measurement of .1.
+In the example above, all indicators exhibited measurement non-invariance. If only a subset of indicators should show a different loading across time, [specify the factor model](#factorDefinition) using the `loadings` argument. For instance, the following defines a single-factor model measured by three indicators at three time points. At the first measurement occasion, the loadings are .7, .6, and .5, at the second measurement occasion .7, .5, .5, and at the third measurement occasion .7, .4, .5. Thus, there are only differences concerning the loadings of the second indicator. In addition, because the factor is measured at three time points, `Phi` now becomes a factor correlation matrix, in this case specifying correlations between the first and second measurement as well as the second and third measurement of .3, and between the first and third measurement of .1.
 ```{r eval=FALSE}
 Phi <- matrix(c(
   c(1, .3, .1),
@@ -2151,9 +2150,9 @@ powerLI <- semPower.powerLI(
 ```
 
 ##### Detect scalar non-invariance {-}
-Detecting failure of another level of invariance proceeds largely identical as described in the case of the metric invariance model above. The differences concern that `nullEffect` now refers to the level of invariance of interest (such as `nullEffect = 'scalar'`) and that the comparison model would usually refer to the model one level lower in the hierarchy (such as `comparison = 'metric'`). In addition, when comparing a scalar against a metric invariance model, the factor model should be defined in a way that metric invariance holds (identical loadings across groups), whereas there must be at least one difference across groups concerning the indicator intercepts (`tau`).
+Detecting failure of another level of invariance proceeds largely identical to the procedure described in the case of the metric invariance model above. The differences concern that `nullEffect` now refers to the level of invariance of interest (such as `nullEffect = 'scalar'`) and that the comparison model would usually refer to the model one level lower in the hierarchy (such as `comparison = 'metric'`). In addition, when comparing a scalar against a metric invariance model, the factor model should be defined in a way that metric invariance holds (identical loadings across groups), whereas there must be at least one difference across groups concerning the indicator intercepts (`tau`).
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a scalar invariance model (`nullEffect = 'scalar'`) differs from a metric invariance model (`comparison = 'metric'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises an attribute assessed at two time points, which is measured by 3 indicators that all load by .5 at both measurement occasions (`nIndicator = c(3, 3)`; see [definition of the factor model](#factorDefinition)). Importantly, the indicator intercepts (`tau`) partly differ across time: the intercept of the second indicator is 0 in at the first, but .2 at the second measurement:
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that a scalar invariance model (`nullEffect = 'scalar'`) differs from a metric invariance model (`comparison = 'metric'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises an attribute assessed at two time points, which is measured by 3 indicators that all load by .5 at both measurement occasions (`nIndicator = c(3, 3)`; see [definition of the factor model](#factorDefinition)). Importantly, the indicator intercepts (`tau`) partly differ across time: the intercept of the second indicator is 0 at the first second measurement, but .2 at the second measurement:
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -2187,9 +2186,9 @@ powerLI <- semPower.powerLI(
 ```
 
 ##### Detect residual non-invariance {-}
-Detecting residual non-invariance again proceeds largely identical as described above.The main difference is that the `Theta` matrix providing the residual-variances needs to be provided. `Theta` can be a diagonal matrix only providing the residual variances. When specifying non-zero off-diagonal elements reflecting correlated indicator residuals, this should be done in a way that only the residuals of the same indicator shows correlations across measurement occasions (and the autocorrelations are estimated by setting `autocorResiduals = TRUE`), because otherwise this would incur misfit (in the H1 model).
+Detecting residual non-invariance again proceeds largely identical to the procedure described above. The main difference is that now the `Theta` matrix providing the residual variances needs to be provided. `Theta` can be a diagonal matrix only providing the residual variances. When specifying non-zero off-diagonal elements reflecting correlated indicator residuals, this should be done in a way that only the residuals of the same indicator shows correlations across measurement occasions (and the autocorrelations are estimated by setting `autocorResiduals = TRUE`), because otherwise this would incur misfit (in the H1 model).
 
-For instance, the following uses `lavaan` style restrictions to request the required sample (`type = 'a-priori'`) to detect that a residual invariance model (`nullEffect = c('loadings', 'residuals')`) differs from a metric invariance model (`comparison = c('loadings')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Importantly, the residual variances (`Theta`) partly differ across groups: At the first measurement, all residual variances are .75, whereas at the second meausurement, the residual variances are .70, .50, and .60.
+For instance, the following uses `lavaan` style restrictions to request the required sample (`type = 'a-priori'`) to detect that a residual invariance model (`nullEffect = c('loadings', 'residuals')`) differs from a metric invariance model (`comparison = c('loadings')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). Importantly, the residual variances (`Theta`) differ across groups: At the first measurement, all residual variances are .75, whereas at the second measurement, the residual variances are .70, .50, and .60.
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -2213,10 +2212,10 @@ Note that if defining the invariance models using the predefined constants (`nul
 
 
 ##### Detect whether latent means differ across measurements {-}
-Detecting that latent factor means differ across time again proceeds largely identical as described above for tests of other levels of invariance. However, the model definition must include a statement about indicator intercepts (`tau`) and latent means (`Alpha`).
+Detecting that latent factor means differ across time again proceeds largely identical to the procedure described above for tests of other levels of invariance. However, the model definition must include a statement about indicator intercepts (`tau`) and latent means (`Alpha`).
 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the latent means differ across time (`nullEffect = c('loadings', 'intercepts', 'means')`) in comparison to a scalar invariance model (`comparison = c('loadings', 'intercepts')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). All indicator intercepts (`tau`) equal zero at both measurements. Importantly, the latent mean (`Alpha`) is 0 at the first, but .22 at the second measurement occasion (thus corresponding to a standardized mean difference of .25, because the factor variances are fixed to 1):
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the latent means differ across time (`nullEffect = c('loadings', 'intercepts', 'means')`) in comparison to a scalar invariance model (`comparison = c('loadings', 'intercepts')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). All indicator intercepts (`tau`) equal zero at both measurements. Importantly, the latent mean (`Alpha`) is 0 at the first measurement occasion, but .25 at the second measurement occasion (thus corresponding to a standardized mean difference of .25, because the factor variances are fixed to 1):
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -2238,13 +2237,13 @@ powerLI <- semPower.powerLI(
 
 Note that the latent means are identified by setting the factor mean at the first measurement occasion to zero, which in the example above matches the value provided for `Alpha`. However, the first mean in `Alpha` may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
 
-The particular comparison performed above cannot be defined using the predefined constants. If using `nullEffect = 'means'` instead, this would include all invariance constraints of the previous levels (i.e, loadings, intercepts, residuals, and factor covariances), so the proper comparison model would be `comparison = 'covariances'.`
+The particular comparison performed above cannot be defined using the predefined constants ??? was meinst du damit genau und warum geht das nicht?. If using `nullEffect = 'means'` instead, this would include all invariance constraints of the previous levels (i.e, loadings, intercepts, residuals, and factor covariances), so the proper comparison model would be `comparison = 'covariances'.`
 
 
 ##### Detect whether factor covariances differ across measurements {-}
-Detecting that the factor covariances differ across time again proceeds largely identical as described above for tests of other levels of invariance. Note that `semPower.powerLI` uses variance scaling of the factors, so that the factor variances are always invariant across time. 
+Detecting that the factor covariances differ across time again proceeds largely identical to the procedure described above for tests of other levels of invariance. Note that `semPower.powerLI` uses variance scaling of the factors, so that the factor variances are always invariant across time. 
 
-For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the factor covariances differ across time (`nullEffect = c('loadings', 'lv.covariances')`) in comparison to a metric invariance model (`comparison = c('loadings')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The correlation (because the variances are 1) between the first and second measurement is .3, the one between the second and third is .2, and the one between the first and third is .4. The null hypothesis states that all these correlations are equal.
+For instance, the following requests the required sample (`type = 'a-priori'`) to detect that the factor covariances differ across time (`nullEffect = c('loadings', 'lv.covariances')`) in comparison to a metric invariance model (`comparison = c('loadings')`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The correlation (because the variances are 1) between the first and second measurement is .3, the correlation between the second and third measurement is .2, and the correlation between the first and third measurement is .4. The null hypothesis states that all these correlations are equal.
 
 ```{r eval=FALSE}
 Phi <- matrix(c(
@@ -2267,7 +2266,7 @@ Note that this particular comparison cannot be defined using the predefined cons
 
 
 ## Autoregressive models {#powerAutoreg}
-`semPower.powerAutoreg` is used to perform power analyses for hypothesis arising in an autoregressive model of the form $X_{t} = \beta_{t,(t-1)} \cdot X_{(t-1)}$ (e.g., `X1 -> X2 -> X3 -> X4`), which may also include lag-2 (e.g., `X1 -> X3`, `X2 -> X4`) and lag-3 effects (e.g., `X1 -> X4`). `semPower.powerAutoreg` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerAutoreg` is used to perform power analyses for hypotheses arising in an autoregressive model of the form $X_{t} = \beta_{t,(t-1)} \cdot X_{(t-1)}$ (e.g., `X1 -> X2 -> X3 -> X4`), which may also include lag-2 (e.g., `X1 -> X3`, `X2 -> X4`) and lag-3 effects (e.g., `X1 -> X4`). `semPower.powerAutoreg` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether the autoregressive lag-1 (`nullEffect = 'lag1'`), lag-2 (`'lag2'`), or lag-3 (`'lag3'`) effects are equal across waves (stationarity of autoregressive parameters).
 * whether the residual-variances of $X$ are equal across waves (stationarity of variance; `'var'`).
@@ -2281,9 +2280,9 @@ Note that this particular comparison cannot be defined using the predefined cons
 `semPower.powerAutoreg` expects the following arguments:
 
 * `nWaves`: The number of waves, must be $\geq$ 2. 
-* `lag1` or equivalently `autoregEffects`: Vector of the autoregressive effects, e.g. `c(.7, .6, .5)` for  autoregressive effects of .7 for `X1 -> X2`, .6 for `X2 -> X3`, and .5 for `X3 -> X4`. 
-* `lag2`: Vector of lag-2 effects or `NULL` for no lag-2 effects, e.g. `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
-* `lag3`: Vector of lag-3 effects or `NULL` for no lag-3 effects, e.g. `c(.05)` for a lag-3 effect of .05 for `X1 -> X4`.
+* `lag1` or equivalently `autoregEffects`: Vector of the autoregressive effects, e.g., `c(.7, .6, .5)` for  autoregressive effects of .7 for `X1 -> X2`, .6 for `X2 -> X3`, and .5 for `X3 -> X4`. 
+* `lag2`: Vector of lag-2 effects or `NULL` for no lag-2 effects, e.g., `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
+* `lag3`: Vector of lag-3 effects or `NULL` for no lag-3 effects, e.g., `c(.05)` for a lag-3 effect of .05 for `X1 -> X4`.
 * `means`: Vector of means for $X$. Can be `NULL` for no meanstructure.
 * `variances`: Vector of (residual-)variances for $X$. When provided, `standardized` must be `FALSE`. When omitted and `standardized = FALSE`, all (residual-)variances are equal to 1. When omitted and `standardized = TRUE`, the (residual-)variances are determined so that all variances are 1, and will thus typically differ from each other. 
 * `waveEqual`: Parameters that are assumed to be equal across waves in both the H0 and the H1 model. Valid are `'lag1'` (or equivalently `'autoreg'`), `'lag2'`, and  `'lag3'` to constrain the autoregressive effects of the specified lag, or `NULL` for none (so that all parameters are freely estimated, subject to the constraints defined in `nullEffect`).
@@ -2308,9 +2307,9 @@ Note that this particular comparison cannot be defined using the predefined cons
 
 ##### Detect whether an autoregressive effect differs from zero {-}
 
-To perform a power analysis to detect whether an autoregressive effect differs from zero, use `nullEffect = 'autoreg'` (or equivalently `nullEffect = 'lag1'`) for lag-1 effects,  `nullEffect = 'lag2'` for lag-2 effects, and  `nullEffect = 'lag3'` for lag-3 effects.
+To perform a power analysis to detect whether an autoregressive effect differs from zero, use `nullEffect = 'autoreg'` (or equivalently `nullEffect = 'lag1'`) for lag-1 effects, `nullEffect = 'lag2'` for lag-2 effects, and `nullEffect = 'lag3'` for lag-3 effects.
 
-For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive lag-1 effect (`nullEffect = 'lag1'`) differs from zero with a power of 80% (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises an attribute measured at three  occasions (`nWaves = 3`) by 3 indicators each (`nIndicator = c(3, 3, 3)`), where all loadings are equal to .50 (`loadM = .5`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. The autoregressive lag-1 effects are .5 for `X1 -> X2` and .7 for `X2 -> X3` (`autoregEffects = c(.5, .7)`). Given that there are two autoregressive effects, the `nullWhich` argument is used to define that the first autoregressive effect is targeted by the null hypothesis (`nullWhich = 1`). There are no lag-2 or lag-3 effects (because the corresponding arguments are omitted). In addition, the model comprises autocorrelated indicator residuals across time, because the `autocorResiduals` (which defaults to `TRUE`) argument is omitted, assumes metric invariance across measurement occasions, because the `invariance` argument (which defaults to `TRUE`) is also omitted, and assumes that all parameters are standardized, because the `standardized` argument (which defaults to `TRUE`) is omitted as well.
+For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive lag-1 effect (`nullEffect = 'lag1'`) differs from zero with a power of 80% (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises an attribute measured at three occasions (`nWaves = 3`) by 3 indicators each (`nIndicator = c(3, 3, 3)`), where all loadings are equal to .50 (`loadM = .5`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. The autoregressive lag-1 effects are .5 for `X1 -> X2` and .7 for `X2 -> X3` (`autoregEffects = c(.5, .7)`). Given that there are two autoregressive effects, the `nullWhich` argument is used to define that the first autoregressive effect is targeted by the null hypothesis (`nullWhich = 1`). There are no lag-2 or lag-3 effects (because the corresponding arguments are omitted). In addition, the model comprises autocorrelated indicator residuals across time, because the `autocorResiduals` (which defaults to `TRUE`) argument is omitted, assumes metric invariance across measurement occasions, because the `invariance` argument (which defaults to `TRUE`) is also omitted, and assumes that all parameters are standardized, because the `standardized` argument (which defaults to `TRUE`) is omitted as well.
 
 
 ```{r eval=FALSE}
@@ -2369,7 +2368,7 @@ If the autoregressive effects are considered stable across measurement occasions
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   autoregEffects = c(.5, .5),  # x1->x2, x2->x3
@@ -2380,7 +2379,7 @@ powerAutoreg <- semPower.powerAutoreg(
 )
 ```
 
-The models may also include lag-2 or lag-3 effects. For instance, the following defines 4 measurements (`nWaves = 4`) and all lag-1 effects to be .5 (`autoregEffects = c(.5, .5, .5)`), all lag-2 effects to be .2 (`lag2Effects = c(.2, .2)`), and the lag-3 effect to be .1 (`lag3Effects = .1`). Further, both the lag-1 and the lag-2 effects are constrained to be equal across waves in both the H0 and the H1 model (`waveEqual = c('lag1', 'lag2')`). Then, the required sample size is requested to detect that the lag-3 effect differs from zero (`nullEffect = 'lag3 = 0'`).
+The models may also include lag-2 or lag-3 effects. For instance, the following defines 4 measurement occasions (`nWaves = 4`) and all lag-1 effects to be .5 (`autoregEffects = c(.5, .5, .5)`), all lag-2 effects to be .2 (`lag2Effects = c(.2, .2)`), and the lag-3 effect to be .1 (`lag3Effects = .1`). Further, both the lag-1 and the lag-2 effects are constrained to be equal across waves in both the H0 and the H1 model (`waveEqual = c('lag1', 'lag2')`). Then, the required sample size is requested to detect that the lag-3 effect differs from zero (`nullEffect = 'lag3 = 0'`).
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
@@ -2409,7 +2408,7 @@ For instance, the following defines an autoregressive model with 3 measurement o
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   autoregEffects = c(.5, .6),  # x1->x2, x2->x3
@@ -2421,16 +2420,16 @@ powerAutoreg <- semPower.powerAutoreg(
 ```
 
 
-The procedure is equivalent when investigating stationarity of the autoregressive lag-2 or lag-3 parameters. For instance, the following defines an autoregressive model with 4 measurement occasions (`nWaves = 4`), defines wave-constant autoregressive lag-1 effects, and  requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive lag-2 effects `X1 -> X3` (of. 20) and `X2 -> X4` (of .10) differ (`nullEffect = 'lag2'`). 
+The procedure is equivalent when investigating stationarity of the autoregressive lag-2 or lag-3 parameters. For instance, the following defines an autoregressive model with 4 measurement occasions (`nWaves = 4`), defines wave-constant autoregressive lag-1 effects, and requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive lag-2 effects `X1 -> X3` (of. 20) and `X2 -> X4` (of .10) differ (`nullEffect = 'lag2'`). 
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
   lag1Effects = c(.5, .5, .5),  # x1->x2, x2->x3, x3->x4
-  lag2Effects = c(.2, .1),         # x1->x3, x2->x4
+  lag2Effects = c(.2, .1),      # x1->x3, x2->x4
   waveEqual = 'lag1',
   nullEffect = 'lag2',
   # define measurement model
@@ -2443,12 +2442,12 @@ powerAutoreg <- semPower.powerAutoreg(
 
 To perform a power analysis to detect whether the residual variances of $X$ differ across measurement occasions (non-stationarity of variance), use `nullEffect = 'var'`. Note that the hypothesis of stationarity of variance does not include the first measurement of $X$, because this variance differs in meaning from the variance associated with the remaining measurements.
 
-For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the residual variances of $X_2$ and $X_3$ differ (`nullEffect = 'var'`). Both autoregressive effects are .50 and are restricted to equality in both the H0 and the H1 model (`waveEqual = c('autoreg')`). The variance of $X$ at the first measurement occasion is 1, the residual variance of $X$ at the second measurement occasion is .75, and the residual variance of $X$ at the third measurement occasion is .50 (`variances = c(1, .75, .50)`). Because variances are now subject of the hypothesis and thus need to be provided, `standardized` must be set to `FALSE`, so that all parameters are treated as unstandardized. However, in the present example, the only parameters that change by standardization are the autoregressive effect of $X_2$ on $X_3$ and the residual variance of $X_3$. 
+For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the residual variances of $X_2$ and $X_3$ differ (`nullEffect = 'var'`). Both autoregressive effects are .50 and are restricted to equality in both the H0 and the H1 model (`waveEqual = c('autoreg')`). The variance of $X$ at the first measurement occasion is 1, the residual variance of $X$ at the second measurement occasion is .75, and the residual variance of $X$ at the third measurement occasion is .50 (`variances = c(1, .75, .50)`). Because variances are now subject to the hypothesis and thus need to be provided, `standardized` must be set to `FALSE`, so that all parameters are treated as unstandardized. However, in the present example, the only parameters that change by standardization are the autoregressive effect of $X_2$ on $X_3$ and the residual variance of $X_3$. 
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   autoregEffects = c(.5, .5),  # x1->x2, x2->x3
@@ -2466,12 +2465,12 @@ powerAutoreg <- semPower.powerAutoreg(
 
 To perform a power analysis to detect whether the conditional means of the $X$ differ across measurement occasions (non-stationarity of means), use `nullEffect = 'mean'`. Note that the hypothesis of stationarity of means does not include the first measurement of $X$, because its mean differs in meaning from those of the remaining measurements.
 
-For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the conditional means of $X_2$ and $X_3$ differ (`nullEffect = 'mean'`). Both autoregressive effects are .50. The variance of $X_1$ is 1 and the residual variances of $X_2$ and $X_3$ are .75. Both the autoregressive effects and the residual variances are restricted to equality in both the H0 and the H1 model (`waveEqual = c('autoreg', 'var')`). The mean of $X$ at the first measurement occasion is 0, the conditional mean of $X$ at the second measurement occasion is .25, and the conditional mean  of $X$ at the third measurement occasion is .50 (`means = c(0, .25, .50)`). Invariance constraints on loadings and indicator intercepts are employed across waves (by omitting the `invariance` argument, which defaults to `TRUE`). Because the variances are provided, `standardized` must be set to `FALSE`. However, in the present example, all standardized parameters equal the unstandardized parameters, so the change in the means can be interpreted in terms of standardized differences. 
+For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`) and requests the required sample size (`type = 'a-priori'`) to detect that the conditional means of $X_2$ and $X_3$ differ (`nullEffect = 'mean'`). Both autoregressive effects are .50. The variance of $X_1$ is 1 and the residual variances of $X_2$ and $X_3$ are .75. Both the autoregressive effects and the residual variances are restricted to equality in both the H0 and the H1 model (`waveEqual = c('autoreg', 'var')`). The mean of $X$ at the first measurement occasion is 0, the conditional mean of $X$ at the second measurement occasion is .25, and the conditional mean of $X$ at the third measurement occasion is .50 (`means = c(0, .25, .50)`). Invariance constraints on loadings and indicator intercepts are employed across waves (by omitting the `invariance` argument, which defaults to `TRUE`). Because the variances are provided, `standardized` must be set to `FALSE`. However, in the present example, all standardized parameters equal the unstandardized parameters, so the change in the means can be interpreted in terms of standardized differences. 
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   autoregEffects = c(.5, .5),  # x1->x2, x2->x3
@@ -2485,18 +2484,18 @@ powerAutoreg <- semPower.powerAutoreg(
 )
 ```
 
-Note that the latent means are identified resorting on single occasion identification (i.e., by setting the factor mean at the first measurement occasion to zero), which in the example above matches the first value provided for `means`. However, the first mean may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
+Note that the latent means are identified resorting to single occasion identification (i.e., by setting the factor mean at the first measurement occasion to zero), which matches the first value provided for `means` in the example above. However, the first mean may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
 
 ##### Detect whether the lag-1 autoregressive effects differ across groups {-}
 
-To perform a power analysis to detect whether the lag-1 autoregressive effect differ across groups, use `nullEffect = 'autoregA = autoregB'`.
+To perform a power analysis to detect whether the lag-1 autoregressive effects differ across groups, use `nullEffect = 'autoregA = autoregB'`.
 
-For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`), where $X$ is measured by three indicators at each wave, with all loadings equal to .5. The measurement model is identical in both groups. However, different autoregressive effects are defined for each group by using a list structure for the `autoregEffects` argument: In the first group, both autoregressive effects are .5, whereas in the second group, both autoregressive effects are .4. In both groups, the autoregressive effects are constant across waves (`waveEqual = c('autoreg')`). Then, the required sample (`type = 'a-priori'`) is requested to detect that the autoregressive effect differs across groups (`nullEffect = 'autoregA = autoregB'`). Note that metric invariance constrains are applied across both waves and groups (by omitting the `invariance` argument, which defaults to `TRUE`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following defines an autoregressive model with 3 measurement occasions (`nWaves = 3`), where $X$ is measured by three indicators at each wave, with all loadings equal to .5. The measurement model is identical in both groups. However, different autoregressive effects are defined for each group by using a list structure for the `autoregEffects` argument: In the first group, both autoregressive effects are .5, whereas in the second group, both autoregressive effects are .4. In both groups, the autoregressive effects are constant across waves (`waveEqual = c('autoreg')`). Then, the required sample (`type = 'a-priori'`) is requested to detect that the autoregressive effect differs across groups (`nullEffect = 'autoregA = autoregB'`). Note that metric invariance constraints are applied across both waves and groups (by omitting the `invariance` argument, which defaults to `TRUE`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which, in case of an a priori power analysis, gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   autoregEffects = list(
@@ -2514,7 +2513,7 @@ If there are more than two groups, the autoregressive effects are held equal acr
 
 
 ## ARMA models {#powerARMA}
-`semPower.powerARMA` is used to perform power analyses for hypothesis arising in models with autoregressive and moving average parameters (ARMA models) of the form $X_{t} =  \beta_{t,(t-1)} \cdot X_{(t-1)} + \gamma_{t,t} \cdot N_{t} + \gamma_{t,(t-1)} \cdot N_{(t-1)}$, where one variable $X$ is repeatedly assessed at different time points (waves), and autoregressive (lag-1, lag-2, or lag-3) effects (e.g. `X1 -> X2 -> X3`), and lag-1, lag-2, or lag-3 moving average parameters (e.g., `N1 -> X2`) are assumed. `semPower.powerARMA` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerARMA` is used to perform power analyses for hypothesis arising in models with autoregressive and moving average parameters (ARMA models) of the form $X_{t} =  \beta_{t,(t-1)} \cdot X_{(t-1)} + \gamma_{t,t} \cdot N_{t} + \gamma_{t,(t-1)} \cdot N_{(t-1)}$, where one variable $X$ is repeatedly assessed at different time points (waves), and autoregressive (lag-1, lag-2, or lag-3) effects (e.g., `X1 -> X2 -> X3`), and lag-1, lag-2, or lag-3 moving average parameters (e.g., `N1 -> X2`) are assumed. `semPower.powerARMA` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether the autoregressive lag-1 (`nullEffect = 'autoreg'`), lag-2 (`'autoregLag2'`), or lag-3 (`'autoregLag3'`) effects are equal across waves (stationarity of autoregressive effects).
 * whether the moving average lag-1 (`'mvAvg'`), lag-2 (`'mvAvgLag2'`), or lag-3 (`'mvAvgLag3'`) parameters are equal across waves (stationarity of moving average effects).
@@ -2533,19 +2532,19 @@ If there are more than two groups, the autoregressive effects are held equal acr
 `semPower.powerARMA` expects the following arguments:
 
 * `nWaves`: The number of waves (measurement occasions), must be $\geq$ 2. 
-* `autoregLag1` (or equivalently, `autoregEffects`): Vector of autoregressive lag-1 effects, e.g. `c(.7, .6, .5)` for  autoregressive effects of .7 for `X1 -> X2`, .6 for `X2 -> X3`, and .5 for `X3 -> X4`. 
-* `autoregLag2`: Vector of lag-2 effects or `NULL` for no lag-2 effects, e.g. `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
-* `autoregLag3`: Vector of lag-3 effects or `NULL` for no lag-3 effects, e.g. `c(.05)` for a lag-3 effect .05 for `X1 -> X4`.
-* `mvAvgLag1`: Vector of the lag-1 moving average parameters, e.g. `c(.7, .6, .5)` for moving average parameters effects of .7 for `N1 -> X2`, .6 for `N2 -> X3`, and .5 for `N3 -> X4`. 
-* `mvAvgLag2`: Vector of the lag-2 moving average parameters or `NULL` for no lag-2 effects, e.g. `c(.2, .1)` for lag-2 effects of .2 for `N1 -> X3` and .1 for `N2 -> X4`.
-* `mvAvgLag3`: Vector of the lag-3 moving average parameters or `NULL` for no lag-3 effects, e.g. `c(.05)` for a lag-3 effect .05 for `N1 -> X4`.
+* `autoregLag1` (or equivalently, `autoregEffects`): Vector of autoregressive lag-1 effects, e.g., `c(.7, .6, .5)` for  autoregressive effects of .7 for `X1 -> X2`, .6 for `X2 -> X3`, and .5 for `X3 -> X4`. 
+* `autoregLag2`: Vector of lag-2 effects or `NULL` for no lag-2 effects, e.g., `c(.2, .1)` for lag-2 effects of .2 for `X1 -> X3` and .1 for `X2 -> X4`.
+* `autoregLag3`: Vector of lag-3 effects or `NULL` for no lag-3 effects, e.g., `c(.05)` for a lag-3 effect .05 for `X1 -> X4`.
+* `mvAvgLag1`: Vector of the lag-1 moving average parameters, e.g., `c(.7, .6, .5)` for moving average parameters effects of .7 for `N1 -> X2`, .6 for `N2 -> X3`, and .5 for `N3 -> X4`. 
+* `mvAvgLag2`: Vector of the lag-2 moving average parameters or `NULL` for no lag-2 effects, e.g., `c(.2, .1)` for lag-2 effects of .2 for `N1 -> X3` and .1 for `N2 -> X4`.
+* `mvAvgLag3`: Vector of the lag-3 moving average parameters or `NULL` for no lag-3 effects, e.g., `c(.05)` for a lag-3 effect of .05 for `N1 -> X4`.
 * `means`: Vector of (conditional) means for $X$. Can be omitted for no meanstructure.
 * `variances`: Vector of the variances of the noise factors $N$ (= the residual variances of $X$).
 * `waveEqual`: Parameters that are assumed to be equal across waves in both the H0 and the H1 model. Because ARMA models are likely not identified when no such constraints are imposed, `waveEqual` may not be empty. Valid are `'autoreg'`, `'autoregLag2'`, and  `'autoregLag3'` for autoregressive effects, `'mvAvg'`, `'mvAvgLag2'`, and  `'mvAvgLag3'` for moving average effects, `var` for the variance of the noise factors $N_2 \ldots N_nWaves$ , and `mean` for the conditional means of $X_2 \ldots X_nWaves$ (starting at the second measurement).
 * `groupEqual`: Parameters that are restricted across groups in both the H0 and the H1 model, when `nullEffect` implies a multiple group model. Valid are `autoreg` for autoregressive effects, `mvAvg` for moving-average parameters, `var` for the variances of the noise factors $N$, and `mean` for the means of $X$. 
 * `nullEffect`: Defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally  `'autoreg = 0'`, `'autoregLag2 = 0'`, `'autoregLag3 = 0'`, `'mvAvg = 0'`, `'mvAvgLag2 = 0'`, `'mvAvgLag3 = 0'` to constrain the autoregressive or moving average effects to zero, and `'autoregA = autoregB'`, `'mvAvgA = mvAvgB'`, `'varA = varB'`, `'meanA = meanB'` to constrain the autoregressive (lag-1) effects, moving average (lag-1) parameters, variances of the noise factors, or means of $X$ to be equal across groups.
 * `nullWhich`: Defines which parameter(s) is targeted by the hypothesis defined in `nullEffect` when there are > 2 waves and the parameter is not part of `waveEqual`.
-* `nullWhichGroups`: For hypotheses involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied. By default, the relevant parameter(s) is restricted across all groups.
+* `nullWhichGroups`: For hypotheses involving cross-groups comparisons, a vector indicating the groups for which equality constrains should be applied. By default, the relevant parameter(s) is restricted across all groups.
 * `invariance`: Whether metric invariance (and scalar invariance if means are part of the model) over waves is assumed (`TRUE`, the default) or not (`FALSE`).
 * `autocorResiduals`: Whether the residuals of the indicators of the $X$ are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`).
 * additional arguments [specifying the type of power analysis](#commonArgs). 
@@ -2565,7 +2564,7 @@ If there are more than two groups, the autoregressive effects are held equal acr
 
 ##### Detect non-stationarity of autoregressive effects {-}
 
-To perform a power analysis to detect whether the autoregressive effects differ across measurements (non-stationarity of autoregressive effects), use `nullEffect = 'autoreg'` for lag-1 effects,  `nullEffect = 'autoregLag2'` for lag-2 effects, and  `nullEffect = 'autoregLag3'` for lag-3 effects.
+To perform a power analysis to detect whether the autoregressive effects differ across measurements (non-stationarity of autoregressive effects), use `nullEffect = 'autoreg'` for lag-1 effects, `nullEffect = 'autoregLag2'` for lag-2 effects, and  `nullEffect = 'autoregLag3'` for lag-3 effects.
 
 For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that the autoregressive lag-1 effect (`nullEffect = 'autoreg'`) differs across measurements with a power of 80% (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises an attribute measured at five occasions (`nWaves = 5`) by 3 indicators each (`nIndicator = rep(3, 5)`), where all loadings are equal to .50 (`loadM = .5`). See the chapter on [specifying a factor model](#factorDefinition) for alternative (more flexible) ways to define the factor loadings. The autoregressive (lag-1) effects are .5 for `X1 -> X2`, .4 for `X2 -> X3`, .3 for `X3 -> X4`, and .2 for `X4 -> X5`(`autoregLag1 = c(.5, .4, .3, .2)`). The moving average (lag-1) parameters are .3 for `N1 -> X2`, .4 for `N2 -> X3`, .5 for `N3 -> X4`, and .4 for `N4 -> X5`(`mvAvgLag1 = c(.3, .4, .5, .4)`). The variances of the noise variables (= the residual variances of $X$) are 1 at each measurement occasion (`variances = c(1, 1, 1, 1, 1)`). To identify the model, the `waveEqual` argument is set so that the variances are restricted to be equal across measurements (excluding the first wave) in both the H0 and the H1 model (`waveEqual = c('var')`). In addition, the model comprises autocorrelated indicator residuals across time, because the `autocorResiduals` (which defaults to `TRUE`) argument is omitted, and assumes metric invariance across measurement occasions, because the `invariance` argument (which defaults to `TRUE`) is also omitted.
 
@@ -2573,7 +2572,7 @@ For instance, the following requests the required sample size (`type = 'a-priori
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2595,7 +2594,7 @@ powerARMA <- semPower.powerARMA(
   type = 'post-hoc', alpha = .05, N = 300,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3 ,.2),  # x1->x2, x2->x3, x3->x4, x4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
   mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var'),
@@ -2613,10 +2612,10 @@ If the $X$ variables are observed variables rather than latent factors, the only
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3 ,.2),  # x1->x2, x2->x3, x3->x4, x4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
   mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var'),
@@ -2627,12 +2626,12 @@ powerARMA <- semPower.powerARMA(
 ```
 
 
-The models may also include lag-2 or lag-3 effects. For instance, the following defines 5 measurements (`nWaves = 5`) and all lag-1 autoregressive effects to be .4 (`autoregLag1 = c(.4, .4, .4, .4)`), the lag-2 autoregressive effects to be .15, .1, and .05 (`autoregLag2 = c(.15, .1, .05)`), and the lag-3 autoregressive effects to be .05 and .10 (`autoregLag3 = c(.05, .10)`). The lag-1 moving average parameters are all equal to .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`) and there are no lag-2 or lag-3 moving average parameters. Further, the variances, the lag-1 autoregressive effects and the lag-1 moving average parameters are constrained to be equal across waves in both the H0 and the H1 model (`waveEqual = c('var', 'autoreg', 'mvAvg')`). Then, the required sample size is requested to detect that the lag-2 autoregressive effects differ across waves (`nullEffect = 'autoregLag2'`).
+The models may also include lag-2 or lag-3 effects. For instance, the following defines 5 measurements (`nWaves = 5`) and all lag-1 autoregressive effects to be .4 (`autoregLag1 = c(.4, .4, .4, .4)`), the lag-2 autoregressive effects to be .15, .1, and .05 (`autoregLag2 = c(.15, .1, .05)`), and the lag-3 autoregressive effects to be .05 and .10 (`autoregLag3 = c(.05, .10)`). The lag-1 moving average parameters are all equal to .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`) and there are no lag-2 or lag-3 moving average parameters. Furthermore, the variances, the lag-1 autoregressive effects, and the lag-1 moving average parameters are constrained to be equal across waves in both the H0 and the H1 model (`waveEqual = c('var', 'autoreg', 'mvAvg')`). Then, the required sample size is requested to detect that the lag-2 autoregressive effects differ across waves (`nullEffect = 'autoregLag2'`).
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2649,14 +2648,14 @@ powerARMA <- semPower.powerARMA(
 
 ##### Detect non-stationarity of moving average parameters {-}
 
-The procedure to perform a power analysis to detect whether the moving average parameters differ across measurements (non-stationarity of the moving average parameters) is largely equivalent to the case described in the previous section, except that `nullEffect` refers to the moving average parameters: `nullEffect = 'mvAvg'` for lag-1 effects, `nullEffect = 'mvAvgLag2'` for lag-2 effects, and  `nullEffect = 'mvAvgLag3'` for lag-3 effects.
+The procedure to perform a power analysis to detect whether the moving average parameters differ across measurements (non-stationarity of the moving average parameters) is largely equivalent to the case described in the previous section, except that `nullEffect` refers to the moving average parameters: `nullEffect = 'mvAvg'` for lag-1 effects, `nullEffect = 'mvAvgLag2'` for lag-2 effects, and `nullEffect = 'mvAvgLag3'` for lag-3 effects.
 
-For instance, the following sets up a population model largely identical to the example described above, but this time requests the required sample to detect that the moving average parameters differ across measurements (`nullEffect = 'mvAvg'`).
+For instance, the following sets up a population model largely identical to the example described above, but this time requests the required sample size to detect that the moving average parameters differ across measurements (`nullEffect = 'mvAvg'`).
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2669,17 +2668,17 @@ powerARMA <- semPower.powerARMA(
 )
 ```
 
-Power analysis to detect non-stationarity of the lag-2 or lag-3 moving average parameters is performed similarly.  For instance, the following defines 5 measurements (`nWaves = 5`) and all lag-1 autoregressive effects to be .4 (`autoregLag1 = c(.4, .4, .4, .4)`), all lag-2 autoregressive effects to be .10 (`autoregLag2 = c(.1, .1, .1)`), and all lag-3 autoregressive effects to be .05 (`autoregLag3 = c(.05, .05)`). All lag-1 moving average parameters are .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`), the lag-2 moving average parameters are .20, .10, and .05 (`mvAvgLag2 = c(.20, .10, .05)`), and the lag-3 moving average parameters are .05 and .10 (`mvAvgLag3 = c(.05, .10)`). The `waveEqual` arguments specifies stability of the variances, of the the lag-1, lag-2, and lag-3 autoregressive effects, and of the lag-1 moving average parameters (`waveEqual = c('var', 'autoreg', 'autoregLag2', 'autoregLag3', 'mvAvg')`). Then, the required sample size is requested to detect that the lag-2 moving average parameters differ across waves (`nullEffect = 'mvAvgLag2'`).
+Power analyses to detect non-stationarity of the lag-2 or lag-3 moving average parameters are performed similarly. For instance, the following defines 5 measurements (`nWaves = 5`) and all lag-1 autoregressive effects to be .4 (`autoregLag1 = c(.4, .4, .4, .4)`), all lag-2 autoregressive effects to be .10 (`autoregLag2 = c(.1, .1, .1)`), and all lag-3 autoregressive effects to be .05 (`autoregLag3 = c(.05, .05)`). All lag-1 moving average parameters are .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`), the lag-2 moving average parameters are .20, .10, and .05 (`mvAvgLag2 = c(.20, .10, .05)`), and the lag-3 moving average parameters are .05 and .10 (`mvAvgLag3 = c(.05, .10)`). The `waveEqual` arguments specifies stability of the variances, of the the lag-1, lag-2, and lag-3 autoregressive effects, and of the lag-1 moving average parameters (`waveEqual = c('var', 'autoreg', 'autoregLag2', 'autoregLag3', 'mvAvg')`). Then, the required sample size is requested to detect that the lag-2 moving average parameters differ across waves (`nullEffect = 'mvAvgLag2'`).
 
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  autoregLag2 = c(.10, .10, .10),   # x1->x3, x2->x4, x3->x5 
+  autoregLag2 = c(.1, .1, .1),   # x1->x3, x2->x4, x3->x5 
   autoregLag3 = c(.05, .05),        # x1->x5, x2->x5 
   mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
   mvAvgLag2 = c(.20, .10, .05),     # n1->x3, n2->x4, n3->x5 
@@ -2703,7 +2702,7 @@ For instance, the following defines 5 measurements (`nWaves = 5`), all lag-1 aut
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2722,12 +2721,12 @@ powerARMA <- semPower.powerARMA(
 
 To perform a power analysis to detect whether the conditional means of the $X$ differ across measurements (non-stationarity of means), use `nullEffect = 'mean'`. As is the case for variances, the hypothesis of stationarity of means excludes the first measurement of $X$, because its mean differs in meaning from those of the remaining measurements.
 
-For instance, the following defines 5 measurements (`nWaves = 5`), all lag-1 autoregressive effects to be .5 (`autoregLag1 = c(.5, .5, .5, .5)`), all lag-1 moving average parameters to be .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`), and all variances of the noise factors to be equal to 1 (`variances = c(1, 1, 1, 1, 1)`). The `waveEqual` arguments specifies stability of the variances, the autoregressive, and the moving average effects in both the H0 and the H1 model (`waveEqual = c('var, 'autoreg', 'mvAvg')`). The means of the $X$ are 0, .3, .2, .5, and .4 (`means = c(0, .3, .2, .5, .4)`). In addition, equal loadings and equal intercepts are assumed across measurements, as the `invariance` argument (which defaults to `TRUE`) is omitted. Then, the required sample size is requested to detect that the means  differ across waves 2 - 5 (`nullEffect = 'mean'`). 
+For instance, the following defines 5 measurements (`nWaves = 5`), all lag-1 autoregressive effects to be .5 (`autoregLag1 = c(.5, .5, .5, .5)`), all lag-1 moving average parameters to be .30 (`mvAvgLag1 = c(.3, .3, .3, .3)`), and all variances of the noise factors to be equal to 1 (`variances = c(1, 1, 1, 1, 1)`). The `waveEqual` arguments specifies stability of the variances, the autoregressive, and the moving average effects in both the H0 and the H1 model (`waveEqual = c('var, 'autoreg', 'mvAvg')`). The means of the $X$ are 0, .3, .2, .5, and .4 (`means = c(0, .3, .2, .5, .4)`). In addition, equal loadings and equal intercepts are assumed across measurements, as the `invariance` argument (which defaults to `TRUE`) is omitted. Then, the required sample size is requested to detect that the means differ across waves 2 - 5 (`nullEffect = 'mean'`). 
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2741,19 +2740,19 @@ powerARMA <- semPower.powerARMA(
 )
 ```
 
-Note that the latent means of the $X$ are identified resorting on single occasion identification (i.e., by setting the factor mean at the first measurement occasion to zero), which in the example above matches the first value provided for `means`. However, the first mean may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
+Note that the latent means of the $X$ are identified resorting to single occasion identification (i.e., by setting the factor mean at the first measurement occasion to zero), which matches the first value provided for `means` in the example above. However, the first mean may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
 
 
 ##### Detect whether autoregressive or moving average parameters differ from zero {-}
 
-To perform a power analysis to detect whether the autoregressive effects differ from zero, use `nullEffect = 'autoreg = 0'` for lag-1 effects,  `nullEffect = 'autoregLag2 = 0'` for lag-2 effects, and  `nullEffect = 'autoregLag3 = 0'` for lag-3 effects. To detect whether the moving average parameters differ from zero, use `nullEffect = 'mvAvg = 0'` for lag-1 effects,  `nullEffect = 'mvAvgLag2 = 0'` for lag-2 effects, and `nullEffect = 'mvAvgLag3 = 0'` for lag-3 parameters. 
+To perform a power analysis to detect whether the autoregressive effects differ from zero, use `nullEffect = 'autoreg = 0'` for lag-1 effects, `nullEffect = 'autoregLag2 = 0'` for lag-2 effects, and `nullEffect = 'autoregLag3 = 0'` for lag-3 effects. To detect whether the moving average parameters differ from zero, use `nullEffect = 'mvAvg = 0'` for lag-1 effects, `nullEffect = 'mvAvgLag2 = 0'` for lag-2 effects, and `nullEffect = 'mvAvgLag3 = 0'` for lag-3 parameters. 
 
 For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that the first autoregressive lag-1 effect (`nullEffect = 'autoreg = 0'`) differs from zero with a power of 80% (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises  five measurement occasions (`nWaves = 5`), so that there are four autoregressive lag-1 effects, namely are .5 for `X1 -> X2`, .4 for `X2 -> X3`, .3 for `X3 -> X4`, and .2 for `X4 -> X5`(`autoregLag1 = c(.5, .4, .3, .2)`). Given that there are several autoregressive effects, the `nullWhich` argument is used to define that the first autoregressive effect is targeted by the null hypothesis (`nullWhich = 1`). If the autoregressive effects are considered stable across measurement occasions (e.g., `waveEqual = c('autoreg')`, there is only a single autoregressive parameter and the `nullWhich` argument can be omitted. 
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2769,12 +2768,12 @@ powerARMA <- semPower.powerARMA(
 Note that the first autoregressive effect (`X1 -> X2`) is only identified when both variances and moving average parameters are constrained to equality across measurement occasions.
 
 
-Power analysis to detect that moving average parameters differ from zero is performed analogously. For instance, the following determines the required sample size to detect that the lag-2 moving average parameters (`nullEffect = 'mvAvgLag2 = 0'`), which are stable across measurements (`waveEqual` includes `'mvAvgLag2'`), differ from zero:
+Power analyses to detect that moving average parameters differ from zero are performed analogously. For instance, the following determines the required sample size to detect that the lag-2 moving average parameters (`nullEffect = 'mvAvgLag2 = 0'`), which are stable across measurements (`waveEqual` includes `'mvAvgLag2'`), differ from zero:
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2795,12 +2794,12 @@ To perform a power analysis to detect whether the lag-1 autoregressive or lag-1 
 
 The general syntax is similar as in the previous examples, with the only difference that the parameters targeted by the null hypothesis need to be provided in a list structure giving the relevant parameters separately for each group. If no list is provided for a particular parameter, these take identical values in all groups (but are freely estimated in each group by default).
 
-For instance, the following defines a two-group model involving 5 measurement occasions (`nWaves = 5`), where $X$ is measured by three indicators at each measurement, with all loadings equal to .5. The measurement model is identical for both groups. Also identical across groups are the noise variances of 1 at each measurement, and equal moving average effects of .3 (`mvAvgLag1 = c(.3, .3, .3, .3)`). Whereas the moving average parameters are freely estimated in each group, the variances are restricted to equality across groups in both the H0 and the H1 model by using `groupEqual = c('var')`. However, different lag-1 autoregressive effects are defined for each group by using a list structure for the `autoregLag1` argument: In the first group, all autoregressive effects are .5, whereas in the second group, all autoregressive effects are .3. In both groups, the variance, autoregressive, and moving average parameters are constant across waves (`waveEqual = c('var', 'autoreg', 'mvAvg')`). Metric invariance constrains are applied across all waves and groups (by omitting the `invariance` argument, which defaults to `TRUE`). Then, the required sample (`type = 'a-priori'`) is requested to detect that the autoregressive effect differs across groups (`nullEffect = 'autoregA = autoregB'`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following defines a two-group model involving 5 measurement occasions (`nWaves = 5`), where $X$ is measured by three indicators at each measurement, with all loadings equal to .5. The measurement model is identical for both groups. Also identical across groups are the noise variances of 1 at each measurement, and equal moving average effects of .3 (`mvAvgLag1 = c(.3, .3, .3, .3)`). Whereas the moving average parameters are freely estimated in each group, the variances are restricted to equality across groups in both the H0 and the H1 model by using `groupEqual = c('var')`. However, different lag-1 autoregressive effects are defined for each group by using a list structure for the `autoregLag1` argument: In the first group, all autoregressive effects are .5, whereas in the second group, all autoregressive effects are .3. In both groups, the variance, autoregressive, and moving average parameters are constant across waves (`waveEqual = c('var', 'autoreg', 'mvAvg')`). Metric invariance constraints are applied across all waves and groups (by omitting the `invariance` argument, which defaults to `TRUE`). Then, the required sample size (`type = 'a-priori'`) is requested to detect that the autoregressive effect differs across groups (`nullEffect = 'autoregA = autoregB'`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = list(
@@ -2824,7 +2823,7 @@ Performing a power analysis to detect that the moving average parameters differ 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .5, .5, .5),
@@ -2848,12 +2847,12 @@ powerARMA <- semPower.powerARMA(
 
 To perform a power analysis to detect whether the variances of the noise factors (= the residual variances of $X$) differ across groups, use `nullEffect = 'varA = varB'`. To detect whether the means of $X$ differ across groups, use `nullEffect = 'meanA = meanB'`.
 
-The general syntax is highly similar as in the previous examples. For instance, the following defines  autoregressive and moving average parameters that are identical across waves and across groups, but defines the all variances in the first group equal 1, whereas all variances in the second group are .6. The variances, autoregressive effects, and moving average parameters are constant over measurements in both groups (`waveEqual = c('var', 'mvAvg', 'autoreg')`). Then, the required sample to detect that the variances differ across groups is requested (`nullEffect = 'varA = varB'`).
+The general syntax is highly similar as in the previous examples. For instance, the following defines  autoregressive and moving average parameters that are identical across waves and across groups, but defines the all variances in the first group equal 1, whereas all variances in the second group are .6. The variances, autoregressive effects, and moving average parameters are constant across measurements in both groups (`waveEqual = c('var', 'mvAvg', 'autoreg')`). Then, the required sample size to detect that the variances differ across groups is requested (`nullEffect = 'varA = varB'`).
 
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -2874,7 +2873,7 @@ The test for the inequality of the latent means of $X$ proceeds analogously. For
 ```{r eval=FALSE}
 powerARMA <- semPower.powerARMA(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
@@ -3430,7 +3429,7 @@ powerRICLPM <- semPower.powerRICLPM(
 
 
 ## Latent growth curve models {#powerLGCM}
-`semPower.powerLGCM` is used to perform power analyses for hypothesis arising  in latent growth curve models (LGCM), where one variable $X$ is repeatedly assessed at different occasions (waves). A latent intercept and a linear (and optionally a quadratic) latent slope factor representing the random effects capturing individual differences in change over time is assumed, and there might also be a time-invariant covariate. `semPower.powerLGCM` provides interfaces to perform power analyses concerning the following hypotheses:
+`semPower.powerLGCM` is used to perform power analyses for hypotheses arising in latent growth curve models (LGCM), where one variable $X$ is repeatedly assessed at different occasions (waves). A latent intercept and a linear (and optionally a quadratic) latent slope factor representing the random effects capturing individual differences in change over time is assumed, and there might also be a time-invariant covariate. `semPower.powerLGCM` provides interfaces to perform power analyses concerning the following hypotheses:
 
 * whether the mean of the intercept (`nullEffect = 'iMean = 0'`), linear slope (`'sMean = 0'`), or quadratic slope (`'s2Mean = 0'`) factor, respectively, is zero.
 * whether the variance of the intercept (`'iVar = 0'`), linear slope (`'sVar = 0'`), or quadratic slope (`'s2Var = 0'`) factor, respectively, is zero.
@@ -3484,7 +3483,7 @@ For instance, the following requests the required sample size (`type = 'a-priori
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),     # i, s
@@ -3523,7 +3522,7 @@ Instead of defining the variances and the covariances separately, a variance-cov
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),     # i, s
@@ -3543,7 +3542,7 @@ If the LGCM should be based on observed rather than latent indicator variables (
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),     # i, s
@@ -3560,7 +3559,7 @@ It is also possible to include a quadratic slope factor by adding `quadratic = T
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
   quadratic = TRUE, 
@@ -3586,7 +3585,7 @@ For instance, the following defines a LGCM involving 4 measurements (`nWaves = 4
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
   quadratic = TRUE, 
@@ -3608,12 +3607,12 @@ powerLGCM <- semPower.powerLGCM(
 
 Performing a power analysis concerning the hypothesis that a covariance between intercept, slope, and quadratic slope factor is zero again proceeds largely identically as described above, with the exception that `nullEffect` now refers to the covariances. To detect that the covariance between the intercept and the linear slope factor differs from zero, use `nullEffect = 'isCov'`,  to detect that the covariance between the intercept and the quadratic slope factor differs from zero, use `nullEffect = 'is2Cov'`, and detect that the covariance between the linear and the quadratic slope factor differs from zero, use `nullEffect = 'ss2Cov'`,  
 
-For instance, the following defines a LGCM involving 4 measurements (`nWaves = 4`) and includes a quadratic slope factor (`quadratic = TRUE`) in addition to the intercept and the linear slope factor. The covariance between the intercept and the linear slope is .25, the covariance between the intercept and the quadratic slope is .10, and the covariance between the linear and the quadratic slope factors is .05 (the off-diagonal elements of the matrix provided to `covariances`). Then, the required sample size to detect that the covariance between the  intercept and the linear slope factor differs from zero (`nullEffect = 'isCov = 0'`) is requested.
+For instance, the following defines a LGCM involving 4 measurements (`nWaves = 4`) and includes a quadratic slope factor (`quadratic = TRUE`) in addition to the intercept and the linear slope factor. The covariance between the intercept and the linear slope is .25, the covariance between the intercept and the quadratic slope is .10, and the covariance between the linear and the quadratic slope factors is .05 (the off-diagonal elements of the matrix provided to `covariances`). Then, the required sample size to detect that the covariance between the intercept and the linear slope factor differs from zero (`nullEffect = 'isCov = 0'`) is requested.
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
   quadratic = TRUE, 
@@ -3633,19 +3632,19 @@ powerLGCM <- semPower.powerLGCM(
 
 ##### Detect that a slope of a time-invariant covariate differs from zero {-}
 
-To perform a power analysis to detect whether the slope of an exogenous time-invariant covariate (TIC) differs from zero, use `nullEffect = 'betaIT'` for the prediction of the intercept factor,  `nullEffect = 'betaST'` for the prediction of the slope factor, and `nullEffect = 'betaS2T'` for the prediction of the quadratic slope factor. These types of hypotheses assume that an additional exogenous TIC is present, which is used to predict the intercept factor, the slope factor, and the quadratic slope factor, implying the following regression equations:
+To perform a power analysis to detect whether the slope of an exogenous time-invariant covariate (TIC) differs from zero, use `nullEffect = 'betaIT'` for the prediction of the intercept factor, `nullEffect = 'betaST'` for the prediction of the slope factor, and `nullEffect = 'betaS2T'` for the prediction of the quadratic slope factor. These types of hypotheses assume that an additional exogenous TIC is present, which is used to predict the intercept factor, the slope factor, and the quadratic slope factor, implying the following regression equations:
 $$\hat{I} = \beta_{IT} \cdot TIC \\
 \hat{S} = \beta_{ST}  \cdot TIC \\
 \hat{S^2} = \beta_{S^2T}  \cdot TIC$$
 
 
-For instance, the following defines a LGCM involving 3 waves along an additional exogenous time-invariant covariate. The measurement model for the covariate also needs to be defined, which in the example is done via the `loadings` argument. An exogenous covariate is defined after the factors associated with the measurements of $X$, so in the present example factors 1 - 3 refer to the repeated assessments of the attribute under consideration, and the fourth factor is the covariate.  Here, the covariate is measured by 4 indicators loading by .8, .6, .5, and .6. The slopes of the covariate in the prediction of the intercept and slope factors are defined in `ticExogSlopes`, so that the slope of the covariate in the prediction of the intercept factor is .1, and the slope in the prediction of the slope factor is .5 (`ticExogSlopes = c(.1, .5)`). Then, the required sample size is requested to detect that the slope of the covariate in the prediction of the slope factor differs from zero (`nullEffect = 'betaST = 0'`).
+For instance, the following defines a LGCM involving 3 waves along with an additional exogenous time-invariant covariate. The measurement model for the covariate also needs to be defined, which in the example is done via the `loadings` argument. An exogenous covariate is defined after the factors associated with the measurements of $X$, so in the present example factors 1 - 3 refer to the repeated assessments of the attribute under consideration, and the fourth factor is the covariate.  Here, the covariate is measured by 4 indicators loading by .8, .6, .5, and .6. The slopes of the covariate in the prediction of the intercept and slope factors are defined in `ticExogSlopes`, so that the slope of the covariate in the prediction of the intercept factor is .1, and the slope in the prediction of the slope factor is .5 (`ticExogSlopes = c(.1, .5)`). Then, the required sample size is requested to detect that the slope of the covariate in the prediction of the slope factor differs from zero (`nullEffect = 'betaST = 0'`).
 
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),           # i, s
@@ -3667,17 +3666,17 @@ powerLGCM <- semPower.powerLGCM(
 
 ##### Detect that a slope in the prediction of an time-invariant covariate differs from zero {-}
 
-To perform a power analysis to detect whether a slope in the prediction of an endogenous time-invariant covariate (TIC) differs from zero, use `nullEffect = 'betaTI'` for the slope of the  intercept factor,  `nullEffect = 'betaTS'` for the slope of the slope factor, and `nullEffect = 'betaTS2'` for the slope of the quadratic slope factor. These types of hypotheses assume that an additional endogenous TIC is present, which is predicted by the intercept factor, the slope factor, and the quadratic slope factor, implying the following regression equation:
+To perform a power analysis to detect whether a slope in the prediction of an endogenous time-invariant covariate (TIC) differs from zero, use `nullEffect = 'betaTI'` for the slope of the intercept factor, `nullEffect = 'betaTS'` for the slope of the slope factor, and `nullEffect = 'betaTS2'` for the slope of the quadratic slope factor. These types of hypotheses assume that an additional endogenous TIC is present, which is predicted by the intercept factor, the slope factor, and the quadratic slope factor, implying the following regression equation:
 $$\widehat{TIC} = \beta_{TI} \cdot I + \beta_{TS} \cdot S +  \beta_{TS^2}  \cdot S^2$$
 
 
-For instance, the following defines a LGCM involving 3 waves along an additional endogenous time-invariant covariate. The measurement model for the covariate also needs to be defined, which in the example is done via the `loadings` argument. An endogenous covariate is defined after the factors associated with the measurements of $X$, and - if also present - after an exogenous covariate, so in the present example factors 1 - 3 refer to the repeated assessments of the attribute under consideration, and the fourth factor is the covariate. Here, the covariate is measured by 4 indicators loading by .8, .6, .5, and .6. The slopes of intercept and the slope factors in the prediction of the covariate are defined in `ticEndogSlopes`, so that the slope of the intercept factor is .3, and the slope of the slope factor is .2 (`ticEndogSlopes = c(.3, .2)`). Then, the required sample size is requested to detect that the slope of the intercept factor in the prediction covariate differs from zero (`nullEffect = 'betaTI = 0'`).
+For instance, the following defines a LGCM involving 3 waves along with an additional endogenous time-invariant covariate. The measurement model for the covariate also needs to be defined, which in the example is done via the `loadings` argument. An endogenous covariate is defined after the factors associated with the measurements of $X$, and - if also present - after an exogenous covariate, so in the present example factors 1 - 3 refer to the repeated assessments of the attribute under consideration, and the fourth factor is the covariate. Here, the covariate is measured by 4 indicators loading by .8, .6, .5, and .6. The slopes of intercept and the slope factors in the prediction of the covariate are defined in `ticEndogSlopes`, so that the slope of the intercept factor is .3, and the slope of the slope factor is .2 (`ticEndogSlopes = c(.3, .2)`). Then, the required sample size is requested to detect that the slope of the intercept factor in the prediction covariate differs from zero (`nullEffect = 'betaTI = 0'`).
 
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80,
+  type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),           # i, s
@@ -3702,12 +3701,12 @@ To perform a power analysis to detect whether the means of the intercept, slope,
 
 The general syntax is similar as in the previous examples, with the only difference that the parameters targeted by the null hypothesis need to be provided in a list structure giving the relevant parameters separately for each group. If no list is provided for a particular parameter, these take identical values in all groups (but are freely estimated in each group by default).
 
-For instance, the following defines a two-group model involving 3 measurement occasions (`nWaves = 3`), where $X$ is measured by three indicators at each measurement, with all loadings equal to .5. The measurement model is identical for both groups. Also identical in both groups (but freely estimated) are the variances of the intercept and slope factors, which are 1 (`variances = c(1, 1)`), as well as the intercept-slope covariance (`covariances = .3,`). However, different intercept and slope factor means for the each group are defined by using a list structure for the `means` argument: In the first group, the means of the intercept and slope factors are .5 and .2, respectively, whereas in the second group, the means are 0 and .4. Loadings and indicator intercepts are always constrained to be equal across all waves and groups. Then, the required sample is requested to detect that the means of the intercept factor differ across groups (`nullEffect = 'iMeanA = iMeanB'`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
+For instance, the following defines a two-group model involving 3 measurement occasions (`nWaves = 3`), where $X$ is measured by three indicators at each measurement, with all loadings equal to .5. The measurement model is identical for both groups. Also identical in both groups (but freely estimated) are the variances of the intercept and slope factors, which are 1 (`variances = c(1, 1)`), as well as the intercept-slope covariance (`covariances = .3,`). However, different intercept and slope factor means for each group are defined by using a list structure for the `means` argument: In the first group, the means of the intercept and slope factors are .5 and .2, respectively, whereas in the second group, the means are 0 and .4. Loadings and indicator intercepts are always constrained to be equal across all waves and groups. Then, the required sample size is requested to detect that the means of the intercept factor differ across groups (`nullEffect = 'iMeanA = iMeanB'`). Furthermore, in multiple group models the `N` argument also needs to be provided as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. If a post hoc or compromise power analysis is requested, `N` is a list providing the number of observations for each group. 
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   means = list(
@@ -3722,14 +3721,14 @@ powerLGCM <- semPower.powerLGCM(
 )
 ```
 
-If there are more than two groups, the autoregressive effects are held equal across all groups by default. If the constraints should only be placed in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, `nullWhichGroups = c(1, 3)` defines that the means  should only be restricted to equality across the first and the third group. 
+If there are more than two groups, the autoregressive effects are held equal across all groups by default. If the constraints should only be placed in specific groups, `nullWhichGroups` is used to identify the groups to which the equality restrictions apply. For instance, `nullWhichGroups = c(1, 3)` defines that the means should only be restricted to equality across the first and the third group. 
 
-Performing a power analysis to detect that the variances of the intercept, slope, or quadratic slope factor proceeds analogously. For instance, the following defines a two-group model with equal means for the intercept (of .5) and slope (of .2) factors in both groups (`means = c(.5, .2)`), but uses a list structure for the `variances` argument to define that the variance of the intercept is .5 in both groups, whereas the variance of the slope is 1 in the first, but .5 in the second group. Then, the required sample is requested to detect that the variances of the slope factor differ across groups (`nullEffect = 'sVarA = sVarB'`).
+Performing a power analysis to detect that the variances of the intercept, slope, or quadratic slope factor differs across groups proceeds analogously. For instance, the following defines a two-group model with equal means for the intercept (of .5) and slope (of .2) factors in both groups (`means = c(.5, .2)`), but uses a list structure for the `variances` argument to define that the variance of the intercept is .5 in both groups, whereas the variance of the slope is 1 in the first, but .5 in the second group. Then, the required sample size is requested to detect that the variances of the slope factors differ across groups (`nullEffect = 'sVarA = sVarB'`).
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),           # i, s
@@ -3749,12 +3748,12 @@ powerLGCM <- semPower.powerLGCM(
 
 To perform a power analysis to detect group-differences in the covariances between intercept and slope factor, intercept and quadratic slope factor, and linear slope and quadratic slope factor, use `nullEffect = 'isCovA = isCovB'`,`nullEffect = 'is2CovA = is2CovB'`, and `nullEffect = 'ss2CovA = ss2CovB'`, respectively.
 
-The procedure is largely identical as described in the previous section. For instance, the following defines a two-group model with equal means and variances for the intercept and slope factors in both groups, but uses `covariances = list(.3, 0)` to define that the intercept-slope covariance is .3 in the first group, but 0 in the second group. Moreover, the variances of both the intercept and the slope factor have identical values in both groups (`variances = c(1, 1)`) and are also restricted to be equal across groups in both the H0 and the H1 model by using `groupEqual = c('iVar', 'sVar')`. Then, the required sample is requested to detect that the covariances differ across groups (`nullEffect = 'isCovA = isCovB'`).
+The procedure is largely identical as described in the previous section. For instance, the following defines a two-group model with equal means and variances for the intercept and slope factors in both groups, but uses `covariances = list(.3, 0)` to define that the intercept-slope covariance is .3 in the first group, but 0 in the second group. Moreover, the variances of both the intercept and the slope factor have identical values in both groups (`variances = c(1, 1)`) and are also restricted to be equal across groups in both the H0 and the H1 model by using `groupEqual = c('iVar', 'sVar')`. Then, the required sample size is requested to detect that the covariances differ across groups (`nullEffect = 'isCovA = isCovB'`).
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),              # i, s
@@ -3768,16 +3767,16 @@ powerLGCM <- semPower.powerLGCM(
 ```
 
 
-##### Detect whether slopes involving a time-invariant covariate differ differ across groups {-}
+##### Detect whether slopes involving a time-invariant covariate differ across groups {-}
 
 To perform a power analysis to detect group-differences in the slope for an exogenous time-invariant covariate, use `nullEffect = 'betaITA = betaITB'` concerning the prediction of the intercept factor, `nullEffect = 'betaSTA = betaSTB'` concerning the prediction of the slope factor, and `nullEffect = 'betaS2TA = betaS2TB'` concerning the prediction of the quadratic slope factor. 
 
-For instance, the following defines a two-group model involving 3 measurement occasions (`nWaves = 3`). The measurement model is identical for both groups. Also identical across groups are the means, variances and covariances of the intercept and slope factors. Variances and covariances are also restricted to be equal across groups in both the H0 and the H1 model by using `groupEqual = c('iVar', 'sVar', 'isCov')`. However, different slopes for the covariate in the prediction of the intercept and the slope factors are defined by using a list structure for the `ticExogSlopes` argument: The slope in the prediction of the intercept factor is .5 in the first group, but .1 in the second group, and the slope in the prediction of the slope factor is .1 in the first group, but .2 in the second group. Then, the required sample is requested to detect that the slopes for the covariate in the prediction of the intercept factors differ across groups (`nullEffect = 'betaITA = betaITB'`).
+For instance, the following defines a two-group model involving 3 measurement occasions (`nWaves = 3`). The measurement model is identical for both groups. Also identical across groups are the means, variances and covariances of the intercept and slope factors. Variances and covariances are also restricted to be equal across groups in both the H0 and the H1 model by using `groupEqual = c('iVar', 'sVar', 'isCov')`. However, different slopes for the covariate in the prediction of the intercept and the slope factors are defined by using a list structure for the `ticExogSlopes` argument: The slope in the prediction of the intercept factor is .5 in the first group, but .1 in the second group, and the slope in the prediction of the slope factor is .1 in the first group, but .2 in the second group. Then, the required sample size is requested to detect that the slopes for the covariate in the prediction of the intercept factors differ across groups (`nullEffect = 'betaITA = betaITB'`).
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),     # i, s
@@ -3799,14 +3798,14 @@ powerLGCM <- semPower.powerLGCM(
 )
 ```
 
-When the slopes of the growth factors in the prediction of an endogenous time-invariant covariate are of concern, use `nullEffect = 'betaTIA = betaTIB'` to detect that the slope of the intercept factor differs across groups, `nullEffect = 'betaTSA = betaTSB'` for the slope of the linear slope factor, and  `nullEffect = 'betaTS2A = betaTS2B'` for the slope of the quadratic slope factor. 
+When the slopes of the growth factors in the prediction of an endogenous time-invariant covariate are of concern, use `nullEffect = 'betaTIA = betaTIB'` to detect that the slope of the intercept factor differs across groups, `nullEffect = 'betaTSA = betaTSB'` for the slope of the linear slope factor, and `nullEffect = 'betaTS2A = betaTS2B'` for the slope of the quadratic slope factor. 
 
-For instance, the following defines group-specific slopes for the intercept and the slope factor in the prediction of the covariate by using a list structure for the `ticEndogSlopes` argument: The slopes for the intercept in the prediction of the covariate factor is .3 in the first group, but .1 in the second group, and the slope of the slope factor is .2 in the first group, but .5 in the second group. Then, the required sample is requested to detect that the slopes for the slope factor in the prediction of the covariate differ across groups (`nullEffect = 'betaTSA = betaTSB'`).
+For instance, the following defines group-specific slopes for the intercept and the slope factor in the prediction of the covariate by using a list structure for the `ticEndogSlopes` argument: The slopes for the intercept in the prediction of the covariate factor is .3 in the first group, but .1 in the second group, and the slope of the slope factor is .2 in the first group, but .5 in the second group. Then, the required sample size is requested to detect that the slopes for the slope factor in the prediction of the covariate differ across groups (`nullEffect = 'betaTSA = betaTSB'`).
 
 ```{r eval=FALSE}
 powerLGCM <- semPower.powerLGCM(
   # define type of power analysis
-  'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
   means = c(.5, .2),     # i, s
