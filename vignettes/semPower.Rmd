@@ -2237,7 +2237,7 @@ powerLI <- semPower.powerLI(
 
 Note that the latent means are identified by setting the factor mean at the first measurement occasion to zero, which in the example above matches the value provided for `Alpha`. However, the first mean in `Alpha` may also take a value different from zero without affecting power, because the remaining means are then simply rescaled. 
 
-The particular comparison performed above cannot be defined using the predefined constants ??? was meinst du damit genau und warum geht das nicht?. If using `nullEffect = 'means'` instead, this would include all invariance constraints of the previous levels (i.e, loadings, intercepts, residuals, and factor covariances), so the proper comparison model would be `comparison = 'covariances'.`
+The particular comparison performed above cannot be defined using the predefined constants (e.g., `means` vs. `scalar`), because using `nullEffect = 'means'` instead includes all invariance constraints of the previous levels (i.e, loadings, intercepts, residuals, and factor covariances), so the proper comparison model would then be `comparison = 'covariances'.`
 
 
 ##### Detect whether factor covariances differ across measurements {-}
