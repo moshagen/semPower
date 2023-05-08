@@ -221,6 +221,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     stopCluster(cl)
     
     fit <- lapply(res, '[[', 1)
+    # replace non-converged by NA
+    fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))
     nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
     
     rr <- 1
@@ -257,6 +259,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   # check convergence
   fit <- lapply(res, '[[', 1)
+  # replace non-converged by NA
+  fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))
   nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
   convergenceRate <- nConverged / length(res)
   if(nConverged == 0) stop("Something went wrong during model estimation, no replication converged.")
@@ -316,6 +320,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       
       # eval param bias
       param <- lapply(res, '[[', 2)
+      # only consider converged param est
+      param <- param[unlist(lapply(param, function(x) length(x) > 0))]  
       rLambda <- do.call(rbind, lapply(param, '[[', 1))
       rPsi <- do.call(rbind, lapply(param, '[[', 2))
       rBeta <- do.call(rbind, lapply(param, '[[', 3))
