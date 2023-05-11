@@ -657,7 +657,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #' * `nullEffect = 'slopeX = slopeZ'`: Tests the hypothesis that two or more slopes are equal to each other.
 #' * `nullEffect = 'slopeA = slopeB'`: Tests the hypothesis that the slope for a predictor is equal in two or more groups (always assuming metric invariance).
 #' 
-#' For hypotheses regarding mediation effects, see [semPower.powerMediation()]. For hypothesis in autoregressive models, see  [semPower.powerAutoregressive()].
+#' For hypotheses regarding mediation effects, see [semPower.powerMediation()]. For hypothesis in autoregressive models, see  [semPower.powerAutoreg()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -1465,7 +1465,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' * `autoregXA = autoregXB` and `autoregYA = autoregYB`: Tests the hypothesis that the autoregressive effect of either X or Y are equal across groups.
 #' * `crossedXA = crossedXB` and `crossedYA = crossedYB`: Tests the hypothesis that the crossed effect of X on Y (`crossedX`) or of Y on X (`crossedY`), respectively, is equal across groups.
 #' 
-#' For hypotheses regarding the random-intercept CLPM, see [semPower.powerRICLPM()]. For hypothesis in autoregressive models, see [semPower.powerAutoregressive()].
+#' For hypotheses regarding the random-intercept CLPM, see [semPower.powerRICLPM()]. For hypothesis in autoregressive models, see [semPower.powerAutoreg()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -3532,7 +3532,7 @@ semPower.powerMI <- function(type,
 #' compared against the previous level (e.g., scalar vs. metric). Power analysis provides  
 #' the power (or the required N) to reject a particular level of invariance.
 #' 
-#' For hypotheses regarding multiple group invariance, see [semPower.powerMI()]. For hypotheses regarding autoregressive models, see [semPower.powerAutoregressive()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
+#' For hypotheses regarding multiple group invariance, see [semPower.powerMI()]. For hypotheses regarding autoregressive models, see [semPower.powerAutoreg()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
 #'  
 #' There are two ways to specify the models defined in the `comparison` and the `nullEffect` arguments. Either, one may
 #' specify a specific level of invariance that includes all previous levels:
@@ -5482,7 +5482,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #' * `varA = varB`: Tests the hypothesis that the variance of the noise factors are equal across groups.
 #' * `meanA = meanB`: Tests the hypothesis that latent means are equal across groups.
 #' 
-#' For hypotheses regarding a simple autoregression, see [semPower.powerAutoregressive()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()].  For hypotheses regarding longitudinal measurement invariance, see [semPower.powerLI()].
+#' For hypotheses regarding a simple autoregression, see [semPower.powerAutoreg()]. For hypotheses regarding a CLPM structure, see [semPower.powerCLPM()].  For hypotheses regarding longitudinal measurement invariance, see [semPower.powerLI()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -6423,7 +6423,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
 #' * `betaITA = betaITB`, `betaSTA = betaSTB`, `betaS2TA = betaS2TB`: Tests the hypothesis that the slopes for the time-invariant covariate in the prediction of the intercept, the linear slope, and the quadratic slope factor, respectively, are equal across groups (`TIC -> I, S, S2`). 
 #' * `betaTIA = betaTIB`, `betaTSA = betaTSB`, `betaTS2A = betaTS2B`: Tests the hypothesis that the slope the intercept, the linear slope, and the quadratic slope factor, respectively, in the prediction of the time-invariant covariate are equal across groups (`I, S, S2 -> TIC`).
 #' 
-#' For hypotheses regarding longitudinal invariance, see [semPower.powerLI()]. For hypotheses regarding a simple autoregression, see [semPower.powerAutoregressive()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
+#' For hypotheses regarding longitudinal invariance, see [semPower.powerLI()]. For hypotheses regarding a simple autoregression, see [semPower.powerAutoreg()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
