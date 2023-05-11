@@ -242,7 +242,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                   modelH0 = modelH0, modelH1 = modelH1,
                   lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
       # [fit][fitH0][fmin] 
-      if(!is.na(cr[[1]][[1]][1])){
+      if(!is.null(cr[[1]][[1]][1]) && !is.na(cr[[1]][[1]][1])){
         res <- append(res, list(cr))
         r <- r + 1
       }
