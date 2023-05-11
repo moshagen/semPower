@@ -1,20 +1,15 @@
 Type: Package
 Package: semPower
 Title: Power Analyses for SEM
-Version: 2.0.0.9000
-Authors@R: 
-  c(person(given = "Morten",
-           family = "Moshagen",
-           role = c("aut", "cre"),
-           email = "morten.moshagen@uni-ulm.de",
+Version: 2.0.0
+Authors@R: c(
+    person("Morten", "Moshagen", , "morten.moshagen@uni-ulm.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-2929-7288")),
-    person(given = "Martina",
-           family = "Bader",
-           role = c("aut"),
-           comment = c(ORCID = "0000-0002-5706-8933")))
+    person("Martina", "Bader", role = "aut",
+           comment = c(ORCID = "0000-0002-5706-8933"))
+  )
 Description: Provides a-priori, post-hoc, and compromise power-analyses
-    for structural equation models (SEM). Moshagen & Erdfelder (2016)
-    <doi:10.1080/10705511.2014.950896>.
+    for structural equation models (SEM).
 License: LGPL
 URL: https://github.com/moshagen/semPower
 BugReports: https://github.com/moshagen/semPower/issues
@@ -36,5 +31,5 @@ Suggests:
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
-RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
