@@ -1,3 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\vignettes\semPower.pdf$
+^\docs\index.html$
+^\docs\.nojekyll$
+^\R\zUnitTests.R$
