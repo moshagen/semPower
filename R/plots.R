@@ -70,7 +70,7 @@ semPower.showPlot <- function(chiCrit, ncp, df, linewidth = 1, showLabels = TRUE
 #' Shows a plot showing power as function of N given the output of a power analysis. 
 #' 
 #' @param semPowerRes results of a semPower analysis 
-#' @param ... other parameters passed to [sempower.powerPlot.byN()]
+#' @param ... other parameters passed to [semPower.powerPlot.byN()]
 #' @return powerplot
 #' @examples
 #' \dontrun{

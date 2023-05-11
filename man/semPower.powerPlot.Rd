@@ -9,7 +9,7 @@ semPower.powerPlot(semPowerRes, ...)
 \arguments{
 \item{semPowerRes}{results of a semPower analysis}
 
-\item{...}{other parameters passed to \code{\link[=sempower.powerPlot.byN]{sempower.powerPlot.byN()}}}
+\item{...}{other parameters passed to \code{\link[=semPower.powerPlot.byN]{semPower.powerPlot.byN()}}}
 }
 \value{
 powerplot
