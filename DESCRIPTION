@@ -27,10 +27,12 @@ Suggests:
     bookdown,
     covsim,
     doSNOW,
+    forEach,
     knitr,
     lavaan,
     mnonr,
     rmarkdown,
+    snow
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

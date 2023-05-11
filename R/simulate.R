@@ -145,14 +145,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      returnFmin = TRUE){
 
   nCores <- ifelse(!is.null(simOptions[['nCores']]), simOptions[['nCores']], 1)
-  if(nCores > 1){
-    if('doSNOW' %in% rownames(installed.packages())){
-      library(doSNOW)
-    }else{
-      stop('Parallel processing requires the doSNOW package, so install doSNOW first.')    
-    }
-  } 
-  
+  if(nCores > 1 && !'doSNOW' %in% rownames(installed.packages())) stop('Parallel processing requires the doSNOW package, so install doSNOW first.')    
+
   nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 500)
   minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .75)
   maxReplications <- ceiling(nReplications / minConvergenceRate)
@@ -205,12 +199,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   # parallel
   if(nCores > 1){
-
-    cl <- makeCluster(nCores)
-    registerDoSNOW(cl)
+    `%dopar%` <- foreach::`%dopar%`
+    
+    cl <- snow::makeCluster(nCores)
+    doSNOW::registerDoSNOW(cl)
     progressBar <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
     progress <- function(r) setTxtProgressBar(progressBar, r)
-    res <- foreach(r = seq(nReplications), .options.snow = list(progress = progress)) %dopar% {
+    res <- foreach::foreach(r = seq(nReplications), .options.snow = list(progress = progress)) %dopar% {
       doSim(r = r, 
             simData = simData,
             isMultigroup = is.list(Sigma),
@@ -218,7 +213,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
             lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
     }
     close(progressBar)
-    stopCluster(cl)
+    snow::stopCluster(cl)
     
     fit <- lapply(res, '[[', 1)
     # replace non-converged by NA
