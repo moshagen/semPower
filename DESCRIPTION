@@ -27,7 +27,7 @@ Suggests:
     bookdown,
     covsim,
     doSNOW,
-    forEach,
+    foreach,
     knitr,
     lavaan,
     mnonr,
