@@ -916,7 +916,6 @@ genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
   
   Sigma <- cov2cor(Sigma)
   k <- ncol(Sigma)
-  rdat <- matrix(0, nrow = N, ncol = k) 
   
   nnDistributions <- lapply(distributions, function(x){
     sort(do.call(x[[1]], append(list(n = N), x[[2]])))
@@ -934,6 +933,7 @@ genData.RK <- function(N = NULL, Sigma = NULL, nSets = 1,
     SigmaInterm <- Sigma
     iter <- 0 
     while(iter < maxIter) {
+      rdat <- matrix(0, nrow = N, ncol = k) 
       iter <- iter + 1
       # Calculate factor loadings and apply to reproduce desired correlations (steps 7, 8)
       loadings <- getLoadings(Sigma, nFactors)

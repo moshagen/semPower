@@ -1772,8 +1772,7 @@ test_powerRICLPM <- function(doTest = TRUE){
   lavres <- helper_lav(ph7$modelH1, ph7$Sigma)
   par <- lavres$par
   lavres8 <- helper_lav(ph7$modelH0, ph7$Sigma)
-  par8 <- lavres8$par
-  
+
   # 3 waves, corXY, corBXBY, crossedX = crossedY 
   ph8 <- semPower.powerRICLPM(type = 'post-hoc', comparison = 'restricted',
                               nWaves = 3,
@@ -2794,7 +2793,6 @@ test_powerAutoreg <- function(doTest = TRUE){
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres4a <- helper_lav(ph4$modelH0, ph4$Sigma)
-  par4a <- lavres4a$par
   lavres4b <- helper_lav(ph4$modelH1, ph4$Sigma)
   par4b <- lavres4b$par
   
@@ -2865,8 +2863,7 @@ test_powerAutoreg <- function(doTest = TRUE){
   lavres7a <- helper_lav(ph7$modelH0, ph7$Sigma)
   par7a <- lavres7a$par
   lavres7b <- helper_lav(ph7$modelH1, ph7$Sigma)
-  par7b <- lavres7b$par  
-  
+
   valid4 <- valid3 &&
     abs(par7a[par7a$lhs == 'f4' & par7a$rhs == 'f1', 'est']) > .05 &&
     abs(par7a[par7a$lhs == 'f3' & par7a$rhs == 'f1', 'est']) > .05 &&
@@ -2884,9 +2881,7 @@ test_powerAutoreg <- function(doTest = TRUE){
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres8a <- helper_lav(ph8$modelH0, ph8$Sigma, sample.nobs = list(500, 500))
-  par8a <- lavres8a$par
   lavres8b <- helper_lav(ph8$modelH1, ph8$Sigma, sample.nobs = list(500, 500))
-  par8b <- lavres8b$par
 
   # multigroup, wave equal
   ph9 <- semPower.powerAutoreg('ph', N = list(500, 500), alpha = .05,
@@ -2900,10 +2895,8 @@ test_powerAutoreg <- function(doTest = TRUE){
                                invariance = TRUE, autocorResiduals = TRUE)
   
   lavres9a <- helper_lav(ph9$modelH0, ph9$Sigma, sample.nobs = list(500, 500))
-  par9a <- lavres9a$par
   lavres9b <- helper_lav(ph9$modelH1, ph9$Sigma, sample.nobs = list(500, 500))
-  par9b <- lavres9b$par
-  
+
   # 4 waves, no lagged effects, with variances, autoreg
   ph10 <- semPower.powerAutoreg('ph', N = 500, alpha = .05,
                                nWaves = 4, 
