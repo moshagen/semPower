@@ -2022,7 +2022,7 @@ test_powerRICLPM <- function(doTest = TRUE){
   # we need to feed lav with proper starting values; powerfnc takes car of that, but 
   # here we need to do this manually
   try({
-    pp <- suppressWarnings(sem(ph14$modelH1, sample.cov = ph14$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
+    pp <- suppressWarnings(lavaan::sem(ph14$modelH1, sample.cov = ph14$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
   }, silent=TRUE)
   lavres <- helper_lav(ph14$modelH1, ph14$Sigma, start = pp)
   par <- lavres$par
@@ -2164,7 +2164,7 @@ test_powerRICLPM <- function(doTest = TRUE){
   # we need to feed lav with proper starting values; powerfnc takes car of that, but 
   # here we need to do this manually
   try({
-    pp <- suppressWarnings(sem(ph19$modelH1, sample.cov = ph19$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
+    pp <- suppressWarnings(lavaan::sem(ph19$modelH1, sample.cov = ph19$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
   }, silent=TRUE)
   lavres <- helper_lav(ph19$modelH1, ph19$Sigma, start = pp)
   par <- lavres$par
