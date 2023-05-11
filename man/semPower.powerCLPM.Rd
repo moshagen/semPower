@@ -86,7 +86,7 @@ Relevant hypotheses in arising in a CLPM are:
 \item \code{crossedXA = crossedXB} and \code{crossedYA = crossedYB}: Tests the hypothesis that the crossed effect of X on Y (\code{crossedX}) or of Y on X (\code{crossedY}), respectively, is equal across groups.
 }
 
-For hypotheses regarding the random-intercept CLPM, see \code{\link[=semPower.powerRICLPM]{semPower.powerRICLPM()}}. For hypothesis in autoregressive models, see \code{\link[=semPower.powerAutoregressive]{semPower.powerAutoregressive()}}.
+For hypotheses regarding the random-intercept CLPM, see \code{\link[=semPower.powerRICLPM]{semPower.powerRICLPM()}}. For hypothesis in autoregressive models, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.

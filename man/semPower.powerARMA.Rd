@@ -106,7 +106,7 @@ Relevant hypotheses in arising in an ARMA model are:
 \item \code{meanA = meanB}: Tests the hypothesis that latent means are equal across groups.
 }
 
-For hypotheses regarding a simple autoregression, see \code{\link[=semPower.powerAutoregressive]{semPower.powerAutoregressive()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.  For hypotheses regarding longitudinal measurement invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}.
+For hypotheses regarding a simple autoregression, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}. For hypotheses regarding a CLPM structure, see \code{\link[=semPower.powerCLPM]{semPower.powerCLPM()}}.  For hypotheses regarding longitudinal measurement invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.

@@ -91,7 +91,7 @@ Relevant hypotheses in arising in a LCGM are:
 \item \code{betaTIA = betaTIB}, \code{betaTSA = betaTSB}, \code{betaTS2A = betaTS2B}: Tests the hypothesis that the slope the intercept, the linear slope, and the quadratic slope factor, respectively, in the prediction of the time-invariant covariate are equal across groups (\verb{I, S, S2 -> TIC}).
 }
 
-For hypotheses regarding longitudinal invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}. For hypotheses regarding a simple autoregression, see \code{\link[=semPower.powerAutoregressive]{semPower.powerAutoregressive()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
+For hypotheses regarding longitudinal invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}. For hypotheses regarding a simple autoregression, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.

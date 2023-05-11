@@ -49,7 +49,7 @@ and concerning the structural part  (e) latent covariances, (f) latent means, wh
 compared against the previous level (e.g., scalar vs. metric). Power analysis provides
 the power (or the required N) to reject a particular level of invariance.
 
-For hypotheses regarding multiple group invariance, see \code{\link[=semPower.powerMI]{semPower.powerMI()}}. For hypotheses regarding autoregressive models, see \code{\link[=semPower.powerAutoregressive]{semPower.powerAutoregressive()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
+For hypotheses regarding multiple group invariance, see \code{\link[=semPower.powerMI]{semPower.powerMI()}}. For hypotheses regarding autoregressive models, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
 
 There are two ways to specify the models defined in the \code{comparison} and the \code{nullEffect} arguments. Either, one may
 specify a specific level of invariance that includes all previous levels:
