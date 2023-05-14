@@ -2214,6 +2214,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'corBXBY = 0'` to constrain the correlation between the random intercepts to zero, and `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'`, and `corBXBYA = corBXBYB` to constrain them to be equal across groups.
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
+#' @param standardized whether the autoregressive and cross-lagged parameters should be treated as standardized (`TRUE`, the default), implying that unstandardized and standardized regression relations have the same value. If `FALSE`, all regression relations are unstandardized.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
@@ -2705,6 +2706,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
                                  nullEffect = NULL,
                                  nullWhichGroups = NULL,
                                  nullWhich = NULL,
+                                 standardized = TRUE,
                                  metricInvariance = TRUE,
                                  autocorResiduals = TRUE,
                                  ...){
@@ -2713,7 +2715,6 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   checkEllipsis(...)
   
   # validate input
-  if('standardized' %in% names(list(...)) && list(...)[['standardized']]) stop('Standardized is not available for RICLPM.')
   if(is.null(autoregEffects) ||  is.null(crossedEffects)) stop('autoregEffects and crossedEffects may not be NULL.')
   if(is.null(nWaves) || is.na(nWaves) || nWaves < 3) stop('nWaves must be >= 3.')
   
@@ -2856,6 +2857,12 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
     
     P
   })
+  
+  if(standardized){
+    Psi <- suppressWarnings(  # bc phi is not positive definite
+      lapply(seq(nGroups), function(x) getPsi.B(Beta[[x]], Psi[[x]], standResCov = FALSE))
+    )
+  }
   
   # add metric invariance constrains
   metricInvarianceFactors <- NULL

@@ -2415,7 +2415,10 @@ test_powerRICLPM <- function(doTest = TRUE){
                                waveEqual = NULL,
                                alpha = .05, N = 250)
 
-  lavres <- helper_lav(ph20$modelH1, ph20$Sigma)
+  try({
+    pp <- suppressWarnings(lavaan::sem(ph20$modelH1, sample.cov = ph20$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
+  }, silent=TRUE)
+  lavres <- helper_lav(ph20$modelH1, ph20$Sigma, start = pp)
   par <- lavres$par
   lavres21 <- helper_lav(ph20$modelH0, ph20$Sigma)
   par21 <- lavres21$par

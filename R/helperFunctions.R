@@ -618,9 +618,9 @@ getPhi.B <- function(B, lPsi = NULL){
     Phi <- Phi[nrow(Phi):1, ncol(Phi):1]
   }
   
-  if(any(abs(Phi) > 1)) stop('Beta implies correlations > 1. Make sure that sum of squared slopes is smaller than 1.')
+  if(any(abs(Phi) > 1)) warning('Beta implies correlations > 1. Make sure that sum of squared slopes is smaller than 1.')
 
-  checkPositiveDefinite(Phi)
+  checkPositiveDefinite(Phi, stop = FALSE)
   
   Phi
 }
@@ -691,7 +691,7 @@ getPsi.B <- function(B, sPsi = NULL, standResCov = TRUE){
     Psi <- D %*% sPsi %*% D
   }
 
-  checkPositiveDefinite(Psi)
+  checkPositiveDefinite(Psi, stop = FALSE)
   
   Psi
 }
