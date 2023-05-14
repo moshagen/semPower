@@ -16,6 +16,7 @@ semPower.powerRICLPM(
   nullEffect = NULL,
   nullWhichGroups = NULL,
   nullWhich = NULL,
+  standardized = TRUE,
   metricInvariance = TRUE,
   autocorResiduals = TRUE,
   ...
@@ -43,6 +44,8 @@ semPower.powerRICLPM(
 \item{nullWhichGroups}{for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
 \item{nullWhich}{used in conjunction with \code{nullEffect} to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, \code{nullEffect = 'autoregX = 0'} with \code{nullWhich = 2} would constrain the second autoregressive effect for X to zero.}
+
+\item{standardized}{whether the autoregressive and cross-lagged parameters should be treated as standardized (\code{TRUE}, the default), implying that unstandardized and standardized regression relations have the same value. If \code{FALSE}, all regression relations are unstandardized.}
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model, where the df are not affected by invariance constraints).}
 

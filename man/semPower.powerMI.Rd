@@ -206,7 +206,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
 # measured by 3 indicators each and all loadings equal .5 (in both groups),
 # the factor correlation is .3 in both groups, and the
 # all intercepts are 0.0 in the first group, but
-# all intercepts are 0.1 in the second group
+# the intercepts are .1, .2, .3, .4, .5, .6 in the second group
 powerMI <- semPower.powerMI(type = 'a-priori',
                             comparison = 'metric', 
                             nullEffect = 'scalar',
@@ -217,7 +217,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             loadM = .5,
                             tau = list(
                               rep(0.0, 6), 
-                              rep(0.1, 6) 
+                              seq(.1, .6, .1) 
                             ),
                             alpha = .05, beta = .05, N = list(1, 1))
 
@@ -232,7 +232,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             loadM = .5,
                             tau = list(
                               rep(0.0, 6), 
-                              rep(0.1, 6) 
+                              seq(.1, .6, .1) 
                             ),
                             alpha = .05, beta = .05, N = list(1, 1))
 

@@ -16,6 +16,7 @@ semPower.powerCLPM(
   nullWhich = NULL,
   nullWhichGroups = NULL,
   standardized = TRUE,
+  standardizedResidualCovariances = TRUE,
   metricInvariance = TRUE,
   autocorResiduals = TRUE,
   ...
@@ -42,7 +43,9 @@ semPower.powerCLPM(
 
 \item{nullWhichGroups}{for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
-\item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
+\item{standardized}{whether all parameters should be treated as standardized (\code{TRUE}, the default), implying that unstandardized and standardized regression relations have the same value. If \code{FALSE}, all regression relations are unstandardized.}
+
+\item{standardizedResidualCovariances}{whether the residual covariances provided in \code{rXY} should be interpreted as correlations. When \code{TRUE} (the default) the unstandardized residual covariances differ from the those provided in \code{rXY}. When \code{FALSE}, the values provided in \code{rXY} are the unstandardized residual covariances, and the standardized residual correlations differ.}
 
 \item{metricInvariance}{whether metric invariance over waves is assumed (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
