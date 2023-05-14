@@ -601,7 +601,35 @@ test_genPhi <- function(){
     round(sum((generated6$Sigma - Phi)^2), 4) == 0 &&
     round(sum((generated6b$Sigma - Phi)^2), 4) == 0
   
-  if(valid4){
+  # non-blocked exog
+  B <- matrix(c(
+    c(.00, .00, .00, .00), # ex1
+    c(.30, .00, .00, .00), # en1
+    c(.00, .00, .00, .00), # ex2
+    c(.10, .05, .50, .00)  # en1
+  ), byrow = TRUE, ncol = 4)
+  lPsi <- matrix(c(
+    c(1, .00, .50, .00),
+    c(.00, 1, .00, .00),
+    c(.50, .00, 1, .00),
+    c(.00, .00, .00, 1)
+  ), byrow = TRUE, ncol = 4)
+  m <- '
+  x2 ~ x1
+  x4 ~ x1 + x2 + x3
+  x1 ~~ x3
+  '
+  Phi <- getPhi.B(B, lPsi)
+  colnames(Phi) <- paste0('x', 1:ncol(B))
+  lavres7 <- helper_lav(m, Phi)
+  par <- lavres7$par
+  
+  valid5 <- valid4 &&
+    mean(abs(par$est - par$std.all)) < 1e-6 && 
+    abs(par[par$lhs == 'x1' & par$rhs == 'x3', 'std.all'] - .5) < 1e-6 &&
+    mean(abs(par[par$op == '~', 'std.all'] - B[B !=0 ])) < 1e-6
+  
+  if(valid5){
     print('test_genPhi: OK')
   }else{
     warning('Invalid')
@@ -769,29 +797,6 @@ test_genPsi <- function(){
     mean(abs(par[par$op == '~', 'est'] - par[par$op == '~', 'std.all'])) < 1e-6 && 
     abs(par[par$lhs == 'x2' & par$rhs == 'x3', 'std.all'] - .30) < 1e-6 &&
     mean(abs(par[par$op == '~', 'std.all'] - B[B !=0 ])) < 1e-6
-  
-  ## TODO: make non-blocked exog work
-  # B <- matrix(c(
-  #   c(.00, .00, .00, .00), # ex1
-  #   c(.30, .00, .00, .00), # en1
-  #   c(.00, .00, .00, .00), # ex2
-  #   c(.10, .05, .50, .00)  # en1
-  # ), byrow = TRUE, ncol = 4)
-  # lPsi <- sPsi <- matrix(c(
-  #   c(1, .00, .50, .00),
-  #   c(.00, 1, .00, .00),
-  #   c(.50, .00, 1, .00),
-  #   c(.00, .00, .00, 1)
-  # ), byrow = TRUE, ncol = 4)
-  # m <- '
-  # x2 ~ x1
-  # x4 ~ x1 + x2 + x3
-  # x1 ~~ x3
-  # '
-  # Phi <- getPhi.B(B, sPsi)
-  # colnames(Phi) <- paste0('x', 1:ncol(B))
-  # helper_lav(m, Phi)
-  
   
   if(valid5){
     print('test_genPsi: OK')

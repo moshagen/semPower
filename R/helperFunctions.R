@@ -586,34 +586,39 @@ getPhi.B <- function(B, lPsi = NULL){
     }
   }
 
-  # TODO
-  # the logic below requires that exogenous variables are blocked, 
-  # so this fails for orders such as (exog1, endog1, exog2, endog2) when r_exog1,exog2 > 0 
-  # because the endog1 - exog2 correlation incorrectly becomes zero 
-  if(length(exog) > 1 && max(exog) > min(endog) && any(Phi[lower.tri(Phi)] != 0)) 
-    stop('Correlated exogenous variables must occupy the first or final rows of Beta.')
-
-  
-  for(i in endog){
-    cPred <- seq(i - 1)
-    cB <- matrix(B[i, cPred])
-    predR <- Phi[cPred, cPred]
-    cR <- (predR %*% cB)
-    # add residual covariances
-    if(any(lPsi[i, cPred] != 0)){
-      ccPhi <- rbind(predR, t(cR))
-      ccPhi <- cbind(ccPhi, t(t(c((cR), 1))))
-      cB <- B[1:i, 1:i]
-      # we can do this here because all predictors are exog as Phi is used
-      r2 <- diag(cB %*% ccPhi %*% t(cB))
-      D <- diag(sqrt(1 - r2)) 
-      newR <- ccPhi + D %*% lPsi[1:i, 1:i] %*% t(D)
-      cR <- newR[i, cPred]
+  for(i in min(endog):max(endog)){   # we also want everything in between
+    # correlations for exog-endog that were missed in previous passes because exog comes after endog 
+    if(i %in% exog){
+      if(any(lPsi[i, seq(i-1)] > 0)){
+        prevEnd <- endog[endog < i]
+        for(j in prevEnd){
+          cB <- matrix(c(B[j, seq(j - 1)], 0))
+          predR <- Phi[c(seq(j - 1), i), c(seq(j - 1), i)]
+          cR <- (predR %*% cB)
+          Phi[i, j] <- Phi[j, i] <- cR[length(cR)]
+        }
+      }
+    # correlations involving endogenous variables  
+    }else{
+      cPred <- seq(i - 1)
+      cB <- matrix(B[i, cPred])
+      predR <- Phi[cPred, cPred]
+      cR <- (predR %*% cB)
+      # add residual covariances
+      if(any(lPsi[i, cPred] != 0)){
+        ccPhi <- rbind(predR, t(cR))
+        ccPhi <- cbind(ccPhi, t(t(c((cR), 1))))
+        cB <- B[1:i, 1:i]
+        # we can do this here because all predictors are exog as Phi is used
+        r2 <- diag(cB %*% ccPhi %*% t(cB))
+        D <- diag(sqrt(1 - r2)) 
+        newR <- ccPhi + D %*% lPsi[1:i, 1:i] %*% t(D)
+        cR <- newR[i, cPred]
+      }
+      Phi[i, cPred] <- t(cR)
+      Phi[cPred, i] <- cR  
     }
-    Phi[i, cPred] <- t(cR)
-    Phi[cPred, i] <- cR
   }
-
   if(revert){
     Phi <- Phi[nrow(Phi):1, ncol(Phi):1]
   }
