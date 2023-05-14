@@ -1433,7 +1433,8 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #' @param nullEffect defines the hypothesis of interest. Valid are the same arguments as in `waveEqual` and additionally `'autoregX = 0'`, `'autoregY = 0'`, `'crossedX = 0'`, `'crossedY = 0'` to constrain the X or Y autoregressive effects or the crossed effects to zero, `'autoregX = autoregY'` and `'crossedX = crossedY'` to constrain them to be equal for X and Y, and `'autoregXA = autoregXB'`, `'autoregYA = autoregYB'`, `'crossedXA = crossedXB'`, `'crossedYA = crossedYB'` to constrain them to be equal across groups. 
 #' @param nullWhich used in conjunction with `nullEffect` to identify which parameter to constrain when there are > 2 waves and parameters are not constant across waves. For example, `nullEffect = 'autoregX = 0'` with `nullWhich = 2` would constrain the second autoregressive effect for X to zero.    
 #' @param nullWhichGroups for hypothesis involving cross-groups comparisons, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
-#' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
+#' @param standardized whether all parameters should be treated as standardized (`TRUE`, the default), implying that unstandardized and standardized regression relations have the same value. If `FALSE`, all regression relations are unstandardized.
+#' @param standardizedResidualCovariances whether the residual covariances provided in `rXY` should be interpreted as correlations. When `TRUE` (the default) the unstandardized residual covariances differ from the those provided in `rXY`. When `FALSE`, the values provided in `rXY` are the unstandardized residual covariances, and the standardized residual correlations differ.
 #' @param metricInvariance whether metric invariance over waves is assumed (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param autocorResiduals whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. The order of factors is (X1, Y1, X2, Y2, ..., X_nWaves, Y_nWaves). See details.
@@ -1824,6 +1825,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                nullWhich = NULL,
                                nullWhichGroups = NULL,
                                standardized = TRUE,
+                               standardizedResidualCovariances = TRUE,
                                metricInvariance = TRUE,
                                autocorResiduals = TRUE,
                                ...){
@@ -1910,7 +1912,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
     if(nullWhich < 1 || (nullEffect != 'corxy=0' && nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
   }
-  if('corxy' %in% nullEffect && standardized) stop('Power analysis for nullEffect == "corxy" can only be performed on unstandardized parameters. Repeat with standardized = FALSE.') 
+  if('corxy' %in% nullEffect && standardizedResidualCovariances) stop('Power analysis for nullEffect == "corxy" can only be performed when the residual covariances are not standardized. Repeat with standardizedResidualCovariances = FALSE.') 
   
   
   ### create B
@@ -1941,6 +1943,10 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
     P
   })
   
+  if(standardized){ 
+    Psi <- lapply(seq(Beta), function(x) getPsi.B(Beta[[x]], Psi[[x]], standResCov = standardizedResidualCovariances))
+  }
+  
   # add metric invariance constraints to analysis model
   metricInvarianceFactors <- NULL
   if(metricInvariance){
@@ -1951,21 +1957,12 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   }
   
   ### get Sigma
-  if(standardized){
-    Phi <- lapply(seq_along(Beta), function(x) getPhi.B(Beta[[x]], Psi[[x]]))
-    generated <- semPower.genSigma(Phi = if(!isMultigroup) Phi[[1]] else Phi, 
-                                   useReferenceIndicator = TRUE,
-                                   metricInvariance = metricInvarianceFactors, 
-                                   nGroups = nGroups,
-                                   ...)
-  }else{  
-    generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta, 
-                                   Psi = if(!isMultigroup) Psi[[1]] else Psi, 
-                                   useReferenceIndicator = TRUE,
-                                   metricInvariance = metricInvarianceFactors, 
-                                   nGroups = nGroups,
-                                   ...)
-  }
+  generated <- semPower.genSigma(Beta = if(!isMultigroup) Beta[[1]] else Beta,
+                                 Psi = if(!isMultigroup) Psi[[1]] else Psi,
+                                 useReferenceIndicator = TRUE,
+                                 metricInvariance = metricInvarianceFactors,
+                                 nGroups = nGroups,
+                                 ...)
   
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
@@ -6016,7 +6013,6 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
     }
     B
   })
-  
   
   ### create Psi
   Psi <- lapply(seq(nGroups), function(x){
