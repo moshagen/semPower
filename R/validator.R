@@ -388,11 +388,14 @@ checkBounded <- function(x, message = NULL, bound = c(0, 1), inclusive = FALSE){
 #' 
 #' @param x x
 #' @param message identifier for `x`
-checkPositiveDefinite <- function(x, message = NULL){
+#' @param stop whether to stop or to throw a warning
+checkPositiveDefinite <- function(x, message = NULL, stop = TRUE){
   if(is.null(message)) message <- deparse(substitute(x))
   checkSymmetricSquare(x)
-  if(sum(eigen(x)$values < 0) > 0)
-    stop(paste(message, " must be positive definite"))
+  if(sum(eigen(x)$values < 0) > 0){
+    if(stop) stop(paste(message, " must be positive definite"))
+    if(!stop) warning(paste(message, " must be positive definite"))
+  }
 }
 
 #' checkSymmetricSquare
