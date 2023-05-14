@@ -239,7 +239,7 @@ semPower.powerLav <- function(type,
                              orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
         deltaF <- fminH0 - fminH1
       }
-      if(sum(unlist(deltaF)) < 1e-10) warning(paste0('The H0 model fits shows the same discrepancy as the H1 model. This usually happens when the H0 model contains restrictions that are valid in the population. Check the definition of the population values and the H0 constraints.'))
+      if(sum(unlist(deltaF)) < 1e-10) warning(paste0('The H0 model shows the same discrepancy as the H1 model. This usually happens when the H0 model contains restrictions that are valid in the population. Check the definition of the population values and the H0 constraints.'))
       if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(unlist(fminH1)[which(unlist(fminH1) > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
@@ -3338,7 +3338,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #' # measured by 3 indicators each and all loadings equal .5 (in both groups),
 #' # the factor correlation is .3 in both groups, and the
 #' # all intercepts are 0.0 in the first group, but
-#' # all intercepts are 0.1 in the second group
+#' # the intercepts are .1, .2, .3, .4, .5, .6 in the second group
 #' powerMI <- semPower.powerMI(type = 'a-priori',
 #'                             comparison = 'metric', 
 #'                             nullEffect = 'scalar',
@@ -3349,7 +3349,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             loadM = .5,
 #'                             tau = list(
 #'                               rep(0.0, 6), 
-#'                               rep(0.1, 6) 
+#'                               seq(.1, .6, .1) 
 #'                             ),
 #'                             alpha = .05, beta = .05, N = list(1, 1))
 #' 
@@ -3364,7 +3364,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'                             loadM = .5,
 #'                             tau = list(
 #'                               rep(0.0, 6), 
-#'                               rep(0.1, 6) 
+#'                               seq(.1, .6, .1) 
 #'                             ),
 #'                             alpha = .05, beta = .05, N = list(1, 1))
 #' 
