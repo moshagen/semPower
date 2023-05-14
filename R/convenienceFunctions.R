@@ -5965,51 +5965,55 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   }
   if(ncol(Lambda) != nWaves) stop('Number of factors must be equal to nWaves.')
   
-  Lambda <- cbind(Lambda, matrix(0, nrow = nrow(Lambda), ncol = nWaves))  # add noise factors
+  Lambda <- cbind(matrix(0, nrow = nrow(Lambda), ncol = nWaves), Lambda)  # add noise factors
   Lambda <- rep(list(Lambda), nGroups)  # require same measurement model across groups
   
   ### create Beta
+  # n1 - n_nwaves, f1 - f_nwaves,  
   Beta <- lapply(seq(nGroups), function(x){
     B <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
     # add autoregEffects
     for(i in seq(nWaves - 1)){
-      B[(i + 1), i] <- autoregEffects[[x]][i]
+      idx <- nWaves + i
+      B[(idx + 1), idx] <- autoregEffects[[x]][i]
     }
     # lag-2 effects
     if(nWaves > 2){
       for(i in seq(nWaves - 2)){
-        B[(i + 2), i] <- autoregLag2[[x]][i]
+        idx <- nWaves + i
+        B[(idx + 2), idx] <- autoregLag2[[x]][i]
       }
     }
     # lag-3 effects
     if(nWaves > 3){
       for(i in seq(nWaves - 3)){
-        B[(i + 3), i] <- autoregLag3[[x]][i]
+        idx <- nWaves + i
+        B[(idx + 3), idx] <- autoregLag3[[x]][i]
       }
     }
     # lag-1 mov avgs
     for(i in seq(nWaves - 1)){
       idx <- nWaves + i
-      B[(i + 1), idx] <- mvAvgLag1[[x]][i]
+      B[(idx + 1), i] <- mvAvgLag1[[x]][i]
     }
     # lag-2 mov avgs
     if(nWaves > 2){
       for(i in seq(nWaves - 2)){
         idx <- nWaves + i
-        B[(i + 2), idx] <- mvAvgLag2[[x]][i]
+        B[(idx + 2), i] <- mvAvgLag2[[x]][i]
       }
     }
     # lag-3 mov avgs
     if(nWaves > 3){
       for(i in seq(nWaves - 3)){
         idx <- nWaves + i
-        B[(i + 3), idx] <- mvAvgLag3[[x]][i]
+        B[(idx + 3), i] <- mvAvgLag3[[x]][i]
       }
     }
     # noise factors
     for(i in seq(nWaves)){
       idx <- nWaves + i
-      B[i, idx] <- 1
+      B[idx, i] <- 1
     }
     B
   })
@@ -6018,19 +6022,19 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   Psi <- lapply(seq(nGroups), function(x){
     P <- matrix(0, ncol = 2*nWaves, nrow = 2*nWaves)
     # var noise factors
-    diag(P[seq((nWaves + 1), 2*nWaves), seq((nWaves + 1), 2*nWaves)]) <- variances[[x]]
+    diag(P[seq(nWaves), seq(nWaves)]) <- variances[[x]]
     P
   })
   
   ### define latent means
   Alpha <- NULL
   if(!is.null(means)){
-    Alpha <- lapply(means, function(x) c(x, rep(0, nWaves))) # F  + noise factors
+    Alpha <- lapply(means, function(x) c(rep(0, nWaves), x)) # noise factors + F
   }
   
   ### add metric invariance constraints to analysis model
   metricInvarianceFactors <- NULL
-  if(invariance) metricInvarianceFactors <- list(seq(nWaves))
+  if(invariance) metricInvarianceFactors <- list(seq((nWaves + 1), 2*nWaves))
   
   
   ### get sigma
@@ -6046,6 +6050,13 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   ### create model string
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   Lambda <- Lambda[[1]]
+  
+  # correct factor labels
+  sf <- paste0('f', seq((nWaves + 1), 2*nWaves))
+  repl <- paste0('f', seq(nWaves))
+  for(i in seq(sf)){
+    model <- gsub(sf[i], repl[i], model)
+  }
   
   # resid var X
   tok <- paste0('f', 1:nWaves, ' ~~ 0*', 'f', 1:nWaves)
