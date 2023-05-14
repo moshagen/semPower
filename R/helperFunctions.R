@@ -551,51 +551,150 @@ genModelString <- function(Lambda = NULL,
 getPhi.B <- function(B, lPsi = NULL){
   
   checkSquare(B)
-  if(any(B[upper.tri(B, diag = TRUE)] != 0)) stop('B may not contain any non-zero values on or upper the diagonal.')
-  if(any(rowSums(B^2) > 1)) stop('B implies negative residual variances.')
-  invisible(lapply(B, function(x) lapply(x, function(x) checkBounded(x, 'All elements in B', bound = c(-1, 1)))))
+  if(any(diag(B) != 0)) stop('Beta may only have zeros on the diagonal.')
+  if(any(B[upper.tri(B)] != 0) && any(B[lower.tri(B)] != 0)) stop('Beta may not contain non-zero elements both above and below the diagonal.')  
   if(!is.null(lPsi)){
     checkSymmetricSquare(lPsi)
-    if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as B')
+    if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as Beta.')
     invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1), inclusive = TRUE))))
-    diag(lPsi) <- 0
+  }else{
+    lPsi <- diag(ncol(B))
+  }
+  
+  # make sure exog come first and use lower tri only by switching order of B if necessary
+  revert <- FALSE
+  if(any(B[upper.tri(B)] != 0) && all(B[lower.tri(B)] == 0)){
+    revert <- TRUE
+    B <- B[nrow(B):1, ncol(B):1]  # this is different from t(B)
+    lPsi <- lPsi[nrow(lPsi):1, ncol(lPsi):1]
+  } 
+  
+  ### this doesnt work for endogenous -> endogenous
+  ### expVar <- B %*% lPsi %*% t(B)
+  ### to obtain Phi in std metric, exploit the structure of B to build Phi recursively
+  ### there must be a simpler way to do this...
+  Phi <- diag(ncol(B)) 
+  exog <- which(apply(B, 1, function(x) all(x == 0)))
+  endog <- seq(ncol(B))[-exog]
+
+  # add exog - exog correlations
+  if(!is.null(lPsi) && length(exog) > 1){
+    for(i in 1:(length(exog) - 1)){
+      for(j in (i + 1):length(exog)){
+        Phi[exog[i], exog[j]] <- Phi[exog[j], exog[i]] <- lPsi[exog[i], exog[j]]
+      }
+    }
   }
 
-  ## to obtain phi in std metrc, exploit the structure of B to build Phi recursively
-  ## there must be a simpler way to do this...
-  exog <- apply(B, 1, function(x) !any(x != 0))
-  Be <- B[!exog, ]
-  if(!is.matrix(Be)) Be <- t(matrix(Be))
+  # TODO
+  # the logic below requires that exogenous variables are blocked, 
+  # so this fails for orders such as (exog1, endog1, exog2, endog2) when r_exog1,exog2 > 0 
+  # because the endog1 - exog2 correlation incorrectly becomes zero 
+  if(length(exog) > 1 && max(exog) > min(endog) && any(Phi[lower.tri(Phi)] != 0)) 
+    stop('Correlated exogenous variables must occupy the first or final rows of Beta.')
+
   
-  Phi <- diag(ncol(B)) 
-  if(!is.null(lPsi) && sum(exog) > 1){
-    Phi[1:sum(exog), 1:sum(exog)] <- lPsi[1:sum(exog), 1:sum(exog)]
-    diag(Phi) <- 1
-  }
-  for(i in 1:nrow(Be)){
-    idx <- i + sum(exog) - 1
-    cb <- matrix(Be[i, 1:idx])
-    cr <- Phi[1:idx, 1:idx]
-    predR <- (cr %*% cb)
+  for(i in endog){
+    cPred <- seq(i - 1)
+    cB <- matrix(B[i, cPred])
+    predR <- Phi[cPred, cPred]
+    cR <- (predR %*% cB)
     # add residual covariances
-    if(!is.null(lPsi) && any(lPsi[idx, 1:(idx + 1)] != 0)){
-      cR <- rbind(cr, t(predR))
-      cR <- cbind(cR, t(t(c((predR),1))))
-      cB <- B[1:(idx + 1), 1:(idx + 1)]
-      rootResidualVar <-  sqrt(diag(1 - diag(cB %*% cR %*% t(cB)))) 
-      cPsi <- lPsi[1:(idx + 1), 1:(idx + 1)]
-      corR <- cR + rootResidualVar %*% cPsi %*% t(rootResidualVar) 
-      predR <- corR[(idx + 1), 1:idx]
+    if(any(lPsi[i, cPred] != 0)){
+      ccPhi <- rbind(predR, t(cR))
+      ccPhi <- cbind(ccPhi, t(t(c((cR), 1))))
+      cB <- B[1:i, 1:i]
+      # we can do this here because all predictors are exog as Phi is used
+      r2 <- diag(cB %*% ccPhi %*% t(cB))
+      D <- diag(sqrt(1 - r2)) 
+      newR <- ccPhi + D %*% lPsi[1:i, 1:i] %*% t(D)
+      cR <- newR[i, cPred]
     }
-    Phi[(idx + 1), 1:idx] <- t(predR)
-    Phi[1:idx, (idx + 1)] <- predR
+    Phi[i, cPred] <- t(cR)
+    Phi[cPred, i] <- cR
+  }
+
+  if(revert){
+    Phi <- Phi[nrow(Phi):1, ncol(Phi):1]
   }
   
+  if(any(abs(Phi) > 1)) stop('Beta implies correlations > 1. Make sure that sum of squared slopes is smaller than 1.')
+
   checkPositiveDefinite(Phi)
   
   Phi
 }
 
+#' getPsi.B
+#'
+#' Computes the implied Psi matrix from Beta, when all coefficients in Beta should be standardized. 
+#' 
+#' @param B matrix of regression coefficients (all-y notation). May only contain non-zero values either above or below the diagonal.
+#' @param sPsi matrix of (residual) correlations/covariances. This is not the Psi matrix, but defines the desired correlations/covariances beyond those implied by B. Can be NULL for no correlations. Standardized and unstandardized residual covariances (between endogenous variables) cannot have the same value, so `standResCov` defines whether to treat these as unstandardized or as standardized.
+#' @param standResCov whether elements in `sPsi` referring to residual covariances (between endogenous variables) shall treated as correlation or as covariance.
+#' @return Psi
+#' @examples
+#' \dontrun{
+#' # mediation model
+#' B <- matrix(c(
+#'   c(.00, .00, .00),
+#'   c(.10, .00, .00),
+#'   c(.20, .30, .00)
+#' ), byrow = TRUE, ncol = 3)
+#' Psi <- getPsi.B(B)
+#' 
+#' # CLPM with residual correlations 
+#' B <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.30, .00, .00, .00),
+#'   c(.70, .10, .00, .00),
+#'   c(.20, .70, .00, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' sPsi <- matrix(c(
+#'   c(1, .00, .00, .00),
+#'   c(.00, 1, .00, .00),
+#'   c(.00, .00, 1, .30),
+#'   c(.00, .00, .30, 1)
+#' ), byrow = TRUE, ncol = 4)
+#' # so that residual cor is std
+#' Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
+#' # so that residual cor is unsstd
+#' Psi <- getPsi.B(B, sPsi, standResCov = FALSE)
+#' }
+getPsi.B <- function(B, sPsi = NULL, standResCov = TRUE){
+  
+  if(is.null(sPsi)) sPsi <- diag(ncol(B))
+  
+  ### this doesnt work for endogenous -> endogenous
+  ### expVar <- B %*% sPsi %*% t(B)
+  ### so compute phi and determine correct residual variances from phi.
+  Phi <- getPhi.B(B, sPsi)
+
+  # determine r-squared
+  r2 <- diag(B %*% Phi %*% t(B))
+  Psi <- diag(1 - r2)
+  
+  # handle case of dummy factors with zero variance
+  if(any(diag(sPsi) == 0)){
+    diag(Psi)[diag(sPsi) == 0] <- 0
+  }
+  
+  if(any(diag(Psi) < 0)) stop('Beta implies negative residual variances. Make sure that sum of squared slopes is smaller than 1.')
+  
+  ### std and unstd residual covariance cannot be identical (when B is std)
+  # approach 1: interpret resid cov given in sPsi as unstd (so that std differs)
+  if(!standResCov){
+    Psi[row(Psi) != col(Psi)] <- sPsi[row(sPsi) != col(sPsi)]
+  # approach 2: interpret resid cov given in sPsi as std (so that unstd differs)
+  }else{
+    D <- diag(sqrt(diag(Psi)))
+    Psi <- D %*% sPsi %*% D
+  }
+
+  checkPositiveDefinite(Psi)
+  
+  Psi
+}
 
 #' semPower.getDf
 #'
