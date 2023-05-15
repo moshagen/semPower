@@ -3,3 +3,6 @@
 .Rapp.history
 .RData
 .Ruserdata
+/doc/
+/Meta/
+inst/doc
