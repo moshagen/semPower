@@ -21,15 +21,11 @@ devtools::install_github("moshagen/semPower")
 
 ### Manual
 
-Read the manual by typing
-```
-vignette("semPower")
-```
-or [view the manual online](https://moshagen.github.io/semPower/). 
+Find a detailed manual at [https://moshagen.github.io/semPower/](https://moshagen.github.io/semPower/). 
 
 We also recommend this in-depth tutorial on power analyses in SEM using a previous version of semPower. Although some information are outdated, this provides a detailed description on generic model based power analysis: 
   
-Jobst, L., Bader, M., & Moshagen, M. (2023). A Tutorial on Assessing Statistical Power and Determining Sample Size for Structural Equation Models. *Psychological Methods, 28*, 207-221. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/vignettes/semPowerTutorial.pdf)
+Jobst, L., Bader, M., & Moshagen, M. (2023). A Tutorial on Assessing Statistical Power and Determining Sample Size for Structural Equation Models. *Psychological Methods, 28*, 207-221. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/docs/semPowerTutorial.pdf)
 
 
 

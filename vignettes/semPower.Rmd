@@ -1,6 +1,7 @@
 ---
 title: "Power Analysis for Structural Equation Models: semPower 2 Vignette"
 author: "Morten Moshagen & Martina Bader"
+#output: pdf_document
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Power Analysis for Structural Equation Models: semPower 2 Vignette}
@@ -24,6 +25,6 @@ For a detailed manual, see
 [https://moshagen.github.io/semPower/](https://moshagen.github.io/semPower/)
 
 
-## Issues and ideas
+## Issues and Suggestions
 
 Please use the GitHub page:  [https://github.com/moshagen/semPower/issues](https://github.com/moshagen/semPower/issues)
