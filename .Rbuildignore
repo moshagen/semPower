@@ -3,3 +3,4 @@
 ^\vignettes\semPower.pdf$
 ^\docs$
 ^\R\zUnitTests.R$
+^doc$
