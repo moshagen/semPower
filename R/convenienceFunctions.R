@@ -4001,8 +4001,9 @@ semPower.powerLI <- function(type,
 #' where \eqn{B} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. 
 #' 
 #' As an example, suppose there are four factors (X1, X2, X3, X4), and Beta is defined as follows:
+#' 
 #' \eqn{
-#' \begin{array}{lrrr} 
+#' \begin{array}{lrrrr} 
 #'     & X_1 & X_2 & X_3 & X_4\\ 
 #' X_1 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
 #' X_2 & 0.0 & 0.0 & 0.0 & 0.0  \\ 
@@ -4029,8 +4030,9 @@ semPower.powerLI <- function(type,
 #' }
 #' 
 #' Further suppose that Psi is
+#' 
 #' \eqn{
-#' \begin{array}{lrrr} 
+#' \begin{array}{lrrrr} 
 #'     & X_1 & X_2 & X_3 & X_4\\ 
 #' X_1 & 1.0 & 0.3 & 0.0 & 0.0 \\ 
 #' X_2 & 0.3 & 1.0 & 0.0 & 0.0 \\ 
