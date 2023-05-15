@@ -5,7 +5,7 @@
   txt <- paste0("\n### Welcome to semPower ", semPowerVersion, " ###",
                 "\n",
                 "\nSee https://github.com/moshagen/semPower for quick examples.",
-                "\nType vignette('semPower') or visit https://moshagen.github.io/semPower/ for a detailed manual.",
+                "\nSee https://moshagen.github.io/semPower/ for a detailed manual.",
                 "\n",
                 "\nPlease cite as:",
                 "\nMoshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models.",
