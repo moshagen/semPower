@@ -35,7 +35,7 @@
 #' * `missingVarProp`: can be used instead of `missingVars`: The proportion of variables containing missing data (defaults to zero).
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
-#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doSNOW` package.
+#' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doFuture` package.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
@@ -145,7 +145,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                      returnFmin = TRUE){
 
   nCores <- ifelse(!is.null(simOptions[['nCores']]), simOptions[['nCores']], 1)
-  if(nCores > 1 && !'doSNOW' %in% rownames(installed.packages())) stop('Parallel processing requires the doSNOW package, so install doSNOW first.')    
+  if(nCores > 1 && !'doFuture' %in% rownames(installed.packages())) stop('Parallel processing requires the doFuture package, so install doFuture first.')    
+  if(nCores > 1 && !'progressr' %in% rownames(installed.packages())) stop('Parallel processing requires the progressr package, so install progressr first.')    
 
   nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 500)
   minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .75)
@@ -199,22 +200,21 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   
   # parallel
   if(nCores > 1){
-    `%dopar%` <- foreach::`%dopar%`
-    
-    cl <- snow::makeCluster(nCores)
-    doSNOW::registerDoSNOW(cl)
-    progressBar <- txtProgressBar(min = 0, max = nReplications, initial = 0, style = 3)
-    progress <- function(r) setTxtProgressBar(progressBar, r)
-    res <- foreach::foreach(r = seq(nReplications), .options.snow = list(progress = progress)) %dopar% {
-      doSim(r = r, 
-            simData = simData,
-            isMultigroup = is.list(Sigma),
-            modelH0 = modelH0, modelH1 = modelH1, 
-            lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
-    }
-    close(progressBar)
-    snow::stopCluster(cl)
-    
+    `%dofuture%` <- doFuture::`%dofuture%`
+    future::plan(future::multisession(workers = nCores))
+    progressr::with_progress({
+      p <- progressr::progressor(along = seq(nReplications)) # progressbar
+      res <- foreach::foreach(r = seq(nReplications), .options.future = list(seed = TRUE)) %dofuture% {
+        p()   # update progress bar
+        doSim(r = r, 
+              simData = simData,
+              isMultigroup = is.list(Sigma),
+              modelH0 = modelH0, modelH1 = modelH1, 
+              lavOptions = lavOptions, lavOptionsH1 = lavOptionsH1)
+      }
+    })
+    future::plan(future::sequential()) # explicitly close multisession workers
+
     fit <- lapply(res, '[[', 1)
     # replace non-converged by NA
     fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))

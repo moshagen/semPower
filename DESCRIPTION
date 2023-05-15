@@ -21,13 +21,14 @@ Imports:
 Suggests: 
     bookdown,
     covsim,
-    doSNOW,
+    doFuture,
     foreach,
+    future,
     knitr,
     lavaan,
     mnonr,
+    progressr,
     rmarkdown,
-    snow
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

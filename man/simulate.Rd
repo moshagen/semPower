@@ -68,7 +68,7 @@ The approaches generating non-normal data require additional arguments detailed 
 \item \code{missingVarProp}: can be used instead of \code{missingVars}: The proportion of variables containing missing data (defaults to zero).
 \item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 \item \code{missingMechanism}: The missing data mechanism, one of \code{'MCAR'} (the default), \code{'MAR'}, or \code{'NMAR'}.
-\item \code{nCores}: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the \code{doSNOW} package.
+\item \code{nCores}: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the \code{doFuture} package.
 }
 
 \code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
