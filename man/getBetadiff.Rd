@@ -4,7 +4,17 @@
 \alias{getBetadiff}
 \title{getBetadiff}
 \usage{
-getBetadiff(cN, critChi, logBetaTarget, fmin, df, weights = NULL)
+getBetadiff(
+  cN,
+  critChi,
+  logBetaTarget,
+  fmin,
+  df,
+  weights = NULL,
+  simulatedPower = FALSE,
+  pkgEnv = NULL,
+  ...
+)
 }
 \arguments{
 \item{cN}{current N}
@@ -18,6 +28,12 @@ getBetadiff(cN, critChi, logBetaTarget, fmin, df, weights = NULL)
 \item{df}{the model degrees of freedom}
 
 \item{weights}{sample weights for multiple group models}
+
+\item{simulatedPower}{whether to perform a simulated (TRUE) (rather than analytical, FALSE) power analysis.}
+
+\item{pkgEnv}{local pkgEnv containing iterationCounter.}
+
+\item{...}{other parameter passed to simulate()}
 }
 \value{
 squared difference requested and achieved beta on a log scale

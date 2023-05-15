@@ -17,6 +17,10 @@ validateInput(
   p = NULL,
   SigmaHat = NULL,
   Sigma = NULL,
+  muHat = NULL,
+  mu = NULL,
+  simulatedPower = FALSE,
+  modelH0 = NULL,
   power.min = alpha,
   power.max = 0.999,
   effect.min = NULL,
@@ -26,17 +30,17 @@ validateInput(
 )
 }
 \arguments{
-\item{power.type}{type of power analyses, one of "a-priori", post-hoc", "compromise", "powerplot.byN", "powerplot.byEffect"}
+\item{power.type}{type of power analyses, one of \code{"a-priori"}, \code{"post-hoc"}, \code{"compromise"}, \code{"powerplot.byN"}, \code{"powerplot.byEffect"}}
 
 \item{effect}{effect size specifying the discrepancy between H0 and H1}
 
-\item{effect.measure}{type of effect, one of "F0, "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}}
 
 \item{alpha}{alpha error}
 
 \item{beta}{beta error}
 
-\item{power}{power (1-beta)}
+\item{power}{power (= 1 - beta)}
 
 \item{abratio}{ratio alpha/beta}
 
@@ -44,11 +48,19 @@ validateInput(
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}}
 
 \item{SigmaHat}{model implied covariance matrix}
 
-\item{Sigma}{population covariance matrix}
+\item{Sigma}{observed (or population) covariance matrix}
+
+\item{muHat}{model implied mean vector}
+
+\item{mu}{observed (or population) mean vector}
+
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}) (rather than analytical, \code{FALSE}) power analysis.}
+
+\item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
 
 \item{power.min}{for plotting: minimum power}
 
@@ -63,5 +75,5 @@ validateInput(
 \item{linewidth}{for plotting: linewidth}
 }
 \description{
-Validates input for power calcuation function
+Validates input for power functions.
 }

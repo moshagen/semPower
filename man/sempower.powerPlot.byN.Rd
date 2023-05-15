@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{semPower.powerPlot.byN}
 \alias{semPower.powerPlot.byN}
-\title{sempower.powerPlot.byN}
+\title{semPower.powerPlot.byN}
 \usage{
 semPower.powerPlot.byN(
   effect = NULL,
@@ -13,7 +13,7 @@ semPower.powerPlot.byN(
   SigmaHat = NULL,
   Sigma = NULL,
   power.min = alpha,
-  power.max = 0.999,
+  power.max = 0.99,
   steps = 50,
   linewidth = 1
 )
@@ -21,19 +21,19 @@ semPower.powerPlot.byN(
 \arguments{
 \item{effect}{effect size specifying the discrepancy between H0 and H1}
 
-\item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}}
 
 \item{alpha}{alpha error}
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}}
 
-\item{SigmaHat}{model implied covariance matrix. Use in conjuntion with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{model implied covariance matrix. Use in conjunction with \verb{Sigma`` to define }effect\code{and}effect.measure`.}
 
-\item{Sigma}{population covariance matrix. Use in conjuntion with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{population covariance matrix. Use in conjunction with \code{SigmaHat} to define \code{effect} and \code{effect.measure}.}
 
-\item{power.min}{minimum power, must not be smaller than alpha}
+\item{power.min}{minimum power, must not be smaller than \code{alpha}.}
 
 \item{power.max}{maximum power}
 
@@ -45,11 +45,11 @@ semPower.powerPlot.byN(
 powerplot
 }
 \description{
-show a plot showing power as function of N for a given effect and alpha
+Shows a plot showing power as function of N for a given effect and alpha.
 }
 \examples{
 \dontrun{
 semPower.powerPlot.byN(effect = .05, effect.measure = "RMSEA", 
-                       alpha = .05, power.min = .05, power.max = .999, df = 200)
+                       alpha = .05, power.min = .05, power.max = .99, df = 200)
 }
 }

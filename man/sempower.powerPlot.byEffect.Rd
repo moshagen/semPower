@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{semPower.powerPlot.byEffect}
 \alias{semPower.powerPlot.byEffect}
-\title{sempower.powerPlot.byEffect}
+\title{semPower.powerPlot.byEffect}
 \usage{
 semPower.powerPlot.byEffect(
   effect.measure = NULL,
@@ -17,7 +17,7 @@ semPower.powerPlot.byEffect(
 )
 }
 \arguments{
-\item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}}
 
 \item{alpha}{alpha error}
 
@@ -25,7 +25,7 @@ semPower.powerPlot.byEffect(
 
 \item{df}{the model degrees of freedom}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}}
 
 \item{effect.min}{minimum effect}
 
@@ -39,7 +39,7 @@ semPower.powerPlot.byEffect(
 powerplot
 }
 \description{
-show a plot showing power as function of N for a given effect and alpha
+Shows a plot showing power as function of the effect for a given N and alpha.
 }
 \examples{
 \dontrun{

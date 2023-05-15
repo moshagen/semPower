@@ -1,9 +1,9 @@
-#' sempower
+#' semPower
 #'
 #' Perform a power analysis. This is a wrapper function for a-priori, post-hoc, and compromise power analyses.
 #'
-#' @param type type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'
-#' @param ... other parameters related to the specific type of power analysis requested
+#' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
+#' @param ... other parameters related to the specific type of power analysis requested.
 #' @return list
 #' @examples
 #' \dontrun{
@@ -38,5 +38,4 @@ semPower  <- function(type, ...){
            semPower.compromise(...)
          }
          )
-
 }

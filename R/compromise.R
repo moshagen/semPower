@@ -1,79 +1,53 @@
 
-#' sempower.compromise
+#' semPower.compromise
 #'
-#' Performs a compromise power analysis, i.e. determines the critical chi-square along with the implied alpha and beta, given a specified alpha/beta ratio, effect, N, and df
+#' Performs a compromise power analysis, i. e., determines the critical chi-square along with the implied alpha error and beta error , given the alpha/beta ratio, a measure of effect, N, and df
 #'
-#' @param effect effect size specifying the discrepancy between H0 and H1  (a list for multiple group models; a vector of length 2 for effect-size differences)
-#' @param effect.measure type of effect, one of "F0","RMSEA", "Mc", "GFI", AGFI"
+#' @param effect effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences. Can be `NULL` if `Sigma` and `SigmaHat` are set.
+#' @param effect.measure type of effect, one of `"F0"`, `"RMSEA"`, `"Mc"`, `"GFI"`, `"AGFI"`. Can be `NULL` if `Sigma` and `SigmaHat` are set.
 #' @param abratio the ratio of alpha to beta
 #' @param N the number of observations  (a list for multiple group models)
-#' @param df the model degrees of freedom
-#' @param p the number of observed variables, required for effect.measure = "GFI" and "AGFI"
-#' @param SigmaHat model implied covariance matrix (a list for multiple group models). Use in conjunction with Sigma to define effect and effect.measure.  
-#' @param Sigma population covariance matrix (a list for multiple group models). Use in conjunction with SigmaHat to define effect and effect.measure.
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @return list
+#' @param df the model degrees of freedom. See [semPower.getDf()] for a way to obtain the df of a specific model. 
+#' @param p the number of observed variables, only required for `effect.measure = "GFI"` and `effect.measure = "AGFI"`.
+#' @param SigmaHat can be used instead of `effect` and `effect.measure`: model implied covariance matrix (a list for multiple group models). Used in conjunction with `Sigma` to define the effect.
+#' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
+#' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
+#' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
+#' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
+#' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
 #' \dontrun{
-#' cp.ph <- semPower.compromise(effect = .08, effect.measure = "RMSEA", abratio = 1, N = 250, df = 200)
-#' summary(cp.ph)
+#' 
+#' # determine the critical value such that alpha = beta when distinguishing a model
+#' # involving 200 df exhibiting an RMSEA >= .08 from a perfectly fitting model.  
+#' cp <- semPower.compromise(effect = .08, effect.measure = "RMSEA", 
+#'                           abratio = 1, N = 250, df = 200)
+#' summary(cp)
+#' 
 #' }
+#' @seealso [semPower.aPriori()] [semPower.postHoc()]
 #' @importFrom stats qchisq pchisq optim
 #' @export
 semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
-                                 N, df, p = NULL,
-                                 SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+                                 N, df = NULL, p = NULL,
+                                 SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                                 ...){
 
-  if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
-  
-  # convert vectors to lists
-  if(!is.list(N) && length(N) > 1) N <- as.list(N) 
-  
-  validateInput('compromise', effect = effect, effect.measure = effect.measure,
-                alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
-                N = N, df = df, p = p,
-                SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu)
+  if('simulatedPower' %in% names(list(...)) && list(...)[['simulatedPower']]) stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
 
+  # validate input and do some preparations
+  pp <- powerPrepare('compromise', effect = effect, effect.measure = effect.measure,
+                     alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
+                     N = N, df = df, p = p,
+                     SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu, 
+                     simulatedPower = FALSE)
 
-  if(!is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
-    effect.measure <- 'F0'
-    p <- ifelse(is.list(SigmaHat), ncol(SigmaHat[[1]]), ncol(SigmaHat))
-  }
-
-  # make sure N/effects have the same length
-  if((is.list(effect) || is.list(SigmaHat)) && length(N) == 1){
-    N <- as.list(rep(N, ifelse(is.null(SigmaHat), length(effect), length(SigmaHat))))
-  }
-  if(is.null(SigmaHat) && is.list(N) && length(effect) == 1){
-    effect <- as.list(rep(effect, length(N)))
-  }
+  df <- pp[['df']]
   
-  if(!is.null(effect)){
-    if(is.list(effect) || length(effect) == 1){
-      fmin.g <- sapply(effect, FUN = getF, effect.measure = effect.measure, df = df, p = p)
-    }else{
-      # power for effect differences
-      f1 <- getF(effect[1], effect.measure, df[1], p)
-      f2 <- getF(effect[2], effect.measure, df[2], p)
-      fdiff <- abs(f2 - f1)   # let's make order arbitrary  
-      fmin.g <- rep(fdiff, length(N)) 
-      df <- abs(df[2] - df[1]) # let's make order arbitrary  
-    }
-  }
-  if(!is.null(SigmaHat)){
-    if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
-    }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
-    }
-  }
+  fit <- getIndices.F(pp[['fmin']], df, pp[['p']], pp[['SigmaHat']], pp[['Sigma']], pp[['muHat']], pp[['mu']], pp[['N']])
   
-  fmin <- sum(unlist(fmin.g) * unlist(N) / sum(unlist(N)))
-  fit <- getIndices.F(fmin, df, p, SigmaHat, Sigma, muHat, mu, N)
-  
-  ncp <- getNCP(fmin.g, N)
+  ncp <- getNCP(pp[['fmin.g']], pp[['N']])
   log.abratio <- log(abratio)
 
   if(ncp >= 1e5)
@@ -82,7 +56,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
   # determine max/min chi for valid alpha/beta prob
   max <- min <- NA
-  # central chi always gives reusult up to 1e-320
+  # central chi always gives result up to 1e-320
   max <- qchisq(log(1e-320), df, lower.tail = FALSE, log.p = TRUE)
 
   # non-central chi accuracy is usually lower, depending on df and ncp
@@ -95,7 +69,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     pmin <- pchisq(min, df, ncp, log.p = TRUE) # beta
   }
 
-  # cannot determine critchi when implied errors are too small
+  # cannot determine critChi when implied errors are too small
   bPrecisionWarning <- (min > max)
 
   if(!bPrecisionWarning){
@@ -130,21 +104,24 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     impliedAbratio = impliedAbratio,
     impliedPower = impliedPower,
     ncp = ncp,
-    fmin = fmin,
-    effect = effect,
-    effect.measure = effect.measure,
-    N = N,
+    fmin = pp[['fmin']],
+    effect = pp[['effect']],
+    effect.measure = pp[['effect.measure']],
+    N = pp[['N']],
     df = df,
-    p = p,
-    rmsea = fit$rmsea,
-    mc = fit$mc,
-    gfi = fit$gfi,
-    agfi = fit$agfi,
-    srmr = fit$srmr,
-    cfi = fit$cfi,
+    p = pp[['p']],
+    rmsea = fit[['rmsea']],
+    mc = fit[['mc']],
+    gfi = fit[['gfi']],
+    agfi = fit[['agfi']],
+    srmr = fit[['srmr']],
+    cfi = fit[['cfi']],
     max = max,
     min = min,
-    bPrecisionWarning = bPrecisionWarning
+    bPrecisionWarning = bPrecisionWarning,
+    plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
+    plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
+    plotShowLabels = if('plotShowLabels' %in% names(list(...))) list(...)[['plotShowLabels']] else TRUE
   )
 
   class(result) <- "semPower.compromise"
@@ -155,7 +132,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
 
 #' getErrorDiff
 #'
-#' determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
+#' Determine the squared log-difference between alpha and beta error given a certain chi-square value from central chi-square(df) and a non-central chi-square(df, ncp) distribution.
 #'
 #' @param critChiSquare evaluated chi-squared value
 #' @param df the model degrees of freedom
@@ -170,7 +147,7 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
 
   if(is.infinite(beta) || is.infinite(alpha)){
 
-    warning('alpha or beta is too small')
+    warning('Alpha or beta are too small.')
     diff <- 0
 
   }else{
@@ -195,13 +172,14 @@ summary.semPower.compromise <- function(object, ...){
 
   cat("\n semPower: Compromise power analysis\n")
 
-  if(object$bPrecisionWarning)
+  if(object[['bPrecisionWarning']])
     cat("\n\n WARNING: Alpha and/or Beta are smaller than 1e-240. Cannot determine critical Chi-Square exactly due to machine precision.")
 
   print(out.table, row.names = FALSE, right = FALSE)
 
-  if(!object$bPrecisionWarning)
-    semPower.showPlot(chiCrit = object$chiCrit, ncp = object$ncp, df = object$df)
+  if(object[['plotShow']] && !object[['bPrecisionWarning']])
+    semPower.showPlot(chiCrit = object[['chiCrit']], ncp = object[['ncp']], df = object[['df']], 
+                      linewidth = object[['plotLinewidth']], showLabels = object[['plotShowLabels']])
   
 }
 

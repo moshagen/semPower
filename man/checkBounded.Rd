@@ -16,5 +16,5 @@ checkBounded(x, message = NULL, bound = c(0, 1), inclusive = FALSE)
 \item{inclusive}{whether x might lie on boundary}
 }
 \description{
-checks whether x is defined and lies within the specified bound
+Checks whether x is defined and lies within the specified bound, stop otherwise.
 }

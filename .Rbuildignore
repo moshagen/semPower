@@ -1,3 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\vignettes\semPower.pdf$
+^\docs$
+^\R\zUnitTests.R$

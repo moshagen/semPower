@@ -10,8 +10,8 @@ checkPowerTypes(type)
 \item{type}{type}
 }
 \value{
-valid type
+Returns cleaned type
 }
 \description{
-checks whether type is one of 'a-priori', 'post-hoc', or 'compromise'.
+Checks whether type is one of \code{'a-priori'}, \code{'post-hoc'}, or \code{'compromise'} (or respective shortcuts), stop otherwise.
 }

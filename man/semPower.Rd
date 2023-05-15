@@ -9,9 +9,9 @@
 semPower(type, ...)
 }
 \arguments{
-\item{type}{type of power analysis, one of 'a-priori', 'post-hoc', 'compromise'}
+\item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{...}{other parameters related to the specific type of power analysis requested}
+\item{...}{other parameters related to the specific type of power analysis requested.}
 }
 \value{
 list
@@ -137,7 +137,7 @@ Useful links:
 }
 
 
-[semPower.aPriori()], [semPower.postHoc()], [semPower.compromise()]
+\code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, \code{\link[=semPower.compromise]{semPower.compromise()}}
 }
 \author{
 Morten Moshagen \email{morten.moshagen@uni-ulm.de}

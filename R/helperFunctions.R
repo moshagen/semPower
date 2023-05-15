@@ -1,561 +1,929 @@
-##########################  determine ncp, chi-square from Fmin   #####################
-
-
-#' getNCP
+#' semPower.genSigma
 #'
-#' calculates non-centrality parameter from the population minimum of the fit-function
-#'
-#' ncp = (n-1) * F
-#'
-#' @param Fmin population minimum of the fit-function
-#' @param n number of observations
-#' @return NCP
-getNCP <- function(Fmin, n){
-  NCP <- unlist(Fmin) * (unlist(n) - 1)
-  sum(NCP)
-}
-
-
-#' getChiSquare.NCP
-#'
-#' calculates chi-square from NCP
-#'
-#' chi = ncp + df
-#'
-#' @param NCP non-centrality parameter
-#' @param df model degrees of freedom
-#' @return chiSquare
-getChiSquare.NCP <- function(NCP, df){
-  chiSquare <- NCP + df
-  chiSquare
-}
-
-#' getChiSquare.F
-#'
-#' calculates chis-square from the population minimum of the fit-function
-#'
-#' chi = (n-1)*F +  df = ncp + df
-#'
-#' note that F is the population minimum; using F_hat would give chi = (n-1)*F_hat
-#'
-#' @param Fmin population minimum of the fit-function
-#' @param n number of observations
-#' @param df model degrees of freedom
-#' @return NCP
-getChiSquare.F <- function(Fmin, n, df){
-  chiSquare <- getNCP(Fmin, n) + df
-  chiSquare
-}
-
-
-##########################  determine Fmin from RMSEA , Mc , GFI , AGFI   #####################
-
-
-#' getF
-#' calculates minimum of the ML-fit-function from known fit indices
-#' @param effect magnitude of effect
-#' @param effect.measure measure of effect, one of 'fmin','rmsea','agfi','gfi','mc'
-#' @param df model degrees of freedom
-#' @param p number of observed varaibles
-#' @param SigmaHat model implied covariance matrix
-#' @param Sigma population covariance matrix
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @return Fmin
-getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
-  fmin <- effect
-  if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
-    switch(effect.measure,
-           "RMSEA" = fmin <- getF.RMSEA(effect, df),
-           "MC" = fmin <- getF.Mc(effect),
-           "GFI" = fmin <- getF.GFI(effect, p),
-           "AGFI" = fmin <- getF.AGFI(effect, df, p)
-    )
-  }else{
-    fmin <- effect <- getF.Sigma(SigmaHat, Sigma, muHat, mu)
-  }
-  fmin
-}
-
-
-#' getF.RMSEA
-#'
-#' calculates minimum of the ML-fit-function from RMSEA
-#'
-#' F_min = rmsea^2 * df
-#'
-#' @param RMSEA RMSEA
-#' @param df model degrees of freedom
-#' @return Fmin
-getF.RMSEA <- function(RMSEA, df){
-  fmin <- RMSEA^2 * df
-  fmin
-}
-
-
-#' getF.Mc
-#'
-#' calculates minimum of the ML-fit-function from Mc
-#'
-#'
-#' @param Mc Mc
-#' @return Fmin
-getF.Mc <- function(Mc){
-  fmin <- -2 * log(Mc)
-  fmin
-}
-
-#' getF.GFI
-#'
-#' calculates minimum of the ML-fit-function from AGFI
-#'
-#'
-#' @param GFI GFI
-#' @param p number of observed variables
-#' @return Fmin
-getF.GFI <- function(GFI, p){
-  fmin <- -(GFI - 1) * p / (2 * GFI)
-  fmin
-}
-
-
-#' getF.AGFI
-#'
-#' calculates minimum of the ML-fit-function from AGFI
-#'
-#' F_min = rmsea^2 * df
-#'
-#' @param AGFI AGFI
-#' @param df model degrees of freedom
-#' @param p number of observed variables
-#' @return Fmin
-getF.AGFI <- function(AGFI, df, p){
-  fmin <- -(AGFI - 1) * df * p / (p * p + p + (2 * AGFI - 2) * df)
-  fmin
-}
-
-
-##########################  determine RMSEA Mc GFI AGFI from Fmin   #####################
-
-#' getIndices.F
-#'
-#' calculates known indices from minimum of the ML-fit-function
-#'
-#'
-#' @param fmin minimum of the ML-fit-function
-#' @param df model degrees of freedom
-#' @param p number of observed variables
-#' @param SigmaHat model implied covariance matrix
-#' @param Sigma population covariance matrix
-#' @param N list of sample weights
-#' @return list of indices
-getIndices.F <- function(fmin, df, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL, N = NULL){
-  fit <- list(
-    rmsea = getRMSEA.F(fmin, df, nGroups = ifelse(length(N) > 1, length(N), 1)),
-    mc = getMc.F(fmin),
-    gfi = NULL,
-    agfi = NULL
-  )
-  if(!is.null(p)){
-    fit$gfi <- getGFI.F(fmin, p)
-    fit$agfi <- getAGFI.F(fmin, df, p)
-  }
-  if(!is.null(SigmaHat)){
-    if(length(N) > 1){
-      fit$srmr <- getSRMR.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
-      fit$cfi <- getCFI.Sigma.mgroups(SigmaHat, Sigma, muHat, mu, N)
-    }else{
-      fit$srmr <- getSRMR.Sigma(SigmaHat, Sigma, muHat, mu)
-      fit$cfi <- getCFI.Sigma(SigmaHat, Sigma, muHat, mu)
-    }
-  }
-  fit
-}
-
-
-
-#' getRMSEA.F
-#'
-#' calculates RMSEA from minimum of the ML-fit-function
-#'
-#' F_min = rmsea^2 * df
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @param df model degrees of freedom
-#' @param nGroups the number of groups
-#' @return RMSEA
-getRMSEA.F <- function(Fmin, df, nGroups = 1){
-  RMSEA <- sqrt(Fmin / df) * sqrt(nGroups)
-  RMSEA
-}
-
-#' getMc.F
-#'
-#' calculates Mc from minimum of the ML-fit-function
-#'
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @return Mc
-getMc.F <- function(Fmin){
-  Mc <- exp(-.5 * Fmin)
-  Mc
-}
-
-
-#' getGFI.F
-#'
-#' calculates GFI from minimum of the ML-fit-function
-#'
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @param p number of observed variables
-#' @return GFI
-getGFI.F <- function(Fmin, p){
-  GFI <- p / (p + 2 * Fmin)
-  GFI
-}
-
-
-#' getAGFI.F
-#'
-#' calculates AGFI from minimum of the ML-fit-function
-#'
-#'
-#' @param Fmin minimum of the ML-fit-function
-#' @param df model degrees of freedom
-#' @param p number of observed variables
-#' @return AGFI
-getAGFI.F <- function(Fmin, df, p){
-  AGFI <- -(Fmin * p * p + (Fmin - df) * p - 2 * df * Fmin) / (df * p + 2 * df * Fmin)
-  AGFI
-}
-
-
-
-##########################  calculate Fmin RMSEA SRMR CFI from covariance matrix #####################
-
-
-#' getF.Sigma
-#'
-#' calculates minimum of the ML-fit-function given model-implied and observed covariance matrix.
-#'
-#' F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))
-#' with meanstructure add (mu - muHat)' SigmaHat^-1 (mu - muHat)
-#'
-#' @param SigmaHat model implied covariance matrix
-#' @param S observed (or population) covariance matrix
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @return Fmin
-getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
-  checkPositiveDefinite(SigmaHat)
-  checkPositiveDefinite(S)
-  fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
-  if(!is.null(mu)){
-    fmean <- t(c(mu - muHat)) %*% solve(SigmaHat) %*% c(mu - muHat)
-    fmin <- fmin + fmean  
-  }
-  fmin
-}
-
-#' getSRMR.Sigma
-#'
-#' calculates SRMR given model-implied and observed covariance matrix.
-#'
-#'
-#' @param SigmaHat model implied covariance matrix
-#' @param S observed (or population) covariance matrix
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @return SRMR
-getSRMR.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
-  checkPositiveDefinite(SigmaHat)
-  checkPositiveDefinite(S)
-  p <- ncol(S)
-
-  # bollen approach to standardization
-  # m <- cov2cor(S) - cov2cor(SigmaHat)
-  
-  # hu+bentler approach to std
-  sqrt.d <- 1 / sqrt(diag(S))
-  D <- diag(sqrt.d, ncol = length(sqrt.d))
-  m <- D %*% (S - SigmaHat) %*% D
-  
-  fols <- sum(m[lower.tri(m, diag = TRUE)]^2)
-  
-  # mplus variant
-  #fols <- (sum(m[lower.tri(m, diag=F)]^2)  +  sum(((diag(S) - diag(SigmaHat))/diag(S))^2)) 
-
-  enum <- fols
-  denum <- (p * (p + 1) / 2)
-  
-  if(!is.null(mu)){
-    # mplus / bollen approach
-    #stdMeanResid <- sum( mu/sqrt(diag(S)) - muHat/sqrt(diag(SigmaHat)) )^2
-    
-    # hu+bentler approach
-    stdMeanResid <- sum( (D %*% (mu - muHat))^2 )
-    
-    enum <- enum + stdMeanResid
-    denum <- denum + p
-  }
-  
-  srmr <- sqrt(enum / denum)    
-  srmr
-}
-
-#' getSRMR.Sigma.mgroups 
-#'
-#' calculates SRMR given model-implied and observed covariance matrix for multiple group models
-#'
-#' @param SigmaHat a list of model implied covariance matrices
-#' @param S a list of observed (or population) covariance matrices
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @param N a list of group weights
-#' @return SRMR
-getSRMR.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
-  if(is.null(mu)){
-    srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]]))
-  }else{
-    srmrs <- sapply(seq_along(SigmaHat), function(x) getSRMR.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]]))
-  }
-    
-  # lavaan approach: apply sample weights to srmr
-  # srmr <- (sum(srmrs*N)/sum(N))
-  # mplus approach: apply sample weights to squared sums of res
-  srmr <- sqrt( sum(unlist(srmrs)^2 * unlist(N)) / sum(unlist(N)) )
-  srmr
-}
-
-
-
-
-#' getCFI.Sigma
-#'
-#' calculates CFI given model-implied and observed covariance matrix.
-#'
-#' cfi= (f_null - f_hyp) / f_null
-#'
-#' @param SigmaHat model implied covariance matrix
-#' @param S observed (or population) covariance matrix
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @return CFI
-getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
-  checkPositiveDefinite(SigmaHat)
-  checkPositiveDefinite(S)
-  fm <- getF.Sigma(SigmaHat, S, muHat, mu)
-  SigmaHatNull <- diag(ncol(S))
-  diag(SigmaHatNull) <- diag(S)
-  muHatNull <- mu # as in mplus: baseline model has unrestricted means
-  f0 <- getF.Sigma(SigmaHatNull, S, muHatNull, mu)
-  cfi <- (f0-fm)/f0
-  cfi
-}
-
-#' getCFI.Sigma.mgroups
-#'
-#' calculates CFI given model-implied and observed covariance matrix for multiple group models.
-#'
-#' cfi= (f_null - f_hyp) / f_null
-#'
-#' @param SigmaHat a list of model implied covariance matrix
-#' @param S a list of observed (or population) covariance matrix
-#' @param muHat model implied mean vector
-#' @param mu observed (or population) mean vector
-#' @param N a list of group weights
-#' @return CFI
-getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
-  N <- unlist(N)
-
-  if(is.null(mu)){
-    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
-    fnull.g <- sapply(seq_along(S), function(x){
-      SigmaHatNull <- diag(ncol(S[[x]]))
-      diag(SigmaHatNull) <- diag(S[[x]])
-      getF.Sigma(SigmaHatNull, S[[x]])
-    })
-  }else{
-    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]])})
-    fnull.g <- sapply(seq_along(S), function(x){
-      SigmaHatNull <- diag(ncol(S[[x]]))
-      diag(SigmaHatNull) <- diag(S[[x]])
-      muHatNull <- mu[[x]]   # as in mplus: baseline model has unrestricted means
-      getF.Sigma(SigmaHatNull, S[[x]], muHatNull[[x]], mu[[x]])
-    })
-  }
-  
-  
-  # approach A: apply sampling weights to CFI
-  #cfi.g <- (fnull.g - fmin.g) / fnull.g
-  #cfi <-  sum(cfi.g * N) / sum(N)
-
-  # approach B: apply sampling weights to fmin and fnull
-  fmin <- sum(fmin.g * N) / sum(N)
-  fnull <- sum(fnull.g * N) / sum(N)
-  cfi <- (fnull - fmin) / fnull
-  
-  return(cfi)
-}
-
-
-##########################  output and formatting #####################
-
-
-#' getFormattedResults
-#'
-#' returned dataframe containing formatted results
+#' Generate a covariance matrix (and a mean vector) and associated `lavaan` model strings based on CFA or SEM model matrices.
 #' 
-#' @param type type of power analysis
-#' @param result result object (list)
-#' @param digits number of significant digits
-#' @return data.frame
-getFormattedResults <- function(type, result, digits = 6){
+#' @param Lambda factor loading matrix. A list for multiple group models. Can also be specified using various shortcuts, see [genLambda()].
+#' @param Phi for CFA models, factor correlation (or covariance) matrix or single number giving the correlation between all factors or `NULL` for uncorrelated factors. A list for multiple group models. 
+#' @param Beta for SEM models, matrix of regression slopes between latent variables (all-y notation). A list for multiple group models. 
+#' @param Psi for SEM models, variance-covariance matrix of latent residuals when `Beta` is specified. If `NULL`, a diagonal matrix is assumed. A list for multiple group models. 
+#' @param Theta variance-covariance matrix between manifest residuals. If `NULL` and `Lambda` is not a square matrix, `Theta` is diagonal so that the manifest variances are 1. If `NULL` and `Lambda` is square, `Theta` is 0. A list for multiple group models.      
+#' @param tau vector of intercepts. If `NULL` and `Alpha` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
+#' @param Alpha vector of factor means. If `NULL` and `tau` is set, these are assumed to be zero. If both `Alpha` and `tau` are `NULL`, no means are returned. A list for multiple group models. 
+#' @param ... other
+#' @return Returns a list (or list of lists for multiple group models) containing the following components:
+#' \item{`Sigma`}{implied variance-covariance matrix.}
+#' \item{`mu`}{implied means}
+#' \item{`Lambda`}{loading matrix}
+#' \item{`Phi`}{covariance matrix of latent variables}
+#' \item{`Beta`}{matrix of regression slopes}
+#' \item{`Psi`}{residual covariance matrix of latent variables}
+#' \item{`Theta`}{residual covariance matrix of observed variables}
+#' \item{`tau`}{intercepts}
+#' \item{`Alpha`}{factor means}
+#' \item{`modelPop`}{`lavaan` model string defining the population model}
+#' \item{`modelTrue`}{`lavaan` model string defining the "true" analysis model freely estimating all non-zero parameters.}
+#' \item{`modelTrueCFA`}{`lavaan` model string defining a model similar to `modelTrue`, but purely CFA based and thus omitting any regression relationships.}
+#' @details
+#' This function generates the variance-covariance matrix of the \eqn{p} observed variables \eqn{\Sigma} and their means \eqn{\mu} via a confirmatory factor (CFA) model or a more general structural equation model. 
+#' 
+#' In the CFA model, 
+#' \deqn{\Sigma = \Lambda \Phi \Lambda' + \Theta}
+#' where \eqn{\Lambda} is the \eqn{p \cdot m} loading matrix, \eqn{\Phi} is the variance-covariance matrix of the \eqn{m} factors, and \eqn{\Theta} is the residual variance-covariance matrix of the observed variables. The means are
+#' \deqn{\mu = \tau + \Lambda \alpha}
+#' with the \eqn{p} indicator intercepts \eqn{\tau} and the \eqn{m} factor means \eqn{\alpha}.
+#' 
+#' In the structural equation model, 
+#' \deqn{\Sigma = \Lambda (I - B)^{-1} \Psi [(I - B)^{-1}]'  \Lambda' + \Theta } 
+#' where \eqn{B} is the \eqn{m \cdot m} matrix containing the regression slopes and \eqn{\Psi} is the (residual) variance-covariance matrix of the \eqn{m} factors. The means are
+#' \deqn{\mu = \tau + \Lambda (I - B)^{-1} \alpha}
+#' 
+#' In either model, the meanstructure can be omitted, leading to factors with zero means and zero intercepts. 
+#' 
+#' When \eqn{\Lambda = I}, the models above do not contain any factors and reduce to ordinary regression or path models.  
+#' 
+#' If `Phi` is defined, a CFA model is used, if `Beta` is defined, a structural equation model. 
+#' When both `Phi` and `Beta` are `NULL`, a CFA model is used with \eqn{\Phi = I}, i. e., uncorrelated factors.
+#' When `Phi` is a single number, all factor correlations are equal to this number.
+#' 
+#' When `Beta` is defined and `Psi` is `NULL`, \eqn{\Psi = I}.
+#' 
+#' When `Theta` is `NULL`, \eqn{\Theta} is a diagonal matrix with all elements such that the variances of the observed variables are 1. When there is only a single observed indicator for a factor, the corresponding element in \eqn{\Theta} is set to zero.
+#'
+#' Instead of providing the loading matrix \eqn{\Lambda} via `Lambda`, there are several shortcuts (see [genLambda()]):
+#' \itemize{
+#' \item `loadings`: defines the primary loadings for each factor in a list structure, e. g. `loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))` defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading in the second factor by .8, .6, .6, and .4.  
+#' \item `nIndicator`: used in conjunction with `loadM` or `loadMinmax`, defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
+#' \item `loadM`: defines the mean loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the mean loadings of the first factor to equal .5 and those of the second factor do equal .6
+#' \item `loadSD`: used in conjunction with `loadM`, defines the standard deviations of the loadings. If omitted or NULL, the standard deviations are zero. Otherwise, the loadings are sampled from a normal distribution with N(loadM, loadSD) for each factor. 
+#' \item `loadMinMax`: defines the minimum and maximum loading either for all factors or separately for each factor (as a list). The loadings are then sampled from a uniform distribution. For example, `loadMinMax = list(c(.4, .6), c(.4, .8))` defines the loadings for the first factor lying between .4 and .6, and those for the second factor between .4 and .8. 
+#' }      
+#'  
+#' @examples
+#' \dontrun{
+#' # single factor model with five indicators each loading by .5
+#' gen <- semPower.genSigma(nIndicator = 5, loadM = .5)
+#' gen$Sigma     # implied covariance matrix
+#' gen$modelTrue # analysis model string
+#' gen$modelPop  # population model string
+#' 
+#' # orthogonal two factor model with four and five indicators each loading by .5
+#' gen <- semPower.genSigma(nIndicator = c(4, 5), loadM = .5)
+#' 
+#' # correlated (r = .25) two factor model with 
+#' # four indicators loading by .7 on the first factor 
+#' # and five indicators loading by .6 on the second factor
+#' gen <- semPower.genSigma(Phi = .25, nIndicator = c(4, 5), loadM = c(.7, .6))
+#' 
+#' # correlated three factor model with variying indicators and loadings, 
+#' # factor correlations according to Phi
+#' Phi <- matrix(c(
+#'   c(1.0, 0.2, 0.5),
+#'   c(0.2, 1.0, 0.3),
+#'   c(0.5, 0.3, 1.0)
+#' ), byrow = TRUE, ncol = 3)
+#' gen <- semPower.genSigma(Phi = Phi, nIndicator = c(3, 4, 5), 
+#'                          loadM = c(.7, .6, .5))
+#' 
+#' # same as above, but using a factor loadings matrix
+#' Lambda <- matrix(c(
+#'   c(0.8, 0.0, 0.0),
+#'   c(0.7, 0.0, 0.0),
+#'   c(0.6, 0.0, 0.0),
+#'   c(0.0, 0.7, 0.0),
+#'   c(0.0, 0.8, 0.0),
+#'   c(0.0, 0.5, 0.0),
+#'   c(0.0, 0.4, 0.0),
+#'   c(0.0, 0.0, 0.5),
+#'   c(0.0, 0.0, 0.4),
+#'   c(0.0, 0.0, 0.6),
+#'   c(0.0, 0.0, 0.4),
+#'   c(0.0, 0.0, 0.5)
+#' ), byrow = TRUE, ncol = 3)
+#' gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
+#' 
+#' # same as above, but using a reduced loading matrix, i. e.
+#' # only define the primary loadings for each factor
+#' loadings <- list(
+#'   c(0.8, 0.7, 0.6),
+#'   c(0.7, 0.8, 0.5, 0.4),
+#'   c(0.5, 0.4, 0.6, 0.4, 0.5)
+#' )
+#' gen <- semPower.genSigma(Phi = Phi, loadings = loadings)
+#' 
+#' # Provide Beta for a three factor model
+#' # with 3, 4, and 5 indicators 
+#' # loading by .6, 5, and .4, respectively.
+#' Beta <- matrix(c(
+#'                 c(0.0, 0.0, 0.0),
+#'                 c(0.3, 0.0, 0.0),  # f2 = .3*f1
+#'                 c(0.2, 0.4, 0.0)   # f3 = .2*f1 + .4*f2
+#'                ), byrow = TRUE, ncol = 3)
+#' gen <- semPower.genSigma(Beta = Beta, nIndicator = c(3, 4, 5), 
+#'                          loadM = c(.6, .5, .4))
+#' 
+#' # two group example: 
+#' # correlated two factor model (r = .25 and .35 in the first and second group, 
+#' # respectively)
+#' # the first factor is indicated by four indicators loading by .7 in the first 
+#' # and .5 in the second group,
+#' # the second factor is indicated by five indicators loading by .6 in the first 
+#' # and .8 in the second group,
+#' # all item intercepts are zero in both groups, 
+#' # the latent means are zero in the first group
+#' # and .25 and .10 in the second group.
+#' gen <- semPower.genSigma(Phi = list(.25, .35), 
+#'                          nIndicator = list(c(4, 5), c(4, 5)), 
+#'                          loadM = list(c(.7, .6), c(.5, .8)), 
+#'                          tau = list(rep(0, 9), rep(0, 9)), 
+#'                          Alpha = list(c(0, 0), c(.25, .10))
+#'                          )
+#' gen[[1]]$Sigma  # implied covariance matrix group 1 
+#' gen[[2]]$Sigma  # implied covariance matrix group 2
+#' gen[[1]]$mu     # implied means group 1 
+#' gen[[2]]$mu     # implied means group 2
+#' }
+#' @export
+semPower.genSigma <- function(Lambda = NULL,
+                              Phi = NULL, 
+                              Beta = NULL,  # capital Beta, to distinguish from beta error
+                              Psi = NULL,
+                              Theta = NULL,
+                              tau = NULL,
+                              Alpha = NULL,  # capital Alpha, to distinguish from alpha error
+                              ...){
+  
+  args <- list(...)
 
-  ########### common across power types
+  # multigroup case
+  argsMG <- c(as.list(environment()), list(...))
+  argsMG <- argsMG[!unlist(lapply(argsMG, is.null)) & 
+                     names(argsMG) %in% c('Lambda', 'Phi', 'Beta', 'Psi', 'Theta', 'tau', 'Alpha', 
+                                          'nIndicator', 'loadM', 'loadSD', 'loadings', 'loadMinMax', 
+                                          'useReferenceIndicator', 'metricInvariance', 'nGroups')]
+  nGroups <- unlist(lapply(seq_along(argsMG), function(x){
+    len <- 1
+    if(names(argsMG)[x] %in% c('loadings', 'loadMinMax', 'metricInvariance')){
+      if(is.list(argsMG[[x]][[1]])) len <- length(argsMG[[x]])
+    }else{
+      if(is.list(argsMG[[x]])) len <- length(argsMG[[x]])
+    }
+    len
+  }))
+  if(any(nGroups > 1)){
+    if(sum(nGroups != 1) > 1 && length(unique(nGroups[nGroups != 1])) > 1) stop('All list arguments in multiple group analysis must have the same length.')
+    # when no list structure is provided for indicators or loadings, assume the same applies for all groups 
+    if(!is.null(argsMG[['Lambda']]) && !is.list(argsMG[['Lambda']])) argsMG[['Lambda']] <- as.list(rep(list(argsMG[['Lambda']]), max(nGroups)))
+    if(!is.null(argsMG[['loadings']]) && !is.list(argsMG[['loadings']][[1]])) argsMG[['loadings']] <- as.list(rep(list(argsMG[['loadings']]), max(nGroups)))
+    if(!is.null(argsMG[['nIndicator']]) && !is.list(argsMG[['nIndicator']])) argsMG[['nIndicator']] <- as.list(rep(list(argsMG[['nIndicator']]), max(nGroups)))
+    if(!is.null(argsMG[['loadM']]) && !is.list(argsMG[['loadM']])) argsMG[['loadM']] <- as.list(rep(list(argsMG[['loadM']]), max(nGroups)))
+    if(!is.null(argsMG[['loadSD']]) && !is.list(argsMG[['loadSD']])) argsMG[['loadSD']] <- as.list(rep(list(argsMG[['loadSD']]), max(nGroups)))
+    if(!is.null(argsMG[['loadMinMax']])) argsMG[['loadMinMax']] <- as.list(rep(list(argsMG[['loadMinMax']]), max(nGroups)))
+    ## TODO shall we do this for tau/Alpha as well? is there any use case for this?
+    ## TODO and what about Phi, Beta, Psi? 
+    # also create list structure for additional arguments 
+    if(!is.null(argsMG[['useReferenceIndicator']])) argsMG[['useReferenceIndicator']] <- as.list(rep(list(argsMG[['useReferenceIndicator']]), max(nGroups)))
+    if(!is.null(argsMG[['metricInvariance']])) argsMG[['metricInvariance']] <- as.list(rep(list(argsMG[['metricInvariance']]), max(nGroups)))
+    if(!is.null(argsMG[['nGroups']])) argsMG[['nGroups']] <- as.list(rep(list(argsMG[['nGroups']]), max(nGroups)))
+    params <- lapply(1:max(nGroups), function(x) lapply(argsMG, '[[', x))
+    return(
+      lapply(params, function(x) do.call(semPower.genSigma, x)) 
+    )
+  }
 
-  if(!is.null(result$srmr) && !is.null(result$gfi)){
-    rows <- c('F0', 'RMSEA', 'SRMR', 'Mc', 'GFI', 'AGFI', 'CFI', '')
-    head <- data.frame(rows)
-    values <- c(result$fmin, result$rmsea, result$srmr, result$mc, result$gfi, result$agfi, result$cfi)
-  }else if(!is.null(result$gfi)){
-    rows <- c('F0', 'RMSEA', 'Mc', 'GFI', 'AGFI', '')
-    head <- data.frame(rows)
-    values <- c(result$fmin, result$rmsea, result$mc, result$gfi, result$agfi)
+  # the following applies to single group cases 
+  if(is.null(Lambda)){
+    Lambda <- genLambda(args[['loadings']], args[['nIndicator']], 
+                        args[['loadM']], args[['loadSD']], args[['loadMinMax']]) 
+  }
+
+  nfac <- ncol(Lambda)
+  nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
+  
+  ### validate input
+  if(ncol(Lambda) > 99) stop("Models with >= 100 factors are not supported.")
+  if(!is.null(Beta) && !is.null(Phi)) stop('Either provide Phi or Beta, but not both. Did you mean to set Beta and Psi?')
+  if(is.null(Beta) && is.null(Phi)) Phi <- diag(nfac)
+  if(is.null(Beta)){
+    if(length(Phi) == 1){
+      Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
+      diag(Phi) <- 1
+    } 
+    if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
+    checkPositiveDefinite(Phi)
+    if(!any(diag(Phi) != 1)){
+      if(any(Phi > 1) || any(Phi > 1)) stop('Phi implies correlations outside [-1 - 1].')
+    }
   }else{
-    rows <- c('F0', 'RMSEA', 'Mc', '')
-    head <- data.frame(rows)
-    values <- c(result$fmin, result$rmsea, result$mc)
+    if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
+    if(!is.null(Psi) && ncol(Psi) != nfac) stop('Psi must have the same number of rows/columns as the number of factors.')
+    if(is.null(Psi)) Psi <- diag(ncol(Beta))
+    if(any(diag(Psi) < 0)) stop('Model implies negative residual variances for latent variables (Psi). Make sure the sum of squared standardized regression coefficients in predicting a factor does not exceed 1.')
   }
-
-  head$values <- c(formatC(values, format='f', digits = digits), '')
-
-
-  ########### a-priori
-
-  if(type == 'a-priori'){
-
-    ifelse(length(result$requiredN.g) == 1, rows <- c('df', 'Required Num Observations', ''), rows <- c('df', 'Required Num Observations', ' ', ''))
-    body <- data.frame(rows)
-    ifelse(length(result$requiredN.g) == 1, 
-           body$values <- c(result$df, result$requiredN, ''),
-           body$values <- c(result$df, result$requiredN, paste0('(', paste(result$requiredN.g, collapse = ', '), ')'), '')
-    )    
-
-    rows <- c('Critical Chi-Square', 'NCP', 'Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
-    foot <- data.frame(rows)
-
-    v1 <- formatC(c(result$chiCrit, result$impliedNCP), format = 'f', digits = digits)
-    v1 <- sapply(v1, substr, 1, digits + 2)
-
-    v2 <- c(result$alpha, result$impliedBeta, result$impliedPower, result$impliedAbratio)
-    # determine whether to use float or scientific number format
-    v2.f <- rep('f', length(v2))
-    v2.f[v2 < 1e-5 | v2 > 1e5] <- 'e'
-    v2 <- sapply(seq_along(v2), function(y, z, i){formatC(x = v2[i], format = v2.f[i], digits = digits)}, y = v2, z = v2.f)
-    foot$values <- c(v1, v2)
-
-    # manually correct some quirks
-    if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
-    }
-
-
-    out <- rbind(head, body, foot)
-    rownames(out) <- colnames(out) <- NULL
-
+  if(!is.null(tau)){
+    if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators.')
   }
-
-
-  ########### post-hoc
-
-  if(type == 'post-hoc'){
-
-    ifelse(!is.list(result$N), rows <- c('df', 'Num Observations'), rows <- c('df', 'Num Observations', ' '))
-    body <- data.frame(rows)
-    ifelse(!is.list(result$N), 
-           body$values <- c(result$df, result$N), 
-           body$values <- c(result$df, sum(unlist(result$N)), paste0('(', paste(result$N, collapse = ', '), ')'))
-          )
-
-    rows <- c('NCP', '', 'Critical Chi-Square')
-    body2 <- data.frame(rows)
-    v1 <- c(formatC(result$ncp, format = 'f', digits = digits), '',
-                      formatC(result$chiCrit, format = 'f', digits = digits)
-                      )
-    body2$values <- sapply(v1, substr, 1, (digits + 2))
-
-    rows <- c('Alpha', 'Beta', 'Power (1-beta)', 'Implied Alpha/Beta Ratio')
-    foot <- data.frame(rows)
-    v <- c(result$alpha, result$beta, result$power, result$impliedAbratio)
-    # determine whether to use float or scientific number format
-    v.f <- rep('f', length(v))
-    v.f[v < 1e-5 | v > 1e5] <- 'e'
-    foot$values <- sapply(seq_along(v),  function(y, z, i) {formatC(x = v[i], format = v.f[i], digits = digits)}, y = v, z = v.f)
-
-    # manually correct some quirks
-    if(result$beta < 1e-5){
-      foot$values[foot$rows == 'Power (1-beta)'] <- '> 0.9999'
-    }
-    if(result$beta == 0){
-      foot$values[foot$rows == 'Beta'] <- '< 1.00e-320'
-      foot$values[foot$rows == 'Implied Alpha/Beta Ratio'] <- '> 1.00e-320'
-    }
-
-    out <- rbind(head, body, body2, foot)
-    rownames(out) <- colnames(out) <- NULL
-
+  if(!is.null(Alpha)){
+    if(length(Alpha) != nfac) stop('Latent means (Alpha) must be of same length as the number of factors.')
   }
+  if(!is.null(tau) && is.null(Alpha)) Alpha <- rep(0, nfac)
+  if(!is.null(Alpha) && is.null(tau)) tau <- rep(0, sum(nIndicator))
 
-  ########### compromise
+  ### compute Sigma
+  if(is.null(Beta)){
+    SigmaND <- Lambda %*% Phi %*% t(Lambda) 
+  }else{
+    invIB <- solve(diag(ncol(Beta)) - Beta)    
+    SigmaND <- Lambda %*% invIB %*% Psi %*% t(invIB) %*% t(Lambda) 
+  }
+  # compute theta
+  if(is.null(Theta)){
+    # the following also works (at least approximately) for factor variances > 1 
+    cv <- diag(Lambda %*% t(Lambda))
+    Theta <- diag((1 - cv)/cv * diag(SigmaND))
+    # but fails for secondary loadings
+    if(any(apply(Lambda, 1, function(x) sum(x != 0)) > 1)){
+      Theta <- diag(1 - diag(SigmaND))
+    }
+    # catch observed only models
+    if(!any(nIndicator > 1)){
+      Theta <- matrix(0, ncol = ncol(SigmaND), nrow = nrow(SigmaND))
+    # catch latent+observed mixed models
+    }else if(any(nIndicator <= 1)){
+      fLat <- which(nIndicator > 1)
+      indLat <- unlist(lapply(fLat, function(x) which(Lambda[, x] != 0)))
+      indObs <- (1:nrow(Lambda))[-indLat]
+      diag(Theta)[indObs] <- 0
+    }
+  }
+  # see whether there are negative variances
+  if(any(diag(Theta) < 0)) stop('Model implies negative residual variances for observed variables (Theta). Make sure the sum of squared standardized loadings by indicator does not exceed 1.')
+  
+  Sigma <- SigmaND + Theta
+  colnames(Sigma) <- rownames(Sigma) <- paste0('x', 1:ncol(Sigma)) # set row+colnames to make isSymmetric() work
 
-  if(type == 'compromise'){
+  ### compute mu
+  mu <- NULL
+  if(!is.null(tau)){
+    if(is.null(Beta)){
+      mu <- tau + Lambda %*% Alpha
+    }else{
+      mu <- tau + Lambda %*% invIB %*% Alpha
+    }
+    names(mu) <- paste0('x', 1:length(mu))
+  }
+  
+  # also provide several lav model strings
+  modelStrings <- genModelString(Lambda = Lambda,
+                                 Phi = Phi, Beta = Beta, Psi = Psi, Theta = Theta,
+                                 tau = tau, Alpha = Alpha,
+                                 useReferenceIndicator = ifelse(is.null(args[['useReferenceIndicator']]), !is.null(Beta), args[['useReferenceIndicator']]), 
+                                 metricInvariance = args[['metricInvariance']], 
+                                 nGroups = args[['nGroups']])
 
-    ifelse(!is.list(result$N), 
-           rows <- c('df','Num Observations', 'Desired Alpha/Beta Ratio', '', 'Critical Chi-Square'), 
-           rows <- c('df','Num Observations', ' ', 'Desired Alpha/Beta Ratio', '', 'Critical Chi-Square')
-           )
-    body <- data.frame(rows)
+  append(
+    list(Sigma = Sigma, 
+       mu = mu,
+       Lambda = Lambda, 
+       Phi = Phi,
+       Beta = Beta, 
+       Psi = Psi,
+       Theta = Theta,
+       tau = tau,
+       Alpha = Alpha),
+    modelStrings
+    )
+}
+
+#' genLambda
+#'
+#' Generate a loading matrix Lambda from various shortcuts, each assuming a simple structure. 
+#' Either define `loadings`, or define `nIndicator` and `loadM` (and optionally `loadSD`), or define
+#' `nIndicator` and `loadMinMax`.
+#' 
+#' @param loadings A list providing the loadings by factor, e. g. `list(c(.4, .5, .6), c(7, .8, .8))` to define two factors with three indicators each with the specified loadings. The vectors must not contain secondary loadings.    
+#' @param nIndicator Vector indicating the number of indicators for each factor, e. g. `c(4, 6)` to define two factors with 4 and 6 indicators, respectively 
+#' @param loadM Either a vector giving the mean loadings for each factor or a single number to use for every loading.
+#' @param loadSD Either a vector giving the standard deviation of loadings for each factor or a single number, for use in conjunction with `loadM`. If `NULL`, SDs are set to zero. Otherwise, loadings are sampled from a normal distribution.
+#' @param loadMinMax A list giving the minimum and maximum loading for each factor or a vector to apply to all factors. If set, loadings are sampled from a uniform distribution.
+#' @return The loading matrix Lambda.
+#' @importFrom stats rnorm runif 
+genLambda <- function(loadings = NULL, 
+                      nIndicator = NULL,
+                      loadM = NULL,
+                      loadSD = NULL,
+                      loadMinMax = NULL){
+
+  # validate input  
+  if(!is.null(nIndicator) && !is.null(loadings)) stop('Either provide loadings or number of indicators, but not both.')
+  if(is.null(nIndicator) && !(is.null(loadM) || is.null(loadMinMax))) stop('Provide both loadings (loadM) and number of indicators (nIndicator) by factor.')
+  if(is.null(nIndicator) && !is.list(loadings)) stop('loadings must be a list')
+  nfac <- ifelse(is.null(loadings), length(nIndicator), length(loadings))
+  if(is.null(loadings)){
+    if(any(!sapply(nIndicator, function(x) x %% 1 == 0))) stop('Number of indicators must be a integer')
+    invisible(sapply(nIndicator, function(x) checkBounded(x, 'Number of indicators ', bound = c(1, 10000), inclusive = TRUE)))
+    if(is.null(loadM) && is.null(loadMinMax)) stop('Either mean loading or min-max loading need to be defined')
+    if(is.null(loadMinMax) && length(loadM) == 1) loadM <- rep(loadM, nfac)
+    if(is.null(loadMinMax) && length(loadM) != nfac) stop('Nindicator and mean loading must of same size')
     
-    if(!result$bPrecisionWarning){
-      sChiCrit <- substr(formatC(result$chiCrit, format = 'f', digits = digits), 1, digits + 2)
+    if(!is.null(loadMinMax) && (!is.null(loadM) || !is.null(loadSD))) stop('Either specify mean and SD of loadings or specify min-max loading, both not both.')
+    if(length(loadMinMax) == 2) loadMinMax <- lapply(1:nfac, function(x) loadMinMax)
+    if(is.null(loadMinMax) && is.null(loadSD)) loadSD <- rep(0, nfac)
+    if(is.null(loadMinMax) && length(loadSD) == 1) loadSD <- rep(loadSD,nfac)
+    if(is.null(loadMinMax) && !is.null(loadSD)) invisible(sapply(loadSD, function(x) checkBounded(x, 'Standard deviations', bound = c(0, .5), inclusive = TRUE)))
+  }else{
+    nIndicator <- unlist(lapply(loadings, length))  # crossloadings are disallowed
+  }  
+
+  Lambda <- matrix(0, ncol = nfac, nrow = sum(nIndicator))
+  sidx <- 1
+  for(f in 1:nfac){
+    eidx <- sidx + (nIndicator[f] - 1)
+    if(!is.null(loadM)){
+      cload <- round(rnorm(nIndicator[f], loadM[f], loadSD[f]), 2)
+      if(any(cload < -1) || any(cload > 1)) warning('Sampled loadings outside [-1, 1] were set to -1 or 1.')
+      cload[cload < -1] <- -1
+      cload[cload > 1] <- 1
+    }else if(!is.null(loadMinMax)){
+      cload <- round(runif(nIndicator[f], loadMinMax[[f]][1], loadMinMax[[f]][2]), 2)
+    }else if(!is.null(loadings)){
+      cload <- loadings[[f]]  # loadings only contains primary loadings
     }else{
-      smax <- substr(formatC(result$max, format = 'f', digits = digits), 1, digits + 2)
-      smin <- substr(formatC(result$min, format = 'f', digits = digits), 1, digits + 2)
-      sChiCrit <- paste(smax,'< Chi-Square < ', smin)
+      stop('loading not found')  
     }
-    if(!is.list(result$N)){
-      body$values <- c(result$df, result$N, 
-                       formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
+    Lambda[sidx:eidx, f] <- cload
+    sidx <- eidx + 1
+  } 
+  
+  Lambda
+}
+
+#' genModelString
+#'
+#' Creates `lavaan` model strings from model matrices.
+#' 
+#' @param Lambda Factor loading matrix. 
+#' @param Phi Factor correlation (or covariance) matrix. If `NULL`, all factors are orthogonal.
+#' @param Beta Regression slopes between latent variables (all-y notation). 
+#' @param Psi Variance-covariance matrix of latent residuals when `Beta` is specified. If `NULL`, a diagonal matrix is assumed. 
+#' @param Theta Variance-covariance matrix of manifest residuals. If `NULL` and `Lambda` is not a square matrix, `Theta` is diagonal so that the manifest variances are 1. If `NULL` and `Lambda` is square, `Theta` is 0.      
+#' @param tau Intercepts. If `NULL` and`` Alpha`` is set, these are assumed to be zero. 
+#' @param Alpha Factor means. If `NULL` and `tau` is set, these are assumed to be zero. 
+#' @param useReferenceIndicator Whether to identify factors in accompanying model strings by a reference indicator (`TRUE`) or by setting their variance to 1 (`FALSE`). When `Beta` is defined, a reference indicator is used by default, otherwise the variance approach. 
+#' @param metricInvariance A list containing the factor indices for which the accompanying model strings should apply metric invariance labels, e.g. `list(c(1, 2), c(3, 4))` to assume invariance for f1 and f2 as well as f3 and f4.  
+#' @param nGroups (defaults to 1) If > 1 and `metricInvariance = TRUE`, group specific labels will be used in the measurement model.
+#' @return A list containing the following `lavaan` model strings:
+#' \item{`modelPop`}{population model}
+#' \item{`modelTrue`}{"true" analysis model freely estimating all non-zero parameters.}
+#' \item{`modelTrueCFA`}{similar to `modelTrue`, but purely CFA based and thus omitting any regression relationships.}
+genModelString <- function(Lambda = NULL,
+                           Phi = NULL,
+                           Beta = NULL,  # capital Beta, to distinguish from beta error
+                           Psi = NULL,
+                           Theta = NULL,
+                           tau = NULL,
+                           Alpha = NULL,  # capital Alpha, to distinguish from alpha error
+                           useReferenceIndicator = !is.null(Beta),
+                           metricInvariance = NULL, 
+                           nGroups = 1){
+
+  nfac <- ncol(Lambda)
+  nIndicator <- apply(Lambda, 2, function(x) sum(x != 0))
+  
+  # validate input
+  if(!is.null(metricInvariance)){
+    if(!is.list(metricInvariance)) stop('metricInvariance must be a list')
+    if(any(unlist(lapply(metricInvariance, function(x) length(x))) < 2)) stop('each list entry in metricInvariance must involve at least two factors')
+    if(max(unlist(metricInvariance)) > nfac || min(unlist(metricInvariance)) <= 0) stop('factor index < 1 or > nfactors in metricInvariance')
+    if(any(unlist(lapply(metricInvariance, function(x) length(unique(nIndicator[x])) > 1)))) stop('factors in metricInvariance must have the same number of indicators')
+    metricInvarianceLabels <- lapply(1:length(metricInvariance), function(x) paste0('l', formatC(x, width = 2, flag = 0), formatC(1:nIndicator[metricInvariance[[x]][1]], width = 2, flag = 0), '*')) 
+    if(!is.null(nGroups) && nGroups > 1){
+      metricInvarianceLabels <- lapply(metricInvarianceLabels, function(x) unlist(lapply(x, function(y) paste0('c(', paste0(substr(y, 1, nchar(y) - 1), '_g', seq(nGroups), collapse = ','), ')*'))))
+    }
+  }
+  
+  # remove names if set. we currently don't support labels anyway
+  # and this causes issues later in building the model strings
+  rownames(Lambda) <- colnames(Lambda) <- NULL  
+  rownames(Theta) <- colnames(Theta) <- NULL  
+  rownames(Phi) <- colnames(Phi) <- NULL  
+  rownames(Beta) <- colnames(Beta) <- NULL  
+  rownames(Psi) <- colnames(Psi) <- NULL  
+  names(tau) <- NULL
+  names(Alpha) <- NULL
+  
+  # create lav population model string
+  tok <- list()
+  for(f in 1:ncol(Lambda)){
+    iIdx <- which(Lambda[, f] != 0)
+    if(length(iIdx) > 0){
+      cload <- Lambda[iIdx, f]
+      tok <- append(tok, paste0('f', f, ' =~ ', paste0(cload, '*', paste0('x', iIdx), collapse = ' + ')))
+    }
+    if(!is.null(Phi)){
+      tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, f],'*', 'f', f))
     }else{
-      body$values <- c(result$df, sum(unlist(result$N)), paste0('(', paste(result$N, collapse = ', '), ')'), 
-                       formatC(result$desiredAbratio, format = 'f', digits = digits), '', sChiCrit)
+      tok <- append(tok, paste0('f', f, ' ~~ ', Psi[f, f],'*', 'f', f))
     }
-
-    rows <- c('Implied Alpha', 'Implied Beta', 'Implied Power (1-beta)', 'Actual Alpha/Beta Ratio')
-    foot <- data.frame(rows)
-    v <- c(result$impliedAlpha, result$impliedBeta, result$impliedPower, result$impliedAbratio)
-    # determine whether to use float or scientific number format
-    v.f <- rep('f', length(v))
-    v.f[v < 1e-5 | v > 1e5] <- 'e'
-    foot$values <- sapply(seq_along(v), function(y, z, i) {formatC(x = v[i], format = v.f[i], digits = digits)}, y = v, z = v.f)
-
-    # manually correct some quirks
-    if(result$impliedBeta < 1e-5){
-      foot$values[foot$rows == 'Implied Power (1-beta)'] <- '> 0.9999'
+  }
+  # manifest residuals
+  for(i in 1:nrow(Lambda)){
+    tok <- append(tok, paste0(paste0('x', i), ' ~~ ', Theta[i, i], '*', paste0('x', i), collapse = '\n'))
+  }
+  # define factor cor / residual cor / regressions
+  if(nfac > 1){
+    if(!is.null(Phi)){
+      for(f in 1:(nfac - 1)){
+        for(ff in (f + 1):nfac){
+          tok <- append(tok, paste0('f', f, ' ~~ ', Phi[f, ff], '*f', ff))
+        }
+      }
+    }else{
+      # regressions
+      for(f in 1:ncol(Beta)){
+        idx <- which(Beta[f, ] != 0)
+        if(!identical(idx, integer(0)))
+          tok <- append(tok, paste0('f', f, ' ~ ', paste0(Beta[f, idx], '*f', idx, collapse = '+'))) 
+      }
+      # (residual) correlations
+      for(f in 1:(nfac - 1)){
+        for(ff in (f + 1):nfac){
+          if(Psi[f, ff] != 0)
+            tok <- append(tok, paste0('f', f, ' ~~ ', Psi[f, ff], '*f', ff))
+        }
+      }
     }
-    if(result$bPrecisionWarning){
-      foot$values[foot$rows == 'Implied Beta'] <- '< 1.00e-240'
-      foot$values[foot$rows == 'Implied Alpha'] <- '< 1.00e-320'
-      foot$values[foot$rows == 'Actual Alpha/Beta Ratio'] <- ' '
+  }
+  # add means
+  if(!is.null(tau)){
+    tok <- append(tok, paste0(paste0('x', 1:nrow(Lambda)), ' ~ ', tau, '*1', collapse = '\n'))
+  }
+  if(!is.null(Alpha)){
+    tok <- append(tok, paste0(paste0('f', 1:ncol(Lambda)), ' ~ ', Alpha, '*1', collapse = '\n'))
+  }
+  
+  modelPop <- paste(unlist(tok), collapse = '\n')
+  
+  # build analysis models strings, one pure cfa based, and one including regression relationships 
+  tok <- list()
+  for(f in 1:ncol(Lambda)){
+    iIdx <- which(Lambda[, f] != 0)   # use any non-zero loading as indicator
+    if(length(iIdx) > 0){
+      # add invariance constraints
+      if(any(unlist(lapply(metricInvariance, function(x) f %in% x)))){
+        labelIdx <- which(unlist(lapply(metricInvariance, function(x) f %in% x)))
+        clabel <- metricInvarianceLabels[[labelIdx]]
+        if(useReferenceIndicator){
+          # scale by first loading instead of 1
+          tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*x', iIdx[1], ' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
+        }else{
+          tok <- append(tok, paste0('f', f, ' =~ NA*x', iIdx[1],' + ', paste0(clabel, 'x', iIdx, collapse = ' + ')))
+        }
+      }else{
+        if(useReferenceIndicator){
+          # scale by first loading instead of 1
+          tok <- append(tok, paste0('f', f, ' =~ ', Lambda[iIdx[1], f], '*', paste0('x', iIdx, collapse = ' + ')))
+        }else{
+          tok <- append(tok, paste0('f', f, ' =~ NA*', paste0('x', iIdx, collapse = ' + ')))
+        }
+      }
     }
+  }
+  modelTrueCFA <- paste(c(unlist(tok)), collapse = '\n')
+  if(!is.null(Beta)){
+    # regressions
+    for(f in 1:ncol(Beta)){
+      idx <- which(Beta[f, ] != 0)
+      if(!identical(idx, integer(0)))
+        tok <- append(tok, paste0('f', f, ' ~ ', paste0('f', idx, collapse = '+'))) 
+    }
+    # (residual) correlations
+    for(f in 1:(nfac - 1)){
+      for(ff in (f + 1):nfac){
+        if(Psi[f, ff] != 0)
+          tok <- append(tok, paste0('f', f, ' ~~ f', ff))
+      }
+    }
+  }
+  modelTrue <- paste(c(unlist(tok)), collapse = '\n')
+  if(!useReferenceIndicator){
+    fvars <- sapply(1:nfac, function(f) paste0('f', f, ' ~~ 1*f', f))
+    # factor variances are always 1, regardless of phi
+    modelTrue <- paste(c(modelTrue, fvars), collapse = '\n')
+    modelTrueCFA <- paste(c(modelTrueCFA, fvars), collapse = '\n')
+  }
+  
+  list(modelPop = modelPop, modelTrue = modelTrue, modelTrueCFA = modelTrueCFA)
+}
 
-    out <- rbind(head, body, foot)
-    rownames(out) <- colnames(out) <- NULL
 
+#' getPhi.B
+#'
+#' Computes implied correlations (completely standardized) from Beta matrix, disallowing recursive paths.
+#' 
+#' @param B matrix of regression coefficients (all-y notation). Must only contain non-zero lower-triangular elements, so the first row only includes zeros. 
+#' @param lPsi (lesser) matrix of residual correlations. This is not the Psi matrix, but a lesser version ignoring all variances and containing correlations off the diagonal. Can be omitted for no correlations beyond those implied by B. 
+#' @return Returns the implied correlation matrix
+#' @examples
+#' \dontrun{
+#' # mediation model
+#' B <- matrix(c(
+#'   c(.00, .00, .00),
+#'   c(.10, .00, .00),
+#'   c(.20, .30, .00)
+#' ), byrow = TRUE, ncol = 3)
+#' Phi <- getPhi.B(B)
+#' 
+#' # CLPM with residual correlations 
+#' B <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.30, .00, .00, .00),
+#'   c(.70, .10, .00, .00),
+#'   c(.20, .70, .00, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' lPsi <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.00, .00, .00, .00),
+#'   c(.00, .00, .00, .30),
+#'   c(.00, .00, .30, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' Phi <- getPhi.B(B, lPsi)
+#' }
+getPhi.B <- function(B, lPsi = NULL){
+  
+  checkSquare(B)
+  if(any(diag(B) != 0)) stop('Beta may only have zeros on the diagonal.')
+  if(any(B[upper.tri(B)] != 0) && any(B[lower.tri(B)] != 0)) stop('Beta may not contain non-zero elements both above and below the diagonal.')  
+  if(!is.null(lPsi)){
+    checkSymmetricSquare(lPsi)
+    if(ncol(lPsi) != ncol(B)) stop('lPsi must be of same dimension as Beta.')
+    invisible(lapply(lPsi, function(x) lapply(x, function(x) checkBounded(x, 'All elements in lPsi', bound = c(-1, 1), inclusive = TRUE))))
+  }else{
+    lPsi <- diag(ncol(B))
+  }
+  
+  # make sure exog come first and use lower tri only by switching order of B if necessary
+  revert <- FALSE
+  if(any(B[upper.tri(B)] != 0) && all(B[lower.tri(B)] == 0)){
+    revert <- TRUE
+    B <- B[nrow(B):1, ncol(B):1]  # this is different from t(B)
+    lPsi <- lPsi[nrow(lPsi):1, ncol(lPsi):1]
+  } 
+  
+  ### this doesnt work for endogenous -> endogenous
+  ### expVar <- B %*% lPsi %*% t(B)
+  ### to obtain Phi in std metric, exploit the structure of B to build Phi recursively
+  ### there must be a simpler way to do this...
+  Phi <- diag(ncol(B)) 
+  exog <- which(apply(B, 1, function(x) all(x == 0)))
+  endog <- seq(ncol(B))[-exog]
 
+  # add exog - exog correlations
+  if(!is.null(lPsi) && length(exog) > 1){
+    for(i in 1:(length(exog) - 1)){
+      for(j in (i + 1):length(exog)){
+        Phi[exog[i], exog[j]] <- Phi[exog[j], exog[i]] <- lPsi[exog[i], exog[j]]
+      }
+    }
   }
 
-  out
+  for(i in min(endog):max(endog)){   # we also want everything in between
+    # correlations for exog-endog that were missed in previous passes because exog comes after endog 
+    if(i %in% exog){
+      if(any(lPsi[i, seq(i-1)] > 0)){
+        prevEnd <- endog[endog < i]
+        for(j in prevEnd){
+          cB <- matrix(c(B[j, seq(j - 1)], 0))
+          predR <- Phi[c(seq(j - 1), i), c(seq(j - 1), i)]
+          cR <- (predR %*% cB)
+          Phi[i, j] <- Phi[j, i] <- cR[length(cR)]
+        }
+      }
+    # correlations involving endogenous variables  
+    }else{
+      cPred <- seq(i - 1)
+      cB <- matrix(B[i, cPred])
+      predR <- Phi[cPred, cPred]
+      cR <- (predR %*% cB)
+      # add residual covariances
+      if(any(lPsi[i, cPred] != 0)){
+        ccPhi <- rbind(predR, t(cR))
+        ccPhi <- cbind(ccPhi, t(t(c((cR), 1))))
+        cB <- B[1:i, 1:i]
+        # we can do this here because all predictors are exog as Phi is used
+        r2 <- diag(cB %*% ccPhi %*% t(cB))
+        D <- diag(sqrt(1 - r2)) 
+        newR <- ccPhi + D %*% lPsi[1:i, 1:i] %*% t(D)
+        cR <- newR[i, cPred]
+      }
+      Phi[i, cPred] <- t(cR)
+      Phi[cPred, i] <- cR  
+    }
+  }
+  if(revert){
+    Phi <- Phi[nrow(Phi):1, ncol(Phi):1]
+  }
+  
+  if(any(abs(Phi) > 1)) warning('Beta implies correlations > 1. Make sure that sum of squared slopes is smaller than 1.')
+
+  checkPositiveDefinite(Phi, stop = FALSE)
+  
+  Phi
+}
+
+#' getPsi.B
+#'
+#' Computes the implied Psi matrix from Beta, when all coefficients in Beta should be standardized. 
+#' 
+#' @param B matrix of regression coefficients (all-y notation). May only contain non-zero values either above or below the diagonal.
+#' @param sPsi matrix of (residual) correlations/covariances. This is not the Psi matrix, but defines the desired correlations/covariances beyond those implied by B. Can be NULL for no correlations. Standardized and unstandardized residual covariances (between endogenous variables) cannot have the same value, so `standResCov` defines whether to treat these as unstandardized or as standardized.
+#' @param standResCov whether elements in `sPsi` referring to residual covariances (between endogenous variables) shall treated as correlation or as covariance.
+#' @return Psi
+#' @examples
+#' \dontrun{
+#' # mediation model
+#' B <- matrix(c(
+#'   c(.00, .00, .00),
+#'   c(.10, .00, .00),
+#'   c(.20, .30, .00)
+#' ), byrow = TRUE, ncol = 3)
+#' Psi <- getPsi.B(B)
+#' 
+#' # CLPM with residual correlations 
+#' B <- matrix(c(
+#'   c(.00, .00, .00, .00),
+#'   c(.30, .00, .00, .00),
+#'   c(.70, .10, .00, .00),
+#'   c(.20, .70, .00, .00)
+#' ), byrow = TRUE, ncol = 4)
+#' sPsi <- matrix(c(
+#'   c(1, .00, .00, .00),
+#'   c(.00, 1, .00, .00),
+#'   c(.00, .00, 1, .30),
+#'   c(.00, .00, .30, 1)
+#' ), byrow = TRUE, ncol = 4)
+#' # so that residual cor is std
+#' Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
+#' # so that residual cor is unsstd
+#' Psi <- getPsi.B(B, sPsi, standResCov = FALSE)
+#' }
+getPsi.B <- function(B, sPsi = NULL, standResCov = TRUE){
+  
+  if(is.null(sPsi)) sPsi <- diag(ncol(B))
+  
+  ### this doesnt work for endogenous -> endogenous
+  ### expVar <- B %*% sPsi %*% t(B)
+  ### so compute phi and determine correct residual variances from phi.
+  Phi <- getPhi.B(B, sPsi)
+
+  # determine r-squared
+  r2 <- diag(B %*% Phi %*% t(B))
+  Psi <- diag(1 - r2)
+  
+  # handle case of dummy factors with zero variance
+  if(any(diag(sPsi) == 0)){
+    diag(Psi)[diag(sPsi) == 0] <- 0
+  }
+  
+  if(any(diag(Psi) < 0)) stop('Beta implies negative residual variances. Make sure that sum of squared slopes is smaller than 1.')
+  
+  ### std and unstd residual covariance cannot be identical (when B is std)
+  # approach 1: interpret resid cov given in sPsi as unstd (so that std differs)
+  if(!standResCov){
+    Psi[row(Psi) != col(Psi)] <- sPsi[row(sPsi) != col(sPsi)]
+  # approach 2: interpret resid cov given in sPsi as std (so that unstd differs)
+  }else{
+    D <- diag(sqrt(diag(Psi)))
+    Psi <- D %*% sPsi %*% D
+  }
+
+  checkPositiveDefinite(Psi, stop = FALSE)
+  
+  Psi
+}
+
+#' semPower.getDf
+#'
+#' Determines the degrees of freedom of a given model provided as `lavaan` model string. This only returns the regular df and does not account for approaches using scaled df.
+#' This requires the `lavaan` package.
+#' 
+#' @param lavModel the `lavaan` model string. Can also include (restrictions on) defined parameters.
+#' @param nGroups for multigroup models: the number of groups.
+#' @param group.equal for multigroup models: vector defining the type(s) of cross-group equality constraints following the `lavaan` conventions (`loadings`, `intercepts`, `means`, `residuals`, `residual.covariances`, `lv.variances`, `lv.covariances`, `regressions`).
+#' @return Returns the df of the model.
+#' @examples
+#' \dontrun{
+#' lavModel <- '
+#' f1 =~ x1 + x2 + x3 + x4
+#' f2 =~ x5 + x6 + x7 + x8
+#' f3 =~ y1 + y2 + y3
+#' f3 ~ f1 + f2
+#' '
+#' semPower.getDf(lavModel)
+#' 
+#' # multigroup version
+#' semPower.getDf(lavModel, nGroups = 3)  
+#' semPower.getDf(lavModel, nGroups = 3, group.equal = c('loadings'))
+#' semPower.getDf(lavModel, nGroups = 3, group.equal = c('loadings', 'intercepts'))
+#' }
+#' @importFrom utils installed.packages
+#' @export
+semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
+  # check whether lavaan is available
+  if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
+  
+  # Fit model to dummy covariance matrix instead of counting parameters. 
+  # This should also account for parameter restrictions and other intricacies
+  # Model fitting will give warnings we just can ignore
+  tryCatch({
+    params <- lavaan::sem(lavModel)
+    dummyS <- diag(params@Model@nvar)
+    rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
+    if(is.null(nGroups) || nGroups == 1){
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = FALSE))
+    }else{
+      if(is.null(group.equal)){
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = FALSE))
+      }else{
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE))
+      }
+    }
+    df <- dummyFit@test[['standard']][['df']]
+    # the above can be NULL if lav encounters issues, so fall back in this case
+    if(is.null(df)){
+      df <- (params@Model@nvar*(params@Model@nvar + 1) / 2) - dummyFit@loglik$npar
+    }
+    df
+  }, 
+  warning = function(w){
+    warning(w)
+  }, 
+  error = function(e){
+    stop(e)
+  }
+  )
+}
+
+#' getLavOptions
+#'
+#' returns `lavaan` options including defaults as set in `sem()` as a list to be passed to `lavaan()` 
+#' 
+#' @param lavOptions additional options to be added to (or overwriting) the defaults  
+#' @param isCovarianceMatrix if `TRUE`, also adds `sample.nobs = 1000` and `sample.cov.rescale = FALSE` to `lavoptions` 
+#' @param nGroups the number of groups, 1 by default
+#' @return a list of `lavaan` defaults
+getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups = 1){
+  # defaults as defined in lavaan::sem()
+  lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
+                             auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
+                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE) 
+  
+  # we also want N - 1 for ml based estm
+  if(is.null(lavOptions[['estimator']]) || 
+     (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% c("ML", "MLM", "MLMV", "MLMVS", "MLF", "MLR")))
+    lavOptionsDefaults <- append(list(likelihood = 'Wishart'), lavOptionsDefaults)
+  
+  if(isCovarianceMatrix){
+    ns <- 1000
+    if(nGroups > 1) ns <- as.list(rep(1000, nGroups))
+    lavOptionsDefaults <- append(list(sample.nobs = ns, sample.cov.rescale = FALSE), 
+                                 lavOptionsDefaults)
+  }
+
+  # append lavoptions to defaults, overwriting any duplicate key
+  lavOptions <- append(lavOptions, lavOptionsDefaults)[!duplicated(c(names(lavOptions), names(lavOptionsDefaults)))]
+  
+  lavOptions
+}
+
+#' orderLavResults
+#'
+#' returns `lavaan` implied covariance matrix or mean vector in correct order.
+#' 
+#' @param lavCov model implied covariance matrix  
+#' @param lavMu model implied means 
+#' @return either cov or mu in correct order
+orderLavResults <- function(lavCov = NULL, lavMu = NULL){
+  if(!is.null(lavCov)){
+    cn <- colnames(lavCov)
+    cno <- cn[order(nchar(cn), cn)]
+    lavCov[cno, cno]
+  }else if(!is.null(lavMu)){
+    cn <- names(lavMu)
+    cno <- cn[order(nchar(cn), cn)]
+    lavMu[cno]
+  }else{
+    NULL
+  }
+}
+
+#' orderLavCov
+#'
+#' returns `lavaan` implied covariance matrix in correct order.
+#' 
+#' @param lavCov model implied covariance matrix  
+#' @return cov in correct order
+orderLavCov <- function(lavCov = NULL){
+  orderLavResults(lavCov = lavCov)
+}
+
+
+#' getKSdistance
+#'
+#' computes average absulute KS-distance between empirical and asympotic chi-square reference distribution.
+#' 
+#' @param chi empirical distribution  
+#' @param df df of reference distribution  
+#' @param ncp ncp of reference distribution  
+#' @return average absolute distance
+#' @importFrom stats ecdf pchisq
+getKSdistance <- function(chi, df, ncp = 0){
+  sChi <- sort(chi)
+  cdfChi <- ecdf(sChi)(sChi)
+  pChi <- sapply(sChi, FUN = pchisq, df = df, ncp = ncp)
+  ks1 <- abs(pChi - cdfChi)
+  ks2 <- abs(pChi - c(0, cdfChi[-length(cdfChi)]))
+  mean(c(mean(ks1), mean(ks2)))
+}
+
+
+#' orderLavMu
+#'
+#' returns `lavaan` implied means in correct order.
+#' 
+#' @param lavMu model implied means 
+#' @return mu in correct order
+orderLavMu <- function(lavMu = NULL){
+  orderLavResults(lavMu = lavMu)
+}
+
+#' makeRestrictionsLavFriendly
+#'
+#' This function is currently orphaned, but we keep it just in case.
+#' 
+#' This function transforms a `lavaan` model string into a model string that works reliably
+#' when both equality constrains and value constrains are imposed on the same parameters.
+#' `lavaan` cannot reliably handle this case, e. g., `"a == b \\n a == 0"` will not always work. 
+#' The solution is to drop the equality constraint and rather apply
+#' the value constraint on each equality constrained parameter, e. g. `"a == 0 \n b == 0"` will work.
+#'  
+#' @param model `lavaan` model string
+#' @return model with  `lavaan`-friendly constrains
+makeRestrictionsLavFriendly <- function(model){
+  if(!grepl('==', model)) return(model)
+  
+  # determine which parameters are equal and which are constant
+  tok <- strsplit(model, '\\n')[[1]]
+  tok <- tok[nchar(tok) > 0 & !startsWith(tok, '#')]
+  parZero <- parEqual <- list()
+  for(i in seq_along(tok)){
+    if(grepl('==', tok[i])){
+      cp <- unlist(lapply(strsplit(tok[i], '==')[[1]], trimws))
+      ncp <- suppressWarnings(as.numeric(cp))
+      if(any(!is.na(ncp))){
+        cl <- list(cp[which(!is.na(ncp))])
+        names(cl) <- cp[which(is.na(ncp))]
+        parZero <- append(parZero, cl)
+      }else{
+        parPresent <- lapply(parEqual, function(x) cp %in% x)
+        if(length(parPresent) > 0) parPresent <- apply(do.call(rbind, parPresent), 2, any)
+        if(!any(parPresent)){
+          parEqual <- append(parEqual, list(cp))
+        }else{
+          idx <- lapply(parEqual, function(x) cp[parPresent] %in% x)
+          idx <- which(apply(do.call(cbind, idx), 2, any))
+          parEqual[[idx]] <- c(cp[!parPresent], parEqual[[idx]])
+        }
+      }
+    }
+  }
+
+  # replace equality and constant parameters by constant only
+  if(length(parEqual) > 0){
+    pIdx <- which(unlist(lapply(lapply(parEqual, function(x) x %in% names(parZero)), any)))
+    if(length(pIdx) > 0){
+      newRestr <- remParams <- list()
+      for(i in seq_along(pIdx)){
+        params <- parEqual[[pIdx[i]]]
+        remParams <- append(remParams, params)
+        val <- parZero[[which(names(parZero) %in% params)]]
+        newRestr <- append(newRestr, paste0(params, ' == ', val))
+      }
+      
+      # remove offending equality constrained and constant parameters
+      mod <- lapply(tok, function(x){
+        if(grepl('==', x)){
+          cp <- unlist(lapply(strsplit(x, '==')[[1]], trimws))
+          if(!any(unlist(lapply(cp, function(x) x %in% unlist(remParams))))) 
+            x  # only return if not found
+        }else{
+          x
+        }
+      })
+      mod <- mod[nchar(mod) > 0]
+      
+      # now add proper constant constrains
+      model <- paste(c(unlist(mod), newRestr), collapse = '\n')
+    } 
+  }
+  model
 }

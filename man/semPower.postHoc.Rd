@@ -9,44 +9,96 @@ semPower.postHoc(
   effect.measure = NULL,
   alpha,
   N,
-  df,
+  df = NULL,
   p = NULL,
   SigmaHat = NULL,
-  Sigma = NULL
+  Sigma = NULL,
+  muHat = NULL,
+  mu = NULL,
+  simulatedPower = FALSE,
+  modelH0 = NULL,
+  modelH1 = NULL,
+  simOptions = NULL,
+  lavOptions = NULL,
+  lavOptionsH1 = lavOptions,
+  ...
 )
 }
 \arguments{
-\item{effect}{effect size specifying the discrepancy between H0 and H1 (a list for multiple group models)}
+\item{effect}{effect size specifying the discrepancy between the null hypothesis (H0) and the alternative hypothesis (H1). A list for multiple group models; a vector of length 2 for effect-size differences. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
-\item{effect.measure}{type of effect, one of "F0", "RMSEA", "Mc", "GFI", AGFI"}
+\item{effect.measure}{type of effect, one of \code{"F0"}, \code{"RMSEA"}, \code{"Mc"}, \code{"GFI"}, \code{"AGFI"}. Can be \code{NULL} if \code{Sigma} and \code{SigmaHat} are set.}
 
 \item{alpha}{alpha error}
 
 \item{N}{the number of observations (a list for multiple group models)}
 
-\item{df}{the model degrees of freedom}
+\item{df}{the model degrees of freedom. See \code{\link[=semPower.getDf]{semPower.getDf()}} for a way to obtain the df of a specific model.}
 
-\item{p}{the number of observed variables, required for effect.measure = "GFI" and "AGFI"}
+\item{p}{the number of observed variables, only required for \code{effect.measure = "GFI"} and \code{effect.measure = "AGFI"}.}
 
-\item{SigmaHat}{model implied covariance matrix (a list for multiple group models). Use in conjuntion with Sigma to define effect and effect.measure.}
+\item{SigmaHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied covariance matrix (a list for multiple group models). Used in conjunction with \code{Sigma} to define the effect.}
 
-\item{Sigma}{population covariance matrix (a list for multiple group models). Use in conjuntion with SigmaHat to define effect and effect.measure.}
+\item{Sigma}{can be used instead of \code{effect} and \code{effect.measure}: population covariance matrix (a list for multiple group models). Used in conjunction with \code{SigmaHat} to define effect.}
+
+\item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
+
+\item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
+
+\item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. Only available if \code{Sigma} and \code{modelH0} are defined.}
+
+\item{modelH0}{for simulated power: \code{lavaan} model string defining the (incorrect) analysis model.}
+
+\item{modelH1}{for simulated power: \code{lavaan} model string defining the comparison model. If omitted, the saturated model is the comparison model.}
+
+\item{simOptions}{a list of additional options specifying simulation details, see \code{\link[=simulate]{simulate()}} for details.}
+
+\item{lavOptions}{a list of additional options passed to \code{lavaan}, e. g., \code{list(estimator = 'mlm')} to request robust ML estimation.}
+
+\item{lavOptionsH1}{alternative options passed to \code{lavaan} that are only used for the H1 model. If \code{NULL}, identical to \code{lavOptions}. Probably only useful for multigroup models.}
+
+\item{...}{other parameters related to plots, notably \code{plotShow}, \code{plotShowLabels}, and \code{plotLinewidth}.}
 }
 \value{
-list
+Returns a list. Use \code{summary()} to obtain formatted results.
 }
 \description{
-Determine power (1-beta) given alpha, df, and effect
+Performs a post-hoc power analysis, i. e., determines power (= 1 - beta) given alpha, df, and and a measure of effect.
 }
 \examples{
 \dontrun{
-power <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", alpha = .05, N = 250, df = 200)
-summary(power)
-power <- semPower.postHoc(effect = list(.02, .01), effect.measure = "F0", 
-                          alpha = .05, N = list(250, 350), df = 200)
-summary(power)
-power <- semPower.postHoc(N = 1000, df = 5, alpha = .05,  
-                          SigmaHat = diag(4), Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
-summary(power)
+# achieved power with a sample of N = 250 to detect misspecifications corresponding
+# to RMSEA >= .05 on 200 df on alpha = .05.
+ph <- semPower.postHoc(effect = .05, effect.measure = "RMSEA", 
+                       alpha = .05, N = 250, df = 200)
+summary(ph)
+
+# power analysis for to detect the difference between a model (with df = 200) exhibiting RMSEA = .05
+# and a model (with df = 210) exhibiting RMSEA = .06.
+ph <- semPower.postHoc(effect = c(.05, .06), effect.measure = "RMSEA", 
+                       alpha = .05, N = 500, df = c(200, 210))
+summary(ph)
+
+# multigroup example
+ph <- semPower.postHoc(effect = list(.02, .01), effect.measure = "F0", 
+                        alpha = .05, N = list(250, 350), df = 200)
+summary(ph)
+
+# power analysis based on SigmaHat and Sigma (nonsense example)
+ph <- semPower.postHoc(alpha = .05, N = 1000, df = 5,  
+                       SigmaHat = diag(4), 
+                       Sigma = cov(matrix(rnorm(4*1000),  ncol=4)))
+summary(ph)
+
+# simulated power analysis (nonsense example)
+ph <- semPower.aPriori(alpha = .05, N = 500, df = 200,  
+                       SigmaHat = list(diag(4), diag(4)), 
+                       Sigma = list(cov(matrix(rnorm(4*1000), ncol=4)), 
+                                    cov(matrix(rnorm(4*1000), ncol=4))),
+                       simulatedPower = TRUE, nReplications = 100)
+summary(ph)
 }
+}
+\seealso{
+\code{\link[=semPower.aPriori]{semPower.aPriori()}} \code{\link[=semPower.compromise]{semPower.compromise()}}
 }
