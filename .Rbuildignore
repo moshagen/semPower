@@ -4,3 +4,4 @@
 ^\docs$
 ^\R\zUnitTests.R$
 ^doc$
+^Meta$
