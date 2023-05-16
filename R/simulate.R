@@ -201,7 +201,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # parallel
   if(nCores > 1){
     `%dofuture%` <- doFuture::`%dofuture%`
-    future::plan(future::multisession(workers = nCores))
+    future::plan(future::multisession, workers = nCores)
     progressr::with_progress({
       p <- progressr::progressor(along = seq(nReplications)) # progressbar
       res <- foreach::foreach(r = seq(nReplications), .options.future = list(seed = TRUE)) %dofuture% {

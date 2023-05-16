@@ -4723,7 +4723,7 @@ test_simulatePower <- function(doTest = TRUE){
                             modelH0 = modelH0, modelH1 = modelH1, Sigma = Sigma,
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 200, nCores = 8))
-  summary(phs3$power)
+  #summary(phs3)
   
   valid2 <- valid &&
     phs3$simDf - pha3$df == 0 &&
