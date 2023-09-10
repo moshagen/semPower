@@ -17,6 +17,7 @@ semPower.aPriori(
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  fittingFunction = "ML",
   simulatedPower = FALSE,
   modelH0 = NULL,
   modelH1 = NULL,
@@ -50,6 +51,8 @@ semPower.aPriori(
 \item{muHat}{can be used instead of \code{effect} and \code{effect.measure}: model implied mean vector. Used in conjunction with \code{mu}. If \code{NULL}, no meanstructure is involved.}
 
 \item{mu}{can be used instead of \code{effect} and \code{effect.measure}: observed (or population) mean vector. Use in conjunction with \code{muHat}. If \code{NULL}, no meanstructure is involved.}
+
+\item{fittingFunction}{one of \code{'ML'} (default), \code{'WLS'}, \code{'DWLS'}, \code{'ULS'}. Defines the discrepancy function used to obtain Fmin.}
 
 \item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. Only available if \code{Sigma} and \code{modelH0} are defined.}
 

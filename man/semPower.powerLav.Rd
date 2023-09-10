@@ -12,6 +12,7 @@ semPower.powerLav(
   fitH1model = TRUE,
   Sigma = NULL,
   mu = NULL,
+  fittingFunction = "ML",
   simulatedPower = FALSE,
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
@@ -32,6 +33,8 @@ semPower.powerLav(
 \item{Sigma}{can be used instead of \code{modelPop}: population covariance matrix. A list for multiple group models.}
 
 \item{mu}{can be used instead of \code{modelPop}: vector of population means. Can be omitted for no meanstructure. A list for multiple group models.}
+
+\item{fittingFunction}{one of \code{'ML'} (default), \code{'WLS'}, \code{'DWLS'}, \code{'ULS'}. Defines the fitting function used to obtain SigmaHat in analytical power analyses. This also implies a certain discrepancy function used to obtain Fmin.}
 
 \item{simulatedPower}{whether to perform a simulated (\code{TRUE}, rather than analytical, \code{FALSE}) power analysis. See \code{\link[=simulate]{simulate()}} for additional options.}
 

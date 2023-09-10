@@ -4,7 +4,7 @@
 \alias{getF.Sigma}
 \title{getF.Sigma}
 \usage{
-getF.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
+getF.Sigma(SigmaHat, S, muHat = NULL, mu = NULL, fittingFunction = "ML")
 }
 \arguments{
 \item{SigmaHat}{model implied covariance matrix}
@@ -14,12 +14,20 @@ getF.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{fittingFunction}{one of \code{ML} (default), \code{WLS}, \code{DWLS}, \code{ULS}}
 }
 \value{
 Returns Fmin
 }
 \description{
-Computes the minimum of the ML-fit-function given the model-implied and the observed (or population) covariance matrix:
+Computes the minimum of the chosen fitting-function given the model-implied and the observed (or population) covariance matrix.
+The ML fitting function is:
 \code{F_min = tr(S \%*\% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))}. When a meanstructure is included,
 \verb{(mu - muHat)' SigmaHat^-1 (mu - muHat)} is added.
+The WLS fitting function is:
+\verb{F_min = (Sij - SijHat)'  V  (Sij - SijHat)}
+where V is the inverse of N times the asymptotic covariance matrix of the sample statistics (Gamma; N x ACOV\link{ mu, vech(S) }).
+For DWLS, V is the diagonal of the inverse of diag(NACOV), i.e. diag(solve(diag(Gamma))).
+For ULS, V = I. ULS has an unknown asymptotic distribution, so it is actually irrelevant, but provided for the sake of completeness.
 }

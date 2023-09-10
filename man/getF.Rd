@@ -12,7 +12,8 @@ getF(
   SigmaHat = NULL,
   Sigma = NULL,
   muHat = NULL,
-  mu = NULL
+  mu = NULL,
+  fittingFunction = "ML"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ getF(
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{fittingFunction}{one of \code{ML} (default), \code{WLS}, \code{DWLS}, \code{ULS}}
 }
 \value{
 Returns Fmin

@@ -58,8 +58,9 @@ getChiSquare.F <- function(Fmin, n, df){
 #' @param Sigma observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param fittingFunction one of `ML` (default), `WLS`, `DWLS`, `ULS`
 #' @return Returns Fmin
-getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL){
+getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL, fittingFunction = 'ML'){
   fmin <- effect
   if(is.null(SigmaHat)){ # sufficient to check for on NULL matrix; primary validity check is in validateInput
     switch(effect.measure,
@@ -69,7 +70,7 @@ getF <- function(effect, effect.measure, df = NULL, p = NULL, SigmaHat = NULL, S
            "AGFI" = fmin <- getF.AGFI(effect, df, p)
     )
   }else{
-    fmin <- effect <- getF.Sigma(SigmaHat, Sigma, muHat, mu)
+    fmin <- effect <- getF.Sigma(SigmaHat, Sigma, muHat, mu, fittingFunction = fittingFunction)
   }
   fmin
 }
@@ -230,29 +231,80 @@ getAGFI.F <- function(Fmin, df, p){
 
 
 
-##########################  calculate Fmin RMSEA SRMR CFI from covariance matrix #####################
+##########################  compute Fmin RMSEA SRMR CFI from covariance matrix #####################
 
 
 #' getF.Sigma
 #'
-#' Computes the minimum of the ML-fit-function given the model-implied and the observed (or population) covariance matrix:
+#' Computes the minimum of the chosen fitting-function given the model-implied and the observed (or population) covariance matrix.
+#' The ML fitting function is:
 #' `F_min = tr(S %*% SigmaHat^-1) - p + ln(det(SigmaHat)) - ln(det(S))`. When a meanstructure is included, 
 #' `(mu - muHat)' SigmaHat^-1 (mu - muHat)` is added.
+#' The WLS fitting function is:
+#' `F_min = (Sij - SijHat)'  V  (Sij - SijHat)` 
+#' where V is the inverse of N times the asymptotic covariance matrix of the sample statistics (Gamma; N x ACOV[ mu, vech(S) ]). 
+#' For DWLS, V is the diagonal of the inverse of diag(NACOV), i.e. diag(solve(diag(Gamma))). 
+#' For ULS, V = I. ULS has an unknown asymptotic distribution, so it is actually irrelevant, but provided for the sake of completeness.
 #'
 #' @param SigmaHat model implied covariance matrix
 #' @param S observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param fittingFunction one of `ML` (default), `WLS`, `DWLS`, `ULS` 
 #' @return Returns Fmin
-getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
+getF.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL, fittingFunction = 'ML'){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
-  fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
-  if(!is.null(mu)){
-    fmean <- t(c(mu - muHat)) %*% solve(SigmaHat) %*% c(mu - muHat)
-    fmin <- fmin + fmean  
+  
+  if(fittingFunction == 'ML'){
+    fmin <- sum(diag(S %*% solve(SigmaHat))) + log(det(SigmaHat)) - log(det(S)) - ncol(S)
+    if(!is.null(mu)){
+      fmean <- t(c(mu - muHat)) %*% solve(SigmaHat) %*% c(mu - muHat)
+      fmin <- fmin + fmean  
+    }
+    
+  }else if(fittingFunction %in% c('WLS', 'ULS', 'DWLS')){
+    Sij <- S[row(S) >= col(S)] 
+    SijHat <- SigmaHat[row(SigmaHat) >= col(SigmaHat)]
+    if(!is.null(mu)){
+        Sij <- c(mu, Sij) 
+        SijHat <- c(muHat, SijHat)
+    }
+    diff <- (Sij - SijHat)
+    if(fittingFunction == 'WLS') fmin <- t(diff) %*% getWLSv(S, mu) %*% diff
+    if(fittingFunction == 'DWLS') fmin <- sum(diff^2 * getWLSv(S, mu, diag = TRUE))
+    if(fittingFunction == 'ULS') fmin <- sum(diff^2)
+    
+  }else{
+    stop('fittingFunction must be one of ML, WLS, DWLS, or ULS.')
   }
+  
   fmin
+}
+
+
+
+#' getWLSv
+#'
+#' Computes the WLS weight matrix as the asymptotic covariance matrix of the sample statistics 
+#'
+#' @param S observed (or population) covariance matrix
+#' @param mu observed (or population) mean vector
+#' @param diag weight matrix for DWLS
+#' @return Returns V
+getWLSv <- function(S, mu = NULL, diag = FALSE){
+  checkPositiveDefinite(S)
+  Sinv <- solve(S)
+  wlsV <- 0.5*lavaan::lav_matrix_duplication_pre_post(Sinv %x% Sinv)
+  if(!is.null(mu)){
+    wlsV <- lavaan::lav_matrix_bdiag(Sinv, wlsV)
+  }
+  if(diag){
+    dv <- diag(nrow(wlsV))
+    diag(dv) <- diag(solve(wlsV))
+    wlsV <- diag(solve(dv))
+  }
+  wlsV
 }
 
 #' getSRMR.Sigma
@@ -337,15 +389,16 @@ getSRMR.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
 #' @param S observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param fittingFunction whether to use `ML` or `WLS`
 #' @return Returns CFI
-getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
+getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL, fittingFunction = 'ML'){
   checkPositiveDefinite(SigmaHat)
   checkPositiveDefinite(S)
-  fm <- getF.Sigma(SigmaHat, S, muHat, mu)
+  fm <- getF.Sigma(SigmaHat, S, muHat, mu, fittingFunction = fittingFunction)
   SigmaHatNull <- diag(ncol(S))
   diag(SigmaHatNull) <- diag(S)
   muHatNull <- mu # as in mplus: baseline model has unrestricted means
-  f0 <- getF.Sigma(SigmaHatNull, S, muHatNull, mu)
+  f0 <- getF.Sigma(SigmaHatNull, S, muHatNull, mu, fittingFunction = fittingFunction)
   cfi <- (f0-fm)/f0
   cfi
 }
@@ -360,24 +413,25 @@ getCFI.Sigma <- function(SigmaHat, S, muHat = NULL, mu = NULL){
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
 #' @param N a list of group weights
+#' @param fittingFunction whether to use `ML` or `WLS`
 #' @return Returns CFI
-getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N){
+getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N, fittingFunction = 'ML'){
   N <- unlist(N)
   
   if(is.null(mu)){
-    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]])})
+    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]], fittingFunction = fittingFunction)})
     fnull.g <- sapply(seq_along(S), function(x){
       SigmaHatNull <- diag(ncol(S[[x]]))
       diag(SigmaHatNull) <- diag(S[[x]])
-      getF.Sigma(SigmaHatNull, S[[x]])
+      getF.Sigma(SigmaHatNull, S[[x]], fittingFunction = fittingFunction)
     })
   }else{
-    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]])})
+    fmin.g <- sapply(seq_along(S), function(x){getF.Sigma(SigmaHat[[x]], S[[x]], muHat[[x]], mu[[x]], fittingFunction = fittingFunction)})
     fnull.g <- sapply(seq_along(S), function(x){
       SigmaHatNull <- diag(ncol(S[[x]]))
       diag(SigmaHatNull) <- diag(S[[x]])
       muHatNull <- mu[[x]]   # as in mplus: baseline model has unrestricted means
-      getF.Sigma(SigmaHatNull, S[[x]], muHatNull[[x]], mu[[x]])
+      getF.Sigma(SigmaHatNull, S[[x]], muHatNull[[x]], mu[[x]], fittingFunction = fittingFunction)
     })
   }
   

@@ -805,6 +805,7 @@ test_genPsi <- function(){
   }
 }
 
+
 test_powerLav <- function(){
   mPop <- '
     f1 =~ .5*x1 + .6*x2 + .4*x3
@@ -849,7 +850,7 @@ test_powerLav <- function(){
     f1 ~~ 0*f2
     f1 ~~ 0*f3
   '
-        # modelh1 does not fit by design 
+  # modelh1 does not fit by design 
   ph2 <- suppressWarnings(semPower.powerLav(type = 'post-hoc',
                            modelPop = mPop, modelH0 = mAna2, modelH1 = mAna,
                            alpha = .05, N = 250))
@@ -1021,6 +1022,135 @@ test_multigroup <- function(){
     
   if(valid4){
     print('test_multigroup: OK')
+  }else{
+    warning('Invalid')
+  }
+}
+
+
+test_WLS <- function(doTest = TRUE){
+  if(!doTest){
+    print('test_WLS: NOT TESTED')
+    return()
+  }
+  
+  # should not make any difference, since computation of f does not involve fitting fnc
+  apML <- semPower(type='a-priori', effect = .05, 'RMSEA', 
+                   alpha = .05, beta = .05, df = 100)
+  phML <- semPower(type='post-hoc', apML$fmin, 'f0', 
+                   alpha = .05, N = apML$requiredN, df = 100)
+  apWLS <- semPower(type='a-priori', effect = .05, 'RMSEA', 
+                    alpha = .05, beta = .05, df = 100, 
+                    fittingFunction = 'WLS')
+  phWLS <- semPower(type='post-hoc', apWLS$fmin, 'f0', 
+                    alpha = .05, N = apWLS$requiredN, df = 100,
+                    fittingFunction = 'WLS')
+  
+  valid <- apML$fmin ==apWLS$fmin && phML$power == phWLS$power
+  
+  # should make a difference when f is computed from Sigmas
+  cfaML <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                          nullEffect = 'cor=0',
+                          nullWhich = c(1, 2),
+                          Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                          alpha = .05, N = 250)
+  
+  phML2 <- semPower(type='post-hoc', 
+                    Sigma = cfaML$Sigma, SigmaHat = cfaML$SigmaHat,
+                    alpha = .05, N = 250, df = 1)
+  phWLS2 <- semPower(type='post-hoc', 
+                     Sigma = cfaML$Sigma, SigmaHat = cfaML$SigmaHat,
+                     alpha = .05, N = 250, df = 1,
+                     fittingFunction = 'WLS')
+  phULS2 <- semPower(type='post-hoc', 
+                     Sigma = cfaML$Sigma, SigmaHat = cfaML$SigmaHat,
+                     alpha = .05, N = 250, df = 1,
+                     fittingFunction = 'ULS')
+  phDWLS2 <- semPower(type='post-hoc', 
+                     Sigma = cfaML$Sigma, SigmaHat = cfaML$SigmaHat,
+                     alpha = .05, N = 250, df = 1,
+                     fittingFunction = 'DWLS')
+  
+  valid2 <- valid &&
+    abs(phML2$fmin - phWLS2$fmin) > .0001 &&
+    abs(phML2$power - phWLS2$power) > .01 &&
+    abs(phML2$fmin - phULS2$fmin) > .001 &&
+    abs(phML2$fmin - phDWLS2$fmin) > .001
+    
+  # lavpower
+  cfaWLS <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                              nullEffect = 'cor=0',
+                              nullWhich = c(1, 2),
+                              Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                              alpha = .05, N = 250, 
+                              fittingFunction = 'WLS')
+  cfaDWLS <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                               nullEffect = 'cor=0',
+                               nullWhich = c(1, 2),
+                               Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                               alpha = .05, N = 250, 
+                               fittingFunction = 'DWLS')
+  cfaUWLS <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                               nullEffect = 'cor=0',
+                               nullWhich = c(1, 2),
+                               Phi = .2, nIndicator = c(5, 6), loadM = .5,
+                               alpha = .05, N = 250, 
+                               fittingFunction = 'ULS')
+  
+  # compare wls results with lav-wls
+  set.seed(300121)
+  dd <- genData.normal(100000, cfaWLS$Sigma)[[1]]
+  lavres <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'WLS')
+  lavres2 <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'DWLS')
+  lavres3 <- lavaan::sem(cfaWLS$modelH0, sample.cov = cfaWLS$Sigma, sample.nobs = 1000, 
+                         estimator = 'ULS', sample.cov.rescale = FALSE)
+
+  valid3 <- valid2 &&
+    abs(cfaML$fmin - cfaWLS$fmin) > .0001 &&
+    abs(cfaML$power - cfaWLS$power) > .01 &&
+    abs((lavres@Fit@test$standard$stat / 100000) - cfaWLS$fmin) < 0.0001  && # this is reasonably accurate (lav computes weight matrix slightly differently) 
+    abs((lavres2@Fit@test$standard$stat / 100000) - cfaDWLS$fmin)  < 0.001 && 
+    abs(2*lavres3@optim$fx - cfaUWLS$fmin) < .0001
+  
+    
+  # mgroup
+  cfaML2 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                               nullEffect = 'corA=corB',
+                               nullWhich = c(1, 2),
+                               Phi = list(.2, .5), nIndicator = c(5, 3), loadM = .5,
+                               alpha = .05, N = list(250, 250))
+  cfaWLS2 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
+                              nullEffect = 'corA=corB',
+                              nullWhich = c(1, 2),
+                              Phi = list(.2, .5), nIndicator = c(5, 3), loadM = .5,
+                              alpha = .05, N = list(250, 250), 
+                              fittingFunction = 'WLS')
+  valid4 <- valid3 &&
+    abs(cfaML2$fmin - cfaWLS2$fmin) > .0001 &&
+    abs(cfaML2$power - cfaWLS2$power) > .001
+  
+
+  # simulated power
+  # set.seed(30012021)
+  # cfaWLS3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'saturated',
+  #                              nullEffect = 'cor=0',
+  #                              nullWhich = c(1, 2),
+  #                              Phi = .2, nIndicator = c(3, 3), loadM = .5,
+  #                              alpha = .05, N = 250,
+  #                              fittingFunction = 'DWLS',
+  #                              simulatedPower = TRUE,
+  #                              simOptions = list(nReplications = 200, nCores = 8),
+  #                              lavOptions = list(estimator = 'wlsmv')
+  #                              )
+  # summary(cfaWLS3)
+  
+  ## dwls vs wlsmv: 
+  # KS 0.022768
+  ## for comparison: wls vs wlsmv: 
+  # KS 0.131055
+  
+  if(valid4){
+    print('test_WLS: OK')
   }else{
     warning('Invalid')
   }
@@ -1720,6 +1850,7 @@ test_powerCLPM <- function(doTest = TRUE){
                              nullWhich = NULL,
                              waveEqual = c('autoregX','autoregY','crossedX','crossedY'),
                              standardized = FALSE,
+                             standardizedResidualCovariances = FALSE,
                              alpha = .05, N = 250)
   
   lavres19 <- helper_lav(ph17$modelH0, ph17$Sigma)
@@ -2320,7 +2451,10 @@ test_powerRICLPM <- function(doTest = TRUE){
                                waveEqual = NULL,
                                alpha = .05, N = 250)
 
-  lavres <- helper_lav(ph17$modelH1, ph17$Sigma)
+  try({
+    pp <- suppressWarnings(lavaan::sem(ph17$modelH1, sample.cov = ph17$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
+  }, silent=TRUE)
+  lavres <- helper_lav(ph17$modelH1, ph17$Sigma, start = pp)
   par <- lavres$par
   lavres18 <- helper_lav(ph17$modelH0, ph17$Sigma)
   par18 <- lavres18$par
@@ -2485,7 +2619,10 @@ test_powerRICLPM <- function(doTest = TRUE){
                                waveEqual = NULL,
                                alpha = .05, N = 250)
   
-  lavres <- helper_lav(ph22$modelH1, ph22$Sigma)
+  try({
+    pp <- suppressWarnings(lavaan::sem(ph22$modelH1, sample.cov = ph22$Sigma, sample.cov.rescale = FALSE, sample.nobs = 1000))
+  }, silent=TRUE)
+  lavres <- helper_lav(ph22$modelH1, ph22$Sigma, start = pp)
   par <- lavres$par
   lavres23 <- helper_lav(ph22$modelH0, ph22$Sigma)
   par23 <- lavres23$par
@@ -4996,6 +5133,7 @@ test_all <- function(){
   test_genPsi()
   test_powerLav()
   test_multigroup()
+  test_WLS(doTest = TRUE)
   test_powerCFA()
   test_powerRegression()
   test_powerMediation()
@@ -5011,4 +5149,4 @@ test_all <- function(){
   test_simulatePower(doTest = FALSE)
 }
 
-#test_all()
+# test_all()

@@ -19,6 +19,7 @@ powerPrepare(
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  fittingFunction = "ML",
   simulatedPower = FALSE,
   modelH0 = NULL,
   nReplications = NULL,
@@ -54,6 +55,8 @@ powerPrepare(
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{fittingFunction}{one of \code{'ML'} (default), \code{'WLS'}, \code{'DWLS'}, \code{'ULS'}. Defines the discrepancy function used to obtain Fmin.}
 
 \item{simulatedPower}{whether to perform a simulated (\code{TRUE}) (rather than analytical, \code{FALSE}) power analysis.}
 

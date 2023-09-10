@@ -4,7 +4,14 @@
 \alias{getCFI.Sigma.mgroups}
 \title{getCFI.Sigma.mgroups}
 \usage{
-getCFI.Sigma.mgroups(SigmaHat, S, muHat = NULL, mu = NULL, N)
+getCFI.Sigma.mgroups(
+  SigmaHat,
+  S,
+  muHat = NULL,
+  mu = NULL,
+  N,
+  fittingFunction = "ML"
+)
 }
 \arguments{
 \item{SigmaHat}{a list of model implied covariance matrix}
@@ -16,6 +23,8 @@ getCFI.Sigma.mgroups(SigmaHat, S, muHat = NULL, mu = NULL, N)
 \item{mu}{observed (or population) mean vector}
 
 \item{N}{a list of group weights}
+
+\item{fittingFunction}{whether to use \code{ML} or \code{WLS}}
 }
 \value{
 Returns CFI

@@ -16,6 +16,7 @@
 #' @param Sigma observed (or population) covariance matrix (a list for multiple group models). Use in conjunction with `SigmaHat` to define `effect` and `effect.measure`.
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param fittingFunction one of `'ML'` (default), `'WLS'`, `'DWLS'`, `'ULS'`. Defines the discrepancy function used to obtain Fmin.
 #' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
 #' @param nReplications for simulated power: number of random samples drawn.
@@ -28,11 +29,13 @@ powerPrepare <- function(type = NULL,
                          alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                          N = NULL, df = NULL, p = NULL,
                          SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                         fittingFunction = 'ML',
                          simulatedPower = FALSE, 
                          modelH0 = NULL, 
                          nReplications = NULL, minConvergenceRate = NULL, lavOptions = NULL){
   
   if(!is.null(effect.measure)) effect.measure <- toupper(effect.measure)
+  fittingFunction <- toupper(fittingFunction)
   
   if(!is.list(N) && length(N) > 1) N <- as.list(N)
 
@@ -40,6 +43,7 @@ powerPrepare <- function(type = NULL,
                 alpha = alpha, beta = beta, power = power, abratio = abratio,
                 N = N, df = df, p = p,
                 SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
+                fittingFunction = fittingFunction,
                 simulatedPower = simulatedPower, 
                 modelH0 = modelH0)
 
@@ -88,9 +92,9 @@ powerPrepare <- function(type = NULL,
   
   if(!is.null(SigmaHat)){
     if(is.list(Sigma)){
-      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]])})
+      fmin.g <- sapply(seq_along(SigmaHat), FUN = function(x) {getF.Sigma(SigmaHat = SigmaHat[[x]], S = Sigma[[x]], muHat = muHat[[x]], mu = mu[[x]], fittingFunction = fittingFunction)})
     }else{
-      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu)
+      fmin.g <- getF.Sigma(SigmaHat = SigmaHat, S = Sigma, muHat = muHat, mu = mu, fittingFunction = fittingFunction)
     }
   }
   
@@ -137,6 +141,7 @@ powerPrepare <- function(type = NULL,
 #' @param Sigma observed (or population) covariance matrix
 #' @param muHat model implied mean vector
 #' @param mu observed (or population) mean vector
+#' @param fittingFunction whether to use `ML` (the default) or `WLS`
 #' @param simulatedPower whether to perform a simulated (`TRUE`) (rather than analytical, `FALSE`) power analysis.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
 #' @param power.min for plotting: minimum power
@@ -149,12 +154,18 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
                           alpha = NULL, beta = NULL, power = NULL, abratio = NULL,
                           N = NULL, df = NULL, p = NULL,
                           SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                          fittingFunction = 'ML',
                           simulatedPower = FALSE, modelH0 = NULL,
                           power.min = alpha, power.max = .999,
                           effect.min = NULL, effect.max = NULL,
                           steps = 50, linewidth = 1){
 
-  known.effects.measures <- c("F0", "RMSEA", "MC", "GFI", "AGFI")
+  knownEffectMeasures <- c("F0", "RMSEA", "MC", "GFI", "AGFI")
+  knownFittingFunctions <- c("ML", "WLS", "DWLS", "ULS")
+  
+  if(!fittingFunction %in% knownFittingFunctions){
+    stop(paste("Fitting function must be one of", paste(knownFittingFunctions, collapse = ', '), '.'))
+  }
   
   if(!simulatedPower){
     
@@ -164,8 +175,8 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
     # generic power analyses
     if(is.null(SigmaHat) && is.null(Sigma)){
       
-      if(!effect.measure %in% known.effects.measures){
-        stop(paste("Effect measure is unknown, must be one of", paste(known.effects.measures, collapse = ", ")))
+      if(!effect.measure %in% knownEffectMeasures){
+        stop(paste("Effect measure is unknown, must be one of", paste(knownEffectMeasures, collapse = ", ")))
       }
       
       # for effect-size differences, check matching length
@@ -514,4 +525,44 @@ checkEllipsis <- function(...){
   args <- names(list(...))
   if(!any(c('Lambda', 'loadings', 'nIndicator', 'loadM') %in% args)) stop('Missing arguments specifying the factor model. Remember to set either Lambda, loadings, or nIndicator and loadM.')
   if(!('alpha' %in% args || 'abratio' %in% args)) stop('Missing arguments related to power analysis. Remember to set alpha, power, N, and/or abratio.')
+}
+
+
+#' getFittingFunctionFromEstimator
+#'
+#' get proper fitting function (to obtain sigmaHat) for chosen estimator
+#' 
+#' @param lavOptions
+#' @return fitting function
+getFittingFunctionFromEstimator <- function(lavOptions){
+  lavEstimML <- c('ML', 'MLM', 'MLMV', 'MLMVS', 'MLF', 'MLR')
+  lavEstimWLS <- c('WLS')
+  lavEstimDWLS <- c('DWLS', 'WLSM', 'WLSMV')
+  lavEstimULS <- c('ULS', 'ULSM', 'ULSMV')
+  
+  ff <- 'ML'
+  if(!is.null(lavOptions[['estimator']])){
+    lavEst <- toupper(lavOptions[['estimator']])
+    if(lavEst %in% lavEstimML) ff <- 'ML'
+    if(lavEst %in% lavEstimWLS) ff <- 'WLS'
+    if(lavEst %in% lavEstimDWLS) ff <- 'DWLS'
+    if(lavEst %in% lavEstimULS) ff <- 'ULS'
+  } 
+  
+  ff
+}
+
+#' getDiscrepancyFunctionFromFittingFunction
+#'
+#' get proper discrepancy function (to measure F0) from fitting function (to obtain SigmaHat)
+#' 
+#' @param fittingFunction
+#' @return discrepancy function
+getDiscrepancyFunctionFromFittingFunction <- function(fittingFunction){
+  df <- 'ML'
+  # two-stage estimators: estimate using reduced weight matrix, but obtain test-statistics using full weight matrix
+  # this is currently (effectively) unused, since using the same approach in estimating and discrepancy assessement 
+  # yields results closer to what lavaan does.
+  if(fittingFunction %in% c('WLS', 'DWLS', 'ULS')) df <- 'WLS'
+  df
 }

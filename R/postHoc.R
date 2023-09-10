@@ -12,6 +12,7 @@
 #' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
 #' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
 #' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
+#' @param fittingFunction one of `'ML'` (default), `'WLS'`, `'DWLS'`, `'ULS'`. Defines the discrepancy function used to obtain Fmin.
 #' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. Only available if `Sigma` and `modelH0` are defined.
 #' @param modelH0 for simulated power: `lavaan` model string defining the (incorrect) analysis model.
 #' @param modelH1 for simulated power: `lavaan` model string defining the comparison model. If omitted, the saturated model is the comparison model.
@@ -59,6 +60,7 @@
 semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                              N, df = NULL, p = NULL,
                              SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                             fittingFunction = 'ML',
                              simulatedPower = FALSE, 
                              modelH0 = NULL, modelH1 = NULL,
                              simOptions = NULL, 
@@ -72,6 +74,7 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
                      alpha = alpha, beta = NULL, power = NULL, abratio = NULL,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu,
+                     fittingFunction = fittingFunction,
                      simulatedPower = simulatedPower, 
                      modelH0 = modelH0,
                      lavOptions = lavOptions)
@@ -86,15 +89,19 @@ semPower.postHoc <- function(effect = NULL, effect.measure = NULL, alpha,
   }else{
     # first perform analytical even when simulated is requested, so both results can be provided
 
-    # set ml estm in case lavoptions request otherwise, because here we perform analytical power analysis
+    # set ML/WLS fitting function in case lavoption estimator requests otherwise, 
+    # because here we perform analytical power analysis and dont care for corrections
+    impliedFF <- getFittingFunctionFromEstimator(lavOptions)
+    if(fittingFunction != impliedFF) warning(paste('Fitting function for analytical power analysis set to', impliedFF, 'to match requested estimator for simulated power analysis.'))
+    # also set corresponding estimator, so that powerLav does not complain
     aLavOptions <- lavOptions
     aLavOptionsH1 <- lavOptionsH1
-    if(!is.null(aLavOptions[['estimator']])) aLavOptions[['estimator']] <- 'ML'
-    if(!is.null(aLavOptionsH1[['estimator']])) aLavOptionsH1[['estimator']] <- 'ML'
+    aLavOptions[['estimator']] <- aLavOptionsH1[['estimator']] <- impliedFF
     ph <- semPower.powerLav(type = 'post-hoc', 
                             alpha = alpha, 
                             modelH0 = modelH0, modelH1 = modelH1, N = pp[['N']],
                             Sigma = Sigma, mu = mu, 
+                            fittingFunction = impliedFF,
                             lavOptions = aLavOptions, lavOptionsH1 = aLavOptionsH1)
     
     df <- ph[['df']]

@@ -19,6 +19,7 @@ validateInput(
   Sigma = NULL,
   muHat = NULL,
   mu = NULL,
+  fittingFunction = "ML",
   simulatedPower = FALSE,
   modelH0 = NULL,
   power.min = alpha,
@@ -57,6 +58,8 @@ validateInput(
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{fittingFunction}{whether to use \code{ML} (the default) or \code{WLS}}
 
 \item{simulatedPower}{whether to perform a simulated (\code{TRUE}) (rather than analytical, \code{FALSE}) power analysis.}
 

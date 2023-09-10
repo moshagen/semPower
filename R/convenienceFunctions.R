@@ -11,6 +11,7 @@
 #' @param fitH1model whether to fit the H1 model. If `FALSE`, the H1 model is assumed to show the same fit as the saturated model, and only the delta df are computed.
 #' @param Sigma can be used instead of `modelPop`: population covariance matrix. A list for multiple group models.
 #' @param mu can be used instead of `modelPop`: vector of population means. Can be omitted for no meanstructure. A list for multiple group models.
+#' @param fittingFunction one of `'ML'` (default), `'WLS'`, `'DWLS'`, `'ULS'`. Defines the fitting function used to obtain SigmaHat in analytical power analyses. This also implies a certain discrepancy function used to obtain Fmin.
 #' @param simulatedPower whether to perform a simulated (`TRUE`, rather than analytical, `FALSE`) power analysis. See [simulate()] for additional options.
 #' @param lavOptions a list of additional options passed to `lavaan`, e. g., `list(estimator = 'mlm')` to request robust ML estimation. Mostly useful in conjunction with `simulatedPower`. 
 #' @param lavOptionsH1 alternative options passed to `lavaan` that are only used for the H1 model. If `NULL`, identical to `lavOptions`. Probably only useful for multigroup models.
@@ -132,7 +133,8 @@
 semPower.powerLav <- function(type, 
                               modelPop = NULL, 
                               modelH0 = NULL, modelH1 = NULL, fitH1model = TRUE, 
-                              Sigma = NULL, mu = NULL, 
+                              Sigma = NULL, mu = NULL,
+                              fittingFunction = 'ML', 
                               simulatedPower = FALSE, 
                               lavOptions = NULL, lavOptionsH1 = lavOptions, 
                               ...){
@@ -141,6 +143,18 @@ semPower.powerLav <- function(type,
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
   # validate input
   type <- checkPowerTypes(type)
+  knownFittingFunctions <- c('ML', 'WLS', 'DWLS', 'ULS')
+  fittingFunction <- toupper(fittingFunction)
+  if(!fittingFunction %in% knownFittingFunctions){
+    stop(paste("Fitting function must be one of", paste(knownFittingFunctions, collapse = ', '), '.'))
+  }
+  
+  ### actually, estimators such as DWLS and ULS use a reduced weight matrix for parameter estimation, 
+  ### but the full weight matrix for model tests. This does not match what is reported by lavaan, however, 
+  ### so for now we use DWLS/ULS for both, estimating SigmaHat and computing fmin. 
+  #discrepancyFunction <- getDiscrepancyFunctionFromFittingFunction(fittingFunction)
+  discrepancyFunction <- fittingFunction
+  
   if(is.null(modelH0)) stop('Provide a lavaan model string defining the analysis (H0) model.')
   if(is.null(modelPop) && is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma.')
   if(!is.null(modelPop) && !is.null(Sigma)) stop('Either provide a lavaan model string defining the population model or provide the population covariance matrix Sigma, but not both.')
@@ -149,50 +163,58 @@ semPower.powerLav <- function(type,
   if(!is.null(Sigma) && !is.list(Sigma)) Sigma <- list(Sigma)
   if(!is.null(mu) && !is.list(mu)) mu <- list(mu)
   
-  # the following is probably no longer needed, as we now always supply lav-friendly restrictions
-  
-  # # lav doesn't like both equality constrains and value constrains on the same parameters, so
-  # # transform this by dropping equality constrains and assign value constrains to the affected parameters
-  # modelH0 <- makeRestrictionsLavFriendly(modelH0)
-  # if(!is.null(modelH1)) modelH1 <- makeRestrictionsLavFriendly(modelH1)
 
   # determine population Sigma / mu
   if(is.null(Sigma)){
     Sigma <- lapply(modelPop, function(x) orderLavCov(lavaan::fitted(lavaan::sem(x))[['cov']]))
     mu <- lapply(modelPop, function(x) orderLavMu(lavaan::fitted(lavaan::sem(x))[['mean']]))
   }
+  nGroups <- length(Sigma)
   
-  # analytical power
+
+  # analytical power  (also called once when simulated power is requested to obtain analytic comparison)
   if(!simulatedPower){
     
     # we need to call lavaan() directly with defaults as defined in sem()
-    lavOptions <- getLavOptions(lavOptions, nGroups = length(Sigma))
-    if(!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) != "ML") stop('Analytical power is only available with ML estimation. Note that power based on ML derivatives (mlm etc) is asymptotically identical.')
+    lavOptions <- getLavOptions(lavOptions, nGroups = nGroups)
+    # make sure proper estimator is set
+    if(!is.null(lavOptions[['estimator']]) && 
+       !toupper(lavOptions[['estimator']]) %in% knownFittingFunctions) stop('Analytical power is only available using ML, WLS, DWLS, or ULS estimation. Note that most robust derivatives (mlm etc) are asymptotically identical.')
+    lavOptions[['estimator']] <- fittingFunction
+    if(fittingFunction %in% c('WLS','DWLS','ULS')) lavOptions[['likelihood']] <- NULL
+    if(fittingFunction == 'WLS'){
+      lavOptions[['WLS.V']] <- lapply(seq(nGroups), function(x) getWLSv(Sigma[[x]], mu[[x]]))
+      if(nGroups == 1) lavOptions[['WLS.V']] <- lavOptions[['WLS.V']][[1]]
+    } 
+    if(fittingFunction == 'DWLS'){
+      lavOptions[['WLS.V']] <- lapply(seq(nGroups), function(x) getWLSv(Sigma[[x]], mu[[x]], diag = TRUE))
+      if(nGroups == 1) lavOptions[['WLS.V']] <- lavOptions[['WLS.V']][[1]]
+    } 
 
     # get H0 sigmaHat / muHat
     modelH0Fit <- suppressWarnings(  # suppress here, throw warnings in second try
       do.call(lavaan::lavaan,
                           append(list(model = modelH0,
-                                      sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
-                                      sample.mean = if(length(Sigma) > 1) mu else mu[[1]]),
+                                      sample.cov = if(nGroups > 1) Sigma else Sigma[[1]],  # lav complains when providing a list of length 1
+                                      sample.mean = if(nGroups > 1) mu else mu[[1]]),
                                  lavOptions))
       )
     if(!modelH0Fit@optim[['converged']]){
       # try again using starting values from previous run
       modelH0Fit <- do.call(lavaan::lavaan,
                             append(list(model = modelH0,
-                                        sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
-                                        sample.mean = if(length(Sigma) > 1) mu else mu[[1]], 
+                                        sample.cov = if(nGroups > 1) Sigma else Sigma[[1]],
+                                        sample.mean = if(nGroups > 1) mu else mu[[1]], 
                                         start = modelH0Fit),
                                    lavOptions))
       if(!modelH0Fit@optim[['converged']]) stop('The H0 model did not converge.')
     } 
-    if(length(Sigma) > 1){
+    if(nGroups > 1){
       # multigroup case
-      SigmaHat <- lapply(1:length(Sigma), function(x) orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]))
-      muHat <- lapply(1:length(Sigma), function(x) orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]))
+      SigmaHat <- lapply(seq(nGroups), function(x) orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]))
+      muHat <- lapply(seq(nGroups), function(x) orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]))
     }else{
-      # single group case
+      # single group case (lav doesnt return a list...)
       SigmaHat <- list(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]))
       muHat <- list(orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]))
     }
@@ -200,7 +222,21 @@ semPower.powerLav <- function(type,
     
     # get H1 comparison model and deltaF
     if(!is.null(modelH1) && fitH1model){
-      lavOptionsH1 <- getLavOptions(lavOptionsH1, nGroups = length(Sigma))
+      
+      # we need to call lavaan() directly with defaults as defined in sem()
+      lavOptionsH1 <- getLavOptions(lavOptionsH1, nGroups = nGroups)
+      # make sure proper estimator is set
+      lavOptionsH1[['estimator']] <- fittingFunction
+      if(fittingFunction %in% c('WLS','DWLS','ULS')) lavOptionsH1[['likelihood']] <- NULL
+      if(fittingFunction == 'WLS'){
+        lavOptionsH1[['WLS.V']] <- lapply(seq(nGroups), function(x) getWLSv(Sigma[[x]], mu[[x]]))
+        if(nGroups == 1) lavOptionsH1[['WLS.V']] <- lavOptionsH1[['WLS.V']][[1]]
+      } 
+      if(fittingFunction == 'DWLS'){
+        lavOptionsH1[['WLS.V']] <- lapply(seq(nGroups), function(x) getWLSv(Sigma[[x]], mu[[x]], diag = TRUE))
+        if(nGroups == 1) lavOptionsH1[['WLS.V']] <- lavOptionsH1[['WLS.V']][[1]]
+      } 
+
       modelH1Fit <- suppressWarnings(  # suppress here, throw warnings in second try
         do.call(lavaan::lavaan,
                 append(list(model = modelH1,
@@ -212,8 +248,8 @@ semPower.powerLav <- function(type,
         # try again using starting values from previous run
         modelH1Fit <- do.call(lavaan::lavaan,
                               append(list(model = modelH1,
-                                          sample.cov = if(length(Sigma) > 1) Sigma else Sigma[[1]],
-                                          sample.mean = if(length(Sigma) > 1) mu else mu[[1]], 
+                                          sample.cov = if(nGroups > 1) Sigma else Sigma[[1]],
+                                          sample.mean = if(nGroups > 1) mu else mu[[1]], 
                                           start = modelH1Fit),
                                      lavOptionsH1))
         
@@ -222,21 +258,27 @@ semPower.powerLav <- function(type,
       dfH1 <- modelH1Fit@test[['standard']][['df']]
       if(dfH1 >= dfH0) stop('The df of the H0 model are not larger than the df of the H1 model, as they should be.')
       # get delta F
-      if(length(Sigma) > 1){
+      if(nGroups > 1){
         # multigroup case
-        fminH0 <- lapply(1:length(Sigma), 
-                         function(x) getF.Sigma(orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]), Sigma[[x]], 
-                                                orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]), mu[[x]]))
-        fminH1 <- lapply(1:length(Sigma), 
-                         function(x) getF.Sigma(orderLavCov(lavaan::fitted(modelH1Fit)[[x]][['cov']]), Sigma[[x]], 
-                                                orderLavMu(lavaan::fitted(modelH1Fit)[[x]][['mean']]), mu[[x]]))
-        deltaF <- lapply(1:length(Sigma), function(x) fminH0[[x]] - fminH1[[x]]) # result must be a list
+        fminH0 <- lapply(seq(nGroups), 
+                         function(x) getF.Sigma(
+                           orderLavCov(lavaan::fitted(modelH0Fit)[[x]][['cov']]), Sigma[[x]],
+                           orderLavMu(lavaan::fitted(modelH0Fit)[[x]][['mean']]), mu[[x]],
+                           fittingFunction = discrepancyFunction))
+        fminH1 <- lapply(seq(nGroups), 
+                         function(x) getF.Sigma(
+                           orderLavCov(lavaan::fitted(modelH1Fit)[[x]][['cov']]), Sigma[[x]], 
+                           orderLavMu(lavaan::fitted(modelH1Fit)[[x]][['mean']]), mu[[x]],
+                           fittingFunction = discrepancyFunction))
+        deltaF <- lapply(seq(nGroups), function(x) fminH0[[x]] - fminH1[[x]]) # result must be a list
       }else{
         # single group case
         fminH0 <- getF.Sigma(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]), Sigma[[1]], 
-                             orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]), mu[[1]])
+                             orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]), mu[[1]],
+                             fittingFunction = discrepancyFunction)
         fminH1 <- getF.Sigma(orderLavCov(lavaan::fitted(modelH1Fit)[['cov']]), Sigma[[1]], 
-                             orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]])
+                             orderLavMu(lavaan::fitted(modelH1Fit)[['mean']]), mu[[1]],
+                             fittingFunction = discrepancyFunction)
         deltaF <- fminH0 - fminH1
       }
       if(sum(unlist(deltaF)) < 1e-10) warning(paste0('The H0 model shows the same discrepancy as the H1 model. This usually happens when the H0 model contains restrictions that are valid in the population. Check the definition of the population values and the H0 constraints.'))
@@ -252,12 +294,14 @@ semPower.powerLav <- function(type,
       power <- semPower(type = type, 
                         SigmaHat = SigmaHat, Sigma = Sigma, 
                         muHat = muHat, mu = mu, 
-                        df = df, 
+                        df = df,
+                        fittingFunction = discrepancyFunction,
                         ...)    
     }else{
       power <- semPower(type = type, 
                         effect = deltaF, effect.measure = "F0", 
                         df = df, 
+                        fittingFunction = discrepancyFunction, # actually irrelevant
                         ...)    
     }    
         
@@ -266,6 +310,7 @@ semPower.powerLav <- function(type,
     power <- semPower(type = type, 
                       Sigma = Sigma, mu = mu, 
                       modelH0 = modelH0, modelH1 = modelH1, fitH1model = fitH1model,
+                      fittingFunction = fittingFunction,
                       simulatedPower = simulatedPower, 
                       # simulate() takes care of proper lavOptions
                       lavOptions = lavOptions,  
@@ -275,7 +320,7 @@ semPower.powerLav <- function(type,
   }
 
   # remove list structure for single group models
-  if(length(Sigma) == 1){
+  if(nGroups == 1){
     Sigma <- Sigma[[1]]
     SigmaHat <- SigmaHat[[1]]
     mu <- mu[[1]]

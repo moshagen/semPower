@@ -192,10 +192,14 @@ To define the discrepancy between the H0 and the H1 model for power analysis, an
 
 ##### F0  {-#effectsF0}
 
-$F_0$ is the population minimum of the Maximum Likelihood fitting function, defined as
+$F_0$ is the population minimum of the chosen fitting function, such as weighted least-squares (WLS) or Maximum Likelihood (ML). The ML fitting function is 
 
 $$F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\Sigma\hat{\Sigma}^{-1}) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) $$
 where $\Sigma$ is the $p \times p$ population covariance matrix, $\hat{\Sigma}$ the $p \times p$ model-implied covariance matrix, $p$ the number of observed variables, $\mu$ the vector of population means, and $\hat{\mu}$ the model-implied means. If means are not part of the model, the last term becomes zero.
+
+The WLS fitting function is
+$$F_0 = (\sigma - s)' V  (\sigma - s)$$
+where $\sigma = vec(\mu, \Sigma)$, $s = vec(\hat \mu, \hat \Sigma)$, and $V$ is a weight matrix. In the (full) WLS fitting function, $V$ is (often) the inverse of $N$ times the asymptotic covariance matrix of the sample statistics. In the DWLS fitting function, $V$ is a diagonal matrix with the inverse of the diagonal elements of $N$ times the asymptotic covariance matrix of the sample statistics. The ULS fitting function is a special case with $V = I$
 
 If the model is correct, $\hat{\Sigma} = \Sigma$, $\hat{\mu} = \mu$, and thus $F_0 = 0$. Otherwise, $F_0 > 0$ with higher values expressing a larger discrepancy (misfit) of the model to the data. 
 
@@ -469,7 +473,7 @@ This feature is particularly useful when used in conjunction with other function
 
 
 # Model-based power analyses {#modelBasedPower}
-A general difficulty in [model-free power analysis](#modelFreePower) is that the relation between constraints on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect $\geq$ .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is hardly feasible. `semPower` therefore provides various convenience function to simplify this process, which are described in this chapter.
+A general difficulty in [model-free power analysis](#modelFreePower) is that the relation between constraints on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect $\geq$ .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is no straightforward endavour. `semPower` therefore provides various convenience function to simplify this process, which are described in this chapter.
 
 The purpose of all convenience functions is to provide high-level interfaces that allow specifying the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a cross-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the `lavaan` package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the [desired power analysis](#modelFreePower).
 
@@ -624,6 +628,7 @@ Whereas all convenience functions expect certain arguments (or values provided a
     + Use `type = 'a-priori'` (or `'ap'`) to request an [a-priori power analysis](#ap) and provide the alpha error (e. g., `alpha = .05`) and the desired beta error (e. g., `beta = .20`; or equivalently, the desired power, `power = .80`).  
     + Use `type = 'post-hoc'` (or `'ph'`) to request a [post-hoc power analysis](#ph) and provide the alpha error (e. g.,`alpha = .05`) and the number of observations (e. g.,`N = 250`).  
     + Use `type = 'compromise'` (or `'cp'`)  to request a [compromise hoc power analysis](#cp) and provide the desired ratio between alpha and beta error (e. g., `abratio = 1`) and the number of observations (e. g., `N = 250`). 
+* `fittingFunction`: Defines the fitting function used to obtain  $\hat \Sigma$ and $F_0$. Must be one of `'ML'` (the default), `'WLS'`, `'DWLS'`, or `'ULS'`. This should not be confused with derived robust test-statistics (such as '`MLM'`, '`MLR'`, '`WLSMV'`,  etc.) that are only relevant in simulated power analysis.
 * Arguments [defining the factor model](#factorDefinition), one of:
     + `Lambda` to provide a loading matrix.
     + `loadings` to provide a list of vectors defining the primary factor loadings.
@@ -642,6 +647,8 @@ powerCFA <- semPower.powerCFA(
   type = 'a-priori', alpha = .05, beta = .20,
   # set comparison model
   comparison = 'restricted',
+  # define fitting function
+  fittingFunction = 'ML',
   # arguments (and values) specific to semPower.powerCFA
   Phi = .25,
   nullEffect = 'cor = 0',
@@ -2934,7 +2941,7 @@ powerARMA <- semPower.powerARMA(
 
 
 ##### Defining the CLPM structure {-#clpmDefinition}
-`semPower.powerCLPM` assumes that two variables $X$ and $Y$ are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a [generic path model](#powerPath)). The structure of a CLPM is defined by specifying `nWaves`, `autoregEffects`, `crossedEffects`,  `rXY`, `standardized`, and `autorcorResiduals`.
+`semPower.powerCLPM` assumes that two variables $X$ and $Y$ are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a [generic path model](#powerPath)). The structure of a CLPM is defined by specifying `nWaves`, `autoregEffects`, `crossedEffects`,  `rXY`, `standardized`, and `autocorResiduals`.
 
 `nWaves` defines the number of measurements of $X$ and $Y$ and must be two or larger. Setting `nWaves = 2` implies the following regression equations: 
 $$
@@ -3009,7 +3016,7 @@ $$
 
 To assume that the residual correlations between $X_2$ and $Y_2$ as well as between $X_3$ and $Y_3$ shall be equal, add `'corXY'` to `waveEqual`. Although the constraints defined in `waveEqual` apply to both the H0 and the H1 model, this will nevertheless affect statistical power.  
 
-Second, when $X$ and/or $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`) and also assume that the residuals of the indicators are autocorrelated across waves (`autorcorResiduals = TRUE`). Both can be set to `FALSE` to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constraints as well as the presence of autocorrelated residuals also affects power for hypotheses concerning the CLPM parameters. Note that when `metricInvariance = TRUE`, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$.
+Second, when $X$ and/or $Y$ are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (`metricInvariance = TRUE`) and also assume that the residuals of the indicators are autocorrelated across waves (`autocorResiduals = TRUE`). Both can be set to `FALSE` to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constraints as well as the presence of autocorrelated residuals also affects power for hypotheses concerning the CLPM parameters. Note that when `metricInvariance = TRUE`, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both $X$ and $Y$.
 
 
 
@@ -4067,8 +4074,11 @@ Other hypotheses arising in multiple group settings are supported in most functi
 * See [`semPower.powerBifactor`](#powerBifactor) to detect that a correlation involving a bifactor differs across groups.
 * See [`semPower.powerRegression`](#powerRegression) and [`semPower.powerPath`](#powerPath) to detect that a regression slope differs across groups.
 * See [`semPower.powerMediation`](#powerMediation) to detect that a mediation effect differs across groups.
+* See [`semPower.powerAutoreg`](#powerAutoreg) to detect that autoregressive effect in an autoregressive model differs across groups.
+* See [`semPower.powerARMA`](#powerARMA) to detect that autoregressive, moving-average parameters, means, or variances in an ARMA model differ across groups.
 * See [`semPower.powerCLPM`](#powerCLPM) to detect that autoregressive effects or cross-lagged effects in a CLPM differ across groups.
 * See [`semPower.powerRICLPM`](#powerRICLPM) to detect that autoregressive effects, cross-lagged effects, or the correlation between random intercept factors in a random-intercept CLPM differ across groups.
+* See [`semPower.powerLGCM`](#powerLGCM) to detect that means or variances of the intercept or slope factors, or the slopes involving a time-invariant covariate differ across groups.
 
 
 ## Simulated power {#simulatedPower}
@@ -4224,14 +4234,15 @@ lines(density(powerCFA$simRes$fitH1[ , 'chisq']))
 
 ##### Non-normal data {-#simNonNormal}
 
-By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = normal` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an [alternative estimator or test-statistic](#simEstimators)).
+By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting `type = 'normal'` in `simOptions`). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an [alternative estimator or test-statistic](#simEstimators)).
 
 Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the multivariate power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. `semPower` therefore also provides interfaces to three further approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:
 
-* `type = IG` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the `covsim` package.
-* `type = mnonr` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. This requires the `mnonr` package.
-* `type = RK` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
-* `type = VM` (Vale & Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be $\geq \text{skew}^2 - 2$. 
+* `type = 'IG'` (Foldnes & Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the `covsim` package.
+* `type = 'mnonr'` (Qu, Liu & Zhang, 2020) requires provision of Mardia's multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of $p \cdot (p + 2)$. This requires the `mnonr` package.
+* `type = 'RK'` (Ruscio & Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).
+* `type = 'VM'` (Vale & Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be $\geq \text{skew}^2 - 2$. 
+
 For instance, recurring to the example above, the following uses the IG approach (`type = 'IG'`) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (`skewness`) of zero, but a quite strong kurtosis (`kurtosis`) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a more moderate kurtosis between 4 - 6.    
 
 ```{r eval=FALSE}
@@ -4300,7 +4311,7 @@ powerCFA <- semPower.powerCFA(
                               ))
 ```
 
-Instead of defining the marginal skewness and kurtosis as in the IG or the VM approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:
+Instead of defining the marginal skewness and kurtosis as in the IG or the VM approach, one may specify the marginal distributions themselves using the RK approach (`type = 'RK'`). This requires that the `distributions` argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., `rnorm`) and additional arguments (e.g, `list(mean = 0, sd = 10)`) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 indicator variables:
 
 ```{r eval=FALSE}
 set.seed(300121)
@@ -4681,7 +4692,7 @@ X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
 X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2
 $$
 
-Psi ($\Psi$) defines whether there are (residual-)correlations between the factors. Suppose that $\Psi$ is
+Psi ($\Psi$) defines the (residual-)variances and whether there are (residual-)covariances between the factors. Suppose that $\Psi$ is
 $$
 \begin{array}{lrrr}
     & X_1 & X_2 & X_3 & X_4\\
@@ -4692,7 +4703,8 @@ X_4 & 0.0 & 0.0 & 0.2 & 1.0 \\
 \end{array}
 $$
 
-which implies a correlation between $X_1$ and $X_2$ of .3 and a residual correlation between $X_3$ and $X_4$ of .2.
+which implies that the variances of $X_1$ and $X_2$ are 1, and that the residual variances of $X_3$ and $X_4$ are also 1. Further, the 
+covariance between $X_1$ and $X_2$ is .3 (which is also a correlation, because both variances are 1) and a residual covariance between $X_3$ and $X_4$ of .2 (which is *not* a correlation, because the variances of $X_3$ and $X_4$ also depend on Beta). 
 
 The scenario just described can be achieved by defining `Beta` and `Psi` accordingly and plugging these as input to `semPower.genSigma`:
 

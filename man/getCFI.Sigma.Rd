@@ -4,7 +4,7 @@
 \alias{getCFI.Sigma}
 \title{getCFI.Sigma}
 \usage{
-getCFI.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
+getCFI.Sigma(SigmaHat, S, muHat = NULL, mu = NULL, fittingFunction = "ML")
 }
 \arguments{
 \item{SigmaHat}{model implied covariance matrix}
@@ -14,6 +14,8 @@ getCFI.Sigma(SigmaHat, S, muHat = NULL, mu = NULL)
 \item{muHat}{model implied mean vector}
 
 \item{mu}{observed (or population) mean vector}
+
+\item{fittingFunction}{whether to use \code{ML} or \code{WLS}}
 }
 \value{
 Returns CFI

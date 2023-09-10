@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Power Analysis for Structural Equation Models: semPower 2 Manual</title>
   <meta name="description" content="Power Analysis for Structural Equation Models: semPower 2 Manual" />
-  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Power Analysis for Structural Equation Models: semPower 2 Manual" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="Morten Moshagen &amp; Martina Bader" />
 
 
-<meta name="date" content="2023-05-15" />
+<meta name="date" content="2023-09-10" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1946,6 +1946,9 @@ code span.vs { color: #4070a0; }
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 
+<style type="text/css">
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
 
 </head>
 
@@ -2034,7 +2037,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 <div id="header">
 <h1 class="title">Power Analysis for Structural Equation Models: semPower 2 Manual</h1>
 <p class="author"><em>Morten Moshagen &amp; Martina Bader</em></p>
-<p class="date"><em>2023-05-15</em></p>
+<p class="date"><em>2023-09-10</em></p>
 </div>
 <style type="text/css">
 .book .book-body .page-wrapper .page-inner {
@@ -2173,9 +2176,12 @@ Figure 2.1: Central (red) and non-central (blue) chi-square distributions.
 <p>To define the discrepancy between the H0 and the H1 model for power analysis, any non-centrality based measure of effect can be used. For <a href="#modelFreePower">model-free power analyses</a>, <code>semPower</code> understands the measures detailed below. Any <a href="#modelBasedPower">model-based power analysis</a> is eventually converted into the <a href="#effectsF0">population minimum of the fit function</a> as effect size.</p>
 <div id="effectsF0" class="section level5 unnumbered hasAnchor">
 <h5>F0<a href="#effectsF0" class="anchor-section" aria-label="Anchor link to header"></a></h5>
-<p><span class="math inline">\(F_0\)</span> is the population minimum of the Maximum Likelihood fitting function, defined as</p>
+<p><span class="math inline">\(F_0\)</span> is the population minimum of the chosen fitting function, such as weighted least-squares (WLS) or Maximum Likelihood (ML). The ML fitting function is</p>
 <p><span class="math display">\[F_0 = \log|\Sigma| - \log|\hat{\Sigma}| + tr(\Sigma\hat{\Sigma}^{-1}) - p  + (\mu - \hat{\mu}) \hat{\Sigma}^{-1} (\mu - \hat{\mu}) \]</span>
 where <span class="math inline">\(\Sigma\)</span> is the <span class="math inline">\(p \times p\)</span> population covariance matrix, <span class="math inline">\(\hat{\Sigma}\)</span> the <span class="math inline">\(p \times p\)</span> model-implied covariance matrix, <span class="math inline">\(p\)</span> the number of observed variables, <span class="math inline">\(\mu\)</span> the vector of population means, and <span class="math inline">\(\hat{\mu}\)</span> the model-implied means. If means are not part of the model, the last term becomes zero.</p>
+<p>The WLS fitting function is
+<span class="math display">\[F_0 = (\sigma - s)&#39; V  (\sigma - s)\]</span>
+where <span class="math inline">\(\sigma = vec(\mu, \Sigma)\)</span>, <span class="math inline">\(s = vec(\hat \mu, \hat \Sigma)\)</span>, and <span class="math inline">\(V\)</span> is a weight matrix. In the (full) WLS fitting function, <span class="math inline">\(V\)</span> is (often) the inverse of <span class="math inline">\(N\)</span> times the asymptotic covariance matrix of the sample statistics. In the DWLS fitting function, <span class="math inline">\(V\)</span> is a diagonal matrix with the inverse of the diagonal elements of <span class="math inline">\(N\)</span> times the asymptotic covariance matrix of the sample statistics. The ULS fitting function is a special case with <span class="math inline">\(V = I\)</span></p>
 <p>If the model is correct, <span class="math inline">\(\hat{\Sigma} = \Sigma\)</span>, <span class="math inline">\(\hat{\mu} = \mu\)</span>, and thus <span class="math inline">\(F_0 = 0\)</span>. Otherwise, <span class="math inline">\(F_0 &gt; 0\)</span> with higher values expressing a larger discrepancy (misfit) of the model to the data.</p>
 <p>If fitting a model to some sample data of size <span class="math inline">\(N\)</span>, the estimated minimum of the fit function, <span class="math inline">\(\hat{F}\)</span>, is used to construct an asymptotically <span class="math inline">\(\chi^2\)</span>-distributed model test statistic, commonly simply called the chi-square model test:</p>
 <p><span class="math display">\[\chi^2 = \hat{F}(N-1)\]</span>
@@ -2408,7 +2414,7 @@ As the GFI depends on the number of observed variables (<span class="math inline
 </div>
 <div id="modelBasedPower" class="section level1 hasAnchor" number="4">
 <h1><span class="header-section-number">4</span> Model-based power analyses<a href="#modelBasedPower" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>A general difficulty in <a href="#modelFreePower">model-free power analysis</a> is that the relation between constraints on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect <span class="math inline">\(\geq\)</span> .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is hardly feasible. <code>semPower</code> therefore provides various convenience function to simplify this process, which are described in this chapter.</p>
+<p>A general difficulty in <a href="#modelFreePower">model-free power analysis</a> is that the relation between constraints on a particular model parameter and the resulting effect size is often not clear. For instance, obtaining the required N to detect a cross-lagged effect <span class="math inline">\(\geq\)</span> .10 in a CLPM with a certain power requires to translate the hypothesized cross-lagged effect to a non-centrality based effect size such as RMSEA, which is no straightforward endavour. <code>semPower</code> therefore provides various convenience function to simplify this process, which are described in this chapter.</p>
 <p>The purpose of all convenience functions is to provide high-level interfaces that allow specifying the parameters of a certain model type (such as a CLPM) and a certain effect of interest in terms of the model parameters (such as a cross-lagged effect). The convenience functions then obtain the relevant population and model-implied covariance matrices and perform the desired power analysis based on these matrices. All convenience functions therefore require that the <code>lavaan</code> package (Rosseel, 2012) is installed, and always require the specification of the relevant parameters for the <a href="#modelFreePower">desired power analysis</a>.</p>
 <p>More precisely, all convenience functions internally obtain the population covariance matrix (and mean vector, if necessary) via <a href="#genSigma"><code>semPower.genSigma</code></a>, define the H0 model (and optionally the H1 model), call <a href="#powerLav"><code>semPower.powerLav</code></a> to fit the models to the population values, which, in turn, obtains the model-implied covariance matrix (and mean vector), and plugs the population and model-implied matrices into one of the <a href="#modelFreePower">model-free power analyses</a> functions. Since all of these low level functions are also exposed, an even higher level of flexibility can be achieved by calling these functions directly (see <a href="#powerLav">this</a> and <a href="#powerCov">this</a> chapter for illustrations).</p>
 <p>Given that the functions performing a model-based power analysis operate on a factor model, it is always required to specify the factor model in terms of the number of factors, number of indicators, and loadings. For this reason, the chapter begins with a primer on how to <a href="#factorDefinition">define the factor model</a>.</p>
@@ -2549,6 +2555,7 @@ As the GFI depends on the number of observed variables (<span class="math inline
 </li>
 <li>Use <code>type = &#39;compromise&#39;</code> (or <code>&#39;cp&#39;</code>) to request a <a href="#cp">compromise hoc power analysis</a> and provide the desired ratio between alpha and beta error (e. g., <code>abratio = 1</code>) and the number of observations (e. g., <code>N = 250</code>).</li>
 </ul></li>
+<li><code>fittingFunction</code>: Defines the fitting function used to obtain <span class="math inline">\(\hat \Sigma\)</span> and <span class="math inline">\(F_0\)</span>. Must be one of <code>&#39;ML&#39;</code> (the default), <code>&#39;WLS&#39;</code>, <code>&#39;DWLS&#39;</code>, or <code>&#39;ULS&#39;</code>. This should not be confused with derived robust test-statistics (such as ‘<code>MLM&#39;</code>,’<code>MLR&#39;</code>, ’<code>WLSMV&#39;</code>, etc.) that are only relevant in simulated power analysis.</li>
 <li>Arguments <a href="#factorDefinition">defining the factor model</a>, one of:
 <ul>
 <li><code>Lambda</code> to provide a loading matrix.</li>
@@ -2567,13 +2574,15 @@ As the GFI depends on the number of observed variables (<span class="math inline
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">beta =</span> .<span class="dv">20</span>,</span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># set comparison model</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">comparison =</span> <span class="st">&#39;restricted&#39;</span>,</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arguments (and values) specific to semPower.powerCFA</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Phi =</span> .<span class="dv">25</span>,</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">nullEffect =</span> <span class="st">&#39;cor = 0&#39;</span>,</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">nullWhich =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># define factor model</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">nIndicator =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">3</span>), <span class="at">loadM =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">6</span>)</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># define fitting function</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">fittingFunction =</span> <span class="st">&#39;ML&#39;</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arguments (and values) specific to semPower.powerCFA</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Phi =</span> .<span class="dv">25</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">nullEffect =</span> <span class="st">&#39;cor = 0&#39;</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">nullWhich =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># define factor model</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">nIndicator =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">3</span>), <span class="at">loadM =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">6</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 <div id="powerCFA" class="section level2 hasAnchor" number="4.3">
 <h2><span class="header-section-number">4.3</span> CFA models<a href="#powerCFA" class="anchor-section" aria-label="Anchor link to header"></a></h2>
@@ -4444,7 +4453,7 @@ sequence is (a) configural, (b) metric, (c) scalar, and (d) residual invariance 
 </ul>
 <div id="clpmDefinition" class="section level5 unnumbered hasAnchor">
 <h5>Defining the CLPM structure<a href="#clpmDefinition" class="anchor-section" aria-label="Anchor link to header"></a></h5>
-<p><code>semPower.powerCLPM</code> assumes that two variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a <a href="#powerPath">generic path model</a>). The structure of a CLPM is defined by specifying <code>nWaves</code>, <code>autoregEffects</code>, <code>crossedEffects</code>, <code>rXY</code>, <code>standardized</code>, and <code>autorcorResiduals</code>.</p>
+<p><code>semPower.powerCLPM</code> assumes that two variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are repeatedly assessed (a CLPM involving more than two variables can be more laboriously specified as a <a href="#powerPath">generic path model</a>). The structure of a CLPM is defined by specifying <code>nWaves</code>, <code>autoregEffects</code>, <code>crossedEffects</code>, <code>rXY</code>, <code>standardized</code>, and <code>autocorResiduals</code>.</p>
 <p><code>nWaves</code> defines the number of measurements of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> and must be two or larger. Setting <code>nWaves = 2</code> implies the following regression equations:
 <span class="math display">\[
 \hat{X_2} = \beta_{X_2,X_1} \cdot X_1 + \beta_{X_2, Y_1} \cdot Y_1 \\
@@ -4506,7 +4515,7 @@ By default, all defined parameters in <code>autoregEffects</code>, <code>crossed
 \hat{Y_3} = \beta_{Y,X} \cdot X_2 + \beta_{Y, Y} \cdot Y_2
 \]</span></p>
 <p>To assume that the residual correlations between <span class="math inline">\(X_2\)</span> and <span class="math inline">\(Y_2\)</span> as well as between <span class="math inline">\(X_3\)</span> and <span class="math inline">\(Y_3\)</span> shall be equal, add <code>&#39;corXY&#39;</code> to <code>waveEqual</code>. Although the constraints defined in <code>waveEqual</code> apply to both the H0 and the H1 model, this will nevertheless affect statistical power.</p>
-<p>Second, when <span class="math inline">\(X\)</span> and/or <span class="math inline">\(Y\)</span> are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (<code>metricInvariance = TRUE</code>) and also assume that the residuals of the indicators are autocorrelated across waves (<code>autorcorResiduals = TRUE</code>). Both can be set to <code>FALSE</code> to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constraints as well as the presence of autocorrelated residuals also affects power for hypotheses concerning the CLPM parameters. Note that when <code>metricInvariance = TRUE</code>, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<p>Second, when <span class="math inline">\(X\)</span> and/or <span class="math inline">\(Y\)</span> are latent factors, the analyses models impose metric invariance constraints (equal loadings) over waves for the measurement model by default (<code>metricInvariance = TRUE</code>) and also assume that the residuals of the indicators are autocorrelated across waves (<code>autocorResiduals = TRUE</code>). Both can be set to <code>FALSE</code> to disable invariance constraints over waves and to disable estimation of autocorrelated residuals. However, it is generally recommended to interpret a CLPM structure only when invariance is met. In addition, the presence of invariance constraints as well as the presence of autocorrelated residuals also affects power for hypotheses concerning the CLPM parameters. Note that when <code>metricInvariance = TRUE</code>, the measurement model should be defined in a way that the invariance constraints are actually met by specifying identical loadings over waves for both <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>.</p>
 </div>
 <div id="detect-whether-a-cross-lagged-effect-differs-from-zero" class="section level5 unnumbered hasAnchor">
 <h5>Detect whether a cross-lagged effect differs from zero<a href="#detect-whether-a-cross-lagged-effect-differs-from-zero" class="anchor-section" aria-label="Anchor link to header"></a></h5>
@@ -5367,8 +5376,11 @@ Figure 5.2: Power as function of the RMSEA with N = 500.
 <li>See <a href="#powerBifactor"><code>semPower.powerBifactor</code></a> to detect that a correlation involving a bifactor differs across groups.</li>
 <li>See <a href="#powerRegression"><code>semPower.powerRegression</code></a> and <a href="#powerPath"><code>semPower.powerPath</code></a> to detect that a regression slope differs across groups.</li>
 <li>See <a href="#powerMediation"><code>semPower.powerMediation</code></a> to detect that a mediation effect differs across groups.</li>
+<li>See <a href="#powerAutoreg"><code>semPower.powerAutoreg</code></a> to detect that autoregressive effect in an autoregressive model differs across groups.</li>
+<li>See <a href="#powerARMA"><code>semPower.powerARMA</code></a> to detect that autoregressive, moving-average parameters, means, or variances in an ARMA model differ across groups.</li>
 <li>See <a href="#powerCLPM"><code>semPower.powerCLPM</code></a> to detect that autoregressive effects or cross-lagged effects in a CLPM differ across groups.</li>
 <li>See <a href="#powerRICLPM"><code>semPower.powerRICLPM</code></a> to detect that autoregressive effects, cross-lagged effects, or the correlation between random intercept factors in a random-intercept CLPM differ across groups.</li>
+<li>See <a href="#powerLGCM"><code>semPower.powerLGCM</code></a> to detect that means or variances of the intercept or slope factors, or the slopes involving a time-invariant covariate differ across groups.</li>
 </ul>
 </div>
 <div id="simulatedPower" class="section level2 hasAnchor" number="6.4">
@@ -5497,15 +5509,15 @@ Figure 6.1: Empirical (solid) versus expected (dashed) chi-square distributions
 </div>
 <div id="simNonNormal" class="section level5 unnumbered hasAnchor">
 <h5>Non-normal data<a href="#simNonNormal" class="anchor-section" aria-label="Anchor link to header"></a></h5>
-<p>By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting <code>type = normal</code> in <code>simOptions</code>). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an <a href="#simEstimators">alternative estimator or test-statistic</a>).</p>
+<p>By default, the data generated in a simulated power analysis are sampled from a multivariate normal distribution (by omitting <code>type = &#39;normal&#39;</code> in <code>simOptions</code>). Multivariate normality is, of course, a strong assumption which is often violated in actual empirical data. Whereas the point estimates for the model parameters are still correct when the data are not normally distributed, the standard errors and - most importantly in the present context - the model test statistic will be inflated. To evaluate the extent to which power depends on the normality assumption, simulated power analyses can also be performed based on non-normal data (and optionally by also considering an <a href="#simEstimators">alternative estimator or test-statistic</a>).</p>
 <p>Generating non-normal data with a given covariance structure is a tricky issue, so there are quite a number of different approaches that may be employed. A popular method is the multivariate power-constants approach by Vale and Maurelli (1983), which, however, implies a population distribution that does not depart from a multivariate normal distribution. <code>semPower</code> therefore also provides interfaces to three further approaches, each of which is associated with different classes of multivariate distributions and expects different input parameters:</p>
 <ul>
-<li><code>type = IG</code> (Foldnes &amp; Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the <code>covsim</code> package.</li>
-<li><code>type = mnonr</code> (Qu, Liu &amp; Zhang, 2020) requires provision of Mardia’s multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of <span class="math inline">\(p \cdot (p + 2)\)</span>. This requires the <code>mnonr</code> package.</li>
-<li><code>type = RK</code> (Ruscio &amp; Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).</li>
-<li><code>type = VM</code> (Vale &amp; Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be <span class="math inline">\(\geq \text{skew}^2 - 2\)</span>.
-For instance, recurring to the example above, the following uses the IG approach (<code>type = &#39;IG&#39;</code>) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (<code>skewness</code>) of zero, but a quite strong kurtosis (<code>kurtosis</code>) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a more moderate kurtosis between 4 - 6.</li>
+<li><code>type = &#39;IG&#39;</code> (Foldnes &amp; Olsson, 2016) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable) akin to the Vale-Maurelli procedure. This requires the <code>covsim</code> package.</li>
+<li><code>type = &#39;mnonr&#39;</code> (Qu, Liu &amp; Zhang, 2020) requires provision of Mardia’s multivariate skewness and kurtosis. Note that multivariate normality implies a population kurtosis of <span class="math inline">\(p \cdot (p + 2)\)</span>. This requires the <code>mnonr</code> package.</li>
+<li><code>type = &#39;RK&#39;</code> (Ruscio &amp; Kaczetow, 2008) requires provision of the marginal distributions (i.e., the population distribution of each variable).</li>
+<li><code>type = &#39;VM&#39;</code> (Vale &amp; Maurelli, 1983) requires provision of skewness and excess kurtosis of the marginals (i.e., for each variable). Note that each kurtosis value must be <span class="math inline">\(\geq \text{skew}^2 - 2\)</span>.</li>
 </ul>
+<p>For instance, recurring to the example above, the following uses the IG approach (<code>type = &#39;IG&#39;</code>) to generate non-normal data, where the marginal distributions of the indicators of the first factor (variables 1 - 5) have a skewness (<code>skewness</code>) of zero, but a quite strong kurtosis (<code>kurtosis</code>) between 10 - 20, whereas the indicators of the second factor (variables 6 - 9) show a minor skewness of 2 and a more moderate kurtosis between 4 - 6.</p>
 <div class="sourceCode" id="cb160"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">300121</span>)</span>
 <span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a>powerCFA <span class="ot">&lt;-</span> <span class="fu">semPower.powerCFA</span>(</span>
 <span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a>                              <span class="co"># define type of power analysis</span></span>
@@ -5562,7 +5574,7 @@ For instance, recurring to the example above, the following uses the IG approach
 <span id="cb162-16"><a href="#cb162-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">kurtosis =</span> <span class="dv">200</span>,</span>
 <span id="cb162-17"><a href="#cb162-17" aria-hidden="true" tabindex="-1"></a>                                <span class="at">nCores =</span> <span class="dv">8</span></span>
 <span id="cb162-18"><a href="#cb162-18" aria-hidden="true" tabindex="-1"></a>                              ))</span></code></pre></div>
-<p>Instead of defining the marginal skewness and kurtosis as in the IG or the VM approach, one may specify the marginal distributions themselves using the RK approach (<code>type = &#39;RK&#39;</code>). This requires that the <code>distributions</code> argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., <code>rnorm</code>) and additional arguments (e.g, <code>list(mean = 0, sd = 10)</code>) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 variables:</p>
+<p>Instead of defining the marginal skewness and kurtosis as in the IG or the VM approach, one may specify the marginal distributions themselves using the RK approach (<code>type = &#39;RK&#39;</code>). This requires that the <code>distributions</code> argument is set as a list of lists, where each component must specify the population distribution for a specific variable (e.g., <code>rnorm</code>) and additional arguments (e.g, <code>list(mean = 0, sd = 10)</code>) also as a list (which may also be empty). For instance, the following defines different marginal distributions for each of the 9 indicator variables:</p>
 <div class="sourceCode" id="cb163"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">300121</span>)</span>
 <span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a>distributions <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="st">&#39;rnorm&#39;</span>, <span class="fu">list</span>(<span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">10</span>)),          <span class="co"># normal</span></span>
@@ -5867,7 +5879,7 @@ X_4 = 0.3 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4
 X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
 X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2
 \]</span></p>
-<p>Psi (<span class="math inline">\(\Psi\)</span>) defines whether there are (residual-)correlations between the factors. Suppose that <span class="math inline">\(\Psi\)</span> is
+<p>Psi (<span class="math inline">\(\Psi\)</span>) defines the (residual-)variances and whether there are (residual-)covariances between the factors. Suppose that <span class="math inline">\(\Psi\)</span> is
 <span class="math display">\[
 \begin{array}{lrrr}
     &amp; X_1 &amp; X_2 &amp; X_3 &amp; X_4\\
@@ -5877,7 +5889,8 @@ X_3 &amp; 0.0 &amp; 0.0 &amp; 1.0 &amp; 0.2 \\
 X_4 &amp; 0.0 &amp; 0.0 &amp; 0.2 &amp; 1.0 \\
 \end{array}
 \]</span></p>
-<p>which implies a correlation between <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> of .3 and a residual correlation between <span class="math inline">\(X_3\)</span> and <span class="math inline">\(X_4\)</span> of .2.</p>
+<p>which implies that the variances of <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> are 1, and that the residual variances of <span class="math inline">\(X_3\)</span> and <span class="math inline">\(X_4\)</span> are also 1. Further, the
+covariance between <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span> is .3 (which is also a correlation, because both variances are 1) and a residual covariance between <span class="math inline">\(X_3\)</span> and <span class="math inline">\(X_4\)</span> of .2 (which is <em>not</em> a correlation, because the variances of <span class="math inline">\(X_3\)</span> and <span class="math inline">\(X_4\)</span> also depend on Beta).</p>
 <p>The scenario just described can be achieved by defining <code>Beta</code> and <code>Psi</code> accordingly and plugging these as input to <code>semPower.genSigma</code>:</p>
 <div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a>Beta <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
 <span id="cb178-2"><a href="#cb178-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(.<span class="dv">00</span>, .<span class="dv">00</span>, .<span class="dv">00</span>, .<span class="dv">00</span>),</span>

@@ -13,6 +13,7 @@
 #' @param Sigma can be used instead of `effect` and `effect.measure`: population covariance matrix (a list for multiple group models). Used in conjunction with `SigmaHat` to define effect.
 #' @param muHat can be used instead of `effect` and `effect.measure`: model implied mean vector. Used in conjunction with `mu`. If `NULL`, no meanstructure is involved.
 #' @param mu can be used instead of `effect` and `effect.measure`: observed (or population) mean vector. Use in conjunction with `muHat`. If `NULL`, no meanstructure is involved.
+#' @param fittingFunction one of `'ML'` (default), `'WLS'`, `'DWLS'`, `'ULS'`. Defines the discrepancy function used to obtain Fmin.
 #' @param ... other parameters related to plots, notably `plotShow`, `plotShowLabels`, and `plotLinewidth`.
 #' @return Returns a list. Use `summary()` to obtain formatted results.
 #' @examples
@@ -32,6 +33,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                                  abratio = 1,
                                  N, df = NULL, p = NULL,
                                  SigmaHat = NULL, Sigma = NULL, muHat = NULL, mu = NULL,
+                                 fittingFunction = 'ML',
                                  ...){
 
   if('simulatedPower' %in% names(list(...)) && list(...)[['simulatedPower']]) stop('Simulated power is not available for compromise power analysis, because this would require a vast (infeasible) number of simulation runs to yield reliable results.')
@@ -41,6 +43,7 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
                      alpha = NULL, beta = NULL, power = NULL, abratio = abratio,
                      N = N, df = df, p = p,
                      SigmaHat = SigmaHat, Sigma = Sigma, muHat = muHat, mu = mu, 
+                     fittingFunction = fittingFunction,
                      simulatedPower = FALSE)
 
   df <- pp[['df']]
