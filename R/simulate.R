@@ -162,6 +162,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # remaining checks are done in corresponding power fnc
   # data gen checks are done in gendata
   
+  # don't allow ULS estimation (but ULSM, ULSMV are ok)
+  if(!is.null(lavOptions[['estimator']]) && lavOptions[['estimator']] == 'ULS') stop('The ULS test-statistic has no known asymptotic distribution. You can try ULSM or ULSMV.')
   # warn in case of long computation times
   lavEstimators <- c("MLM", "MLMV", "MLMVS", "MLF", "MLR", "WLS", "DWLS", "WLSM", "WLSMV", "ULSM", "ULSMV")
   costlyEstm <- (!is.null(lavOptions[['estimator']]) && toupper(lavOptions[['estimator']]) %in% lavEstimators)
