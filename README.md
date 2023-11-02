@@ -10,7 +10,7 @@ semPower is an R-package that provides several functions to perform a-priori, co
 
 (Very) basic functionality is also provided as a shiny app, which you can use online at [https://sempower.shinyapps.io/sempower](https://sempower.shinyapps.io/sempower/).
 
-### Installation
+## Installation
 
 `semPower` can be installed via [CRAN](https://CRAN.R-project.org/package=semPower). The CRAN version often lags behind the development version, which can be installed as follows:
 
@@ -19,7 +19,7 @@ semPower is an R-package that provides several functions to perform a-priori, co
 devtools::install_github("moshagen/semPower")
 ```
 
-### Manual
+## Manual
 
 Find a detailed manual at [https://moshagen.github.io/semPower/](https://moshagen.github.io/semPower/). 
 
@@ -28,9 +28,14 @@ We also recommend this in-depth tutorial on power analyses in SEM using a previo
 Jobst, L., Bader, M., & Moshagen, M. (2023). A Tutorial on Assessing Statistical Power and Determining Sample Size for Structural Equation Models. *Psychological Methods, 28*, 207-221. [https://doi.org/10.1037/met0000423](https://doi.org/10.1037/met0000423)  [preprint](https://github.com/moshagen/semPower/blob/master/docs/semPowerTutorial.pdf)
 
 
+## Citation
+
+If you use `semPower` in publications, please cite the package as follows:
+  
+Moshagen, M., & Bader, M. (in press). semPower: General Power Analysis for Structural Equation Models. *Behavior Research Methods*. [https://doi.org/10.3758/s13428-023-02254-7](https://doi.org/10.3758/s13428-023-02254-7)
 
 
-### Quick Examples for model-free power analyses
+## Quick Examples for model-free power analyses
 
 Determine the required sample size to detect misspecifications of a model (involving df = 100 degrees of freedom) corresponding to RMSEA = .05 with a power of 80% on an alpha error of .05:
   
@@ -91,14 +96,14 @@ summary(ap)
 See the [manual](https://moshagen.github.io/semPower/#modelFreePower) for details.
 
 
-### Quick Examples for model-based power analyses
+## Quick Examples for model-based power analyses
 
 
 All the following examples determine the required sample size to detect the specified effect  (a priori power analysis) with a power of 80% on alpha .05 and define the measurement model via the `loadings` argument. See the [manual](https://moshagen.github.io/semPower/#factorDefinition) for details and for other ways to specify the measurement model.
 
 
 
-#### CFA models
+### CFA models
 
 Determine sample size to detect that a correlation between the first and the second factor of at least .3 differs from zero:
 ```
@@ -187,7 +192,7 @@ summary(powerCFA)
 See the [manual](https://moshagen.github.io/semPower/#powerCFA) for more details.
 
 
-#### Latent regression models
+### Latent regression models
 Determine sample size to detect that the first slope (of .2) differs from zero:
 
 ```
@@ -756,7 +761,7 @@ summary(powerLGCM)
 See the [manual](https://moshagen.github.io/semPower/#powerLGCM) for more details and further hypotheses.
 
 
-#### Simulated power analysis
+## Simulated power analysis
 
 Perform a simulated power-analysis with 500 replications and non-normal data with a population multivariate skewness of 10 and multivariate kurtosis of 200 to determine the sample size to detect that a correlation between the first and the second factor of at least .3 differs from zero:
 ```
@@ -793,13 +798,8 @@ powerCFA <- semPower.powerCFA(
 summary(powerCFA)
 ```
 
-See the [manual](https://moshagen.github.io/semPower/#simulatedPower) for more details
+See the [manual](https://moshagen.github.io/semPower/#simulatedPower) for more details.
 
 
 
 
-### Citation
-
-If you use `semPower` in publications, please cite the package as follows:
-  
-  Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54-60. doi: 10.1080/10705511.2014.950896

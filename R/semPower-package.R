@@ -20,7 +20,7 @@
 #' @Citation
 #' If you use \code{semPower} in publications, please cite the package as follows:
 #' 
-#' Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. \emph{Structural Equation Modeling, 23}, 54-60. doi: 10.1080/10705511.2014.950896
+#' Moshagen, M., & Bader, M. (in press). semPower: General Power Analysis for Structural Equation Models. \emph{Behavior Research Methods}. https://doi.org/10.3758/s13428-023-02254-7 
 #'
 #' @examples
 #' # a-priori power analyses using rmsea = .05 a target power (1-beta) of .80

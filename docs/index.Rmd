@@ -56,11 +56,10 @@ Contact: <morten.moshagen@uni-ulm.de>
 
 Please cite as:
 
-* Moshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models. *Structural Equation Modeling, 23*, 54–60. [https://doi.org/10.1080/10705511.2014.950896](https://doi.org/10.1080/10705511.2014.950896)
-
+* Moshagen, M., & Bader, M. (in press). semPower: General Power Analysis for Structural Equation Models. *Behavior Research Methods*. [https://doi.org/10.3758/s13428-023-02254-7](https://doi.org/10.3758/s13428-023-02254-7)
 
 ##### Version history{-}
-The first iteration of `semPower` was developed as a java program in 2016 and was ported as a slightly extended version to R a year afterwards. These versions provided support for a priori, post hoc, and compromise [model-free power analyses](#modelFreePower) based on common effect-size measures such as the RMSEA. The R package was subsequently extended to support covariance matrices as input as an alternative way to define the effect. The current, second version of `semPower` expands this approach by providing many convenience functions to define the effect in [terms of model parameters](#modelBasedPower), covering many commonly encountered model structures, and also supports [simulated power](#simulatedPower) estimation in addition to analytical power analyses.
+The first iteration of `semPower` was developed as a java program in 2015 and was ported as a slightly extended version to R a year afterwards. These versions provided support for a priori, post hoc, and compromise [model-free power analyses](#modelFreePower) based on common effect-size measures such as the RMSEA. The R package was subsequently extended to support covariance matrices as input as an alternative way to define the effect. The current, second version of `semPower` expands this approach by providing many convenience functions to define the effect in [terms of model parameters](#modelBasedPower), covering many commonly encountered model structures, and also supports [simulated power](#simulatedPower) estimation in addition to analytical power analyses.
 
 ##### Installation{-}
 

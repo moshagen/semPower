@@ -8,8 +8,8 @@
                 "\nSee https://moshagen.github.io/semPower/ for a detailed manual.",
                 "\n",
                 "\nPlease cite as:",
-                "\nMoshagen, M., & Erdfelder, E. (2016). A new strategy for testing structural equation models.",
-                "\nStructural Equation Modeling, 23, 54-60. doi: 10.1080/10705511.2014.950896",
+                "\nMoshagen, M., & Bader, M. (in press). semPower: General Power Analysis for Structural Equation Models.",
+                "\nBehavior Research Methods. https://doi.org/10.3758/s13428-023-02254-7",
                 "\n")
   packageStartupMessage(txt)
 }
