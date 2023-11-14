@@ -93,7 +93,7 @@ Generally, statistical power depends on
 * the alpha error (alpha)
 * the degrees of freedom (df)
 
-and will be higher for a larger effect, a larger sample size, a higher alpha error, and fewer degrees of freedom. When performing a power analysis, one of these quantities is computed as function of the other quantities, giving rise to different types of power analyses:
+and will be higher for a larger effect, a larger sample size, a higher alpha error, and fewer degrees of freedom^[Note that this only applies for effect-size metrics that do not adjust for parsimony. For instance, when using a constant value for the [RMSEA](#effects) as an effect size metric, power decreases with increasing df, because the implied $F_0$ decreases.]. When performing a power analysis, one of these quantities is computed as function of the other quantities, giving rise to different types of power analyses:
 
 * **A priori power analysis**: Determines the required sample size to detect a certain effect with a desired power, given alpha and df. 
 * **Post-hoc power analysis**: Determines the achieved power to detect a certain effect with a given sample size, alpha and df. 

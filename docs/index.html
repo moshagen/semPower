@@ -23,7 +23,7 @@
 <meta name="author" content="Morten Moshagen &amp; Martina Bader" />
 
 
-<meta name="date" content="2023-11-02" />
+<meta name="date" content="2023-11-14" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2037,7 +2037,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="header">
 <h1 class="title">Power Analysis for Structural Equation Models: semPower 2 Manual</h1>
 <p class="author"><em>Morten Moshagen &amp; Martina Bader</em></p>
-<p class="date"><em>2023-11-02</em></p>
+<p class="date"><em>2023-11-14</em></p>
 </div>
 <style type="text/css">
 .book .book-body .page-wrapper .page-inner {
@@ -2087,7 +2087,7 @@ left: 380px;
 <li>the alpha error (alpha)</li>
 <li>the degrees of freedom (df)</li>
 </ul>
-<p>and will be higher for a larger effect, a larger sample size, a higher alpha error, and fewer degrees of freedom. When performing a power analysis, one of these quantities is computed as function of the other quantities, giving rise to different types of power analyses:</p>
+<p>and will be higher for a larger effect, a larger sample size, a higher alpha error, and fewer degrees of freedom<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. When performing a power analysis, one of these quantities is computed as function of the other quantities, giving rise to different types of power analyses:</p>
 <ul>
 <li><strong>A priori power analysis</strong>: Determines the required sample size to detect a certain effect with a desired power, given alpha and df.</li>
 <li><strong>Post-hoc power analysis</strong>: Determines the achieved power to detect a certain effect with a given sample size, alpha and df.</li>
@@ -2098,7 +2098,7 @@ left: 380px;
 <div id="types-of-hypotheses" class="section level2 hasAnchor" number="1.2">
 <h2><span class="header-section-number">1.2</span> Types of hypotheses<a href="#types-of-hypotheses" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>Statistical power is always tied to a particular hypothesis, so power will typically differ even for the same (base-)model depending on which hypothesis is considered. A general statement such as “power was 80%” is meaningless, unless the hypothesis for which power was determined is also stated (such as “power to detect a correlation <span class="math inline">\(\geq .2\)</span> between the first and the second factor was 80%.”). Moreover, power can be high for one hypothesis, but low for other hypotheses, so a power analysis should always be performed concerning (a) the focal hypotheses and (b) the hypothesis where the smallest effect is expected.</p>
-<p>In SEM, the typical types of hypotheses that occur either implement equality constraints on two or more parameters (such as cross-group constraints) or assign a particular parameter a specific value (such as zero).<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> For instance, consider a cross-lagged panel model (CLPM) with two constructs <em>X</em> and <em>Y</em> measured by three indicators each at three different waves (so the full model comprises six factors). Relevant (non-exhaustive) hypotheses could be</p>
+<p>In SEM, the typical types of hypotheses that occur either implement equality constraints on two or more parameters (such as cross-group constraints) or assign a particular parameter a specific value (such as zero).<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> For instance, consider a cross-lagged panel model (CLPM) with two constructs <em>X</em> and <em>Y</em> measured by three indicators each at three different waves (so the full model comprises six factors). Relevant (non-exhaustive) hypotheses could be</p>
 <ul>
 <li>whether the model as a whole describes the data well.</li>
 <li>whether measurement invariance over time concerning the indicators holds.</li>
@@ -3216,7 +3216,7 @@ BF &amp; S_1 &amp; S_2 &amp; S_3 &amp; COV\\
 <li>whether an indirect effect differs from zero (<code>nullEffect = &#39;ind = 0&#39;</code>).</li>
 <li>whether an indirect effect differs across two or more groups (<code>nullEffect = &#39;indA = indB&#39;</code>).</li>
 </ul>
-<p>Note that (for now) <code>semPower</code> only provides accurate power analyses for models without latent variables, where the test of the indirect effect is performed according to Tofighi and Kelley (2020). For single group models with latent variables (i.e, <code>nullEffect = &#39;ind = 0&#39;</code>), power is only (sometimes roughly) approximated. Multiple group models involving latent variables (i.e., <code>nullEffect = &#39;indA = indB&#39;</code>) are currently not supported.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Note that (for now) <code>semPower</code> only provides accurate power analyses for models without latent variables, where the test of the indirect effect is performed according to Tofighi and Kelley (2020). For single group models with latent variables (i.e, <code>nullEffect = &#39;ind = 0&#39;</code>), power is only (sometimes roughly) approximated. Multiple group models involving latent variables (i.e., <code>nullEffect = &#39;indA = indB&#39;</code>) are currently not supported.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p><code>semPower.powerMediation</code> only addresses hypotheses in a mediation context. <code>semPower</code> provides other convenience functions for hypotheses arising in <a href="#powerRegression">latent regression models</a>, <a href="#powerPath">generic path models</a>, and <a href="#powerCLPM">cross-lagged panel models</a>. For hypotheses regarding global model fit, a <a href="#modelFreePower">model-free power analysis</a> should be performed.</p>
 <p><code>semPower.powerMediation</code> expects the following arguments:</p>
 <ul>
@@ -5332,7 +5332,7 @@ Figure 5.2: Power as function of the RMSEA with N = 500.
 <p>Knowledge of the degrees of freedom (df) is required to perform a power analysis. When power refers to the comparison of two explicitly specified, nested models, the resulting df are just the difference between the df of the two models (or equivalently, the number of free parameters removed by the more restrictive model). When power is requested for the comparison of a hypothesized model to the saturated model, the model df are given by</p>
 <p><span class="math display">\[df = p\cdot(p+1)/2 - q\]</span></p>
 <p>where <span class="math inline">\(p\)</span> is the number of observed variables and <span class="math inline">\(q\)</span> is the number of free parameters of the hypothesized model. The <a href="#comparisonModel">next chapter</a> discusses the difference between a saturated and less restricted H1 comparison model in greater detail.</p>
-<p>To obtain the df in a typical SEM, one needs to count the (a) loadings, (b) indicator residual variances, and (c) covariance/regression parameters between factors and between indicator residuals.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> For instance, consider a correlated two-factor CFA model with each factor measured by 4 indicators and no secondary loadings or residual correlations. Thus, there are (a) <span class="math inline">\(2\cdot4\)</span> loadings, (b) 8 indicator residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus <span class="math inline">\(8\cdot9/2 - 17 = 19\)</span>.</p>
+<p>To obtain the df in a typical SEM, one needs to count the (a) loadings, (b) indicator residual variances, and (c) covariance/regression parameters between factors and between indicator residuals.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> For instance, consider a correlated two-factor CFA model with each factor measured by 4 indicators and no secondary loadings or residual correlations. Thus, there are (a) <span class="math inline">\(2\cdot4\)</span> loadings, (b) 8 indicator residual variances, and (c) 1 covariance between the factors, which results in 17 free parameters. The df are thus <span class="math inline">\(8\cdot9/2 - 17 = 19\)</span>.</p>
 <p>If you are unsure or have a more complicated model (or both), <code>semPower</code> also includes a utility function called <code>semPower.getDf</code> that determines the df for a model provided in the <code>lavaan</code> syntax (note that this function requires the <code>lavaan</code> package). For the model sketched above, running</p>
 <div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define model using standard lavaan syntax</span></span>
 <span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a>lavmodel <span class="ot">&lt;-</span> <span class="st">&#39;</span></span>
@@ -5385,7 +5385,7 @@ Figure 5.2: Power as function of the RMSEA with N = 500.
 </div>
 <div id="simulatedPower" class="section level2 hasAnchor" number="6.4">
 <h2><span class="header-section-number">6.4</span> Simulated power<a href="#simulatedPower" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>By default, power analyses are performed analytically by relying on asymptotic theory. Alternatively, all <a href="#modelBasedPower">model-based</a> a priori and post hoc power analyses<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> can also be performed using a simulation approach.</p>
+<p>By default, power analyses are performed analytically by relying on asymptotic theory. Alternatively, all <a href="#modelBasedPower">model-based</a> a priori and post hoc power analyses<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> can also be performed using a simulation approach.</p>
 <p>When all relevant assumptions are satisfied, a simulated power analysis with a sufficiently large number of replications will yield the same results as an analytical power analysis. Moreover (and perhaps surprisingly), there will also be - generally speaking - little differences whenever the H0 model is compared against a less restricted H1 model (see the <a href="#comparisonModel">chapter on choosing the comparison model</a>) regardless of whether additional assumptions such as multivariate normality hold. Major differences are thus only to be expected when the H0 model is compared against the saturated model and the model is large or the data are non-normal or incomplete.</p>
 <p>To request a simulated power analysis, add <code>simulatedPower = TRUE</code> as an additional argument to <strong>any</strong> of the convenience functions performing a <a href="#modelBasedPower">model-based power analysis</a> or to the <code>semPower.apriori</code> or <code>semPower.posthoc</code> functions when a covariance matrix and a model string is provided. The details of the simulation can be specified in <code>simOptions</code>, which is a list that may have the following components:</p>
 <ul>
@@ -5944,10 +5944,11 @@ covariance between <span class="math inline">\(X_1\)</span> and <span class="mat
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>A third type implements order constraints on parameters, but this is associated with certain intricacies concerning the limiting distributions and not covered by <code>semPower</code>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>This may change once <code>lavaan</code> supports an optimizer that better copes with non-linear constraints, such as NPSOL or SLSQP.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning the number of free parameters, it does not matter whether factors are identified by fixing their variance or by fixing one loading.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Note that this only applies for effect-size metrics that do not adjust for parsimony. For instance, when using a constant value for the <a href="#effects">RMSEA</a> as an effect size metric, power decreases with increasing df, because the implied <span class="math inline">\(F_0\)</span> decreases.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>A third type implements order constraints on parameters, but this is associated with certain intricacies concerning the limiting distributions and not covered by <code>semPower</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>This may change once <code>lavaan</code> supports an optimizer that better copes with non-linear constraints, such as NPSOL or SLSQP.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Note that factor (residual) variances can be omitted, because each factor needs to be assigned a scale, so one free parameter is lost for each factor anyway. Concerning the number of free parameters, it does not matter whether factors are identified by fixing their variance or by fixing one loading.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Simulated power is not supported for compromise power analysis, because this required an unfeasible large number of replications to yield reliable results.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
             </section>
