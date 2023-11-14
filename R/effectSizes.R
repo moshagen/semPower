@@ -242,7 +242,7 @@ getAGFI.F <- function(Fmin, df, p){
 #' `(mu - muHat)' SigmaHat^-1 (mu - muHat)` is added.
 #' The WLS fitting function is:
 #' `F_min = (Sij - SijHat)'  V  (Sij - SijHat)` 
-#' where V is the inverse of N times the asymptotic covariance matrix of the sample statistics (Gamma; N x ACOV[ mu, vech(S) ]). 
+#' where V is the inverse of N times the asymptotic covariance matrix of the sample statistics (Gamma; N x ACOV(mu, vech(S))). 
 #' For DWLS, V is the diagonal of the inverse of diag(NACOV), i.e. diag(solve(diag(Gamma))). 
 #' For ULS, V = I. ULS has an unknown asymptotic distribution, so it is actually irrelevant, but provided for the sake of completeness.
 #'
