@@ -6,6 +6,9 @@
 \usage{
 getFittingFunctionFromEstimator(lavOptions)
 }
+\arguments{
+\item{lavOptions}{lavOptions}
+}
 \value{
 fitting function
 }

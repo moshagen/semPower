@@ -6,6 +6,9 @@
 \usage{
 getDiscrepancyFunctionFromFittingFunction(fittingFunction)
 }
+\arguments{
+\item{fittingFunction}{fittingFunction}
+}
 \value{
 discrepancy function
 }

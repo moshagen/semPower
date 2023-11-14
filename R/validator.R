@@ -532,7 +532,7 @@ checkEllipsis <- function(...){
 #'
 #' get proper fitting function (to obtain sigmaHat) for chosen estimator
 #' 
-#' @param lavOptions
+#' @param lavOptions lavOptions
 #' @return fitting function
 getFittingFunctionFromEstimator <- function(lavOptions){
   lavEstimML <- c('ML', 'MLM', 'MLMV', 'MLMVS', 'MLF', 'MLR')
@@ -556,7 +556,7 @@ getFittingFunctionFromEstimator <- function(lavOptions){
 #'
 #' get proper discrepancy function (to measure F0) from fitting function (to obtain SigmaHat)
 #' 
-#' @param fittingFunction
+#' @param fittingFunction fittingFunction
 #' @return discrepancy function
 getDiscrepancyFunctionFromFittingFunction <- function(fittingFunction){
   df <- 'ML'
