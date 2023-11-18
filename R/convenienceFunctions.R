@@ -4237,6 +4237,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
   if(nullEffect == 'betax=betaz' && any(lapply(nullWhich, function(x) length(x)) != 2)) stop('nullWhich must be a list containing vectors of size two each.')
   if(nullEffect == 'betaa=betab' && !isMultigroup) stop('Beta must be a list for multiple group comparisons.')
   if(nullEffect != 'betaa=betab' && isMultigroup) stop('Multiple group models are only valid for nullEffect = "betaA=betaB".')
+  if(nullEffect != 'betax=betaz' && is.list(nullWhich)) stop('nullWhich may only contain a single vector of size two unless nullEffect = "betaX = betaZ".')
   if(nullEffect == 'beta=0' && any(unlist(lapply(Beta, function(x) x[nullWhich[1], nullWhich[2]] == 0)))) stop('nullWhich must not refer to a slope with a population value of zero.')
   if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups', bound = c(1, length(Beta)), inclusive = TRUE))
   if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
