@@ -3497,9 +3497,6 @@ semPower.powerMI <- function(type,
     if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
   }
   
-  # models are the same, the only difference pertains to lavOptions
-  modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
-
   # set proper lavOptions
   lavOptionsH1 <- list()
   if(!useLavOptions){
@@ -3526,7 +3523,38 @@ semPower.powerMI <- function(type,
     }
   }
   
+  # define model strings
+  
+  nGroups <- length(generated)
+  
+  nFactors <- ncol(generated[[1]][["Lambda"]])
+  
+  modelH0 <- generated[[1]][['modelTrueCFA']]
+  
+  # freely estimate latent variances in all but one group when loadings are equal
+  if("loadings" %in% lavOptionsH0[['group.equal']]){
+    
+    replacement <- paste0('c(1,', paste(rep('NA', (nGroups-1)), collapse = ','), ')*')
+    
+    for(x in 1:nFactors){
+      modelH0 <- sub(paste0('f', x, ' ~~ ', '1*f', x), paste0('f', x, ' ~~ ', replacement, 'f', x), modelH0, fixed = TRUE)
+    } 
+  }
+  
+  modelH1 <- generated[[1]][['modelTrueCFA']]
+  
+  # freely estimate latent variances in all but one group when loadings are equal
+  if("loadings" %in% lavOptionsH1[['group.equal']]){
+    
+    replacement <- paste0('c(1,', paste(rep('NA', (nGroups-1)), collapse = ','), ')*')
+    
+    for(x in 1:nFactors){
+      modelH1 <- sub(paste0('f', x, ' ~~ ', '1*f', x), paste0('f', x, ' ~~ ', replacement, 'f', x), modelH1, fixed = TRUE)
+    } 
+  }
+  
   if('saturated' %in% comparison) modelH1 <- NULL
+  
   
   Sigma <- lapply(generated, '[[', 'Sigma')
   mu <- NULL
