@@ -2840,8 +2840,8 @@ test_powerMI <- function(){
                          comparison = 'saturated',
                          nullEffect = 'metric',
                          Phi = list(.2, .2), 
-                         nIndicator = list(c(3, 3), c(3, 3)), 
-                         loadM = list(.5, .6),
+                         loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                         list(c(.60, .70, .63), c(.55, .50, .60))),
                          alpha = .05, N = list(250, 250))
   
   lavres <- helper_lav(ph$modelH0, ph$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
@@ -2849,7 +2849,9 @@ test_powerMI <- function(){
   # metric vs configural
   ph2 <- semPower.powerMI(type = 'post-hoc', comparison = 'configural',
                           nullEffect = 'metric',
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2),
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   
   lavres2a <- helper_lav(ph2$modelH0, ph2$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
@@ -2877,12 +2879,16 @@ test_powerMI <- function(){
   # metric vs saturated: lav model string
   ph4 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
                           nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2), 
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   # metric vs configural: lav model string
   ph5 <- semPower.powerMI(type = 'post-hoc', comparison = 'none',
                           nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2), 
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   # scalar vs metric: lav model string
   ph6 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings'),
