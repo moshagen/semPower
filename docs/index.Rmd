@@ -1835,7 +1835,7 @@ Alternatively, the models can also be defined using `lavaan` style `group.equal`
 * `c('loadings', 'residuals')`: all loadings and (indicator-)residuals are restricted to equality.
 * `c('loadings', 'intercepts', 'means')`: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
 
-Note that `semPower.powerMI` implements variance scaling of the factors. In models assuming configural invariance, the variances of all factors are equal to 1 in all groups. In models assuming invariance of the loadings (metric invariance and higher), the factors variances are equal to 1 in one group and freely estimated in all other groups.
+Note that `semPower.powerMI` implements variance scaling of the factors. In models assuming configural invariance, the variances of all factors are equal to 1 in all groups. In models assuming invariance of the loadings (metric invariance and higher), the factor variances are equal to 1 in one group and freely estimated in all other groups.
 
 `semPower.powerMI` provides a list as result. Use the `summary` method to obtain formatted results. The list contains the following components:
 
