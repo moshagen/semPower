@@ -1,3 +1,9 @@
+semPower 2.1.1 (June 2024)
+===========
+
+* minor bugfix: make definition of factor model via Lambda in powerBifactor work
+
+
 semPower 2.1.0 (September 2023)
 ===========
 
