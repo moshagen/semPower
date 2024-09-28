@@ -1134,7 +1134,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined.
 #' If the model contains observed variables only, use `Lambda = diag(x)` where `x` is the number of variables.
 #'
-#' Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the thrird as Y. In case of a more complex mediation defined via the `Beta` matrix, the order of factors matches the order of `Beta`. 
+#' Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the third as Y. In case of a more complex mediation defined via the `Beta` matrix, the order of factors matches the order of `Beta`. 
 #' 
 #' Additional arguments related to the requested type of **power analysis**:
 #' * `alpha`: The alpha error probability. Required for `type = 'a-priori'` and `type = 'post-hoc'`.
@@ -1381,6 +1381,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
+  if(isObserved) model <- '' # dummy latents don't work with non-linear constraints
   # add mediation structure
   for(f in 1:ncol(B[[1]])){
     fidx <- unique(unlist(lapply(B, function(x) which(x[f, ] != 0))))
@@ -1437,6 +1438,15 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   }else{
     stop('nullEffect not defined.')
   }
+  
+  # for observed only models, replace factor labels (f) by observed variables as found in sigma
+  if(isObserved){
+    ff <- paste0('f', 1:ncol(Sigma))
+    for(i in 1:ncol(Sigma)){
+      model <- gsub(ff[i], colnames(Sigma)[i], model)  # later reused for modelH1
+      modelH0 <- gsub(ff[i], colnames(Sigma)[i], modelH0)
+    }
+  } 
 
   # enforce invariance constraints in the multigroup case
   if(isMultigroup){
