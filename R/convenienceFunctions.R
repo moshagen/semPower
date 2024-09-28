@@ -169,6 +169,10 @@ semPower.powerLav <- function(type,
     Sigma <- lapply(modelPop, function(x) orderLavCov(lavaan::fitted(lavaan::sem(x))[['cov']]))
     mu <- lapply(modelPop, function(x) orderLavMu(lavaan::fitted(lavaan::sem(x))[['mean']]))
   }
+  # make sure sigma/mu are properly ordered
+  Sigma <- lapply(Sigma, function(x) orderLavCov(x))
+  if(!is.null(mu)) mu <- lapply(mu, function(x) orderLavMu(x))
+  
   nGroups <- length(Sigma)
   
 
