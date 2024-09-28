@@ -1,7 +1,9 @@
-semPower 2.1.1 (June 2024)
+semPower 2.1.1 (September 2024)
 ===========
 
-* minor bugfix: make definition of factor model via Lambda in powerBifactor work
+* bugfix: don't rely on dummy latents in powerMediation with only observed variables. This led to underestimated effects and thus underestimated power.    
+* bugfix: fix edge cases with variable ordering in user-provided Sigmas
+* bugfix: make definition of factor model via Lambda in powerBifactor work
 
 
 semPower 2.1.0 (September 2023)

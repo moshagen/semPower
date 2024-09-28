@@ -1,7 +1,7 @@
 Type: Package
 Package: semPower
 Title: Power Analyses for SEM
-Version: 2.1.0
+Version: 2.1.1
 Authors@R: c(
     person("Morten", "Moshagen", , "morten.moshagen@uni-ulm.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-2929-7288")),
