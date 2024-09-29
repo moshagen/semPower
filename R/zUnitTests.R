@@ -449,7 +449,7 @@ test_generateSigmaB <- function(){
     c(0.7, 0.6, 0.5, 0.6),
     c(0.8, 0.8, 0.5)
   )
-  Lambda <- semPower:::genLambda(loadings)
+  Lambda <- genLambda(loadings)
   generated <- semPower.genSigma(Lambda = Lambda, Phi = .3)
   generated2 <- semPower.genSigma(loadings = loadings, Phi = .3)
   
@@ -476,7 +476,7 @@ test_genPhi <- function(){
     c(.10, .05, .50, .00)
   ), byrow = TRUE, ncol = 4)
   
-  Phi <- semPower:::getPhi.B(B)
+  Phi <- getPhi.B(B)
   colnames(Phi) <- paste0('f', 1:4)
   par <- helper_lav(m, Phi)$par  
   par <- helper_lav(m, Phi)$par
@@ -504,7 +504,7 @@ test_genPhi <- function(){
     c(.00, .00, .30, .00)
   ), byrow = TRUE, ncol = 4)
   
-  Phi <- semPower:::getPhi.B(B, lPsi)
+  Phi <- getPhi.B(B, lPsi)
   colnames(Phi) <- paste0('f', 1:4)
   par <- helper_lav(m2, Phi)$par
   
@@ -527,7 +527,7 @@ test_genPhi <- function(){
     c(.00, .00, .00, .00)
   ), byrow = TRUE, ncol = 4)
   
-  Phi <- semPower:::getPhi.B(B2, lPsi2)
+  Phi <- getPhi.B(B2, lPsi2)
   colnames(Phi) <- paste0('f', 1:4)
   par2 <- helper_lav(m3, Phi)$par
 
@@ -560,7 +560,7 @@ test_genPhi <- function(){
     c(0.4, 0.5, 0.8),
     c(0.6, 0.6, 0.5)
   )
-  Phi <- semPower:::getPhi.B(B, lPsi)
+  Phi <- getPhi.B(B, lPsi)
   generated6 <- semPower.genSigma(Phi = Phi, loadings = loadings, useReferenceIndicator = TRUE)
   m <- paste(generated6$modelTrue,
              'f3 + f4 ~ f1 + f2
@@ -591,7 +591,7 @@ test_genPhi <- function(){
     c(.30, .00, .00),
     c(.20, .40, .00)
   ), byrow = TRUE, ncol = 3)
-  Phi <- semPower:::getPhi.B(B)
+  Phi <- getPhi.B(B)
   generated6 <- semPower.genSigma(Phi = Phi, nIndicator = rep(1, 3), loadM = 1)
   
   # same with Lambda as diag matrix
@@ -619,7 +619,7 @@ test_genPhi <- function(){
   x4 ~ x1 + x2 + x3
   x1 ~~ x3
   '
-  Phi <- semPower:::getPhi.B(B, lPsi)
+  Phi <- getPhi.B(B, lPsi)
   colnames(Phi) <- paste0('x', 1:ncol(B))
   lavres7 <- helper_lav(m, Phi)
   par <- lavres7$par
@@ -646,7 +646,7 @@ test_genPsi <- function(){
     c(.20, .40, .00, .00),
     c(.10, .05, .50, .00)
   ), byrow = TRUE, ncol = 4)
-  Psi <- semPower:::getPsi.B(B)
+  Psi <- getPsi.B(B)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B, Psi = Psi)
   
   par <- helper_lav(gen$modelTrue, gen$Sigma)$par  
@@ -674,11 +674,11 @@ test_genPsi <- function(){
   x1 ~~ x2
   x3 ~~ x4
   '
-  Psi <- semPower:::getPsi.B(B, sPsi, standResCov = TRUE)
+  Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B, Psi = Psi)
   par <- helper_lav(m2, gen$Sigma)$par
   
-  Psi <- semPower:::getPsi.B(B, sPsi, standResCov = FALSE)
+  Psi <- getPsi.B(B, sPsi, standResCov = FALSE)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B, Psi = Psi)
   par2 <- helper_lav(m2, gen$Sigma)$par
   
@@ -700,7 +700,7 @@ test_genPsi <- function(){
   x1 ~~ x2
   x3 ~~ x4
   '  
-  Psi2 <- semPower:::getPsi.B(B2, sPsi2, standResCov = FALSE)
+  Psi2 <- getPsi.B(B2, sPsi2, standResCov = FALSE)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B2, Psi = Psi2)
   par3 <- helper_lav(m3, gen$Sigma)$par
 
@@ -732,7 +732,7 @@ test_genPsi <- function(){
   x2 ~~ x1
   x4 ~~ x3
   '
-  Psi <- semPower:::getPsi.B(B, sPsi, standResCov = TRUE)
+  Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B, Psi = Psi)
   par <- helper_lav(m3, gen$Sigma)$par
   
@@ -761,7 +761,7 @@ test_genPsi <- function(){
     c(0.4, 0.5, 0.8),
     c(0.6, 0.6, 0.5)
   )
-  Psi <- semPower:::getPsi.B(B, sPsi, standResCov = TRUE)
+  Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
   gen <- semPower.genSigma(loadings = loadings, Beta = B, Psi = Psi)
   par <- helper_lav(gen$modelTrue, gen$Sigma)$par
   
@@ -789,7 +789,7 @@ test_genPsi <- function(){
   x4 ~ x1 + x2
   x2 ~~ x3
   '
-  Psi <- semPower:::getPsi.B(B, sPsi, standResCov = TRUE)
+  Psi <- getPsi.B(B, sPsi, standResCov = TRUE)
   gen <- semPower.genSigma(Lambda = diag(ncol(B)), Beta = B, Psi = Psi)
   par <- helper_lav(m2, gen$Sigma)$par
   
@@ -863,8 +863,8 @@ test_powerLav <- function(){
   # consistency with f difference
   SigmaHat1 <- lavaan::fitted(lavres$res)$cov
   SigmaHat2 <- lavaan::fitted(lavres2$res)$cov
-  f1 <- semPower:::getF.Sigma(SigmaHat1, Sigma)
-  f2 <- semPower:::getF.Sigma(SigmaHat2, Sigma)
+  f1 <- getF.Sigma(SigmaHat1, Sigma)
+  f2 <- getF.Sigma(SigmaHat2, Sigma)
   deltaF <- f2 - f1
   ph3 <- semPower.postHoc(effect = deltaF, effect.measure = "F0",
                           alpha = .05, N = 250, df = 1)
@@ -1111,7 +1111,7 @@ test_WLS <- function(doTest = TRUE){
   
   # compare wls results with lav-wls
   set.seed(300121)
-  dd <- semPower:::genData.normal(100000, cfaWLS$Sigma)[[1]]
+  dd <- genData.normal(100000, cfaWLS$Sigma)[[1]]
   lavres <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'WLS')
   lavres2 <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'DWLS')
   lavres3 <- lavaan::sem(cfaWLS$modelH0, sample.cov = cfaWLS$Sigma, sample.nobs = 1000, 
