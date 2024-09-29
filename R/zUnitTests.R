@@ -1570,7 +1570,55 @@ test_powerMediation <- function(){
     round(sum(abs(par7[par7$op == '~' & par7$lhs != par7$rhs, 'est'] - c(.3, .25, .4, .3, .25, .5))), 4) == 0 &&
     round(abs(par7b[par7b$lhs == 'ind1', 'est'] - par7b[par7b$lhs == 'ind2', 'est']), 4) == 0
   
-  if(valid4){
+  
+  # compare powerMed vs powerLav 
+  ph8 <- semPower.powerMediation(type = 'ph', alpha = .05, N = 250,
+                                 bYX = .2, bYM = .4, bMX = .3, standardized = FALSE,
+                                 Lambda = diag(3))
+  
+  modelH1 <- '
+  m ~  a*x
+  y ~  b*m + c*x
+  ind := a*b'
+  modelH0 <- '
+  m ~ a*x
+  y ~ b*m + c*x
+  ind := a *b
+  ind == 0
+  '
+  B <- matrix(c(
+    c(.00, .00, .00),    # X
+    c(.30, .00, .00),    # M
+    c(.2, .40, .00)     # Y
+  ), nrow = 3, ncol = 3, byrow = TRUE)
+  
+  Sigma <- semPower.genSigma(Beta = B, Lambda = diag(3))[["Sigma"]]
+  colnames(Sigma) <- rownames(Sigma) <- c("x", "m", "y")
+  
+  ph9 <- semPower.powerLav(type = "ph", alpha = .05, N = 250,
+                           modelH1 = modelH1,
+                           modelH0 = modelH0,
+                           Sigma = Sigma)
+  
+  
+  # use lav model instead of Sigma
+  modelPop <- '
+  m ~ .3*x
+  y ~ .4*m + .2*x
+  '
+  ph10 <- semPower.powerLav(type = "ph", alpha = .05, N = 250,
+                            modelH1 = modelH1,
+                            modelH0 = modelH0,
+                            modelPop = modelPop)
+  
+
+  valid5 <- valid4 &&
+    round(ph8$fmin - 2*helper_lav(ph8$modelH0, ph8$Sigma)$fit['fmin'], 6) == 0 &&
+    round(ph9$fmin - ph8$fmin, 6) == 0 &&
+    round(ph10$fmin - ph8$fmin, 6) == 0
+  
+  
+  if(valid5){
     print('test_powerMediation: OK')
   }else{
     warning('Invalid')
