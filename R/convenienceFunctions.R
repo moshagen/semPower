@@ -1441,10 +1441,11 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
   
   # for observed only models, replace factor labels (f) by observed variables as found in sigma
   if(isObserved){
-    ff <- paste0('f', 1:ncol(Sigma))
-    for(i in 1:ncol(Sigma)){
-      model <- gsub(ff[i], colnames(Sigma)[i], model)  # later reused for modelH1
-      modelH0 <- gsub(ff[i], colnames(Sigma)[i], modelH0)
+    if(isMultigroup) tSigma <- generated[[1]][['Sigma']] else tSigma <- generated[['Sigma']] 
+    ff <- paste0('f', 1:ncol(tSigma))
+    for(i in 1:ncol(tSigma)){
+      model <- gsub(ff[i], colnames(tSigma)[i], model)  # later reused for modelH1
+      modelH0 <- gsub(ff[i], colnames(tSigma)[i], modelH0)
     }
   } 
 
