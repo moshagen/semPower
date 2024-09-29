@@ -95,9 +95,9 @@ Phi <- matrix(c(
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
 
-Additional arguments related to the \strong{definition of the factor model} concerning the specific factors and the covariate(s):
+Additional arguments related to the \strong{definition of the factor model} concerning the specific factors and the covariate(s). The loadings on the bifactor must be provided via \code{bfLoadings}.
 \itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
+\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of specific factors and covariates).
 \item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
 \item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
 \item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.

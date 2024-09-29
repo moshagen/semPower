@@ -94,7 +94,7 @@ Additional arguments related to the \strong{definition of the factor model}:
 So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined.
 If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
 
-Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the thrird as Y. In case of a more complex mediation defined via the \code{Beta} matrix, the order of factors matches the order of \code{Beta}.
+Note that in case of a simple mediation model involving three variables, the order of the factors is X, M, Y, i. e., the first factor is treated as X, the second as M, and the third as Y. In case of a more complex mediation defined via the \code{Beta} matrix, the order of factors matches the order of \code{Beta}.
 
 Additional arguments related to the requested type of \strong{power analysis}:
 \itemize{

@@ -1,6 +1,7 @@
 semPower 2.1.1 (September 2024)
 ===========
 
+* update to R 4.4.0
 * bugfix: don't rely on dummy latents in powerMediation with only observed variables. This led to underestimated effects and thus underestimated power.    
 * bugfix: fix edge cases with variable ordering in user-provided Sigmas
 * bugfix: make definition of factor model via Lambda in powerBifactor work

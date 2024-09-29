@@ -2,8 +2,8 @@
 % Please edit documentation in R/semPower-package.R, R/semPower.R
 \docType{package}
 \name{semPower}
-\alias{semPower}
 \alias{semPower-package}
+\alias{semPower}
 \title{semPower: Power analyses for structural equation models (SEM).}
 \usage{
 semPower(type, ...)
