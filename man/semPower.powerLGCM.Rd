@@ -93,6 +93,13 @@ Relevant hypotheses in arising in a LCGM are:
 
 For hypotheses regarding longitudinal invariance, see \code{\link[=semPower.powerLI]{semPower.powerLI()}}. For hypotheses regarding a simple autoregression, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
 
+Note that power analyses concerning the hypotheses \code{iVar = 0}, \code{sVar = 0}, and \code{s2Var = 0} are only approximate,
+because the H0 model involves a parameter constraint on the boundary of the parameter space (a variance of zero),
+so that the correct limiting distribution is a mixture of non-central \eqn{\chi^2} distributions
+(see Stoel et al., 2006). In effect, power is (slightly) underestimated.
+
+Stoel, R. D., Garre, F. G., Dolan, C., & Van Den Wittenboer, G. (2006). On the likelihood ratio test in structural equation modeling when parameters are subject to boundary constraints. \emph{Psychological Methods, 11}, 439-455.
+
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
 
@@ -141,7 +148,7 @@ of each variable (\code{distributions}). \code{distributions} must be a list (if
 Each component must specify the population distribution (e.g. \code{rchisq}) and additional arguments (\code{list(df = 2)}).
 
 \code{type = 'VM'} implements the third-order polynomial method (Vale & Maurelli, 1983)
-specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.  This requires the \code{semTools} package.
+specifying third and fourth moments of the marginals, and thus requires that skewness (\code{skewness}) and excess kurtosis (\code{kurtosis}) for each variable are provided as vectors.
 }
 \examples{
 \dontrun{

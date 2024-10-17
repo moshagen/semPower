@@ -61,7 +61,7 @@
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -428,7 +428,7 @@ semPower.powerLav <- function(type,
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -750,7 +750,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -1164,7 +1164,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -1570,7 +1570,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -2350,7 +2350,7 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -3320,7 +3320,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -3676,7 +3676,7 @@ semPower.powerMI <- function(type,
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -4143,7 +4143,7 @@ semPower.powerLI <- function(type,
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -4435,7 +4435,7 @@ semPower.powerPath <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -4902,7 +4902,7 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -5597,7 +5597,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{
@@ -6506,6 +6506,14 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
 #' 
 #' For hypotheses regarding longitudinal invariance, see [semPower.powerLI()]. For hypotheses regarding a simple autoregression, see [semPower.powerAutoreg()]. For hypotheses in an ARMA model, see [semPower.powerARMA()].
 #' 
+#' Note that power analyses concerning the hypotheses `iVar = 0`, `sVar = 0`, and `s2Var = 0` are only approximate, 
+#' because the H0 model involves a parameter constraint on the boundary of the parameter space (a variance of zero), 
+#' so that the correct limiting distribution is a mixture of non-central \eqn{\chi^2} distributions 
+#' (see Stoel et al., 2006). In effect, power is (slightly) underestimated.
+#' 
+#' Stoel, R. D., Garre, F. G., Dolan, C., & Van Den Wittenboer, G. (2006). On the likelihood ratio test in structural equation modeling when parameters are subject to boundary constraints. *Psychological Methods, 11*, 439-455.
+#'
+#' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
 #' 
@@ -6548,7 +6556,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
 #'  Each component must specify the population distribution (e.g. `rchisq`) and additional arguments (`list(df = 2)`).
 #' 
 #' `type = 'VM'` implements the third-order polynomial method (Vale & Maurelli, 1983) 
-#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.  This requires the `semTools` package.
+#' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors.
 #' 
 #' @examples
 #' \dontrun{

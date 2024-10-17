@@ -32,7 +32,7 @@ Jobst, L., Bader, M., & Moshagen, M. (2023). A Tutorial on Assessing Statistical
 
 If you use `semPower` in publications, please cite the package as follows:
   
-Moshagen, M., & Bader, M. (2023). semPower: General Power Analysis for Structural Equation Models. *Behavior Research Methods, 56*, 2901-2922. [https://doi.org/10.3758/s13428-023-02254-7](https://doi.org/10.3758/s13428-023-02254-7)
+Moshagen, M., & Bader, M. (2024). semPower: General Power Analysis for Structural Equation Models. *Behavior Research Methods, 56*, 2901-2922. [https://doi.org/10.3758/s13428-023-02254-7](https://doi.org/10.3758/s13428-023-02254-7)
 
 
 ## Quick Examples for model-free power analyses
