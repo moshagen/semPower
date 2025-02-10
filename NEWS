@@ -1,3 +1,9 @@
+semPower 2.1.2 (February 2025)
+===========
+
+* bugfix: bugfix: make simulated power work properly for multigroup models with > 2 groups 
+
+
 semPower 2.1.1 (September 2024)
 ===========
 
