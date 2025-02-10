@@ -419,7 +419,7 @@ doSim <- function(r,
     if(!isMultigroup){
       cdata <- simData[[r]]
     }else{
-      cdata <- rbind(simData[[1]][[r]], simData[[2]][[r]])
+      cdata <- do.call(rbind, lapply(simData, '[[', r ))
     }
     
     lavArgs <- list(model = modelH0, data = cdata)
