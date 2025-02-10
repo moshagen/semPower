@@ -2352,7 +2352,7 @@ Now, `summary(powerAutoreg)` provides the same information as a model-free [post
 
 In the examples above, a power analysis was performed by comparing the implied H0 model against a less restrictive H1 model (by omitting the `comparison` argument which defaults to `'restricted'`). If one rather wants to compare the H0 model against the saturated model, use `comparison = 'saturated'`. See the chapter on [the definition of the comparison model](#comparisonModel) for a detailed discussion. 
 
-If the $X$ variables are observed variables rather than latent factors, the only change refers to the definition of the measurement model. Below, `Lambda = diag(4)` defines three dummy factors with a single indicator loading by 1, so these become observed variables:
+If the $X$ variables are observed variables rather than latent factors, the only change refers to the definition of the measurement model. Below, `Lambda = diag(3)` defines three dummy factors with a single indicator loading by 1, so these become observed variables:
 
 ```{r eval=FALSE}
 powerAutoreg <- semPower.powerAutoreg(
@@ -2418,7 +2418,7 @@ powerAutoreg <- semPower.powerAutoreg(
   # define hypothesis 
   nWaves = 3,
   autoregEffects = c(.5, .6),  # x1->x2, x2->x3
-  nullEffect = 'autoreg',
+  nullEffect = 'lag1',
   # define measurement model
   nIndicator = c(3, 3, 3), loadM = .5,
   standardized = FALSE
@@ -3961,7 +3961,7 @@ summary(sem(modelH1, sample.cov = ap$Sigma,
             sample.nobs = 1000, sample.cov.rescale = FALSE), 
         stand = TRUE, fit = TRUE)
 ```
-Note that the `sample.nobs` are arbitrary and that `sample.cov.rescale = FALSE` must ne added to prevent `lavaan` from modifying the provided covariance matrix.
+Note that the `sample.nobs` are arbitrary and that `sample.cov.rescale = FALSE` must be added to prevent `lavaan` from modifying the provided covariance matrix.
 
 
 # Power Plots {#plots}
