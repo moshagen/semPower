@@ -146,32 +146,37 @@ Generally, statistical power depends on
 -   the degrees of freedom (df)
 
 and will be higher for a larger effect, a larger sample size, a higher
-alpha error, and fewer degrees of freedom[^1]. When performing a power
-analysis, one of these quantities is computed as function of the other
-quantities, giving rise to different types of power analyses:
+alpha error, and fewer degrees of freedom. (Note that this only applies 
+for effect-size metrics that do not adjust for parsimony.[^1]) When 
+performing a power analysis, one of these quantities is computed as 
+a function of the other quantities, giving rise to different types of 
+power analyses:
 
-[^1]: Note that this only applies for effect-size metrics that do not
-    adjust for parsimony. For instance, when using a constant value for
+[^1]: For instance, when using a constant value for
     the [RMSEA](#effects) as an effect size metric, power decreases with
     increasing df, because the implied $F_0$ decreases.
 
 -   **A priori power analysis**: Determines the required sample size to
     detect a certain effect with a desired power, given alpha and df.
 -   **Post-hoc power analysis**: Determines the achieved power to detect
-    a certain effect with a given sample size, alpha and df.
+    a certain effect with a given sample size, alpha and df. 
 -   **Compromise power analysis**: Determines the alpha and the beta
     error, given the alpha/beta ratio, the sample size, a certain
     effect, and the df.
 
 Each type of power analysis has different aims. A priori power analyses
 are performed prior to data collection to inform the required number of
-observations to detect an expected effect with the desired power. Post
-hoc power analyses are performed after data collection to judge whether
+observations to detect an expected effect with the desired power. 
+Post-hoc power analyses are performed after data collection to judge whether
 the given sample size yields a power that is sufficiently high for a
-meaningful test of a certain hypothesis. Compromise power analyses are
-used to determine which decision rule to apply in evaluating whether the
-outcome of a hypothesis test favors the null or the alternative
-hypothesis (see [Moshagen & Erdfelder, 2016](#refs), for details).
+meaningful test of a certain hypothesis. Post-hoc power analyses are 
+not to be confused with "observed power". Estimates of "observed power" 
+determine power to detect an effect size observed in a study, which is 
+close to meaningless (see [Yuan & Maxwell, 2005](#refs), for 
+details). Compromise power analyses are used to determine which decision 
+rule to apply in evaluating whether the outcome of a hypothesis test 
+favors the null or the alternative hypothesis 
+(see [Moshagen & Erdfelder, 2016](#refs), for details).
 
 ## Types of hypotheses
 
@@ -8162,3 +8167,8 @@ summary(sem(gen$modelTrueCFA,
 -   Vale, C. D., & Maurelli, V. A. (1983). Simulating Multivariate
     Nonnormal Distributions. *Psychometrika, 48*, 465–471.
     <https://doi.org/10.1007/bf02293687>
+
+-   Yuan, K.-H., & Maxwell, S. (2005). On the post hoc power in 
+    testing mean differences. *Journal of Educational and Behavioral 
+	Statistics, 30*, 141–167.
+    <https://doi.org/10.3102/10769986030002141>
