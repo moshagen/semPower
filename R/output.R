@@ -218,14 +218,14 @@ getFormattedSimulationResults <- function(object, digits = 2){
     simOut <- rbind(simOut, c('Chi-Square Bias (%)', ''))
     simOut <- rbind(simOut, c('H0 Model', formatC(c(100*object[['bChiSqH0']]), format = 'f', digits = digits)))
     if(!is.null(object[['bChiSqH1']])){
-      simOut <- rbind(simOut, c('H1 Model', formatC(c(100*object[['bChiSqH1']]), format = 'f', digits = digits)))
+      simOut <- rbind(simOut, c('H1 Model', ifelse(is.na(object[['ksChiSqH1']]), 'NA', formatC(c(100*object[['bChiSqH1']]), format = 'f', digits = digits))))
       simOut <- rbind(simOut, c('H0-H1 Difference', formatC(c(100*object[['bChiSqDiff']]), format = 'f', digits = digits)))
     }
     simOut <- rbind(simOut, c('', ''))
     simOut <- rbind(simOut, c('Chi-Square KS-Distance', ''))
     simOut <- rbind(simOut, c('H0 Model', formatC(c(object[['ksChiSqH0']]), format = 'f', digits = 6)))
     if(!is.null(object[['bChiSqH1']])){
-      simOut <- rbind(simOut, c('H1 Model', formatC(c(object[['ksChiSqH1']]), format = 'f', digits = 6)))
+      simOut <- rbind(simOut, c('H1 Model', ifelse(is.na(object[['ksChiSqH1']]), 'NA', formatC(c(object[['ksChiSqH1']]), format = 'f', digits = 6))))
       simOut <- rbind(simOut, c('H0-H1 Difference', formatC(c(object[['ksChiSqDiff']]), format = 'f', digits = 6)))
       simOut <- rbind(simOut, c('', ''))
       simOut <- rbind(simOut, c('Rejection Rate (%)', ''))

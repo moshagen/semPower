@@ -326,19 +326,21 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       
       # assume that modelH1 is properly specified, so that fitting modelH1 to Sigma
       # yields population parameters
-      if(is.list(Sigma)) sample.nobs <- list(1000, 1000) else sample.nobs <- 1000
       lavOptionsH1[['estimator']] <- 'ML'  # needs to be overwritten in case this is set, since we are not working with observed variables
       lavOptionsH1[['missing']] <- NULL
       lavresPop <- do.call(lavaan::lavaan, 
-                           append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = sample.nobs, 
+                           append(list(model = modelH1, sample.cov = Sigma, sample.mean = mu, sample.nobs = N, 
                                        sample.cov.rescale = FALSE),
                                   lavOptionsH1))
       if(lavresPop@optim[['fx']] > 1e-6) warning('H1 model is not properly specified.')
       
       # h1 chi bias. we compute this here, but cant do this for H0/diff because need the ncp
-      bChiSqH1 <- (mean(fitH1[, 'chisq']) - fitH1[1, 'df']) / fitH1[1, 'df']
-      ksChiSqH1 <- getKSdistance(fitH1[, 'chisq'], fitH1[1, 'df'])  
-      rrH1 <- sum(fitH1[, 'p'] < alpha) / nConverged 
+      bChiSqH1 <- ksChiSqH1 <- rrH1 <- NA 
+      if(fitH1[1, 'df'] > 0 ){
+        bChiSqH1 <- (mean(fitH1[, 'chisq']) - fitH1[1, 'df']) / fitH1[1, 'df']
+        ksChiSqH1 <- getKSdistance(fitH1[, 'chisq'], fitH1[1, 'df'])  
+        rrH1 <- sum(fitH1[, 'p'] < alpha) / nConverged 
+      }
 
       # parameter bias
       cLambda <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'lambda')]
