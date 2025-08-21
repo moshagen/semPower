@@ -1618,7 +1618,39 @@ test_powerMediation <- function(){
     round(ph10$fmin - ph8$fmin, 6) == 0
   
   
-  if(valid5){
+  # direct effects of 0
+  B <- matrix(c(
+    c(.00, .00, .00, .00),
+    c(.20, .00, .00, .00),
+    c(.00, .30, .00, .00),
+    c(.10, .00, .40, .00)
+  ), byrow = TRUE, ncol = 4)
+  ph7 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                 estimateDirectEffects = TRUE,
+                                 Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+                                 Lambda = diag(4),
+                                 alpha = .05, N = 250)
+  
+  lavres7 <- helper_lav(ph7$modelH1, ph7$Sigma)
+  par7 <- lavres7$par 
+  
+  ph8 <- semPower.powerMediation(type = 'post-hoc', comparison = 'restricted',
+                                 estimateDirectEffects = FALSE,
+                                 Beta = B, indirect = list(c(2,1), c(3,2), c(4,3)),
+                                 Lambda = diag(4),
+                                 alpha = .05, N = 250)
+  
+  lavres8 <- helper_lav(ph8$modelH1, ph8$Sigma)
+  par8 <- lavres8$par    
+  
+  valid6 <- valid5 &&
+    length(par7[par7$lhs == 'x3' & par7$rhs == 'x1', 'est']) != 0 &&
+    length(par7[par7$lhs == 'x4' & par7$rhs == 'x2', 'est']) != 0 &&
+    length(par8[par8$lhs == 'x3' & par8$rhs == 'x1', 'est']) == 0 &&
+    length(par8[par8$lhs == 'x4' & par8$rhs == 'x2', 'est']) == 0 
+  
+  
+  if(valid6){
     print('test_powerMediation: OK')
   }else{
     warning('Invalid')

@@ -10,6 +10,7 @@
 #' @param bYM the slope for M -> Y. A list for multiple group models. Can be `NULL` if `Beta` is set.
 #' @param Beta can be used instead of `bYX`, `bMX`, and `bYM`: matrix of regression weights connecting the latent factors (all-Y notation). Exogenous variables must be in the first row(s), so the upper triangular of Beta must be zero. A list for multiple group models.
 #' @param indirect `NULL` unless `Beta` is set. Otherwise a list of vectors of size 2 indicating the elements of `Beta` that define the indirect effect of interest, e.g. `list(c(2, 1), c(3, 2))`. See details.
+#' @param estimateDirectEffects Whether to estimate all direct effects (`TRUE`, the default). If `FALSE`, only direct effects unequal zero in the population are estimated.
 #' @param nullEffect defines the hypothesis of interest, must be one of `'ind = 0'` (the default) to test whether the indirect effect is zero or `'indA = indB'` to test for the equality of indirect effects across groups. See details.
 #' @param nullWhichGroups for `nullEffect = 'indA = indB'`, vector indicating the groups for which equality constrains should be applied, e.g. `c(1, 3)` to constrain the relevant parameters of the first and the third group. If `NULL`, all groups are constrained to equality.
 #' @param standardized whether all parameters should be standardized (`TRUE`, the default). If `FALSE`, all regression relations are unstandardized.
@@ -32,7 +33,7 @@
 #' * If a simple mediation involving three variables of the form `X -> M -> Y` is assumed, the arguments
 #' `bYX`, `bMX`, and `bYM` are used to define the respective slopes, e. g.  `bYX = .4`, `bMX = .5`, and `bYM = .3` translates to
 #' `X -- .5 --> M -- .3 --> Y` and  `X -- .4 --> Y`.
-#' * More complex mediation structures can be defined by providing the `Beta` matrix along with `indirect` specifying which paths define the indirect effect. See examples below.
+#' * More complex mediation structures can be defined by providing the `Beta` matrix along with `indirect` specifying which paths define the indirect effect. See examples below. To specify residual correlations, use [semPower.powerPath()] in conjunction with [semPower.powerLav()].
 #' 
 #' Notes on implementation:
 #' * For models without latent variables, `nullEffect = 'ind = 0'` and `nullEffect = 'indA = indB'` constrain the indirect effect to zero and to equality, respectively, yielding the test described in Tofighi & Kelley (2020).
@@ -239,6 +240,7 @@
 semPower.powerMediation <- function(type, comparison = 'restricted',
                                     bYX = NULL, bMX = NULL, bYM = NULL,
                                     Beta = NULL, indirect = NULL, 
+                                    estimateDirectEffects = TRUE,
                                     nullEffect = 'ind = 0',
                                     nullWhichGroups = NULL,
                                     standardized = TRUE,
@@ -321,6 +323,26 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
       if(isMultigroup) clab <- unlist(lapply(clab, function(x) paste0('c(', paste0(x, 'g', seq_along(B), collapse = ', '), ')')))
       tok <- paste0('f', f, ' ~ ', paste(clab, paste0('*f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
+    }
+  }
+  # ensure we did not miss direct effects
+  if(estimateDirectEffects){
+    # possible direct effects
+    idx <- cbind(unlist(lapply(2:nrow(B[[1]]), function(x) x:nrow(B[[1]]))), rep(1:(nrow(B[[1]])-1), (nrow(B[[1]])-1):1))
+    # skip indirect and beta!=0
+    de <- unique(rbind(do.call(rbind, indirect), idx))
+    xx <- lapply(B, function(x) x[de] == 0)
+    de <- matrix(de[apply(do.call(cbind, xx), 1, function(x) any(x)), ], ncol=2)
+    # add to modelstring
+    if(nrow(de) > 0){
+      for(i in 1:nrow(de)){
+        f <- de[i, 1]
+        fidx <- de[i, 2]
+        clab <- paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)))
+        if(isMultigroup) clab <- unlist(lapply(clab, function(x) paste0('c(', paste0(x, 'g', seq_along(B), collapse = ', '), ')')))
+        tok <- paste0('f', f, ' ~ ', paste(clab, paste0('*f', fidx), sep = '', collapse = ' + '))
+        model <- paste(model, tok, sep='\n')
+      }
     }
   }
   # add indirect effects

@@ -2534,6 +2534,7 @@ analysis](#modelFreePower) should be performed.
         [this chapter](#semDefinition) for details.
     -   `indirect`: A list of vectors of size 2 indicating the elements
         of `Beta` that define the indirect effect.
+-   `estimateDirectEffects`: Whether to estimate all direct effects (`TRUE`, the default). If `FALSE`, only direct effects unequal zero in the population are estimated.
 -   `nullEffect`: Defines the hypothesis of interest; one of `'ind = 0'`
     or `'indA = indB'`.
 -   `nullWhichGroups`: Defines which groups are targeted when
@@ -2687,16 +2688,18 @@ chapter](#semDefinition) for details), implying a slope for `X -> M1` of
 being equal to zero). `indirect` is a list of vectors of size two,
 indicating the elements of `Beta` that define the indirect effect, so in
 this example, the indirect effect of interest comprise `X -> M1`
-(`c(2, 1)`), `M1 -> M2` (`c(3, 2)`), `Y -> M2` (`c(4, 3)`). Further, all
-variables are defined to be observed variables, rather than latent
-factors (`Lambda = diag(4)`).
+(`c(2, 1)`), `M1 -> M2` (`c(3, 2)`), `Y -> M2` (`c(4, 3)`). As 
+`estimateDirectEffects` is omitted (and defaults to `TRUE`), all direct effects, 
+i.e. `X -> M2`, `X -> Y`, `M1 -> Y`, are also estimated, even though these are
+zero in the population. Further, all variables are defined to be observed 
+variables rather than latent factors (`Lambda = diag(4)`).
 
 ```{r eval=FALSE}
 Beta <- matrix(c(
-  c(.00, .00, .00, .00),       # X  = .00*X + .00*M1 + .00*M1 + .00*Y 
-  c(.20, .00, .00, .00),       # M1 = .20*X + .00*M1 + .00*M1 + .00*Y 
-  c(.00, .30, .00, .00),       # M2 = .00*X + .30*M1 + .00*M1 + .00*Y 
-  c(.00, .00, .40, .00)        # Y  = .00*X + .00*M1 + .40*M1 + .00*Y 
+  c(.00, .00, .00, .00),       # X  = .00*X + .00*M1 + .00*M2 + .00*Y 
+  c(.20, .00, .00, .00),       # M1 = .20*X + .00*M1 + .00*M2 + .00*Y 
+  c(.00, .30, .00, .00),       # M2 = .00*X + .30*M1 + .00*M2 + .00*Y 
+  c(.00, .00, .40, .00)        # Y  = .00*X + .00*M1 + .40*M2 + .00*Y 
 ), byrow = TRUE, ncol = 4)
 powerMed <- semPower.powerMediation(
                                      # define type of power analysis
@@ -2709,6 +2712,87 @@ powerMed <- semPower.powerMediation(
                                      Lambda = diag(4)
                                      )
 ```
+
+
+Note that `semPower.powerMediation` cannot be used to include 
+(residual-)correlations in the model. Suppose there are two `X` variables, 
+correlated by .25, and the model considers two possible mediation chains
+`X1 -> M -> Y` and `X2 -> M -> Y`. The approach to power analysis 
+using `semPower` is to generate the population covariance matrix Sigma 
+using [`semPower.powerPath`](#powerPath) and then plug this matrix along with a 
+suitable model string into [`semPower.powerLav`](#powerLav).
+
+First, `semPower.powerPath` is used as a handy interface to obtain the population
+covariance matrix Sigma. `Beta` defines the regression relations, and `lPsi` 
+defines the (residual-)correlations between the variables (when 
+`standardized = TRUE`; otherwise it is indeed treated as Psi, 
+see [`semPower.powerPath`](#powerPath)). Next, `semPower.powerPath` is called, 
+with the sole purpose to obtain Sigma, so all information relating to power are
+irrelevant. Then, a `lavaan` model string specifying the H0 model is defined, 
+here including the definition of the indirect effect of interest (`ind := a1*b`) 
+and restricting it to zero (`ind == 0`). This model string and Sigma are finally
+plugged into `semPower.powerLav`, which provides the requested power analysis 
+for the hypothesized indirect effect.
+
+```{r eval=FALSE}
+# regression relations
+Beta <- matrix(c(
+  c(.00, .00, .00, .00),       # X1 = .00*X1 + .00*X2 + .00*M + .00*Y
+  c(.00, .00, .00, .00),       # X2 = .00*X1 + .00*X2 + .00*M + .00*Y
+  c(.20, .30, .00, .00),       # M  = .20*X1 + .30*X2 + .00*M + .00*Y
+  c(.10, .05, .25, .00)        # Y  = .10*X1 + .05*X2 + .25*M + .00*Y
+), byrow = TRUE, ncol = 4)
+# (residual-)correlations
+lPsi <- matrix(c(
+  c(1.0, .25, .00, .00),       # X1
+  c(.25, 1.0, .00, .00),       # X2
+  c(.00, .00, 1.0, .00),       # M
+  c(.00, .00, .00, 1.0)        # Y
+), byrow = TRUE, ncol = 4)
+
+# use semPower.powerPath to obtain Sigma
+powerPath <- semPower.powerPath(
+  # define type of power analysis (irrelevant)
+  type = 'post-hoc', alpha = .05, N = 1000,
+  # define model
+  Beta = Beta,
+  Psi = lPsi,
+  standardized = TRUE,
+  # define hypothesis (irrelevant)
+  nullEffect = 'beta = 0', 
+  nullWhich = c(4, 1),
+  # define measurement model
+  Lambda = diag(4)
+)
+
+# get Sigma and set proper variable names
+Sigma <- powerPath$Sigma
+colnames(Sigma) <- rownames(Sigma) <- c('X1','X2','M','Y')
+
+# define H0 model
+modelH0 <- '
+M ~ a1*X1 + a2*X2
+Y ~ c1*X1 + c2*X2 + b*M
+X1 ~~ X2
+# indirect effect
+ind := a1*b
+ind == 0
+'
+# plug Sigma and model into semPower.powerLav
+power <- semPower.powerLav(
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Sigma = Sigma,
+  modelH0 = modelH0,
+  # define measurement model
+  Lambda = diag(4)
+)
+summary(power)
+```
+
+
+
 
 ##### Detect whether an indirect differs across groups {.unnumbered}
 
