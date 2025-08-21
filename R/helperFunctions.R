@@ -220,13 +220,13 @@ semPower.genSigma <- function(Lambda = NULL,
     if(any(diag(Psi) < 0)) stop('Model implies negative residual variances for latent variables (Psi). Make sure the sum of squared standardized regression coefficients in predicting a factor does not exceed 1.')
   }
   if(!is.null(tau)){
-    if(length(tau) != sum(nIndicator)) stop('Intercepts (tau) must be of same length as the number of indicators.')
+    if(length(tau) != nrow(Lambda)) stop('Intercepts (tau) must be of same length as the number of indicators.')
   }
   if(!is.null(Alpha)){
     if(length(Alpha) != nfac) stop('Latent means (Alpha) must be of same length as the number of factors.')
   }
   if(!is.null(tau) && is.null(Alpha)) Alpha <- rep(0, nfac)
-  if(!is.null(Alpha) && is.null(tau)) tau <- rep(0, sum(nIndicator))
+  if(!is.null(Alpha) && is.null(tau)) tau <- rep(0, nrow(Lambda))
 
   ### compute Sigma
   if(is.null(Beta)){
