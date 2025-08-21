@@ -8,7 +8,7 @@
                 "\nSee https://moshagen.github.io/semPower/ for a detailed manual.",
                 "\n",
                 "\nPlease cite as:",
-                "\nMoshagen, M., & Bader, M. (2023). semPower: General Power Analysis for Structural Equation Models.",
+                "\nMoshagen, M., & Bader, M. (2024). semPower: General Power Analysis for Structural Equation Models.",
                 "\nBehavior Research Methods, 56, 2901-2922. https://doi.org/10.3758/s13428-023-02254-7",
                 "\n")
   packageStartupMessage(txt)
