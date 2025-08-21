@@ -96,10 +96,11 @@
 #' # M is measured by 5 indicators loading by .6 each, 
 #' # Y is measured by 4 indicators loading by .7 each.
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05,
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(3, 5, 4),
-#'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, beta = .05)
+#'                                     loadM = c(.5, .6, .7)
+#'                                     )
 #' # show summary
 #' summary(powerMed)
 #' # optionally use lavaan to verify the model was set-up as intended
@@ -110,32 +111,39 @@
 #' 
 #' # same as above, but determine power with N = 500 on alpha = .05
 #' powerMed <- semPower.powerMediation(type = 'post-hoc',
+#'                                     alpha = .05, N = 500,
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(3, 5, 4),
-#'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, N = 500)
+#'                                     loadM = c(.5, .6, .7))
+#' 
 #' 
 #' # same as above, but determine the critical chi-square with N = 500 so that alpha = beta
 #' powerMed <- semPower.powerMediation(type = 'compromise',
+#'                                     abratio = 1, N = 500
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(3, 5, 4),
-#'                                     loadM = c(.5, .6, .7),
-#'                                     abratio = 1, N = 500)
+#'                                     loadM = c(.5, .6, .7)
+#'                                     )
+#' 
 #' 
 #' # same as above, but compare to the saturated model
 #' # (rather than to the less restricted model)
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05,
 #'                                     comparison = 'saturated',
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(3, 5, 4),
-#'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, beta = .05)
+#'                                     loadM = c(.5, .6, .7)
+#'                                     )
+#'                                     
 #' 
 #' # same as above, but assuming observed variables only (Lambda = diag(3))
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05,
 #'                                     bYX = .25, bMX = .3, bYM = .4,
-#'                                     Lambda = diag(3),
-#'                                     alpha = .05, beta = .05)
+#'                                     Lambda = diag(3)
+#'                                     )
+#'                                     
 #' 
 #' 
 #' # same mediation model as above, but specifying Beta and indirect
@@ -146,11 +154,12 @@
 #'   c(.25, .40, .00)     # Y
 #' ), byrow = TRUE, ncol = 3)
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05
 #'                                     Beta = Beta, 
 #'                                     indirect = list(c(2, 1), c(3, 2)),
 #'                                     nIndicator = c(3, 5, 4),
-#'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, beta = .05)
+#'                                     loadM = c(.5, .6, .7)
+#'                                     )
 #' 
 #' # Beta for a more complex mediation hypothesis
 #' # of the form X -- .2 --> M1 -- .3 --> M2 -- .40 -> Y 
@@ -173,12 +182,13 @@
 #'   c(0.6, 0.7, 0.8)            # Y
 #' )
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
-#'                                     Beta = B, 
+#'                                     alpha = .05, beta = .05,
+#'                                     Beta = Beta, 
 #'                                     indirect = list(c(2, 1), 
 #'                                                     c(3, 2), 
 #'                                                     c(4, 3)),
-#'                                     loadings = loadings,
-#'                                     alpha = .05, beta = .05)
+#'                                     loadings = loadings)
+#'                                     
 #' 
 #' # Determine required N to detect that the indirect effect 
 #' # in group 1 (of .2 * .3 = .09) differs from the indirect effect 
@@ -187,12 +197,13 @@
 #' # The model is based on observed variables only (Lambda = diag(3))
 #' # Both groups are sized equally (N = list(1, 1)).
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05, N = list(1, 1),
 #'                                     nullEffect = 'indA = indB',
 #'                                     bYX = list(.25, .25), 
 #'                                     bMX = list(.2, .3), 
 #'                                     bYM = list(.3, .5),
-#'                                     Lambda = diag(3),
-#'                                     alpha = .05, beta = .05, N = list(1, 1))
+#'                                     Lambda = diag(3)
+#'                                     )
 #' 
 #' # same as above, but specifying Beta 
 #' Beta1 <- matrix(c(
@@ -206,19 +217,20 @@
 #'   c(.25, .50, .00)     # Y
 #' ), byrow = TRUE, ncol = 3)
 #' powerMed <- semPower.powerMediation(type = 'a-priori',
+#'                                     alpha = .05, beta = .05, N = list(1, 1),
 #'                                     nullEffect = 'indA = indB',
 #'                                     Beta = list(Beta1, Beta2), 
 #'                                     indirect = list(c(2, 1), c(3, 2)),
-#'                                     Lambda = diag(3),
-#'                                     alpha = .05, beta = .05, N = list(1, 1))
+#'                                     Lambda = diag(3)
+#'                                     )
 #' 
 #' # request a simulated post-hoc power analysis with 500 replications.
 #' set.seed(300121)
 #' powerMed <- semPower.powerMediation(type = 'post-hoc',
+#'                                     alpha = .05, N = 500,
 #'                                     bYX = .25, bMX = .3, bYM = .4,
 #'                                     nIndicator = c(3, 5, 4),
 #'                                     loadM = c(.5, .6, .7),
-#'                                     alpha = .05, N = 500,
 #'                                     simulatedPower = TRUE, 
 #'                                     simOptions = list(nReplications = 500))
 #'}
