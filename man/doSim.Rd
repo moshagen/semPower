@@ -33,7 +33,5 @@ doSim(
 list
 }
 \description{
-Generates random data from population variance-covariance matrix and population means, either
-from a multivariate normal distribution, or using one of various approaches to generate
-non-normal data.
+Performs simulation on single data set
 }

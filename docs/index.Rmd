@@ -7225,6 +7225,10 @@ following components:
     This vastly speeds up computations. Defaults to 1 for no parallel
     processing. Parallel processing requires that the `doFuture` package
     is installed.
+-   `futureStrategy`: How to set up the backend for parallel processing (when 
+    `nCores` is > 1). Defaults to `'multisession'`. This is passed to 
+    the `plan` function of the `doFuture` package. See the `doFuture` package  
+    for valid strategies.
 -   additional arguments related to [non-normal data](#simNonNormal) and
     [missingness](#simMissing)
 

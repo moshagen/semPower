@@ -8538,6 +8538,10 @@ smaller than <code>minConvergenceRate</code>, but will issue a warning.</li>
 This vastly speeds up computations. Defaults to 1 for no parallel
 processing. Parallel processing requires that the <code>doFuture</code> package
 is installed.</li>
+<li><code>futureStrategy</code>: How to set up the backend for parallel processing (when
+<code>nCores</code> is &gt; 1). Defaults to <code>&#39;multisession&#39;</code>. This is passed to
+the <code>plan</code> function of the <code>doFuture</code> package. See the <code>doFuture</code> package<br />
+for valid strategies.</li>
 <li>additional arguments related to <a href="#simNonNormal">non-normal data</a> and
 <a href="#simMissing">missingness</a></li>
 </ul>

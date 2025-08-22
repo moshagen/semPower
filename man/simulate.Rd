@@ -13,7 +13,7 @@ simulate(
   alpha = NULL,
   simOptions = list(nReplications = 500, minConvergenceRate = 0.75, type = "normal",
     missingVars = NULL, missingVarProp = 0, missingProp = 0, missingMechanism = "MCAR",
-    nCores = 1),
+    nCores = 1, futureStrategy = "multisession"),
   lavOptions = NULL,
   lavOptionsH1 = lavOptions,
   returnFmin = TRUE
@@ -69,6 +69,7 @@ The approaches generating non-normal data require additional arguments detailed 
 \item \code{missingProp}: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 \item \code{missingMechanism}: The missing data mechanism, one of \code{'MCAR'} (the default), \code{'MAR'}, or \code{'NMAR'}.
 \item \code{nCores}: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the \code{doFuture} package.
+\item \code{futureStrategy}: A string specifying the strategy how to resolve a future when \code{nCores} is larger than 1. Defaults to \code{'multisession'}. This is passed to the \code{plan} method of the \code{doFuture} package. See the \code{doFuture} package for valid strategies.
 }
 
 \code{type = 'IG'} implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach
