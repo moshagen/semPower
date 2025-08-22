@@ -36,6 +36,7 @@
 #' * `missingProp`: The proportion of missingness for variables containing missing data (defaults to zero), either a single value or a vector giving the probabilities for each variable.
 #' * `missingMechanism`: The missing data mechanism, one of `'MCAR'` (the default), `'MAR'`, or `'NMAR'`.
 #' * `nCores`: The number of cores to use for parallel processing. Defaults to 1 (= no parallel processing). This requires the `doFuture` package.
+#' * `futureStrategy`: A string specifying the strategy how to resolve a future when `nCores` is larger than 1. Defaults to `'multisession'`. This is passed to the `plan` method of the `doFuture` package. See the `doFuture` package for valid strategies.
 #' 
 #' `type = 'IG'` implements the independent generator approach (IG, Foldnes & Olsson, 2016) approach 
 #' specifying third and fourth moments of the marginals, and thus requires that skewness (`skewness`) and excess kurtosis (`kurtosis`) for each variable are provided as vectors. This requires the `covsim` package.
@@ -139,7 +140,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
                        missingVarProp = 0,
                        missingProp = 0,
                        missingMechanism = 'MCAR',
-                       nCores = 1
+                       nCores = 1,
+                       futureStrategy = 'multisession'
                      ),
                      lavOptions = NULL, lavOptionsH1 = lavOptions,
                      returnFmin = TRUE){
@@ -203,7 +205,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # parallel
   if(nCores > 1){
     `%dofuture%` <- doFuture::`%dofuture%`
-    future::plan(future::multisession, workers = nCores)
+    future::plan(futureStrategy, workers = nCores)
     progressr::with_progress({
       p <- progressr::progressor(along = seq(nReplications)) # progressbar
       res <- foreach::foreach(r = seq(nReplications), .options.future = list(seed = TRUE)) %dofuture% {
@@ -310,8 +312,6 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
         fitH0 = fitH0
       )
     )
-    
-    
     
     
     if(!is.null(modelH1)){
