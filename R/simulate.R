@@ -194,7 +194,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   }
 
   # if we have missings, notify lav and check estimator 
-  if(sum(is.na(simData[[1]])) > 0){
+  if(sum(is.na(unlist(simData[[1]]))) > 0){
     lavOptions <- append(lavOptions, list(missing = 'ml'))
     if(!is.null(lavOptions[['estimator']]) && tolower(lavOptions[['estimator']]) %in% c('mlm', 'mlmv', 'mlmvs')) stop('Estimators mlm, mlmv, and mlmvs are not supported with missing data. Use mlr or mlf instead.')
     if(!is.null(modelH1)) lavOptionsH1 <- append(lavOptionsH1, list(missing = 'ml'))
@@ -252,8 +252,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     }
     close(progressBar)
   }
-  usedDataIdx <- seq(nConverged + (rr - 1))
-  
+
   # check convergence
   fit <- lapply(res, '[[', 1)
   # replace non-converged by NA
@@ -292,6 +291,9 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     ubFmeanGroups <- NULL
     if(!is.na(efminGroups[1])) ubFmeanGroups <- unlist(lapply(1:ncol(efminGroups), function(x) mean( efminGroups[ , x] - (df / length(N)) / N[[x]] ))) / length(N)
 
+    outSimData <- simData
+    if(is.list(Sigma)) outSimData <- lapply(seq(nReplications), function(r) do.call(rbind, lapply(simData, '[[', r )))
+    
     out <- list(
       ePower = ePower,
       meanFmin = ubFmean,
@@ -304,10 +306,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       chiSqDiff = fitDiff[, 'chisq'],
       rrH0 = rrH0,
       simRes = list(
-        simData = simData[usedDataIdx],
+        simData = outSimData,
         fitH0 = fitH0
       )
     )
+    
+    
+    
     
     if(!is.null(modelH1)){
       fitH1 <- do.call(rbind, lapply(fit, '[[', 2))
@@ -396,9 +401,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
 
 #' doSim
 #' 
-#' Generates random data from population variance-covariance matrix and population means, either
-#' from a multivariate normal distribution, or using one of various approaches to generate 
-#' non-normal data.
+#' Performs simulation on single data set
 #'
 #' @param r replication id
 #' @param simData list of datafiles
