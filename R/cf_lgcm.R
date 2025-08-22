@@ -461,6 +461,7 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
     diag(covariances[[x]]) <- variances[[x]]
     covariances[[x]]
   })
+  if(any(unlist(lapply(covariances, function(x) any(abs(cov2cor(x)) > 1))))) warning('Provided variances and covariances imply a correlation larger 1 or smaller -1.')
   
   if(any(unlist(lapply(means, function(x) length(x) != vLength)))) stop(paste('Exactly', vLength, 'means must be provided.'))
   if(any(unlist(lapply(variances, function(x) length(x) != vLength)))) stop(paste('Exactly', vLength, 'variances must be provided.'))
