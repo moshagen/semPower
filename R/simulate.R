@@ -149,7 +149,8 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   nCores <- ifelse(!is.null(simOptions[['nCores']]), simOptions[['nCores']], 1)
   if(nCores > 1 && !'doFuture' %in% rownames(installed.packages())) stop('Parallel processing requires the doFuture package, so install doFuture first.')    
   if(nCores > 1 && !'progressr' %in% rownames(installed.packages())) stop('Parallel processing requires the progressr package, so install progressr first.')    
-
+  futureStrategy <- ifelse(!is.null(simOptions[['futureStrategy']]), simOptions[['futureStrategy']], 'multisession')
+  
   nReplications <- ifelse(!is.null(simOptions[['nReplications']]), simOptions[['nReplications']], 500)
   minConvergenceRate <- ifelse(!is.null(simOptions[['minConvergenceRate']]), simOptions[['minConvergenceRate']], .75)
   maxReplications <- ceiling(nReplications / minConvergenceRate)
@@ -356,24 +357,45 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       # for phi/psi/beta, we only consider population parameters that are larger than
       # a small constant to avoid absurd relative biases for parameters with true values close to zero 
       cPhi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'phi')]
+      bPhi <- NULL
       if(length(cPhi) > 0){
         nonzero <- unlist(lapply(cPhi, function(x) which(abs(x) > .01)))
         pPhi <- unlist(lapply(cPhi, function(x) x[nonzero]))
-        if(!is.null(pPhi)) bPhi <- mean( (apply(rPhi, 2, median) - pPhi) / pPhi ) else bPhi <- NULL
+        if(!is.null(pPhi)){
+          if(is.null(ncol(rPsi[, nonzero]))){
+            bPhi <- mean( (median(rPhi[, nonzero]) - pPhi) / pPhi )
+          }else{
+            bPhi <- mean( (apply(rPhi[, nonzero], 2, median) - pPhi) / pPhi )
+          }
+        }
       }
       
       cPsi <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'psi')]
       if(length(cPsi) > 0){
         nonzero <- unlist(lapply(cPsi, function(x) which(abs(x) > .01)))
         pPsi <- unlist(lapply(cPsi, function(x) x[nonzero]))
-        if(!is.null(pPsi)) bPsi <- mean( (apply(rPsi[, nonzero], 2, median) - pPsi) / pPsi ) else bPsi <- NULL
+        bPsi <- NULL
+        if(!is.null(pPsi)){
+          if(is.null(ncol(rPsi[, nonzero]))){
+            bPsi <- mean( (median(rPsi[, nonzero]) - pPsi) / pPsi ) 
+          }else{
+            bPsi <- mean( (apply(rPsi[, nonzero], 2, median) - pPsi) / pPsi ) 
+          }
+        } 
       }
       
       cBeta <- lavresPop@Model@GLIST[which(names(lavresPop@Model@GLIST) %in% 'beta')]
+      bBeta <- NULL
       if(length(cBeta) > 0){
         nonzero <- unlist(lapply(cBeta, function(x) which(abs(x) > .01)))
         pBeta <- unlist(lapply(cBeta, function(x) x[nonzero]))
-        if(!is.null(pBeta)) bBeta <- mean( (apply(rBeta[, nonzero], 2, median) - pBeta) / pBeta ) else bBeta <- NULL
+        if(!is.null(pBeta)){
+          if(is.null(ncol(rBeta[, nonzero]))){
+            bBeta <- mean( (median(rBeta[, nonzero]) - pBeta) / pBeta )
+          }else{
+            bBeta <- mean( (apply(rBeta[, nonzero], 2, median) - pBeta) / pBeta )
+          }
+        } 
       }    
       
       out <- append(out, list(
