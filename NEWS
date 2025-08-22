@@ -1,7 +1,15 @@
+semPower 2.1.3 (August 2025)
+===========
+* update to R 4.5.0
+* add option to estimate direct effects with population values of zero in powerMediation
+* bugfix: fix genSigma with supplied means when Lambda includes secondary loadings
+
+
+
 semPower 2.1.2 (February 2025)
 ===========
 
-* bugfix: bugfix: make simulated power work properly for multigroup models with > 2 groups 
+* bugfix: make simulated power work properly for multigroup models with > 2 groups 
 
 
 semPower 2.1.1 (September 2024)
@@ -23,7 +31,7 @@ semPower 2.0.1 (May 2023)
 ===========
 
 * update to R 4.3.0
-* make futures work
+* bugfix: make futures work
 
 
 semPower 2.0.0 (May 2023)
