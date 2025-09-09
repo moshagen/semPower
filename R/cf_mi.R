@@ -5,8 +5,10 @@
 #' This requires the lavaan package.
 #' 
 #' @param type type of power analysis, one of `'a-priori'`, `'post-hoc'`, `'compromise'`.
-#' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, `'covariances'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
-#' @param nullEffect defines the hypothesis (i.e., level of invariance) of interest. One of `'metric'`, `'scalar'`, `'residual'`, `'covariances'`, `'means'` or a vector of restrictions in `lavaan` format. See details.   
+#' @param comparison comparison model, either `'saturated'` or one of `'configural'`, `'metric'`, `'scalar'`, `'variances'`, `'covariances'`, or a vector of restrictions in `lavaan` format (with `'none'` for no restrictions). See details.
+#' @param nullEffect defines the hypothesis (i.e., level of invariance) of interest. One of `'metric'`, `'scalar'`, `'residual'`, `'variances'`, `'covariances'`, `'means'` or a vector of restrictions in `lavaan` format. See details.   
+#' @param useReferenceIndicator whether to identify the factor variances and factor means using a referent indicator (`TRUE`) or using a standardization approach setting the means to 0 and the variances to 1 (`FALSE`, the default). See details.
+#' @param singleGroupIdent when `useReferenceIndicator = FALSE`, whether to maintain the identification constraints only for a single group (`TRUE`) or whether to maintain all scaling constraints (`FALSE`). See details.
 #' @param ... mandatory further parameters related to the specific type of power analysis requested, see [semPower.aPriori()], [semPower.postHoc()], and [semPower.compromise()], and parameters specifying the factor model. See details.
 #' @return a list. Use the `summary` method to obtain formatted results. Beyond the results of the power analysis and a number of effect size measures, the list contains the following components:
 #' \item{`Sigma`}{the population covariance matrix. A list for multiple group models.}
@@ -34,8 +36,9 @@
 #' \item `'metric'`: all loadings are restricted to equality. 
 #' \item `'scalar'`: all loadings and (indicator-)intercepts are restricted to equality. 
 #' \item `'residual'`: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
-#' \item `'covariances'`: all loadings, (indicator-)intercepts, and (indicator-)residuals, and latent covariances are restricted to equality.
-#' \item `'means'`: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
+#' \item `'variances'`: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent variances are restricted to equality.
+#' \item `'covariances'`: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, and latent covariances are restricted to equality.
+#' \item `'means'`: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, latent covariances, and latent means are restricted to equality.
 #' }
 #' 
 #' For example, setting `comparison = 'metric'` and `nullEffect = 'scalar'` determines power 
@@ -56,7 +59,12 @@
 #' For example, setting `comparison = c('loadings')` and `nullEffect = 'c('loadings', 'intercepts')'` 
 #' determines power to reject the hypothesis that the constraints placed in the scalar invariance model 
 #' (restricting loadings and intercepts) over the  metric invariance model (restricting only the loadings) are defensible.
-#' Note that variance scaling is used, so invariance of variances (`'lv.variances'`) is always met. 
+#' 
+#' By default, the factors are identified by setting their means to 0 and their variances to 1 (`useReferenceIndicator = FALSE`), so that all loadings and indicator intercepts are freely estimated. 
+#' In models involving constraints on loadings or intercepts, a single group identification approach is used by default (`singleGroupIdent = TRUE`), so that the factor variances and means are constrained in only a single group, but are freely estimated in all remaining groups. This mimics the `lavaan` approach to invariance testing.
+#' If setting `singleGroupIdent = FALSE`, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, in all groups. Concerning metric invariance, this was the default behavior in `semPower` versions prior 2.1.4. 
+#' A referent scaling approach can be be defined using `useReferenceIndicator = TRUE`, so that the loading and the intercept of the first indicator of each factor are constrained in each group, and the factor variances and means are freely estimated. 
+#' Reference scaling is always maintained in all invariance models, so `singleGroupIdent` has no effect (i.e. is always `FALSE`)
 #' 
 #' Beyond the arguments explicitly contained in the function call, additional arguments 
 #' are required specifying the factor model and the requested type of power analysis.  
@@ -111,73 +119,68 @@
 #' \dontrun{
 #' # obtain the required N to reject the hypothesis of metric invariance
 #' # in comparison to the configural invariance model 
-#' # with a power of 95% on alpha = 5% 
+#' # with a power of 80% on alpha = 5% 
 #' # assuming equally sized groups (N = list(1, 1)) 
 #' # for a factor model involving a single factor which 
-#' # is measured by 5 indicators (in both groups)
-#' # loading by .5 each in the first group and 
-#' # loading by .6 each in the second group.
+#' # is measured by 4 indicators (in both groups)
+#' # loading by .9, .8, .7, .6 in the first group and 
+#' # loading by .7, .7, .8, .7 in the second group.
 #' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, power = .80, N = list(1, 1),
 #'                             comparison = 'configural', 
 #'                             nullEffect = 'metric',
-#'                             nIndicator = list(5, 5),
-#'                             loadM = list(.5, .6),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
+#'                             loadings = list(
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7)))
+#' )
 #' 
 #' # show summary
 #' summary(powerMI)
 #' # optionally use lavaan to verify the model was set-up as intended
 #' lavaan::sem(powerMI$modelH1, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
 #'             sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
-#' lavaan::sem(powerMI$modelH0, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-#'             sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 #' 
 #' # same as above, but determine power with N = 500 in each group on alpha = .05
 #' powerMI <- semPower.powerMI(type = 'post-hoc',
+#'                             alpha = .05, N = list(500, 500),
 #'                             comparison = 'configural', 
 #'                             nullEffect = 'metric',
-#'                             nIndicator = 5,
-#'                             loadM = list(.5, .6),
-#'                             alpha = .05, N = list(500, 500))
+#'                             loadings = list(
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7)))
+#'                             )
 #' 
 #' # same as above, but determine the critical chi-square with N = 500 in each 
 #' # group so that alpha = beta
 #' powerMI <- semPower.powerMI(type = 'compromise',
+#'                             abratio = 1, N = list(500, 500),
 #'                             comparison = 'configural', 
 #'                             nullEffect = 'metric',
-#'                             nIndicator = 5,
-#'                             loadM = list(.5, .6),
-#'                             abratio = 1, N = list(500, 500))
+#'                             loadings = list(
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7)))
+#'                             )
 #' 
 #' # same as above, but compare to the saturated model
 #' # (rather than to the configural invariance model)
 #' powerMI <- semPower.powerMI(type = 'a-priori',
-#'                             comparison = 'saturated', 
-#'                             nullEffect = 'metric',
-#'                             nIndicator = 5,
-#'                             loadM = list(.5, .6),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
-#' 
-#' # same as above, but provide individual factor loadings by group using a 
-#' # reduced loading matrix to define a  single factor model with three indicators
-#' # loading by .4, .6, .5 in the first group and 
-#' # loading by .5, .6, .7 in the second group
-#' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, beta = .05, N = list(1, 1),
 #'                             comparison = 'saturated', 
 #'                             nullEffect = 'metric',
 #'                             loadings = list(
-#'                               list(c(.4, .6, .5)), 
-#'                               list(c(.5, .6, .7))),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7)))
+#'                             )
 #' 
 #' # same as above, but make first group twice as large as the second group 
 #' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, beta = .05, N = list(2, 1),
 #'                             comparison = 'saturated', 
 #'                             nullEffect = 'metric',
 #'                             loadings = list(
-#'                               list(c(.4, .6, .5)), 
-#'                               list(c(.5, .6, .7))),
-#'                             alpha = .05, beta = .05, N = list(2, 1))
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7)))
+#'                             )
 #' 
 #' # obtain the required N to reject the hypothesis of scalar invariance
 #' # in comparison to the metric invariance model 
@@ -189,6 +192,7 @@
 #' # all intercepts are 0.0 in the first group, but
 #' # the intercepts are .1, .2, .3, .4, .5, .6 in the second group
 #' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, beta = .05, N = list(1, 1)
 #'                             comparison = 'metric', 
 #'                             nullEffect = 'scalar',
 #'                             Phi = list(.3, .3),
@@ -199,11 +203,11 @@
 #'                             tau = list(
 #'                               rep(0.0, 6), 
 #'                               seq(.1, .6, .1) 
-#'                             ),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
+#'                             ))
 #' 
 #' # same as above, but use lavaan group.equal strings 
 #' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, beta = .05, N = list(1, 1)
 #'                             comparison = c('loadings'), 
 #'                             nullEffect = c('loadings', 'intercepts'),
 #'                             Phi = list(.3, .3),
@@ -214,8 +218,7 @@
 #'                             tau = list(
 #'                               rep(0.0, 6), 
 #'                               seq(.1, .6, .1) 
-#'                             ),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
+#'                             ))
 #' 
 #' # same as above, but
 #' # obtain the required N to reject the hypothesis of equal latent means
@@ -224,6 +227,7 @@
 #' # in the first group, the latent means equal 0.0, 
 #' # in the second group, the latent mean of the factors are 0.0 and 0.5
 #' powerMI <- semPower.powerMI(type = 'a-priori',
+#'                             alpha = .05, beta = .05, N = list(1, 1),
 #'                             comparison = c('loadings', 'intercepts'), 
 #'                             nullEffect = c('loadings', 'intercepts', 'means'),
 #'                             Phi = list(.3, .3),
@@ -238,18 +242,18 @@
 #'                             Alpha = list(
 #'                               c(0.0, 0.0),
 #'                               c(0.0, 0.5)
-#'                             ),
-#'                             alpha = .05, beta = .05, N = list(1, 1))
+#'                             ))                             
 #' 
 #' # request a simulated post-hoc power analysis with 500 replications
 #' # to reject the hypothesis of metric invariance.
 #' set.seed(300121)
 #' powerMI <- semPower.powerMI(type = 'post-hoc',
+#'                             alpha = .05, N = list(500, 500), 
 #'                             comparison = 'configural', 
 #'                             nullEffect = 'metric',
-#'                             nIndicator = list(5, 5),
-#'                             loadM = list(.5, .6),
-#'                             alpha = .05, N = list(500, 500), 
+#'                             loadings = list(
+#'                               list(c(.9, .8, .7, .6)),
+#'                               list(c(.7, .7, .8, .7))),
 #'                             simulatedPower = TRUE, 
 #'                             simOptions = list(nReplications = 500))
 #'                              
@@ -259,31 +263,31 @@
 semPower.powerMI <- function(type, 
                              comparison = NULL,
                              nullEffect = NULL,
+                             useReferenceIndicator = FALSE,
+                             singleGroupIdent = !useReferenceIndicator,
                              ...){
   
   args <- list(...)
   
   # validate input
   checkEllipsis(...)
-  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.covariances','regressions')
+  lavGroupStrings <- c('loadings', 'intercepts', 'residuals', 'residual.covariances', 'lv.variances', 'lv.covariances','regressions')
   useLavOptions <- any(grepl(paste(lavGroupStrings, collapse = '|'), comparison)) || any(grepl(paste(lavGroupStrings, collapse = '|'), nullEffect))
   # we only check typos etc when not using lavstrings
   if(!useLavOptions){
-    comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar', 'covariances'))
-    nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual', 'covariances', 'means'))
-    if(which(c('saturated', 'configural', 'metric', 'scalar', 'covariances') %in% comparison) >= 
-       (2 + which(c('metric', 'scalar', 'residuals', 'covariances', 'means') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
+    comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar', 'variances', 'covariances'))
+    nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual', 'variances', 'covariances', 'means'))
+    if(which(c('saturated', 'configural', 'metric', 'scalar', 'variances', 'covariances') %in% comparison) >= 
+       (2 + which(c('metric', 'scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
   }else{
-    if('lv.variances' %in% comparison || 'lv.variances' %in% nullEffect) stop('Variance scaling is used, so invariance of latent variances is always met.')
+    if(!useReferenceIndicator && !singleGroupIdent && ('lv.variances' %in% comparison || 'lv.variances' %in% nullEffect)) stop('Variance scaling without single group identification is used, so invariance of latent variances is always met. Either use single group identification or referent scaling.')
+    if(!useReferenceIndicator && !singleGroupIdent && ('means' %in% nullEffect)) stop('Mean scaling without single group identification is used, so invariance of latent means is always met. Either use single group identification or referent scaling.')
     if(!any(c('saturated', 'none') %in% comparison) && !all(comparison %in% nullEffect)) stop('Comparison model is not nested in hypothesized model; all restrictions in comparison must also be present in nullEffect.')
   }
+  if(useReferenceIndicator && singleGroupIdent) stop('Identification constraints on referent indicators (useReferenceIndicator = TRUE) must be maintained, so singleGroupIdent must be FALSE.')
   
   ### generate sigmas
-  # we use variance scaling, so the first loading may also differ across groups.
-  # If using reference indicators instead, the first loading must be equal across groups.
-  # Not sure whether to expose this to users.
-  # the downside is that lv.variances is always true.
-  generated <- semPower.genSigma(..., useReferenceIndicator = FALSE)   
+  generated <- semPower.genSigma(..., useReferenceIndicator = useReferenceIndicator)   
   
   # more input validations
   if(!is.list(generated[[1]])) stop('Loadings, Phi, Beta, etc. must be provided as a list for each group.')
@@ -292,14 +296,31 @@ semPower.powerMI <- function(type,
     if(useLavOptions){
       inv <- any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect))
     }else{
-      inv <- any(c('scalar', 'residuals', 'covariances', 'means') %in% nullEffect)
+      inv <- any(c('scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect)
     }
     if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
   }
+  # throw warning if identification constraints imply misfit 
+  if(useReferenceIndicator){
+    lambda <- lapply(generated, '[[', 'Lambda')
+    iIdx <- sapply(seq(ncol(lambda[[1]])), function(x) min(which(lambda[[1]][ , x] != 0)))
+    rIdx <- unlist(lapply(seq(iIdx), function(x) iIdx[x] + (x-1) * nrow(lambda[[1]]))) # adapt index
+    if(any(unlist(lapply(seq(rIdx), function(x) length(unique(sapply(lambda, '[[', rIdx[x]))) != 1)))) warning('Loadings of the referent indicator differ across groups. This is probably not intended. Either define the same loading for the first indicator of each factor or use variance scaling (useReferenceIndicator = FALSE).')
+    if(!is.null(generated[[1]][['tau']])){
+      tau <- do.call(cbind, lapply(generated, '[[', 'tau'))
+      if(any(unlist(lapply(seq(iIdx), function(x) length(unique(tau[iIdx[x], ])) != 1))))  warning('Intercepts of the referent indicator differ across groups. This is probably not intended. Either define the same intercept for the first indicator of each factor or use mean scaling (useReferenceIndicator = FALSE).')
+    }
+  }else{
+    if(!singleGroupIdent){
+      phi <- do.call(cbind, lapply(lapply(generated, '[[', 'Phi'), diag))
+      if(any(apply(phi, 1, function(x) length(unique(x)) != 1))) warning('Factor variances differ across groups. This is probably not intended. Either define the same variance for each factor across groups or use referent scaling (useReferenceIndicator = TRUE).')  
+      if(!is.null(generated[[1]][['Alpha']])){
+        alpha <- do.call(cbind, lapply(generated, '[[', 'Alpha'))
+        if(any(apply(alpha, 1, function(x) length(unique(x)) != 1))) warning('Factor means differ across groups. This is probably not intended. Either define the same mean for each factor across groups or use referent scaling (useReferenceIndicator = TRUE).')
+      }
+    }
+  }
   
-  # models are the same, the only difference pertains to lavOptions
-  modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
-
   # set proper lavOptions
   lavOptionsH1 <- list()
   if(!useLavOptions){
@@ -307,16 +328,18 @@ semPower.powerMI <- function(type,
                                               'metric' = c('loadings'),
                                               'scalar' = c('loadings', 'intercepts'),
                                               'residual' = c('loadings', 'intercepts', 'residuals'),
-                                              'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
-                                              'means' = c('loadings', 'intercepts', 'residuals', 'lv.covariances', 'means')
+                                              'variances' = c('loadings', 'intercepts', 'residuals', 'lv.variances'),
+                                              'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.variances', 'lv.covariances'),
+                                              'means' = c('loadings', 'intercepts', 'residuals', 'lv.variances', 'lv.covariances', 'means')
                                               
     ))
-    if(comparison %in% c('metric', 'scalar', 'residuals', 'covariances')){
+    if(comparison %in% c('metric', 'scalar', 'residuals', 'variances', 'covariances')){
       lavOptionsH1 <- list(group.equal = switch(comparison,
                                                 'metric' = c('loadings'),
                                                 'scalar' = c('loadings', 'intercepts'),
                                                 'residual' = c('loadings', 'intercepts', 'residuals'),
-                                                'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.covariances')
+                                                'variances' = c('loadings', 'intercepts', 'residuals', 'lv.variances'),
+                                                'covariances' = c('loadings', 'intercepts', 'residuals', 'lv.variances', 'lv.covariances')
       ))
     }
   }else{
@@ -325,13 +348,64 @@ semPower.powerMI <- function(type,
       lavOptionsH1 <- list(group.equal = comparison)
     }
   }
+
+  
+  # define model strings
+  
+  # for referent scaling, models are the same, the only difference pertains to lavOptions
+  modelH0 <- modelH1 <- generated[[1]][['modelTrueCFA']]
+
+  # add constraints on referent intercept
+  if(useReferenceIndicator){
+    if("intercepts" %in% lavOptionsH0[['group.equal']]){
+      modelH0 <- paste(modelH0, paste0('x', iIdx, ' ~ 0*1', collapse = '\n'), sep = '\n')
+      modelH0 <- paste(modelH0, paste0('f', seq(ncol(generated[[1]][['Lambda']])), ' ~ 1', collapse = '\n'), sep = '\n')
+    }    
+  }
+    
+  # variance scaling
+  if(!useReferenceIndicator){
+    # for single group identification, freely estimate latent variances/means in all but one group when loadings/intercepts are equal
+    nGroups <- length(generated)
+    nFactors <- ncol(generated[[1]][['Lambda']])
+    if(singleGroupIdent){
+      if("loadings" %in% lavOptionsH0[['group.equal']]){
+        replacement <- paste0('c(1,', paste(rep('NA', (nGroups-1)), collapse = ','), ')*')
+        for(i in 1:nFactors){
+          modelH0 <- sub(paste0('f', i, ' ~~ ', '1*f', i), paste0('f', i, ' ~~ ', replacement, 'f', i), modelH0, fixed = TRUE)
+        }
+        if("loadings" %in% lavOptionsH1[['group.equal']]){
+          modelH1 <- sub(paste0('f', i, ' ~~ ', '1*f', i), paste0('f', i, ' ~~ ', replacement, 'f', i), modelH1, fixed = TRUE)
+        }
+      }
+      if("intercepts" %in% lavOptionsH0[['group.equal']]){
+        tok <- paste0('c(0,', paste(rep('NA', (nGroups-1)), collapse = ','), ')*')
+        modelH0 <- paste(modelH0, paste0(unlist(lapply(1:nFactors, function(x) paste0('f', x, ' ~ ', tok, '1'))), collapse = '\n'), sep = '\n')
+        if("intercepts" %in% lavOptionsH1[['group.equal']]){
+          modelH1 <- paste(modelH1, paste0(unlist(lapply(1:nFactors, function(x) paste0('f', x, ' ~ ', tok, '1'))), collapse = '\n'), sep = '\n')
+        }
+      }
+      
+    # otherwise retain scaling constraints; also for factor means (!)
+    }else{
+      if("intercepts" %in% lavOptionsH0[['group.equal']]){
+        tok <- paste0('c(', paste(rep('0', nGroups), collapse = ','), ')*')
+        modelH0 <- paste(modelH0, paste0(unlist(lapply(1:nFactors, function(x) paste0('f', x, ' ~ ', tok, '1'))), collapse = '\n'), sep = '\n')
+        if("intercepts" %in% lavOptionsH1[['group.equal']]){
+          modelH1 <- paste(modelH1, paste0(unlist(lapply(1:nFactors, function(x) paste0('f', x, ' ~ ', tok, '1'))), collapse = '\n'), sep = '\n')
+        }
+      }
+    }
+  }
+
+  
   
   if('saturated' %in% comparison) modelH1 <- NULL
   
   Sigma <- lapply(generated, '[[', 'Sigma')
   mu <- NULL
   if(!useLavOptions){
-    if(any(c('scalar', 'residuals', 'covariances', 'means') %in% nullEffect))
+    if(any(c('scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect))
       mu <- lapply(generated, '[[', 'mu')
   }else{
     if(any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect)))

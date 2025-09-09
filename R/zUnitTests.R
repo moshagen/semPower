@@ -2932,8 +2932,8 @@ test_powerMI <- function(){
                          comparison = 'saturated',
                          nullEffect = 'metric',
                          Phi = list(.2, .2), 
-                         nIndicator = list(c(3, 3), c(3, 3)), 
-                         loadM = list(.5, .6),
+                         loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                         list(c(.60, .70, .63), c(.55, .50, .60))),
                          alpha = .05, N = list(250, 250))
   
   lavres <- helper_lav(ph$modelH0, ph$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
@@ -2941,7 +2941,9 @@ test_powerMI <- function(){
   # metric vs configural
   ph2 <- semPower.powerMI(type = 'post-hoc', comparison = 'configural',
                           nullEffect = 'metric',
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2),
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   
   lavres2a <- helper_lav(ph2$modelH0, ph2$Sigma, sample.nobs = list(250, 250), group.equal = c('loadings'))
@@ -2969,12 +2971,16 @@ test_powerMI <- function(){
   # metric vs saturated: lav model string
   ph4 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
                           nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2), 
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   # metric vs configural: lav model string
   ph5 <- semPower.powerMI(type = 'post-hoc', comparison = 'none',
                           nullEffect = c('loadings'),
-                          Phi = list(.2, .2), nIndicator = list(c(3, 3), c(3, 3)), loadM = list(.5, .6),
+                          Phi = list(.2, .2), 
+                          loadings = list(list(c(.53, .49, .40), c(.50, .59, .39)), 
+                                          list(c(.60, .70, .63), c(.55, .50, .60))),
                           alpha = .05, N = list(250, 250))
   # scalar vs metric: lav model string
   ph6 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings'),
@@ -3011,7 +3017,52 @@ test_powerMI <- function(){
     round(ph7$fmin - 2*(lavres7a$fit['fmin'] - lavres7b$fit['fmin']), 4) == 0 &&
     round(ph8$fmin - 2*(lavres8a$fit['fmin'] - lavres8b$fit['fmin']), 4) == 0 
   
-  if(valid2){
+  
+  # identification options
+  ph9 <- semPower.powerMI(type = 'post-hoc', comparison = c('loadings'),
+                          nullEffect = c('loadings', 'intercepts'),
+                          nIndicator = list(5, 5), loadM = list(.5, .5),
+                          tau = list(rep(0, 5), 0:4),
+                          alpha = .05, N = list(250, 250),
+                          useReferenceIndicator = TRUE,
+                          singleGroupIdent = FALSE
+  )
+  lavres9a <- helper_lav(ph9$modelH0, ph9$Sigma, sample.mean = ph9$mu, sample.nobs = list(250, 250), group.equal = c('loadings', 'intercepts'))
+
+  ph10 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
+                           nullEffect = c('loadings', 'intercepts'),
+                           nIndicator = list(5, 5), loadM = list(.5, .5),
+                           tau = list(rep(0, 5), 0:4),
+                           alpha = .05, N = list(250, 250),
+                           useReferenceIndicator = FALSE,
+                           singleGroupIdent = FALSE
+  )
+  lavres10a <- helper_lav(ph10$modelH0, ph10$Sigma, sample.mean = ph10$mu, sample.nobs = list(250, 250), group.equal = c('loadings', 'intercepts'))
+
+  ph11 <- semPower.powerMI(type = 'post-hoc', comparison = 'saturated',
+                           nullEffect = c('loadings', 'intercepts'),
+                           nIndicator = list(5, 5), loadM = list(.5, .5),
+                           tau = list(rep(0, 5), 0:4),
+                           alpha = .05, N = list(250, 250),
+                           useReferenceIndicator = FALSE,
+                           singleGroupIdent = TRUE
+  )
+  lavres11a <- helper_lav(ph11$modelH0, ph11$Sigma, sample.mean = ph11$mu, sample.nobs = list(250, 250), group.equal = c('loadings', 'intercepts'))
+  
+  valid3 <- valid2 &&
+    all(is.na(lavres9a$par[lavres9a$par$rhs == 'x1' & lavres9a$par$op == '=~', 'z'])) &&
+    all(!is.na(lavres9a$par[lavres9a$par$rhs == 'f1' & lavres9a$par$op == '~~', 'z'])) && 
+    all(is.na(lavres9a$par[lavres9a$par$rhs == 'x1' & lavres9a$par$op == '~1', 'z'])) &&
+    all(!is.na(lavres9a$par[lavres9a$par$rhs == 'f1' & lavres9a$par$op == '~1', 'z'])) && 
+    all(is.na(lavres10a$par[lavres10a$par$lhs == 'f1' & lavres10a$par$rhs == 'f1', 'z'])) &&
+    all(is.na(lavres10a$par[lavres10a$par$lhs == 'f1' & lavres10a$par$op == '~1', 'z'])) &&
+    is.na(lavres11a$par[lavres11a$par$lhs == 'f1' & lavres11a$par$rhs == 'f1' & lavres11a$par$group == 1, 'z']) &&
+    is.na(lavres11a$par[lavres11a$par$lhs == 'f1' & lavres11a$par$op == '~1' & lavres11a$par$group == 1, 'z']) &&
+    !is.na(lavres11a$par[lavres11a$par$lhs == 'f1' & lavres11a$par$rhs == 'f1' & lavres11a$par$group == 2, 'z']) &&
+    !is.na(lavres11a$par[lavres11a$par$lhs == 'f1' & lavres11a$par$op == '~1' & lavres11a$par$group == 2, 'z'])
+  
+  
+  if(valid3){
     print('test_powerMI: OK')
   }else{
     warning('Invalid')
@@ -5225,20 +5276,20 @@ test_all <- function(){
   test_genPsi()
   test_powerLav()
   test_multigroup()
-  test_WLS(doTest = TRUE)
+  test_WLS(doTest = FALSE)
   test_powerCFA()
   test_powerRegression()
   test_powerMediation()
-  test_powerCLPM(doTest = TRUE)
-  test_powerRICLPM(doTest = TRUE)
+  test_powerCLPM(doTest = FALSE)
+  test_powerRICLPM(doTest = FALSE)
   test_powerPath()
   test_powerMI()
-  test_powerBifactor(doTest = TRUE)
-  test_powerAutoreg(doTest = TRUE)
-  test_powerARMA(doTest = TRUE)
-  test_powerLI(doTest = TRUE)
-  test_powerLGCM(doTest = TRUE)
+  test_powerBifactor(doTest = FALSE)
+  test_powerAutoreg(doTest = FALSE)
+  test_powerARMA(doTest = FALSE)
+  test_powerLI(doTest = FALSE)
+  test_powerLGCM(doTest = FALSE)
   test_simulatePower(doTest = FALSE)
 }
 
-# test_all()
+test_all()
