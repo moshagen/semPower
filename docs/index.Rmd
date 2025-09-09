@@ -3234,6 +3234,8 @@ hypothesis arising in multigroup settings](#multipleGroups).
     arguments).
 -   `nullEffect`: Defines the level of invariance of interest (see below
     for valid arguments).
+-   `useReferenceIndicator`: Defines whether to identify the factor variances and factor means using a referent indicator (`TRUE`) or using a standardization approach setting the means to 0 and the variances to 1 (`FALSE`, the default). See below for details.
+-   `singleGroupIdent`: whether to maintain the identification constraints only for a single group (`TRUE`) or whether to maintain all scaling constraints (`FALSE`). See below for details.
 -   additional arguments [specifying the type of power
     analysis](#commonArgs).
 -   additional arguments [defining the factor model](#factorDefinition),
@@ -3252,11 +3254,14 @@ invariance that includes all previous levels:
     to equality.
 -   `'residual'`: all loadings, (indicator-)intercepts, and
     (indicator-)residuals are restricted to equality.
+-   `'variances'`: all loadings, (indicator-)intercepts,
+    (indicator-)residuals, and factor variances are restricted to
+    equality.
 -   `'covariances'`: all loadings, (indicator-)intercepts,
-    (indicator-)residuals, and factor covariances are restricted to
+    (indicator-)residuals, factor variances, and factor covariances are restricted to
     equality.
 -   `'means'`: all loadings, (indicator-)intercepts, and
-    (indicator-)residuals, factor covariances, and latent means are
+    (indicator-)residuals, factor variances, factor covariances, and latent means are
     restricted to equality.
 
 Alternatively, the models can also be defined using `lavaan` style
@@ -3276,9 +3281,10 @@ Alternatively, the models can also be defined using `lavaan` style
     (indicator-)intercepts, and latent factor means are restricted to
     equality.
 
-Note that `semPower.powerMI` implements variance scaling of the factors
-(the variances of all factors are equal to 1 in all groups), so
-invariance of variances (`'lv.variances'`) is always met.
+By default, the factors are identified by setting their means to 0 and their variances to 1 (`useReferenceIndicator = FALSE`), so that all loadings and indicator intercepts are freely estimated. In models involving constraints on loadings or intercepts, a single group identification approach is used by default (`singleGroupIdent = TRUE`), so that the factor variances and means are constrained in only a single group, but are freely estimated in all remaining groups. This mimics the `lavaan` approach to invariance testing. If setting `singleGroupIdent = FALSE`, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, in all groups. Concerning metric invariance, this was the default behavior in `semPower` versions prior 2.1.4.
+
+A referent scaling approach can be be defined using `useReferenceIndicator = TRUE`, so that the loading and the intercept of the first indicator of each factor are constrained in each group, and the factor variances and means are freely estimated. Reference scaling is always maintained in all invariance models, so `singleGroupIdent` must be `FALSE`.
+
 
 `semPower.powerMI` provides a list as result. Use the `summary` method
 to obtain formatted results. The list contains the following components:
@@ -3307,21 +3313,9 @@ and define the factor model in a way that at least one loading differs
 across groups (so that metric invariance is violated to the extent as
 defined by the difference in the loadings across groups).
 
-For instance, the following requests the required sample size
-(`type = 'a-priori'`) to detect that a metric invariance model
-(`nullEffect = 'metric'`) differs from a configural invariance model
-(`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a
-power of 80% (`power = .80`). The model comprises a single factor, which
-is measured by 5 indicators in both groups (`nIndicator = list(5, 5)`).
-In the first group, all indicators load by .5, whereas in the second
-group, all indicators load by .6 (`loadM = list(.5, .6)`). See the
-chapter on [specifying a factor model](#factorDefinition) for
-alternative (more flexible) ways to define the factor loadings.
-Furthermore, in multiple group models, the `N` argument also needs to be
-supplied as a list, which in case of an a priori power analysis gives
-the group weights. `N = list(1, 1)` requests equally sized groups. If
-using `N = list(2, 1)` instead, the first group would be twice as large
-as the second group.
+For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises a single factor, which is measured by 5 indicators in both groups. The `loadings` argument specifies that in the first group, all indicators load by .5, whereas in the second group, the indicators load by .7, .4, .6, .4, .7. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to define the factor loadings. 
+
+Furthermore, in multiple group models, the `N` argument also needs to be supplied as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. 
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
@@ -3331,8 +3325,9 @@ powerMI <- semPower.powerMI(
                            comparison = 'configural', 
                            nullEffect = 'metric',
                            # define measurement model
-                           nIndicator = list(5, 5),
-                           loadM = list(.5, .6))
+                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
+                                          list(c(.7, .4, .6, .4, .7))) # group 2
+                           )
 summary(powerMI)
 ```
 
@@ -3352,8 +3347,9 @@ powerMI <- semPower.powerMI(
                            comparison = 'configural', 
                            nullEffect = 'metric',
                            # define factor model
-                           nIndicator = list(5, 5),
-                           loadM = list(.5, .6))
+                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
+                                          list(c(.7, .4, .6, .4, .7))) # group 2
+                           )
 ```
 
 Now, `summary(powerMI)` provides the same information as a model-free
@@ -3370,20 +3366,12 @@ powerMI <- semPower.powerMI(
                            # define hypothesis
                            comparison = 'none', 
                            nullEffect = c('loadings'),
-                           nIndicator = list(5, 5),
-                           loadM = list(.5, .6))
+                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
+                                          list(c(.7, .4, .6, .4, .7))) # group 2
+                           )
 ```
 
-Note that the arguments [specifying a factor model](#factorDefinition)
-must be provided as lists, where each component refers to a specific
-group. For instance, the following defines a two-factor model, where the
-first factor is measured by 3 indicators and the second factor is
-measured by 4 indicators (in both groups,
-`nIndicator = list(c(3, 4), c(3, 4))`). In the first group, all loadings
-are equal to .5. In the second group, the loadings on the first factor
-are also .5, but the loadings on the second factor are .6
-(`list(c(.5, .5), c(.5, .6))`). In both groups, the factor correlation
-is .3 (`Phi = list(.3, 3)`).
+The arguments [specifying a factor model](#factorDefinition) must be provided as lists, where each component refers to a specific group. For instance, the following defines a two-factor model, where the first factor is measured by 3 indicators and the second factor is measured by 4 indicators. In the first group, all loadings are equal to .5. In the second group, the loadings on the first factor are also .5, but the loadings on the second factor are .6, .4, .3, and .5 (`loadings = list(list(c(.5, .5, .5), c(.5, .5, .5, .5)), list(c(.5, .5, .5), c(.6, .4, .3, .5)))`). In both groups, the factor correlation is .3 (`Phi = list(.3, 3)`).
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
@@ -3391,57 +3379,36 @@ powerMI <- semPower.powerMI(
                            comparison = 'configural', 
                            nullEffect = 'metric',
                            # define two factors 
-                           nIndicator = list(c(3, 4), c(3, 4)),
-                           loadM = list(c(.5, .5), c(.5, .6)),
-                           Phi = list(.3, 3))
-```
-
-Measurement parameters that should be equal across groups can also be
-provided omitting the list structure, so the same as above can be
-achieved by using:
-
-```{r eval=FALSE}
-powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define two factors
-                           nIndicator = c(3, 4),
-                           loadM = list(c(.5, .5), c(.5, .6)),
-                           Phi = list(.3, .3)) 
-```
-
-In the examples above, all indicators of a certain factor exhibited
-measurement non-invariance. If only a subset of indicators should show a
-different loading by group, [specify the factor
-model](#factorDefinition) using the `loadings` argument. For instance,
-the following defines a two-factor model with a factor correlation of .3
-(`Phi = list(.3, 3)`) in both groups. The first factor is measured by 3
-indicators and the second factor is also measured by 3 indicators (in
-both groups). In the first group, the loadings on the first factor are
-.7, .6, and .5, and those on the second factor are .5, .5, and .7. In
-the second group, the loadings on the first factor are .7, .7, and .5,
-and those on the second factor are .5, .5, and .6. Thus, there are group
-differences concerning the loadings of the second indicator of the first
-factor (.6 vs .5) and concerning the loadings of the third indicator of
-the second factor (.7 vs .6).
-
-```{r eval=FALSE}
-powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define measurement model 
-                           loadings = list(
-                             # loadings on the first and second factor in the first group
-                             list(c(.7, .6, .5), 
-                                  c(.5, .5, .7)),
-                             # loadings on the first and second factor in the second group
-                             list(c(.7, .7, .5), 
-                                  c(.5, .5, .6))
-                             ),
+                           loadings = list(list(c(.5, .5, .5),        # group 1, factor 1
+                                                c(.5, .5, .5, .5)),   # group 1, factor 2
+                                           list(c(.5, .5, .5),        # group 2, factor 1
+                                                c(.6, .4, .3, .5))),  # group 2, factor 2     
                            Phi = list(.3, .3))
 ```
+
+All examples thus far relied on the default identification option (`useReferenceIndicator = FALSE` and `singleGroupIdent = TRUE`). This implies that the factor variances in models involving at least metric invariance are constrained to 1 in a single group, and freely estimated in all remaining groups. Similarly, the factor means in models involving at least scalar invariance are constrained to 0 in a single group, and freely estimated in all remaining groups. In the configural invariance model, factor variances and means are constrained to 1 and 0, respectively, in all groups.
+
+Note that metric invariance equality restrictions are placed on the unstandardized loadings across groups. As a consequence, differences in loadings can be accounted for by the free factor variances, if the loadings are proportional across groups (i.e., the ratio of loadings across groups is identical for all indicators within a factor). In such cases, the metric invariance model shows no discrepancy and a power analysis cannot be performed. For instance, the following assumes a single-factor model, which is measured by 5 indicators in both groups. The loadings are proportional because all indicators load by .5 in the first group, and by .6 in the second group. Running a corresponding power analysis will give an error as both the configural and metric model show an identical and perfect model fit.
+
+```{r eval=FALSE}
+powerMI <- semPower.powerMI(
+                           # define type of power analysis
+                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+                           # define hypothesis
+                           comparison = 'configural', 
+                           nullEffect = 'metric',
+                           # define measurement model
+                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
+                                          list(c(.6, .6, .6, .6, .6))), # group 2
+                           # identification options
+                           useReferenceIndicator = FALSE,
+                           singleGroupIdent = TRUE
+                           )
+
+```
+
+However, the same code works well when setting `singleGroupIdent = FALSE`. Then, the factor variances are 1 in all groups regardless of the level of invariance, so the factor variances cannot account for proportionally different loadings. 
+
 
 ##### Detect scalar non-invariance {.unnumbered}
 
@@ -3503,6 +3470,29 @@ powerMI <- semPower.powerMI(
                              c(0, 0, 0, 0, 0),
                              c(0, .1, -.3, 0, 0)
                            ))
+```
+
+Similar as in the case of metric invariance, scalar invariance with the default identification option (`useReferenceIndicator = FALSE` and `singleGroupIdent = TRUE`) fixes only the latent factor means of the first group to 0, while the latent factor means of the other groups are set free. As a consequence, differences in indicator intercepts can be accounted for by the free factor means, if the intercepts are proportional across groups (i.e., the ratio of intercepts across groups is identical for all indicators within a factor). In such cases, the scalar invariance model shows no discrepancy and a power analysis cannot be performed. 
+
+For instance, the following assumes a single-factor model, which is measured by 5 indicators in both groups. The intercepts are proportional because all intercepts are 0 in the first group, and .1 in the second group. Running a corresponding power analysis with `useReferenceIndicator = FALSE` and `singleGroupIdent = TRUE` will give an error as both the metric and scalar model show an identical and perfect model fit. However, setting `singleGroupIdent = FALSE` will work fine. 
+
+```{r eval=FALSE}
+powerMI <- semPower.powerMI(
+                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+                           # define hypothesis
+                           comparison = 'metric', 
+                           nullEffect = 'scalar',
+                           # define measurement model
+                           nIndicator = 5,
+                           loadM = .5,
+                           tau = list(
+                             c(0, 0, 0, 0, 0),
+                             c(.1, .1, .1, .1, .1)
+                           ),
+                           # identification options
+                           useReferenceIndicator = FALSE,
+                           singleGroupIdent = TRUE
+                           )
 ```
 
 ##### Detect residual non-invariance {.unnumbered}

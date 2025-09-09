@@ -23,7 +23,7 @@
 <meta name="author" content="Morten Moshagen &amp; Martina Bader" />
 
 
-<meta name="date" content="2025-08-22" />
+<meta name="date" content="2025-09-09" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2060,7 +2060,7 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 <div id="header">
 <h1 class="title">Power Analysis for Structural Equation Models: semPower 2 Manual</h1>
 <p class="author"><em>Morten Moshagen &amp; Martina Bader</em></p>
-<p class="date"><em>2025-08-22</em></p>
+<p class="date"><em>2025-09-09</em></p>
 </div>
 <style type="text/css">
 .book .book-body .page-wrapper .page-inner {
@@ -4953,6 +4953,8 @@ hypothesis arising in multigroup settings</a>.</p>
 arguments).</li>
 <li><code>nullEffect</code>: Defines the level of invariance of interest (see below
 for valid arguments).</li>
+<li><code>useReferenceIndicator</code>: Defines whether to identify the factor variances and factor means using a referent indicator (<code>TRUE</code>) or using a standardization approach setting the means to 0 and the variances to 1 (<code>FALSE</code>, the default). See below for details.</li>
+<li><code>singleGroupIdent</code>: whether to maintain the identification constraints only for a single group (<code>TRUE</code>) or whether to maintain all scaling constraints (<code>FALSE</code>). See below for details.</li>
 <li>additional arguments <a href="#commonArgs">specifying the type of power
 analysis</a>.</li>
 <li>additional arguments <a href="#factorDefinition">defining the factor model</a>,
@@ -4971,11 +4973,14 @@ saturated model, so this only affects the df.</li>
 to equality.</li>
 <li><code>&#39;residual&#39;</code>: all loadings, (indicator-)intercepts, and
 (indicator-)residuals are restricted to equality.</li>
+<li><code>&#39;variances&#39;</code>: all loadings, (indicator-)intercepts,
+(indicator-)residuals, and factor variances are restricted to
+equality.</li>
 <li><code>&#39;covariances&#39;</code>: all loadings, (indicator-)intercepts,
-(indicator-)residuals, and factor covariances are restricted to
+(indicator-)residuals, factor variances, and factor covariances are restricted to
 equality.</li>
 <li><code>&#39;means&#39;</code>: all loadings, (indicator-)intercepts, and
-(indicator-)residuals, factor covariances, and latent means are
+(indicator-)residuals, factor variances, factor covariances, and latent means are
 restricted to equality.</li>
 </ul>
 <p>Alternatively, the models can also be defined using <code>lavaan</code> style
@@ -4995,9 +5000,8 @@ are restricted to equality.</li>
 (indicator-)intercepts, and latent factor means are restricted to
 equality.</li>
 </ul>
-<p>Note that <code>semPower.powerMI</code> implements variance scaling of the factors
-(the variances of all factors are equal to 1 in all groups), so
-invariance of variances (<code>&#39;lv.variances&#39;</code>) is always met.</p>
+<p>By default, the factors are identified by setting their means to 0 and their variances to 1 (<code>useReferenceIndicator = FALSE</code>), so that all loadings and indicator intercepts are freely estimated. In models involving constraints on loadings or intercepts, a single group identification approach is used by default (<code>singleGroupIdent = TRUE</code>), so that the factor variances and means are constrained in only a single group, but are freely estimated in all remaining groups. This mimics the <code>lavaan</code> approach to invariance testing. If setting <code>singleGroupIdent = FALSE</code>, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, in all groups. Concerning metric invariance, this was the default behavior in <code>semPower</code> versions prior 2.1.4.</p>
+<p>A referent scaling approach can be be defined using <code>useReferenceIndicator = TRUE</code>, so that the loading and the intercept of the first indicator of each factor are constrained in each group, and the factor variances and means are freely estimated. Reference scaling is always maintained in all invariance models, so <code>singleGroupIdent</code> must be <code>FALSE</code>.</p>
 <p><code>semPower.powerMI</code> provides a list as result. Use the <code>summary</code> method
 to obtain formatted results. The list contains the following components:</p>
 <ul>
@@ -5024,21 +5028,8 @@ is significantly worse than a configural invariance model, use
 and define the factor model in a way that at least one loading differs
 across groups (so that metric invariance is violated to the extent as
 defined by the difference in the loadings across groups).</p>
-<p>For instance, the following requests the required sample size
-(<code>type = &#39;a-priori&#39;</code>) to detect that a metric invariance model
-(<code>nullEffect = &#39;metric&#39;</code>) differs from a configural invariance model
-(<code>comparison = &#39;configural&#39;</code>) on alpha = .05 (<code>alpha = .05</code>) with a
-power of 80% (<code>power = .80</code>). The model comprises a single factor, which
-is measured by 5 indicators in both groups (<code>nIndicator = list(5, 5)</code>).
-In the first group, all indicators load by .5, whereas in the second
-group, all indicators load by .6 (<code>loadM = list(.5, .6)</code>). See the
-chapter on <a href="#factorDefinition">specifying a factor model</a> for
-alternative (more flexible) ways to define the factor loadings.
-Furthermore, in multiple group models, the <code>N</code> argument also needs to be
-supplied as a list, which in case of an a priori power analysis gives
-the group weights. <code>N = list(1, 1)</code> requests equally sized groups. If
-using <code>N = list(2, 1)</code> instead, the first group would be twice as large
-as the second group.</p>
+<p>For instance, the following requests the required sample size (<code>type = &#39;a-priori&#39;</code>) to detect that a metric invariance model (<code>nullEffect = &#39;metric&#39;</code>) differs from a configural invariance model (<code>comparison = &#39;configural&#39;</code>) on alpha = .05 (<code>alpha = .05</code>) with a power of 80% (<code>power = .80</code>). The model comprises a single factor, which is measured by 5 indicators in both groups. The <code>loadings</code> argument specifies that in the first group, all indicators load by .5, whereas in the second group, the indicators load by .7, .4, .6, .4, .7. See the chapter on <a href="#factorDefinition">specifying a factor model</a> for alternative ways to define the factor loadings.</p>
+<p>Furthermore, in multiple group models, the <code>N</code> argument also needs to be supplied as a list, which in case of an a priori power analysis gives the group weights. <code>N = list(1, 1)</code> requests equally sized groups. If using <code>N = list(2, 1)</code> instead, the first group would be twice as large as the second group.</p>
 <div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
 <span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a>                           <span class="co"># define type of power analysis</span></span>
 <span id="cb70-3"><a href="#cb70-3" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
@@ -5046,9 +5037,10 @@ as the second group.</p>
 <span id="cb70-5"><a href="#cb70-5" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
 <span id="cb70-6"><a href="#cb70-6" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
 <span id="cb70-7"><a href="#cb70-7" tabindex="-1"></a>                           <span class="co"># define measurement model</span></span>
-<span id="cb70-8"><a href="#cb70-8" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="fu">list</span>(<span class="dv">5</span>, <span class="dv">5</span>),</span>
-<span id="cb70-9"><a href="#cb70-9" tabindex="-1"></a>                           <span class="at">loadM =</span> <span class="fu">list</span>(.<span class="dv">5</span>, .<span class="dv">6</span>))</span>
-<span id="cb70-10"><a href="#cb70-10" tabindex="-1"></a><span class="fu">summary</span>(powerMI)</span></code></pre></div>
+<span id="cb70-8"><a href="#cb70-8" tabindex="-1"></a>                           <span class="at">loadings=</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>)), <span class="co"># group 1</span></span>
+<span id="cb70-9"><a href="#cb70-9" tabindex="-1"></a>                                          <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">4</span>, .<span class="dv">6</span>, .<span class="dv">4</span>, .<span class="dv">7</span>))) <span class="co"># group 2</span></span>
+<span id="cb70-10"><a href="#cb70-10" tabindex="-1"></a>                           )</span>
+<span id="cb70-11"><a href="#cb70-11" tabindex="-1"></a><span class="fu">summary</span>(powerMI)</span></code></pre></div>
 <p>The results of the power analysis are printed by calling the <code>summary</code>
 method on <code>powerMI</code>, which in this example provides the same information
 as a model-free <a href="#ap">a-priori power analysis</a> counterpart.</p>
@@ -5062,8 +5054,9 @@ the number of observations for each group:</p>
 <span id="cb71-5"><a href="#cb71-5" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
 <span id="cb71-6"><a href="#cb71-6" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
 <span id="cb71-7"><a href="#cb71-7" tabindex="-1"></a>                           <span class="co"># define factor model</span></span>
-<span id="cb71-8"><a href="#cb71-8" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="fu">list</span>(<span class="dv">5</span>, <span class="dv">5</span>),</span>
-<span id="cb71-9"><a href="#cb71-9" tabindex="-1"></a>                           <span class="at">loadM =</span> <span class="fu">list</span>(.<span class="dv">5</span>, .<span class="dv">6</span>))</span></code></pre></div>
+<span id="cb71-8"><a href="#cb71-8" tabindex="-1"></a>                           <span class="at">loadings=</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>)), <span class="co"># group 1</span></span>
+<span id="cb71-9"><a href="#cb71-9" tabindex="-1"></a>                                          <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">4</span>, .<span class="dv">6</span>, .<span class="dv">4</span>, .<span class="dv">7</span>))) <span class="co"># group 2</span></span>
+<span id="cb71-10"><a href="#cb71-10" tabindex="-1"></a>                           )</span></code></pre></div>
 <p>Now, <code>summary(powerMI)</code> provides the same information as a model-free
 <a href="#ph">post-hoc power analysis</a> counterpart. A <a href="#cp">compromise power
 analysis</a> (<code>type = &#39;compromise&#39;</code>) is performed analogously.</p>
@@ -5075,65 +5068,36 @@ following yields the same results as above:</p>
 <span id="cb72-3"><a href="#cb72-3" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
 <span id="cb72-4"><a href="#cb72-4" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;none&#39;</span>, </span>
 <span id="cb72-5"><a href="#cb72-5" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="fu">c</span>(<span class="st">&#39;loadings&#39;</span>),</span>
-<span id="cb72-6"><a href="#cb72-6" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="fu">list</span>(<span class="dv">5</span>, <span class="dv">5</span>),</span>
-<span id="cb72-7"><a href="#cb72-7" tabindex="-1"></a>                           <span class="at">loadM =</span> <span class="fu">list</span>(.<span class="dv">5</span>, .<span class="dv">6</span>))</span></code></pre></div>
-<p>Note that the arguments <a href="#factorDefinition">specifying a factor model</a>
-must be provided as lists, where each component refers to a specific
-group. For instance, the following defines a two-factor model, where the
-first factor is measured by 3 indicators and the second factor is
-measured by 4 indicators (in both groups,
-<code>nIndicator = list(c(3, 4), c(3, 4))</code>). In the first group, all loadings
-are equal to .5. In the second group, the loadings on the first factor
-are also .5, but the loadings on the second factor are .6
-(<code>list(c(.5, .5), c(.5, .6))</code>). In both groups, the factor correlation
-is .3 (<code>Phi = list(.3, 3)</code>).</p>
+<span id="cb72-6"><a href="#cb72-6" tabindex="-1"></a>                           <span class="at">loadings=</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>)), <span class="co"># group 1</span></span>
+<span id="cb72-7"><a href="#cb72-7" tabindex="-1"></a>                                          <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">4</span>, .<span class="dv">6</span>, .<span class="dv">4</span>, .<span class="dv">7</span>))) <span class="co"># group 2</span></span>
+<span id="cb72-8"><a href="#cb72-8" tabindex="-1"></a>                           )</span></code></pre></div>
+<p>The arguments <a href="#factorDefinition">specifying a factor model</a> must be provided as lists, where each component refers to a specific group. For instance, the following defines a two-factor model, where the first factor is measured by 3 indicators and the second factor is measured by 4 indicators. In the first group, all loadings are equal to .5. In the second group, the loadings on the first factor are also .5, but the loadings on the second factor are .6, .4, .3, and .5 (<code>loadings = list(list(c(.5, .5, .5), c(.5, .5, .5, .5)), list(c(.5, .5, .5), c(.6, .4, .3, .5)))</code>). In both groups, the factor correlation is .3 (<code>Phi = list(.3, 3)</code>).</p>
 <div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
 <span id="cb73-2"><a href="#cb73-2" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
 <span id="cb73-3"><a href="#cb73-3" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
 <span id="cb73-4"><a href="#cb73-4" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
 <span id="cb73-5"><a href="#cb73-5" tabindex="-1"></a>                           <span class="co"># define two factors </span></span>
-<span id="cb73-6"><a href="#cb73-6" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>)),</span>
-<span id="cb73-7"><a href="#cb73-7" tabindex="-1"></a>                           <span class="at">loadM =</span> <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>), <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">6</span>)),</span>
-<span id="cb73-8"><a href="#cb73-8" tabindex="-1"></a>                           <span class="at">Phi =</span> <span class="fu">list</span>(.<span class="dv">3</span>, <span class="dv">3</span>))</span></code></pre></div>
-<p>Measurement parameters that should be equal across groups can also be
-provided omitting the list structure, so the same as above can be
-achieved by using:</p>
+<span id="cb73-6"><a href="#cb73-6" tabindex="-1"></a>                           <span class="at">loadings =</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>),        <span class="co"># group 1, factor 1</span></span>
+<span id="cb73-7"><a href="#cb73-7" tabindex="-1"></a>                                                <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>)),   <span class="co"># group 1, factor 2</span></span>
+<span id="cb73-8"><a href="#cb73-8" tabindex="-1"></a>                                           <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>),        <span class="co"># group 2, factor 1</span></span>
+<span id="cb73-9"><a href="#cb73-9" tabindex="-1"></a>                                                <span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">4</span>, .<span class="dv">3</span>, .<span class="dv">5</span>))),  <span class="co"># group 2, factor 2     </span></span>
+<span id="cb73-10"><a href="#cb73-10" tabindex="-1"></a>                           <span class="at">Phi =</span> <span class="fu">list</span>(.<span class="dv">3</span>, .<span class="dv">3</span>))</span></code></pre></div>
+<p>All examples thus far relied on the default identification option (<code>useReferenceIndicator = FALSE</code> and <code>singleGroupIdent = TRUE</code>). This implies that the factor variances in models involving at least metric invariance are constrained to 1 in a single group, and freely estimated in all remaining groups. Similarly, the factor means in models involving at least scalar invariance are constrained to 0 in a single group, and freely estimated in all remaining groups. In the configural invariance model, factor variances and means are constrained to 1 and 0, respectively, in all groups.</p>
+<p>Note that metric invariance equality restrictions are placed on the unstandardized loadings across groups. As a consequence, differences in loadings can be accounted for by the free factor variances, if the loadings are proportional across groups (i.e., the ratio of loadings across groups is identical for all indicators within a factor). In such cases, the metric invariance model shows no discrepancy and a power analysis cannot be performed. For instance, the following assumes a single-factor model, which is measured by 5 indicators in both groups. The loadings are proportional because all indicators load by .5 in the first group, and by .6 in the second group. Running a corresponding power analysis will give an error as both the configural and metric model show an identical and perfect model fit.</p>
 <div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
-<span id="cb74-2"><a href="#cb74-2" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
-<span id="cb74-3"><a href="#cb74-3" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
-<span id="cb74-4"><a href="#cb74-4" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
-<span id="cb74-5"><a href="#cb74-5" tabindex="-1"></a>                           <span class="co"># define two factors</span></span>
-<span id="cb74-6"><a href="#cb74-6" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>),</span>
-<span id="cb74-7"><a href="#cb74-7" tabindex="-1"></a>                           <span class="at">loadM =</span> <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>), <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">6</span>)),</span>
-<span id="cb74-8"><a href="#cb74-8" tabindex="-1"></a>                           <span class="at">Phi =</span> <span class="fu">list</span>(.<span class="dv">3</span>, .<span class="dv">3</span>)) </span></code></pre></div>
-<p>In the examples above, all indicators of a certain factor exhibited
-measurement non-invariance. If only a subset of indicators should show a
-different loading by group, <a href="#factorDefinition">specify the factor
-model</a> using the <code>loadings</code> argument. For instance,
-the following defines a two-factor model with a factor correlation of .3
-(<code>Phi = list(.3, 3)</code>) in both groups. The first factor is measured by 3
-indicators and the second factor is also measured by 3 indicators (in
-both groups). In the first group, the loadings on the first factor are
-.7, .6, and .5, and those on the second factor are .5, .5, and .7. In
-the second group, the loadings on the first factor are .7, .7, and .5,
-and those on the second factor are .5, .5, and .6. Thus, there are group
-differences concerning the loadings of the second indicator of the first
-factor (.6 vs .5) and concerning the loadings of the third indicator of
-the second factor (.7 vs .6).</p>
-<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
-<span id="cb75-2"><a href="#cb75-2" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
-<span id="cb75-3"><a href="#cb75-3" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
-<span id="cb75-4"><a href="#cb75-4" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
-<span id="cb75-5"><a href="#cb75-5" tabindex="-1"></a>                           <span class="co"># define measurement model </span></span>
-<span id="cb75-6"><a href="#cb75-6" tabindex="-1"></a>                           <span class="at">loadings =</span> <span class="fu">list</span>(</span>
-<span id="cb75-7"><a href="#cb75-7" tabindex="-1"></a>                             <span class="co"># loadings on the first and second factor in the first group</span></span>
-<span id="cb75-8"><a href="#cb75-8" tabindex="-1"></a>                             <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">6</span>, .<span class="dv">5</span>), </span>
-<span id="cb75-9"><a href="#cb75-9" tabindex="-1"></a>                                  <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">7</span>)),</span>
-<span id="cb75-10"><a href="#cb75-10" tabindex="-1"></a>                             <span class="co"># loadings on the first and second factor in the second group</span></span>
-<span id="cb75-11"><a href="#cb75-11" tabindex="-1"></a>                             <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">7</span>, .<span class="dv">5</span>), </span>
-<span id="cb75-12"><a href="#cb75-12" tabindex="-1"></a>                                  <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">6</span>))</span>
-<span id="cb75-13"><a href="#cb75-13" tabindex="-1"></a>                             ),</span>
-<span id="cb75-14"><a href="#cb75-14" tabindex="-1"></a>                           <span class="at">Phi =</span> <span class="fu">list</span>(.<span class="dv">3</span>, .<span class="dv">3</span>))</span></code></pre></div>
+<span id="cb74-2"><a href="#cb74-2" tabindex="-1"></a>                           <span class="co"># define type of power analysis</span></span>
+<span id="cb74-3"><a href="#cb74-3" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb74-4"><a href="#cb74-4" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
+<span id="cb74-5"><a href="#cb74-5" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;configural&#39;</span>, </span>
+<span id="cb74-6"><a href="#cb74-6" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;metric&#39;</span>,</span>
+<span id="cb74-7"><a href="#cb74-7" tabindex="-1"></a>                           <span class="co"># define measurement model</span></span>
+<span id="cb74-8"><a href="#cb74-8" tabindex="-1"></a>                           <span class="at">loadings=</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>, .<span class="dv">5</span>)), <span class="co"># group 1</span></span>
+<span id="cb74-9"><a href="#cb74-9" tabindex="-1"></a>                                          <span class="fu">list</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">6</span>, .<span class="dv">6</span>, .<span class="dv">6</span>, .<span class="dv">6</span>))), <span class="co"># group 2</span></span>
+<span id="cb74-10"><a href="#cb74-10" tabindex="-1"></a>                           <span class="co"># identification options</span></span>
+<span id="cb74-11"><a href="#cb74-11" tabindex="-1"></a>                           <span class="at">useReferenceIndicator =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb74-12"><a href="#cb74-12" tabindex="-1"></a>                           <span class="at">singleGroupIdent =</span> <span class="cn">TRUE</span></span>
+<span id="cb74-13"><a href="#cb74-13" tabindex="-1"></a>                           )</span></code></pre></div>
+<p>However, the same code works well when setting <code>singleGroupIdent = FALSE</code>. Then, the factor variances are 1 in all groups regardless of the level of invariance, so the factor variances cannot account for proportionally different loadings.</p>
 </div>
 <div id="detect-scalar-non-invariance" class="section level5 unnumbered hasAnchor">
 <h5>Detect scalar non-invariance<a href="#detect-scalar-non-invariance" class="anchor-section" aria-label="Anchor link to header"></a></h5>
@@ -5158,36 +5122,54 @@ model</a>). Importantly, the indicator intercepts
 (<code>tau</code>) partly differ across groups: the second intercept is 0 in the
 first, but .1 in the second group, the third intercept is 0 in the
 first, but -.3 in the second group:</p>
-<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
-<span id="cb76-2"><a href="#cb76-2" tabindex="-1"></a>                           <span class="co"># define type of power analysis</span></span>
-<span id="cb76-3"><a href="#cb76-3" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
-<span id="cb76-4"><a href="#cb76-4" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
-<span id="cb76-5"><a href="#cb76-5" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;metric&#39;</span>, </span>
-<span id="cb76-6"><a href="#cb76-6" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;scalar&#39;</span>,</span>
-<span id="cb76-7"><a href="#cb76-7" tabindex="-1"></a>                           <span class="co"># define measurement model (same for all groups)</span></span>
-<span id="cb76-8"><a href="#cb76-8" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="dv">5</span>,</span>
-<span id="cb76-9"><a href="#cb76-9" tabindex="-1"></a>                           <span class="at">loadM =</span> .<span class="dv">5</span>,</span>
-<span id="cb76-10"><a href="#cb76-10" tabindex="-1"></a>                           <span class="co"># define indicator intercepts</span></span>
-<span id="cb76-11"><a href="#cb76-11" tabindex="-1"></a>                           <span class="at">tau =</span> <span class="fu">list</span>(</span>
-<span id="cb76-12"><a href="#cb76-12" tabindex="-1"></a>                             <span class="co"># intercepts in the first group</span></span>
-<span id="cb76-13"><a href="#cb76-13" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb76-14"><a href="#cb76-14" tabindex="-1"></a>                             <span class="co"># intercepts in the second group</span></span>
-<span id="cb76-15"><a href="#cb76-15" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">1</span>, <span class="sc">-</span>.<span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>)</span>
-<span id="cb76-16"><a href="#cb76-16" tabindex="-1"></a>                           ))</span></code></pre></div>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
+<span id="cb75-2"><a href="#cb75-2" tabindex="-1"></a>                           <span class="co"># define type of power analysis</span></span>
+<span id="cb75-3"><a href="#cb75-3" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb75-4"><a href="#cb75-4" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
+<span id="cb75-5"><a href="#cb75-5" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;metric&#39;</span>, </span>
+<span id="cb75-6"><a href="#cb75-6" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;scalar&#39;</span>,</span>
+<span id="cb75-7"><a href="#cb75-7" tabindex="-1"></a>                           <span class="co"># define measurement model (same for all groups)</span></span>
+<span id="cb75-8"><a href="#cb75-8" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="dv">5</span>,</span>
+<span id="cb75-9"><a href="#cb75-9" tabindex="-1"></a>                           <span class="at">loadM =</span> .<span class="dv">5</span>,</span>
+<span id="cb75-10"><a href="#cb75-10" tabindex="-1"></a>                           <span class="co"># define indicator intercepts</span></span>
+<span id="cb75-11"><a href="#cb75-11" tabindex="-1"></a>                           <span class="at">tau =</span> <span class="fu">list</span>(</span>
+<span id="cb75-12"><a href="#cb75-12" tabindex="-1"></a>                             <span class="co"># intercepts in the first group</span></span>
+<span id="cb75-13"><a href="#cb75-13" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb75-14"><a href="#cb75-14" tabindex="-1"></a>                             <span class="co"># intercepts in the second group</span></span>
+<span id="cb75-15"><a href="#cb75-15" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">1</span>, <span class="sc">-</span>.<span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb75-16"><a href="#cb75-16" tabindex="-1"></a>                           ))</span></code></pre></div>
 <p>Equivalently, <code>comparison</code> and <code>nullEffect</code> can also be provided
 according to <code>lavaan</code> conventions:</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
+<span id="cb76-2"><a href="#cb76-2" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb76-3"><a href="#cb76-3" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
+<span id="cb76-4"><a href="#cb76-4" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="fu">c</span>(<span class="st">&#39;loadings&#39;</span>), </span>
+<span id="cb76-5"><a href="#cb76-5" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="fu">c</span>(<span class="st">&#39;loadings&#39;</span>, <span class="st">&#39;intercepts&#39;</span>),</span>
+<span id="cb76-6"><a href="#cb76-6" tabindex="-1"></a>                           <span class="co"># define measurement model</span></span>
+<span id="cb76-7"><a href="#cb76-7" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="dv">5</span>,</span>
+<span id="cb76-8"><a href="#cb76-8" tabindex="-1"></a>                           <span class="at">loadM =</span> .<span class="dv">5</span>,</span>
+<span id="cb76-9"><a href="#cb76-9" tabindex="-1"></a>                           <span class="at">tau =</span> <span class="fu">list</span>(</span>
+<span id="cb76-10"><a href="#cb76-10" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb76-11"><a href="#cb76-11" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">1</span>, <span class="sc">-</span>.<span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb76-12"><a href="#cb76-12" tabindex="-1"></a>                           ))</span></code></pre></div>
+<p>Similar as in the case of metric invariance, scalar invariance with the default identification option (<code>useReferenceIndicator = FALSE</code> and <code>singleGroupIdent = TRUE</code>) fixes only the latent factor means of the first group to 0, while the latent factor means of the other groups are set free. As a consequence, differences in indicator intercepts can be accounted for by the free factor means, if the intercepts are proportional across groups (i.e., the ratio of intercepts across groups is identical for all indicators within a factor). In such cases, the scalar invariance model shows no discrepancy and a power analysis cannot be performed.</p>
+<p>For instance, the following assumes a single-factor model, which is measured by 5 indicators in both groups. The intercepts are proportional because all intercepts are 0 in the first group, and .1 in the second group. Running a corresponding power analysis with <code>useReferenceIndicator = FALSE</code> and <code>singleGroupIdent = TRUE</code> will give an error as both the metric and scalar model show an identical and perfect model fit. However, setting <code>singleGroupIdent = FALSE</code> will work fine.</p>
 <div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" tabindex="-1"></a>powerMI <span class="ot">&lt;-</span> <span class="fu">semPower.powerMI</span>(</span>
 <span id="cb77-2"><a href="#cb77-2" tabindex="-1"></a>                           <span class="at">type =</span> <span class="st">&#39;a-priori&#39;</span>, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">power =</span> .<span class="dv">80</span>, <span class="at">N =</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">1</span>),</span>
 <span id="cb77-3"><a href="#cb77-3" tabindex="-1"></a>                           <span class="co"># define hypothesis</span></span>
-<span id="cb77-4"><a href="#cb77-4" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="fu">c</span>(<span class="st">&#39;loadings&#39;</span>), </span>
-<span id="cb77-5"><a href="#cb77-5" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="fu">c</span>(<span class="st">&#39;loadings&#39;</span>, <span class="st">&#39;intercepts&#39;</span>),</span>
+<span id="cb77-4"><a href="#cb77-4" tabindex="-1"></a>                           <span class="at">comparison =</span> <span class="st">&#39;metric&#39;</span>, </span>
+<span id="cb77-5"><a href="#cb77-5" tabindex="-1"></a>                           <span class="at">nullEffect =</span> <span class="st">&#39;scalar&#39;</span>,</span>
 <span id="cb77-6"><a href="#cb77-6" tabindex="-1"></a>                           <span class="co"># define measurement model</span></span>
 <span id="cb77-7"><a href="#cb77-7" tabindex="-1"></a>                           <span class="at">nIndicator =</span> <span class="dv">5</span>,</span>
 <span id="cb77-8"><a href="#cb77-8" tabindex="-1"></a>                           <span class="at">loadM =</span> .<span class="dv">5</span>,</span>
 <span id="cb77-9"><a href="#cb77-9" tabindex="-1"></a>                           <span class="at">tau =</span> <span class="fu">list</span>(</span>
 <span id="cb77-10"><a href="#cb77-10" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb77-11"><a href="#cb77-11" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">1</span>, <span class="sc">-</span>.<span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>)</span>
-<span id="cb77-12"><a href="#cb77-12" tabindex="-1"></a>                           ))</span></code></pre></div>
+<span id="cb77-11"><a href="#cb77-11" tabindex="-1"></a>                             <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">1</span>, .<span class="dv">1</span>, .<span class="dv">1</span>, .<span class="dv">1</span>)</span>
+<span id="cb77-12"><a href="#cb77-12" tabindex="-1"></a>                           ),</span>
+<span id="cb77-13"><a href="#cb77-13" tabindex="-1"></a>                           <span class="co"># identification options</span></span>
+<span id="cb77-14"><a href="#cb77-14" tabindex="-1"></a>                           <span class="at">useReferenceIndicator =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb77-15"><a href="#cb77-15" tabindex="-1"></a>                           <span class="at">singleGroupIdent =</span> <span class="cn">TRUE</span></span>
+<span id="cb77-16"><a href="#cb77-16" tabindex="-1"></a>                           )</span></code></pre></div>
 </div>
 <div id="detect-residual-non-invariance" class="section level5 unnumbered hasAnchor">
 <h5>Detect residual non-invariance<a href="#detect-residual-non-invariance" class="anchor-section" aria-label="Anchor link to header"></a></h5>
