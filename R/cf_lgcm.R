@@ -67,7 +67,7 @@
 #' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`. Defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
 #' * `loadM`: Can be used instead of `Lambda`: Used in conjunction with `nIndicator`. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
 #' 
-#' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. Neither may contain entries referring to the intercept and slope factors.
+#' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. Neither may contain entries referring to the intercept and slope factors. In a multigroup structure, only provide the loadings for a single group.
 #' If the model contains observed variables only, use `Lambda = diag(x)` where `x` is the number of variables.
 #'
 #' The order of the factors is (X1, X2, ..., X_nWaves, ticExogenous, ticEndogenous). If ticExogenous is undefined, ticEndogenous takes its place.
@@ -435,6 +435,15 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
   if(grepl('s2', nullEffect) && !quadratic) stop('nulleffect refers to quadratic slope, but no quadratic slope requested.')
   
   if(!is.list(means)) means <- rep(list(means), nGroups)
+  covmatProvided <- FALSE
+  if(!is.null(covariances)){
+    if(is.list(covariances)){
+      covmatProvided <- is.matrix(covariances[[1]])
+    }else{
+      covmatProvided <- is.matrix(covariances)
+    }
+  }
+  if(!is.null(variances) && covmatProvided) message('Both variances and the covariance matrix are provided; replacing the diagonal of the covariance matrix by the supplied variances.')
   if(!is.null(variances) && !is.list(variances)) variances <- rep(list(variances), nGroups)
   if(!is.null(covariances) && !is.list(covariances)) covariances <- rep(list(covariances), nGroups)
   if(!is.null(ticExogSlopes) && !is.list(ticExogSlopes)) ticExogSlopes <- rep(list(ticExogSlopes), nGroups)
@@ -486,7 +495,11 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
                         args[['loadM']], args[['loadSD']], args[['loadMinMax']])
   }
   if(ncol(Lambda) != (nWaves + sum(!is.null(ticExogSlopes)) + sum(!is.null(ticEndogSlopes)))) stop('A single factor is needed for each wave, optionally plus additional single factors for time-invariant covariates.')
-  
+  # warn if loadings dont satisfy metric invariance
+  mIdx <- sapply(seq(nWaves), function(x) (which(Lambda[ , x] != 0))) # non zero loadings indices
+  rIdx <- lapply(seq(nrow(mIdx)), function(r) unlist(lapply(seq(length(mIdx[r,])), function(c)  mIdx[r, c] + (c-1) * nrow(Lambda)))) # adapt indices to vech
+  if(any(unlist(lapply(rIdx, function(x) length(unique(c(Lambda)[x])) != 1)))) warning('At least one loading differs across waves, violating metric invariance. Verify that this is intended.')
+
   # order of factors is: f1 - f_nwaves, (int, slope, slope2) , ticpred, ticcrit
   m1 <- cbind(Lambda[, seq(nWaves)],
               rep(0, nrow(Lambda)),

@@ -285,7 +285,16 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                            if(is.list(args[['loadSD']])) args[['loadSD']][[1]] else args[['loadSD']], 
                            if(is.list(args[['loadMinMax']])) args[['loadMinMax']][[1]] else args[['loadMinMax']])
   }
-  if(ncol(tLambda) != (1 + nrow(slopes[[1]]))) stop('The number of factors does not match the number of slopes + 1. Remember to define a measurement model including both the criterion (Y) and all predictors (X).')
+  cols <- ifelse(is.list(tLambda), ncol(tLambda[[1]]), ncol(tLambda))
+  if(cols != (1 + nrow(slopes[[1]]))) stop('The number of factors does not match the number of slopes + 1. Remember to define a measurement model including both the criterion (Y) and all predictors (X).')
+  
+  # warn if loadings dont satisfy metric invariance
+  if(is.list(tLambda)){
+    lambdas <- do.call(cbind, lapply(tLambda, c))
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
+  
+  
   
   ### calc implied sigma. 
   # standardized case: transform B and Psi to Phi

@@ -64,7 +64,7 @@
 #' * `nIndicator`: Can be used instead of `Lambda`: Used in conjunction with `loadM`. Defines the number of indicators by factor, e. g., `nIndicator = c(3, 4)` defines a two factor model with three and four indicators for the first and second factor, respectively. `nIndicator` can also be a single number to define the same number of indicators for each factor. 
 #' * `loadM`: Can be used instead of `Lambda`: Used in conjunction with `nIndicator`. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. `loadM = c(.5, .6)` defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
 #' 
-#' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. Note that neither may contain the noise factors.
+#' So either `Lambda`, or `loadings`, or `nIndicator` and `loadM` need to be defined. Neither may contain the noise factors. In a multigroup structure, only provide the loadings for a single group.
 #' If the model contains observed variables only, use `Lambda = diag(x)` where `x` is the number of variables.
 #'
 #' The order of the factors is (X1, X2, ..., X_nWaves).
@@ -540,7 +540,15 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   }
   if(ncol(Lambda) != nWaves) stop('Number of factors must be equal to nWaves.')
   
-  Lambda <- cbind(matrix(0, nrow = nrow(Lambda), ncol = nWaves), Lambda)  # add noise factors
+  # warn if loadings dont satisfy metric invariance
+  if(invariance){
+    mIdx <- sapply(seq(ncol(Lambda)), function(x) (which(Lambda[ , x] != 0))) # non zero loadings indices
+    rIdx <- lapply(seq(nrow(mIdx)), function(r) unlist(lapply(seq(length(mIdx[r,])), function(c)  mIdx[r, c] + (c-1) * nrow(Lambda)))) # adapt indices to vech
+    if(any(unlist(lapply(rIdx, function(x) length(unique(c(Lambda)[x])) != 1)))) warning('At least one loading differs across waves, violating metric invariance. Verify that this is intended.')
+  }
+  
+  # add noise factors
+  Lambda <- cbind(matrix(0, nrow = nrow(Lambda), ncol = nWaves), Lambda)  
   Lambda <- rep(list(Lambda), nGroups)  # require same measurement model across groups
   
   ### create Beta
@@ -702,7 +710,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(autocorResiduals){
     # do this only when there is at least one latent variable
     if(nrow(Lambda) > nWaves){
-      autocorResidualsFactors <- metricInvarianceFactors  # same structure 
+      autocorResidualsFactors <- list(seq((nWaves + 1), 2*nWaves))  # same structure as metricInvarianceFactors
       tok <- list()
       for(x in seq_along(autocorResidualsFactors)){
         ci <- lapply(autocorResidualsFactors[[x]], function(f) paste0('x', which(Lambda[, f] != 0)))

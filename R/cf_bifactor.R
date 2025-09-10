@@ -366,6 +366,12 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
     cLambda
   })
   
+  # warn if loadings dont satisfy metric invariance
+  if(isMultigroup){
+    lambdas <- do.call(cbind, lapply(Lambda, c))
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
+  
   ### create Phi
   sPhi <- Phi
   nf <- 1:ncol(Lambda[[1]])

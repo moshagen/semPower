@@ -243,6 +243,12 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     if(nullWhich[1] > nrow(generated[['Lambda']]) || nullWhich[2] > ncol(generated[['Lambda']])  ) stop('nullWhich refers to an invalid element in Lambda. The first entry must be <= nIndicator, the second <= nFactors.')
     if(generated[['Lambda']][nullWhich[1], nullWhich[2]] == 0) stop('nullWhich refers to a loading with a population value of zero. The loading referred by nullWhich must differ from zero.')
   }
+
+  # warn if loadings dont satisfy metric invariance
+  if(isMultigroup){
+    lambdas <- sapply(generated, '[[', 'Lambda')
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
   
   ### H0 model
   if(isMultigroup) modelH0 <- generated[[1]][['modelTrueCFA']] else modelH0 <- generated[['modelTrueCFA']] 

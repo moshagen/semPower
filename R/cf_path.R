@@ -249,6 +249,13 @@ semPower.powerPath <- function(type, comparison = 'restricted',
                                    useReferenceIndicator = TRUE, ...)
   }
   
+  # warn if loadings dont satisfy metric invariance
+  if(isMultigroup){
+    lambdas <- sapply(generated, '[[', 'Lambda')
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
+  
+  
   ### create model strings
   # we need to use modelTrueCFA and define regression relations here,
   # because we need labels for the H0 model and because standardized based on phi yields no regression structure 

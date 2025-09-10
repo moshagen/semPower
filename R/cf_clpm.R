@@ -545,6 +545,25 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
                                  nGroups = nGroups,
                                  ...)
   
+  if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
+  
+  ### warn if loadings dont satisfy metric invariance
+  # check for equality across waves
+  if(metricInvariance){
+    lapply(metricInvarianceFactors, function(mif){
+      mIdx <- sapply(mif, function(x) (which(Lambda[ , x] != 0))) # non zero loadings indices
+      rIdx <- lapply(seq(nrow(mIdx)), function(r) unlist(lapply(seq(length(mIdx[r,])), function(c)  mIdx[r, c] + (mif[c]-1) * nrow(Lambda)))) # adapt indices to vech
+      if(any(unlist(lapply(rIdx, function(x) length(unique(c(Lambda)[x])) != 1)))) warning('At least one loading differs across waves, violating metric invariance. Verify that this is intended.')
+    })
+  }
+  # check for equality across groups
+  if(isMultigroup){
+    lambdas <- sapply(generated, '[[', 'Lambda')
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
+  
+  
+  
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
   
@@ -566,7 +585,6 @@ semPower.powerCLPM <- function(type, comparison = 'restricted',
   
   # add autocorrelated residuals
   if(autocorResiduals){
-    if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
     # do this only when there is at least one latent variable
     if(nrow(Lambda) > 2*nWaves){
       autocorResidualsFactors <- metricInvarianceFactors  # same structure 

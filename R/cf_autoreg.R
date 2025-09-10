@@ -469,7 +469,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   
   # add metric invariance constraints to analysis model
   metricInvarianceFactors <- NULL
-  if(invariance) metricInvarianceFactors <- list(seq(nWaves))
+  metricInvarianceFactors <- list(seq(nWaves))
 
   # define latent means
   Alpha <- NULL
@@ -503,9 +503,23 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
                                    ...)
   }
   
+  if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
+  
+  ### warn if loadings dont satisfy metric invariance
+  # check for equality across waves
+  if(invariance){
+    mIdx <- sapply(seq(ncol(Lambda)), function(x) (which(Lambda[ , x] != 0))) # non zero loadings indices
+    rIdx <- lapply(seq(nrow(mIdx)), function(r) unlist(lapply(seq(length(mIdx[r,])), function(c)  mIdx[r, c] + (c-1) * nrow(Lambda)))) # adapt indices to vech
+    if(any(unlist(lapply(rIdx, function(x) length(unique(c(Lambda)[x])) != 1)))) warning('At least one loading differs across waves, violating metric invariance. Verify that this is intended.')
+  }
+  # check for equality across groups
+  if(isMultigroup){
+    lambdas <- sapply(generated, '[[', 'Lambda')
+    if(any(apply(lambdas, 1, function(x) length(unique(x)) != 1))) warning('At least one loading differs across groups, violating metric invariance. Verify that this is intended.')
+  }
+  
   ### create model strings
   if(!isMultigroup) model <- generated[['modelTrueCFA']] else model <- generated[[1]][['modelTrueCFA']]
-  if(!isMultigroup) Lambda <- generated[['Lambda']] else Lambda <- generated[[1]][['Lambda']]
   
   # add autoregressive structure 
   for(f in 2:ncol(Beta[[1]])){     # omit first row
@@ -548,7 +562,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(autocorResiduals){
     # do this only when there is at least one latent variable
     if(nrow(Lambda) > nWaves){
-      autocorResidualsFactors <- metricInvarianceFactors  # same structure 
+      autocorResidualsFactors <- list(seq(nWaves))  # same structure as metricInvarianceFactors
       tok <- list()
       for(x in seq_along(autocorResidualsFactors)){
         ci <- lapply(autocorResidualsFactors[[x]], function(f) paste0('x', which(Lambda[, f] != 0)))
