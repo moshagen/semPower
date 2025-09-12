@@ -1,9 +1,21 @@
+semPower 2.2.0 (development)
+===========
+
+* single group/occasion identification is now the default in models assuming metric or scalar invariance in powerMI and powerLI. The previous behavior can be obtained by setting singleGroupIdent = FALSE / singleOccasionIdent = FALSE.
+* allow referent scaling in powerMI and powerLI
+* allow multifactor models at each measurement in powerLI
+* more sensible structure of returned simulated data in the multigroup case 
+* add option to specify a specific strategy to resolve futures when using parallel processing to estimate simulated power
+* bugfix: proper evaluation of parameter bias in simulated power when models involve a single factor or single regression relations. 
+* bugfix: respect requested autocorrelated residuals without invariance constraints in powerARMA, powerAutoreg
+
+
 semPower 2.1.3 (August 2025)
 ===========
+
 * update to R 4.5.0
 * add option to estimate direct effects with population values of zero in powerMediation
 * bugfix: fix genSigma with supplied means when Lambda includes secondary loadings
-
 
 
 semPower 2.1.2 (February 2025)
