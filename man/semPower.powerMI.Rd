@@ -4,14 +4,25 @@
 \alias{semPower.powerMI}
 \title{semPower.powerMI}
 \usage{
-semPower.powerMI(type, comparison = NULL, nullEffect = NULL, ...)
+semPower.powerMI(
+  type,
+  comparison = NULL,
+  nullEffect = NULL,
+  useReferenceIndicator = FALSE,
+  singleGroupIdent = !useReferenceIndicator,
+  ...
+)
 }
 \arguments{
 \item{type}{type of power analysis, one of \code{'a-priori'}, \code{'post-hoc'}, \code{'compromise'}.}
 
-\item{comparison}{comparison model, either \code{'saturated'} or one of \code{'configural'}, \code{'metric'}, \code{'scalar'}, \code{'covariances'}, or a vector of restrictions in \code{lavaan} format (with \code{'none'} for no restrictions). See details.}
+\item{comparison}{comparison model, either \code{'saturated'} or one of \code{'configural'}, \code{'metric'}, \code{'scalar'}, \code{'variances'}, \code{'covariances'}, or a vector of restrictions in \code{lavaan} format (with \code{'none'} for no restrictions). See details.}
 
-\item{nullEffect}{defines the hypothesis (i.e., level of invariance) of interest. One of \code{'metric'}, \code{'scalar'}, \code{'residual'}, \code{'covariances'}, \code{'means'} or a vector of restrictions in \code{lavaan} format. See details.}
+\item{nullEffect}{defines the hypothesis (i.e., level of invariance) of interest. One of \code{'metric'}, \code{'scalar'}, \code{'residual'}, \code{'variances'}, \code{'covariances'}, \code{'means'} or a vector of restrictions in \code{lavaan} format. See details.}
+
+\item{useReferenceIndicator}{whether to identify the factor variances and factor means using a referent indicator (\code{TRUE}) or using a standardization approach setting the means to 0 and the variances to 1 (\code{FALSE}, the default). See details.}
+
+\item{singleGroupIdent}{when \code{useReferenceIndicator = FALSE}, whether to maintain the identification constraints only for a single group (\code{TRUE}) or whether to maintain all scaling constraints (\code{FALSE}). See details.}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. See details.}
 }
@@ -48,8 +59,9 @@ a specific level of invariance that includes all previous levels:
 \item \code{'metric'}: all loadings are restricted to equality.
 \item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality.
 \item \code{'residual'}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
-\item \code{'covariances'}: all loadings, (indicator-)intercepts, and (indicator-)residuals, and latent covariances are restricted to equality.
-\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
+\item \code{'variances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent variances are restricted to equality.
+\item \code{'covariances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, and latent covariances are restricted to equality.
+\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, latent covariances, and latent means are restricted to equality.
 }
 
 For example, setting \code{comparison = 'metric'} and \code{nullEffect = 'scalar'} determines power
@@ -70,7 +82,12 @@ For greater flexibility, the models can also be defined using \code{lavaan} styl
 For example, setting \code{comparison = c('loadings')} and \verb{nullEffect = 'c('loadings', 'intercepts')'}
 determines power to reject the hypothesis that the constraints placed in the scalar invariance model
 (restricting loadings and intercepts) over the  metric invariance model (restricting only the loadings) are defensible.
-Note that variance scaling is used, so invariance of variances (\code{'lv.variances'}) is always met.
+
+By default, the factors are identified by setting their means to 0 and their variances to 1 (\code{useReferenceIndicator = FALSE}), so that all loadings and indicator intercepts are freely estimated.
+In models involving constraints on loadings or intercepts, a single group identification approach is used by default (\code{singleGroupIdent = TRUE}), so that the factor variances and means are constrained in only a single group, but are freely estimated in all remaining groups. This mimics the \code{lavaan} approach to invariance testing.
+If setting \code{singleGroupIdent = FALSE}, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, in all groups. Concerning metric invariance, this was the default behavior in \code{semPower} versions prior 2.1.4.
+A referent scaling approach can be be defined using \code{useReferenceIndicator = TRUE}, so that the loading and the intercept of the first indicator of each factor are constrained in each group, and the factor variances and means are freely estimated.
+Reference scaling is always maintained in all invariance models, so \code{singleGroupIdent} has no effect (i.e. is always \code{FALSE})
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
@@ -131,73 +148,68 @@ specifying third and fourth moments of the marginals, and thus requires that ske
 \dontrun{
 # obtain the required N to reject the hypothesis of metric invariance
 # in comparison to the configural invariance model 
-# with a power of 95\% on alpha = 5\% 
+# with a power of 80\% on alpha = 5\% 
 # assuming equally sized groups (N = list(1, 1)) 
 # for a factor model involving a single factor which 
-# is measured by 5 indicators (in both groups)
-# loading by .5 each in the first group and 
-# loading by .6 each in the second group.
+# is measured by 4 indicators (in both groups)
+# loading by .9, .8, .7, .6 in the first group and 
+# loading by .7, .7, .8, .7 in the second group.
 powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, power = .80, N = list(1, 1),
                             comparison = 'configural', 
                             nullEffect = 'metric',
-                            nIndicator = list(5, 5),
-                            loadM = list(.5, .6),
-                            alpha = .05, beta = .05, N = list(1, 1))
+                            loadings = list(
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7)))
+)
 
 # show summary
 summary(powerMI)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerMI$modelH1, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
             sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
-lavaan::sem(powerMI$modelH0, sample.cov = list(powerMI$Sigma[[1]], powerMI$Sigma[[2]]),
-            sample.nobs = as.list(powerMI$requiredN.g), sample.cov.rescale = FALSE)
 
 # same as above, but determine power with N = 500 in each group on alpha = .05
 powerMI <- semPower.powerMI(type = 'post-hoc',
+                            alpha = .05, N = list(500, 500),
                             comparison = 'configural', 
                             nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            alpha = .05, N = list(500, 500))
+                            loadings = list(
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7)))
+                            )
 
 # same as above, but determine the critical chi-square with N = 500 in each 
 # group so that alpha = beta
 powerMI <- semPower.powerMI(type = 'compromise',
+                            abratio = 1, N = list(500, 500),
                             comparison = 'configural', 
                             nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            abratio = 1, N = list(500, 500))
+                            loadings = list(
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7)))
+                            )
 
 # same as above, but compare to the saturated model
 # (rather than to the configural invariance model)
 powerMI <- semPower.powerMI(type = 'a-priori',
-                            comparison = 'saturated', 
-                            nullEffect = 'metric',
-                            nIndicator = 5,
-                            loadM = list(.5, .6),
-                            alpha = .05, beta = .05, N = list(1, 1))
-
-# same as above, but provide individual factor loadings by group using a 
-# reduced loading matrix to define a  single factor model with three indicators
-# loading by .4, .6, .5 in the first group and 
-# loading by .5, .6, .7 in the second group
-powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, beta = .05, N = list(1, 1),
                             comparison = 'saturated', 
                             nullEffect = 'metric',
                             loadings = list(
-                              list(c(.4, .6, .5)), 
-                              list(c(.5, .6, .7))),
-                            alpha = .05, beta = .05, N = list(1, 1))
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7)))
+                            )
 
 # same as above, but make first group twice as large as the second group 
 powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, beta = .05, N = list(2, 1),
                             comparison = 'saturated', 
                             nullEffect = 'metric',
                             loadings = list(
-                              list(c(.4, .6, .5)), 
-                              list(c(.5, .6, .7))),
-                            alpha = .05, beta = .05, N = list(2, 1))
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7)))
+                            )
 
 # obtain the required N to reject the hypothesis of scalar invariance
 # in comparison to the metric invariance model 
@@ -209,6 +221,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
 # all intercepts are 0.0 in the first group, but
 # the intercepts are .1, .2, .3, .4, .5, .6 in the second group
 powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, beta = .05, N = list(1, 1)
                             comparison = 'metric', 
                             nullEffect = 'scalar',
                             Phi = list(.3, .3),
@@ -219,11 +232,11 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             tau = list(
                               rep(0.0, 6), 
                               seq(.1, .6, .1) 
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
+                            ))
 
 # same as above, but use lavaan group.equal strings 
 powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, beta = .05, N = list(1, 1)
                             comparison = c('loadings'), 
                             nullEffect = c('loadings', 'intercepts'),
                             Phi = list(.3, .3),
@@ -234,8 +247,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             tau = list(
                               rep(0.0, 6), 
                               seq(.1, .6, .1) 
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
+                            ))
 
 # same as above, but
 # obtain the required N to reject the hypothesis of equal latent means
@@ -244,6 +256,7 @@ powerMI <- semPower.powerMI(type = 'a-priori',
 # in the first group, the latent means equal 0.0, 
 # in the second group, the latent mean of the factors are 0.0 and 0.5
 powerMI <- semPower.powerMI(type = 'a-priori',
+                            alpha = .05, beta = .05, N = list(1, 1),
                             comparison = c('loadings', 'intercepts'), 
                             nullEffect = c('loadings', 'intercepts', 'means'),
                             Phi = list(.3, .3),
@@ -258,18 +271,18 @@ powerMI <- semPower.powerMI(type = 'a-priori',
                             Alpha = list(
                               c(0.0, 0.0),
                               c(0.0, 0.5)
-                            ),
-                            alpha = .05, beta = .05, N = list(1, 1))
+                            ))                             
 
 # request a simulated post-hoc power analysis with 500 replications
 # to reject the hypothesis of metric invariance.
 set.seed(300121)
 powerMI <- semPower.powerMI(type = 'post-hoc',
+                            alpha = .05, N = list(500, 500), 
                             comparison = 'configural', 
                             nullEffect = 'metric',
-                            nIndicator = list(5, 5),
-                            loadM = list(.5, .6),
-                            alpha = .05, N = list(500, 500), 
+                            loadings = list(
+                              list(c(.9, .8, .7, .6)),
+                              list(c(.7, .7, .8, .7))),
                             simulatedPower = TRUE, 
                             simOptions = list(nReplications = 500))
                              

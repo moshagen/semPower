@@ -10,6 +10,8 @@ semPower.powerLI(
   nullEffect = NULL,
   autocorResiduals = TRUE,
   Phi = NULL,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = !useReferenceIndicator,
   ...
 )
 }
@@ -22,7 +24,11 @@ semPower.powerLI(
 
 \item{autocorResiduals}{whether the residuals of the indicators of latent variables are autocorrelated over waves (\code{TRUE}, the default) or not (\code{FALSE}). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).}
 
-\item{Phi}{the factor correlation matrix. Can be \code{NULL} for uncorrelated factors.}
+\item{Phi}{the factor covariance matrix. Can be \code{NULL} for uncorrelated factors and unit variances.}
+
+\item{useReferenceIndicator}{whether to identify the factor variances and factor means using a referent indicator (\code{TRUE}) or using a standardization approach setting the means to 0 and the variances to 1 (\code{FALSE}, the default). See details.}
+
+\item{singleOccasionIdent}{when \code{useReferenceIndicator = FALSE}, whether to maintain the identification constraints only for a single measurement (\code{TRUE}) or whether to maintain all scaling constraints (\code{FALSE}). See details.}
 
 \item{...}{mandatory further parameters related to the specific type of power analysis requested, see \code{\link[=semPower.aPriori]{semPower.aPriori()}}, \code{\link[=semPower.postHoc]{semPower.postHoc()}}, and \code{\link[=semPower.compromise]{semPower.compromise()}}, and parameters specifying the factor model. See details.}
 }
@@ -45,62 +51,75 @@ This requires the lavaan package.
 This function performs a power analysis to reject various hypotheses arising
 in the context of longitudinal measurement invariance, where a single attribute is measured repeatedly. The typical - but not in all parts necessary -
 sequence concerning the measurement part is (a) configural, (b) metric, (c) scalar, (d) residual invariance,
-and concerning the structural part  (e) latent covariances, (f) latent means, where each level of invariance is
+and concerning the structural part  (e) latent variances, (f) latent covariances, and (g) latent means, where each level of invariance is
 compared against the previous level (e.g., scalar vs. metric). Power analysis provides
 the power (or the required N) to reject a particular level of invariance.
 
 For hypotheses regarding multiple group invariance, see \code{\link[=semPower.powerMI]{semPower.powerMI()}}. For hypotheses regarding autoregressive models, see \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}. For hypotheses in an ARMA model, see \code{\link[=semPower.powerARMA]{semPower.powerARMA()}}.
 
+The general model structure posits at least one factor measured at two ore more occasions. The invariance constraints over occasions are always
+placed separately for each factor. For example, if two factors are measured twice, equality constraints on loadings are placed over the measurements of each factor separately.
 There are two ways to specify the models defined in the \code{comparison} and the \code{nullEffect} arguments. Either, one may
 specify a specific level of invariance that includes all previous levels:
 \itemize{
 \item \code{'configural'}: no invariance constraints. Shows the same fit as the saturated model, so only the delta df differ.
-\item \code{'metric'}: all loadings are restricted to equality over measurement occasions. Note that reference scaling is used, so the first indicator should be invariant.
-\item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality.
+\item \code{'metric'}: all loadings (of a particular attribute) are restricted to equality over measurement occasions. Note that if reference scaling is used, the first indicator should be invariant.
+\item \code{'scalar'}: all loadings and (indicator-)intercepts are restricted to equality. Note that if reference scaling is used, the first indicator should be invariant.
 \item \code{'residual'}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
-\item \code{'covariances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent covariances are restricted to equality.
-\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent covariances, and latent means are restricted to equality.
+\item \code{'variances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, and latent variances are restricted to equality.
+\item \code{'covariances'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, and latent covariances are restricted to equality. This only refers to the factor covariance(s) at each measurement occasion, but does not involve cross-temporal relations such as stabilities.
+\item \code{'means'}: all loadings, (indicator-)intercepts, (indicator-)residuals, latent variances, latent covariances, and latent means are restricted to equality.
 }
 
 For example, setting \code{comparison = 'metric'} and \code{nullEffect = 'scalar'} determines power
 to reject the hypothesis that the constraints placed in the scalar invariance model
-(restricting loadings and intercepts) over the
-metric invariance model (restricting only the loadings) are defensible.
+(restricting loadings and intercepts over measurement occasions) over the
+metric invariance model (restricting only the loadings over measurement occasions) are defensible.
 
 For greater flexibility, the models can also be defined using \code{lavaan} style restrictions as a vector, namely
-\code{'none'} (no restrictions), \code{'loadings'} (loadings), \code{'intercepts'} (intercepts), \code{'residuals'} (residuals), \code{'lv.covariances'} (latent covariances), \code{'means'} (latent means).
+\code{'none'} (no restrictions), \code{'loadings'} (loadings), \code{'intercepts'} (intercepts), \code{'residuals'} (residuals), \code{'lv.variances'} (latent variances), \code{'lv.covariances'} (latent covariances), \code{'means'} (latent means).
 For instance:
 \itemize{
 \item \code{'none'}: no invariance constraints and thus representing a configural invariance model. Shows the same fit as the saturated model, so only the delta df differ.
-\item \code{c('loadings')}: all loadings are restricted to equality. Note that reference scaling is used, so the first indicator should be invariant.
-\item \code{c('loadings', 'intercepts')}: all loadings and (indicator-)intercepts are restricted to equality.
+\item \code{c('loadings')}: all loadings (of a particular attribute) are restricted to equality. Note that if reference scaling is used, the first indicator should be invariant.
+\item \code{c('loadings', 'intercepts')}: all loadings and (indicator-)intercepts are restricted to equality. Note that if reference scaling is used, the first indicator should be invariant.
 \item \code{c('loadings', 'intercepts', 'residuals')}: all loadings, (indicator-)intercepts, and (indicator-)residuals are restricted to equality.
 \item \code{c('loadings', 'residuals')}: all loadings and (indicator-)residuals are restricted to equality.
 \item \code{c('loadings', 'intercepts', 'means')}: all loadings, (indicator-)intercepts, and latent factor means are restricted to equality.
-\item \code{c('loadings', 'residuals', 'lv.covariances')}: all loadings, (indicator-)residuals, and latent factor covariances are restricted to equality.
+\item \code{c('loadings', 'residuals', 'lv.variances')}: all loadings, (indicator-)residuals, and latent factor variances are restricted to equality.
 }
 
 For example, setting \code{comparison = c('loadings')} and \verb{nullEffect = 'c('loadings', 'intercepts')'}
 determines power to reject the hypothesis that the constraints placed in the scalar invariance model
 (restricting loadings and intercepts) over the  metric invariance model (restricting only the loadings) are defensible.
-Note that variance scaling is used, so invariance of variances (\code{'lv.variances'}) is always met. Latent means are identified using single occasion identification.
+
+By default, the factors are identified by setting their means to 0 and their variances to 1 (\code{useReferenceIndicator = FALSE}), so that all loadings and indicator intercepts are freely estimated.
+In models involving constraints on loadings or intercepts, a single occasion identification approach is used by default (\code{singleOccasionIdent = TRUE}), so that the factor variances and means are constrained at only a single occasion, but are freely estimated at all remaining occasions. This mimics the \code{lavaan} approach to invariance testing.
+If setting \code{singleOccasionIdent = FALSE}, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, across all occasions (so invariance of factor variances and factor means is always met). Concerning metric invariance, this was the default behavior in \code{semPower} versions prior 2.1.4.
+A referent scaling approach can be be defined using \code{useReferenceIndicator = TRUE}, so that the loading and the intercept of the first indicator of each factor are constrained at all occasions, and the factor variances and means are freely estimated.
+Reference scaling is always maintained in all invariance models, so \code{singleOccasionIdent} has no effect (i.e. is always \code{FALSE})
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
 
 Additional arguments related to the \strong{definition of the factor model}:
 \itemize{
-\item \code{Lambda}: The factor loading matrix (with the number of columns equaling the number of factors).
-\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.8, .6, .6, .4))} defines a two factor model with three indicators loading on the first factor by .5, , 4., and .6, and four indicators loading on the second factor by .8, .6, .6, and .4.
-\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 4)} defines a two factor model with three and four indicators for the first and second factor, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
+\item \code{Lambda}: The factor loading matrix, where the order is F1_T1, F2_T1, ..., F1_T2, F2_T2, ..., F1_TZ, ..., FX_TZ
+\item \code{loadings}: Can be used instead of \code{Lambda}: Defines the primary loadings for each factor in a list structure, e. g. \code{loadings = list(c(.5, .4, .6), c(.5, .7, .7))} defines two factors with three indicators loading on the first factor by .5, , 4., and .6, and three indicators loading on the second factor by .5, .7, .7.
+\item \code{nIndicator}: Can be used instead of \code{Lambda}: Used in conjunction with \code{loadM}. Defines the number of indicators by factor, e. g., \code{nIndicator = c(3, 3)} defines a two factor model with three indicators each, respectively. \code{nIndicator} can also be a single number to define the same number of indicators for each factor.
 \item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
 \item \code{Theta}: Variance-covariance matrix of the indicator residuals, which should be a diagonal matrix. Required when residual non-invariance is to be detected. When \code{NULL}, Theta is a diagonal matrix with elements such that all variances are 1.
 \item \code{tau}: Defines the indicator intercepts, required whenever a model involves hypotheses about means (e.g., scalar invariance). If \code{NULL} and \code{Alpha} is set, all intercepts are assumed to equal zero.
-\item \code{Alpha}: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If \code{NULL} and \code{tau} is set, all latent means are assumed to equal zero. Because variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
+\item \code{Alpha}: Defines the latent means, required whenever a model involves hypotheses about latent means (e.g., latent mean invariance). If \code{NULL} and \code{tau} is set, all latent means are assumed to equal zero. If variance scaling is used so that all factor variances are 1, latent mean differences can be interpreted akin to Cohen's d as standardized mean differences.
 }
 
 So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} always need to be defined,
 and \code{Theta}, \code{tau} and \code{Alpha} need to be defined for particular levels of invariance.
+
+If longitudinal invariance for a single factor measured at T occasions is of interest, \code{loadings} can be a single list with T elements, and \code{nIndicator}, \code{loadM}, \code{tau} and \code{Alpha} can be single vectors.
+If longitudinal invariance for a multiple factor measured at T occasions is of interest, \code{loadings}, \code{nIndicator}, \code{loadM}, \code{tau} and \code{Alpha} must be wrapped in a list with T elements, where each element refers to a single measurement occasion.
+\code{Phi} and \code{Theta} always must be a single matrix. The order of \code{Phi} must be F1_T1, F2_T1, ..., F1_T2, F2_T2, ..., F1_TZ, F2_TZ, ..., FX_TZ. The order of \code{Theta} must match
+the order of \code{Phi} and thus first contains the respective indicators of F1 at T1, F2 at T1, ..., F1 at T2, F2 at T2, and so on.
 
 Additional arguments related to the requested type of \strong{power analysis}:
 \itemize{
@@ -150,12 +169,16 @@ specifying third and fourth moments of the marginals, and thus requires that ske
 # loading by .6 each in the second measurement occasion,
 # and assuming autocorrelated residuals
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = 'configural',
   nullEffect = 'metric',
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.4, .4, .4, .4)    # factor 1 at T2
+  ),
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
 # show summary
@@ -171,84 +194,121 @@ lavaan::sem(powerLI$modelH0, sample.cov = powerLI$Sigma,
 
 # same as above, but determine power with N = 500 on alpha = .05
 powerLI <- semPower.powerLI(
-  type = 'post-hoc', alpha = .05, N = 500, 
+  type = 'post-hoc', alpha = .05, N = 500,
   comparison = 'configural',
   nullEffect = 'metric',
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.4, .4, .4, .4)    # factor 1 at T2
+  ),
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
 
 # same as above, but determine the critical chi-square with N = 500 in each
 # group so that alpha = beta
 powerLI <- semPower.powerLI(
-  type = 'compromise', abratio = 1, N = 500, 
+  type = 'compromise', abratio = 1, N = 500,
   comparison = 'configural',
   nullEffect = 'metric',
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.4, .4, .4, .4)    # factor 1 at T2
+  ),
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
 
 # same as above, but compare to the saturated model
 # (rather than to the configural invariance model)
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = 'saturated',
   nullEffect = 'metric',
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.4, .4, .4, .4)    # factor 1 at T2
+  ),
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
 
-# same as above, but provide individual factor loadings by group using a
-# reduced loading matrix to define a  single factor model with three indicators
-# loading by .4, .6, .5 at the first measurement occasion and
-# loading by .5, .6, .7 at the second measurement occasion 
+# define two factors measured at three occasions using a
+# reduced loading matrix, and provide factor covariance matrix
+Phi <- matrix(c(
+  # F1T1 F2T1 F1T2 F2T2 F1T3 F2T3 
+  c(1,   .1,  .7,   0,  .5,   0),     # F1_T1 
+  c(.1,   1,  .0,  .6,   0,  .3),     # F2_T1 
+  c(.7,  .0,   1,  .1,  .7,   0),     # F1_T2 
+  c(.0,  .6,  .1,   1,   0,  .6),     # F2_T2 
+  c(.5,  .0,  .7,   0,   1,  .1),     # F1_T3 
+  c(.0,  .3,   0,  .6,  .1,   1)      # F2_T3
+), nrow=6, ncol=6, byrow = TRUE)
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = 'configural',
   nullEffect = 'metric',
   loadings = list(
-    c(.4, .6, .5),
-    c(.5, .6, .7)
+    list(
+      c(.8, .8, .8),   # factor 1 at T1
+      c(.5, .5, .5)    # factor 2 at T1
+    ),
+    list(
+      c(.7, .6, .7),   # factor 1 at T2
+      c(.4, .6, .4)    # factor 2 at T2
+    ),
+    list(
+      c(.6, .8, .4),   # factor 1 at T3
+      c(.5, .5, .7)    # factor 2 at T3
+    )
   ),
-  autocorResiduals = TRUE
+  Phi = Phi,
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
 # obtain the required N to reject the hypothesis of scalar invariance
 # in comparison to the metric invariance model
 # with a power of 80\% on alpha = 5\%
-# for a two factor model, where both factors are
-# measured by 3 indicators each and all loadings equal .5 (at both measurements),
 # all intercepts are 0.0 at the first measurement occasion, but
 # all intercepts are 0.2 at the second measurement occasion and
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = 'metric',
   nullEffect = 'scalar',
-  nIndicator = c(5, 5),
-  loadM = c(.5, .5),
-  tau = c(0, 0, 0, 0, 0, 
-          .2, .2, .2, .2, .2),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.7, .6, .5, .7)    # factor 1 at T2
+  ),
+  tau = c(0, 0, 0, 0,
+          .1, .2, .3, .2),  
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
 
-# same as above, but use lavaan strings 
+# same as above, but use lavaan strings to define invariance models
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = c('loadings'),
   nullEffect = c('loadings', 'intercepts'),
-  nIndicator = c(5, 5),
-  loadM = c(.5, .5),
-  tau = c(0, 0, 0, 0, 0, 
-          .2, .2, .2, .2, .2),
-  autocorResiduals = TRUE
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.7, .6, .5, .7)    # factor 1 at T2
+  ),
+  tau = c(0, 0, 0, 0,
+          .1, .2, .3, .2),  
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
-
 
 # obtain the required N to reject the hypothesis of equal latent means
 # in comparison to the scalar invariance model;
@@ -256,48 +316,39 @@ powerLI <- semPower.powerLI(
 # at the first measurement occasion, the latent mean is 0.0,
 # at the first measurement occasion, the latent mean is 0.5
 powerLI <- semPower.powerLI(
-  type = 'a-priori', alpha = .05, power = .80, 
+  type = 'a-priori', alpha = .05, power = .80,
   comparison = c('loadings', 'intercepts'),
   nullEffect = c('loadings', 'intercepts', 'means'),
-  nIndicator = c(5, 5),
-  loadM = c(.5, .5),
-  tau = rep(0, 10),
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.7, .6, .5, .7)    # factor 1 at T2
+  ),
+  tau = c(0, 0, 0, 0,
+          0, 0, 0, 0),  
   Alpha = c(0, .5),
-  autocorResiduals = TRUE
+  autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE
 )
-
-# obtain the required N to reject the hypothesis of equal covariances
-# in comparison to the residual invariance model;
- Phi <- matrix(c(
-  c(1, .3, .1),
-   c(.3, 1, .2),
-   c(.1, .2, 1)
- ), nrow=3, byrow = TRUE)
- powerLI <- semPower.powerLI(
-   type = 'a-priori', alpha = .05, power = .80,
-   comparison = 'residual',
-   nullEffect = 'covariances',
-   nIndicator = c(3, 3, 3),
-   loadM = c(.5, .5, .5),
-   Phi = Phi,
-   tau = rep(0, 9)
-)   
- 
+   
 # request a simulated post-hoc power analysis with 250 replications
 # to reject the hypothesis of equal latent means.
 set.seed(300121)
 powerLI <- semPower.powerLI(
-  type = 'post-hoc', alpha = .05, N = 500, 
-  comparison = c('loadings', 'intercepts'),
-  nullEffect = c('loadings', 'intercepts', 'means'),
-  nIndicator = c(5, 5),
-  loadM = c(.5, .5),
-  tau = rep(0, 10),
-  Alpha = c(0, .5),
+  type = 'post-hoc', alpha = .05, N = 500,
+  comparison = 'configural',
+  nullEffect = 'metric',
+  loadings = list(
+    c(.7, .6, .5, .7),   # factor 1 at T1
+    c(.4, .4, .4, .4)    # factor 1 at T2
+  ),
   autocorResiduals = TRUE,
+  useReferenceIndicator = FALSE,
+  singleOccasionIdent = TRUE,
   simulatedPower = TRUE,
-  simOptions = list(nReplications = 250)  
+  simOptions = list(nReplications = 250)
 )
+
 }
 }
 \seealso{

@@ -119,7 +119,7 @@ Additional arguments related to the \strong{definition of the factor model}:
 \item \code{loadM}: Can be used instead of \code{Lambda}: Used in conjunction with \code{nIndicator}. Defines the loading either for all indicators (if a single number is provided) or separately for each factor (if a vector is provided), e. g. \code{loadM = c(.5, .6)} defines the loadings of the first factor to equal .5 and those of the second factor do equal .6.
 }
 
-So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined. Note that neither may contain the noise factors.
+So either \code{Lambda}, or \code{loadings}, or \code{nIndicator} and \code{loadM} need to be defined. Neither may contain the noise factors. In a multigroup structure, only provide the loadings for a single group.
 If the model contains observed variables only, use \code{Lambda = diag(x)} where \code{x} is the number of variables.
 
 The order of the factors is (X1, X2, ..., X_nWaves).
