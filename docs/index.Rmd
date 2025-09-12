@@ -3584,7 +3584,7 @@ powerMI <- semPower.powerMI(
 
 `semPower.powerLI` is used to perform power analyses for hypotheses
 arising in models assessing longitudinal invariance involving the
-repeated assessment of a single attribute. The typical - but not in all
+repeated assessment of one or more attributes. The typical - but not in all
 parts necessary - sequence is (a) configural, (b) metric, (c) scalar,
 and (d) residual invariance concerning the measurement part, and (e)
 latent variances, (f) latent covariances, and (g) latent means
@@ -3611,12 +3611,16 @@ measurement invariance. For multigroup invariance, see the
     arguments).
 -   `nullEffect`: Defines the level of invariance of interest (see below
     for valid arguments).
--   `Phi`: Defines the factor correlation matrix (i.e., the
-    autocorrelations across time) or a single number when there are
-    exactly two measurements, or `NULL` for uncorrelated factors.
+-   `useReferenceIndicator`: Defines whether to identify the factor variances and factor means using a referent indicator (`TRUE`) or using a standardization approach setting the means to 0 and the variances to 1 (`FALSE`, the default).
+-   `singleOccasionIdent`: When `useReferenceIndicator = FALSE`, whether to maintain the identification constraints only for a single measurement (`TRUE`) or whether to maintain all scaling constraints (`FALSE`).
+-   `autocorResiduals`: Defines whether the residuals of the indicators of latent variables are autocorrelated over waves (`TRUE`, the default) or not (`FALSE`). This affects the df when the comparison model is the saturated model and generally affects power (also for comparisons to the restricted model).
+-   `Phi`: Defines the factor covariance matrix, a single number when there are
+    exactly two measurements, or `NULL` for uncorrelated factors with unit variance.
 -   additional arguments [specifying the type of power
     analysis](#commonArgs).
 -   additional arguments [defining the factor model](#factorDefinition).
+
+The general model structure posits at least one factor measured at two ore more occasions. The invariance constraints over occasions are always placed separately for each factor. For example, if two factors are measured twice, equality constraints on loading over time are placed over the measurements of each factor separately. 
 
 There are two ways to specify the models defined in the `comparison` and
 the `nullEffect` arguments. Either, one may specify a specific level of
@@ -3629,11 +3633,14 @@ invariance that includes all previous levels:
     to equality.
 -   `'residual'`: all loadings, (indicator-)intercepts, and
     (indicator-)residual variances are restricted to equality.
+-   `'variances'`: all loadings, (indicator-)intercepts,
+    (indicator-)residual variances, and latent variances are
+    restricted to equality.
 -   `'covariances'`: all loadings, (indicator-)intercepts,
-    (indicator-)residual variances, and latent covariances are
+    (indicator-)residual variances, latent variances, and latent covariances are
     restricted to equality.
 -   `'means'`: all loadings, (indicator-)intercepts,
-    (indicator-)residual variances, latent covariances, and latent means
+    (indicator-)residual variances, latent variances, latent covariances, and latent means
     are restricted to equality.
 
 Alternatively, the models can also be defined using `lavaan` style
@@ -3652,15 +3659,17 @@ restrictions as a vector to allow for greater flexibility, for instance:
 -   `c('loadings', 'intercepts', 'means')`: all loadings,
     (indicator-)intercepts, and latent factor means are restricted to
     equality.
--   `c('loadings', 'residuals', 'lv.covariances')`: all loadings,
-    (indicator-)residual variances, and latent factor covariances are
+-   `c('loadings', 'residuals', 'lv.variances')`: all loadings,
+    (indicator-)residual variances, and latent factor variances are
     restricted to equality.
 
-`semPower.powerLI` implements variance scaling of the factors (the
-variances of all factors are equal to 1), so invariance of variances
-(`'lv.variances'`) is always met. Latent means are identified using
-single occasion identification, so that the factor mean at the first
-measurement occasion is fixed to zero.
+By default, the factors are identified by setting their means to 0 and their variances to 1 (`useReferenceIndicator = FALSE`), so that all loadings and indicator intercepts are freely estimated. In models involving constraints on loadings or intercepts, a single occasion identification approach is used by default (`singleOccasionIdent = TRUE`), so that the factor variances and means are constrained at only a single occasion, but are freely estimated at all remaining occasions. This mimics the `lavaan` approach to invariance testing.
+
+If setting `singleOccasionIdent = FALSE`, the identification constraints are maintained in models assuming metric or scalar invariance, so that the factor means and variances are constrained to 0 and 1, respectively, across all occasions (so invariance of factor variances and factor means is always met). Concerning metric invariance, this was the default behavior in `semPower` versions prior 2.1.4.
+
+A referent scaling approach can be be defined using `useReferenceIndicator = TRUE`, so that the loading and the intercept of the first indicator of each factor are constrained at all occasions, and the factor variances and means are freely estimated. Reference scaling is always maintained in all invariance models, so `singleOccasionIdent` has no effect (i.e. is always `FALSE`).
+
+Beyond the arguments stated above, `semPower.powerLI` requires the [definition of the factor model](#factorDefinition). In particular, either `Lambda`, or `loadings`, or `nIndicator` and `loadM` always need to be defined, and `Theta`, `tau` and `Alpha` need to be defined for particular levels of invariance. If longitudinal invariance for a single factor measured at T occasions is of interest, `loadings` can be a single list with T elements, and `nIndicator`, `loadM`, `tau` and `Alpha` can be single vectors. If longitudinal invariance for multiple factors measured at T occasions is of interest, `loadings`, `nIndicator`, `loadM`, `tau` and `Alpha` must be wrapped in a list with T elements, where each element refers to a single measurement occasion. `Phi` and `Theta` always must be a single matrix. The order of `Phi` must be F1_T1, F2_T1, ..., F1_T2, F2_T2, ..., F1_TZ, F2_TZ, ..., FX_TZ. The order of `Theta` must match the order of `Phi` and thus first contains the respective indicators of F1 at T1, F2 at T1, ..., F1 at T2, F2 at T2, and so on.
 
 `semPower.powerLI` provides a list as result. Use the `summary` method
 to obtain formatted results. The list contains the following components:
@@ -3678,6 +3687,7 @@ to obtain formatted results. The list contains the following components:
 -   `simRes`: Detailed simulation results when a [simulated power
     analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
+
 ##### Detect metric non-invariance {.unnumbered}
 
 To perform a power analysis to detect whether a metric invariance model
@@ -3694,14 +3704,14 @@ For instance, the following requests the required sample size
 (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a
 power of 80% (`power = .80`). The model comprises an attribute measured
 at two time points which are correlated by .3 (`Phi = .3`). The
-attribute is measured by 5 indicators (at both the first and the second
-measurement, `nIndicator = c(5, 5)`). At the first measurement, all
-indicators load by .5, whereas at the second measurement, all indicators
-load by .6 (`loadM = c(.5, .6)`). See the chapter on [specifying a
-factor model](#factorDefinition) for alternative (more flexible) ways to
-define the factor loadings. In addition, the model comprises
+attribute is measured by 4 indicators (at both the first and the second
+measurement). At the first measurement, all indicators load by .7, 
+whereas at the second measurement, the indicators
+load by .4, .5, .6, and .6. In addition, the model comprises
 autocorrelated indicator residuals across time, because the
-`autocorResiduals` (which defaults to `TRUE`) argument is omitted.
+`autocorResiduals` (which defaults to `TRUE`) argument is omitted, and
+relies on single occasion identification 
+(by omitting `useReferenceIndicator = FALSE` and `singleOccasionIdent = TRUE`).
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -3710,9 +3720,11 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = 'configural', 
   nullEffect = 'metric',
-  # define measurement model
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),
+  # define model
+  loadings = list(
+    c(.7, .7, .7, .7),   # factor 1 at T1
+    c(.4, .5, .6, .6)    # factor 1 at T2
+  ),
   Phi = .3
 )
 summary(powerLI)
@@ -3732,9 +3744,11 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = 'configural', 
   nullEffect = 'metric',
-  # define measurement model
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),  # (time 1, time 2)
+  # define model
+  loadings = list(
+    c(.7, .7, .7, .7),   # factor 1 at T1
+    c(.4, .5, .6, .6)    # factor 1 at T2
+  ),
   Phi = .3
 )
 ```
@@ -3752,46 +3766,72 @@ powerLI <- semPower.powerLI(
   # define type of power analysis
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis
-  comparison = 'none', 
+  comparison = 'none',    # configural invariance
   nullEffect = 'loadings',
-  # define measurement model
-  nIndicator = c(5, 5),
-  loadM = c(.5, .6),  # (time 1, time 2)
+  # define model
+  loadings = list(
+    c(.7, .7, .7, .7),   # factor 1 at T1
+    c(.4, .5, .6, .6)    # factor 1 at T2
+  ),
   Phi = .3
 )
 ```
 
-In the example above, all indicators exhibited measurement
-non-invariance. If only a subset of indicators should show a different
-loading across time, [specify the factor model](#factorDefinition) using
-the `loadings` argument. For instance, the following defines a
-single-factor model measured by three indicators at three time points.
-At the first measurement occasion, the loadings are .7, .6, and .5, at
-the second measurement occasion .7, .5, .5, and at the third measurement
-occasion .7, .4, .5. Thus, there are only differences concerning the
-loadings of the second indicator. In addition, because the factor is
-measured at three time points, `Phi` now becomes a factor correlation
-matrix, in this case specifying correlations between the first and
-second measurement as well as the second and third measurement of .3,
-and between the first and third measurement of .1.
+Note that by default the factors are scaled using single occasion identification 
+(`useReferenceIndicator = FALSE` and `singleOccasionIdent = TRUE`). This means that 
+the variance of the factor(s) measured at the first occasion are fixed to 1, 
+whereas the remaining factor variances are freely estimated. All loadings are also
+freely estimated. 
+
+Repeating the call above but adding `singleOccasionIdent = FALSE` would
+again freely estimate all loadings, but fix all factor variances to 1. These
+different approaches to identification can have a profound impact on power, also
+because this changes the df.
+
+A reference identification results by adding `useReferenceIndicator = TRUE` (and 
+`singleOccasionIdent = FALSE`). Then, all factor variances are freely estimated, whereas 
+the loading of the first indicator of each factor is fixed. Thus, the loadings of 
+the first indicator should be equal across measurements.
+
+In the examples above, only a single factor measured repeatedly was considered.
+If more factors are measured, the `loadings` argument must be put in a list 
+(as must other options to [specify the factor model](#factorDefinition), except for `Lambda`).
+For instance, the following defines a
+two-factor model measured by three indicators each at two time points.
+At the first measurement occasion, the loadings on the first factor are .8, .8, and .7 
+and those on the second factor are .5, .7, and .5. At the second measurement occasion 
+the loadings on the first factor are .7, .6, .7, and those on the second factor are
+.6, .8, and .4. In addition, because the factor is
+measured at three time points, `Phi` now becomes a factor covariance
+matrix, in this case specifying all variances to be 1, 
+the correlations between the first and second measurement of the first factor to be .5,
+the correlation between the first and second measurement the second factor to be .6, 
+and all other correlations to be zero.
 
 ```{r eval=FALSE}
 Phi <- matrix(c(
-  c(1, .3, .1),
-  c(.3, 1, .3),
-  c(.1, .3, 1)
-), ncol = 3, byrow = TRUE)
+  # F1T1 F2T1 F1T2 F2T2
+  c(1,   0,   .5,  .0),    # F1 T1
+  c(0,   1,    0,  .6),    # F2 T1
+  c(.5,  0,    1,  .0),    # F1 T2
+  c(0,   .6,   0,   1)     # F2 T2
+), ncol = 4, byrow = TRUE)
 powerLI <- semPower.powerLI(
   # define type of power analysis
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis
-  comparison = 'none', 
+  comparison = 'none',   # configural invariance
   nullEffect = c('loadings'),
-  # define measurement model
+  # define model
   loadings = list(
-    c(.7, .6, .5),  # time 1
-    c(.7, .5, .5),  # time 2
-    c(.7, .4, .5)   # time 3
+    list(
+      c(.8, .8, .7),   # factor 1 at T1
+      c(.5, .7, .5)    # factor 2 at T1
+    ),
+    list(
+      c(.7, .6, .7),   # factor 1 at T2
+      c(.6, .8, .4)    # factor 2 at T2
+    )
   ),
   Phi = Phi
 )
@@ -3816,12 +3856,12 @@ For instance, the following requests the required sample
 (`nullEffect = 'scalar'`) differs from a metric invariance model
 (`comparison = 'metric'`) on alpha = .05 (`alpha = .05`) with a power of
 80% (`power = .80`). The model comprises an attribute assessed at two
-time points, which is measured by 3 indicators that all load by .5 at
-both measurement occasions (`nIndicator = c(3, 3)`; see [definition of
+time points, which is measured by 4 indicators that load by .7, .6, .7, and .6 
+at both measurement occasions (`loadings`; see [definition of
 the factor model](#factorDefinition)). Importantly, the indicator
-intercepts (`tau`) partly differ across time: the intercept of the
-second indicator is 0 at the first second measurement, but .2 at the
-second measurement:
+intercepts (`tau`) partly differ across time: the intercepts of the
+second and fourth indicators is 0 at the first second measurement, but .2 at the
+second and fourth measurements:
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -3830,10 +3870,13 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = 'metric', 
   nullEffect = 'scalar',
-  # define measurement model
-  nIndicator = c(3, 3), loadM = .5,
-  tau = c(0, 0, 0,     # intercepts at time 1
-          0, .2, 0),   # intercepts at time 2
+  # define model
+  loadings = list(
+    c(.7, .6, .7, .6),   # factor 1 at T1
+    c(.7, .6, .7, .6)    # factor 1 at T2
+  ),
+  tau = c(0, 0, 0, 0,     # intercepts at time 1
+          0, .2, 0, .2),   # intercepts at time 2
   Phi = .3
 )
 ```
@@ -3848,13 +3891,56 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = c('loadings'), 
   nullEffect = c('loadings', 'intercepts'),
-  # define measurement model
-  nIndicator = c(3, 3), loadM = .5,
-  tau = c(0, 0, 0,     # intercepts at time 1
-          0, .2, 0),   # intercepts at time 2
+  # define model
+  loadings = list(
+    c(.7, .6, .7, .6),   # factor 1 at T1
+    c(.7, .6, .7, .6)    # factor 1 at T2
+  ),
+  tau = c(0, 0, 0, 0,     # intercepts at time 1
+          0, .2, 0, .2),   # intercepts at time 2
   Phi = .3
 )
 ```
+
+Again note that different identification options may lead to different results.
+By default, single occasion identification 
+(`useReferenceIndicator = FALSE` and `singleOccasionIdent = TRUE`) freely estimates 
+all intercepts and all factor means except for those measured at the first occasion.
+`singleOccasionIdent = FALSE` also freely estimate all intercepts, but fixes all factor means to 0. 
+A reference identification (`useReferenceIndicator = TRUE`) freely estimates
+all factor means and fixes the intercept of the first factor indicator to 0.
+
+If multiple factors are measured repeatedly, `tau` becomes a list with each
+element providing the intercepts at a particular measurement, as in the following example:
+
+```{r eval=FALSE}
+powerLI <- semPower.powerLI(
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  comparison = c('loadings'), 
+  nullEffect = c('loadings', 'intercepts'),
+  # define model
+  loadings = list(
+    list(
+      c(.8, .8, .7),   # factor 1 at T1
+      c(.5, .7, .5)    # factor 2 at T1
+    ),
+    list(
+      c(.8, .8, .7),   # factor 1 at T2
+      c(.5, .7, .5)    # factor 2 at T2
+    )
+  ),
+  tau = list(
+    c(0, 0, 0,         # intercepts at T1 
+      0, 0, 0),
+    c(0, .2, 0,        # intercepts at T2 
+      0, .2, 0)
+  ),
+  Phi = diag(4)
+)
+```
+
 
 ##### Detect residual non-invariance {.unnumbered}
 
@@ -3867,7 +3953,7 @@ indicator residuals, this should be done in a way that only the
 residuals of the same indicator shows correlations across measurement
 occasions (and the autocorrelations are estimated by setting
 `autocorResiduals = TRUE`), because otherwise this would incur misfit
-(in the H1 model).
+in the H1 model.
 
 For instance, the following uses `lavaan` style restrictions to request
 the required sample (`type = 'a-priori'`) to detect that a residual
@@ -3884,9 +3970,11 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = c('loadings'), 
   nullEffect = c('loadings', 'residuals'),
-  # define measurement model
-  nIndicator = c(3, 3),
-  loadM = c(.5, .5), 
+  # define model
+  loadings = list(
+    c(.7, .6, .7),   # factor 1 at T1
+    c(.7, .6, .7)    # factor 1 at T2
+  ),
   Phi = .3,
   # diagonal matrix for Theta
   Theta = diag(  
@@ -3915,9 +4003,7 @@ scalar invariance model (`comparison = c('loadings', 'intercepts')`) on
 alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). All
 indicator intercepts (`tau`) equal zero at both measurements.
 Importantly, the latent mean (`Alpha`) is 0 at the first measurement
-occasion, but .25 at the second measurement occasion (thus corresponding
-to a standardized mean difference of .25, because the factor variances
-are fixed to 1):
+occasion, but .25 at the second measurement occasion:
 
 ```{r eval=FALSE}
 powerLI <- semPower.powerLI(
@@ -3925,23 +4011,21 @@ powerLI <- semPower.powerLI(
   # define hypothesis
   comparison = c('loadings', 'intercepts'), 
   nullEffect = c('loadings', 'intercepts', 'means'),
-  # define measurement model
-  nIndicator = c(3, 3),
-  loadM = c(.5, .5),
+  # define model
+  loadings = list(
+    c(.7, .6, .7),   # factor 1 at T1
+    c(.7, .6, .7)    # factor 1 at T2
+  ),
   Phi = .3,
   # invariant indicator intercepts
-  tau = c(0, 0, 0, 0, 0, 0),
+  tau = c(0, 0, 0, 
+          0, 0, 0),
   # non-invariant latent means
   Alpha = c(0, .25)  
 )
-
 ```
 
-Note that the latent means are identified by setting the factor mean at
-the first measurement occasion to zero, which in the example above
-matches the value provided for `Alpha`. However, the first mean in
-`Alpha` may also take a value different from zero without affecting
-power, because the remaining means are then simply rescaled.
+Again, if multiple factors are measured repeatedly, both `tau` and `Alpha` become a list.
 
 The particular comparison performed above cannot be defined using the
 predefined constants (e.g., `means` vs. `scalar`), because using
@@ -3950,39 +4034,87 @@ the previous levels (i.e, loadings, intercepts, residuals, and factor
 covariances), so the proper comparison model would then be
 `comparison = 'covariances'.`
 
+
+##### Detect whether factor variances differ across measurements {.unnumbered}
+
+Detecting that factor variances differ across time again proceeds
+largely identical to the procedure described above for tests of other
+levels of invariance. However, the model definition must include a
+definition of the factor variance-.covariance matrix (`Phi`).
+
+For instance, the following requests the required sample
+(`type = 'a-priori'`) to detect that a metric invariance model with invariant variances
+(`nullEffect = c('loadings', 'lv.variances')`) differs from a metric invariance model without
+constraints on the variances (`comparison = c('loadings')`) on alpha = .05 (`alpha = .05`) with a power of
+80% (`power = .80`). The model comprises an attribute assessed at two
+time points, which is measured by 4 indicators that load by .7, .6, .7, and .6 
+at both measurement occasions. The factor variance-covariance matrix (`Phi`) defines
+the variance of the factor at the first measurement to be 1, but at the
+second measurement to be .7.
+
+```{r eval=FALSE}
+Phi <- matrix(c(
+  # F1T1 F1T2
+  c(1,   .2),    # F1 T1
+  c(.2,  .7)     # F1 T2
+  ), ncol = 2, byrow = TRUE)
+powerLI <- semPower.powerLI(
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  comparison = c('loadings'), 
+  nullEffect = c('loadings', 'lv.variances'),
+  # define model
+  loadings = list(
+    c(.7, .6, .7, .6),   # factor 1 at T1
+    c(.7, .6, .7, .6)    # factor 1 at T2
+  ),
+  Phi = Phi
+)
+```
+
+
 ##### Detect whether factor covariances differ across measurements {.unnumbered}
 
 Detecting that the factor covariances differ across time again proceeds
 largely identical to the procedure described above for tests of other
-levels of invariance. Note that `semPower.powerLI` uses variance scaling
-of the factors, so that the factor variances are always invariant across
-time.
+levels of invariance. The tests of covariances only refer to covariances between
+factors measured at the same occasion, i.e. covariances across measurements (such as stabilities) not part of this hypothesis.
 
 For instance, the following requests the required sample
 (`type = 'a-priori'`) to detect that the factor covariances differ
-across time (`nullEffect = c('loadings', 'lv.covariances')`) in
-comparison to a metric invariance model (`comparison = c('loadings')`)
+across time (`nullEffect = c('loadings', 'lv.variances', 'lv.covariances')`) in
+comparison to a metric invariance model with equal variances (`comparison = c('loadings', 'lv.variances')`)
 on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The
-correlation (because the variances are 1) between the first and second
-measurement is .3, the correlation between the second and third
-measurement is .2, and the correlation between the first and third
-measurement is .4. The null hypothesis states that all these
+correlation (because the variances are 1) between the first and second factor 
+at the first measurement is .2, whereas the correlation between the first and 
+the second factor at the second measurement is 0. The null hypothesis states that these two
 correlations are equal.
 
 ```{r eval=FALSE}
 Phi <- matrix(c(
-  c(1, .3, .2),
-  c(.3, 1, .4),
-  c(.2, .4, 1)
-), ncol = 3, byrow = TRUE)
+  # F1T1 F2T1 F1T2 F2T2
+  c(1,   .2,   .5,  .0),    # F1 T1
+  c(.2,   1,    0,  .6),    # F2 T1
+  c(.5,  0,    1,  .0),     # F1 T2
+  c(0,   .6,   0,   1)      # F2 T2
+), ncol = 4, byrow = TRUE)
 powerLI <- semPower.powerLI(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis
-  comparison = c('loadings'), 
-  nullEffect = c('loadings', 'lv.covariances'),
-  # define measurement model
-  nIndicator = c(3, 3, 3),
-  loadM = c(.5, .5, .5), 
+  comparison = c('loadings', 'lv.variances'), 
+  nullEffect = c('loadings', 'lv.variances', 'lv.covariances'),
+  # define model
+  loadings = list(
+    list(
+      c(.8, .8, .7),   # factor 1 at T1
+      c(.5, .7, .5)    # factor 2 at T1
+    ),
+    list(
+      c(.8, .8, .7),   # factor 1 at T2
+      c(.5, .7, .5)    # factor 2 at T2
+    )
+  ),
   Phi = Phi
 )
 ```
@@ -3990,8 +4122,9 @@ powerLI <- semPower.powerLI(
 Note that this particular comparison cannot be defined using the
 predefined constants. If using `nullEffect = 'covariances'` instead,
 this would include all invariance constraints of the previous levels
-(i.e, loadings, intercepts, and residuals), so the proper comparison
-model would be `comparison = 'residuals'.`
+(i.e, loadings, intercepts, residuals, variances).
+
+
 
 ## Autoregressive models {#powerAutoreg}
 
@@ -4922,7 +5055,9 @@ difference that the parameters targeted by the null hypothesis need to
 be provided in a list structure giving the relevant parameters
 separately for each group. If no list is provided for a particular
 parameter, these take identical values in all groups (but are freely
-estimated in each group by default).
+estimated in each group by default). The measurement model must be identical
+across groups, so always provide the measurement model 
+for a single group only (do not use a list structure).
 
 For instance, the following defines a two-group model involving 5
 measurement occasions (`nWaves = 5`), where $X$ is measured by three
