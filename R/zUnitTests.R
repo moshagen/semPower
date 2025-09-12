@@ -3966,14 +3966,16 @@ test_powerLI <- function(doTest = TRUE){
     comparison = 'configural',
     nullEffect = 'metric',
     nIndicator = c(3, 3),
-    loadM = c(.5, .6)  
+    loadM = c(.5, .6),
+    singleOccasionIdent = FALSE
   )
   ph1b <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
     comparison = 'saturated',
     nullEffect = 'metric',
     nIndicator = c(3, 3),
-    loadM = c(.5, .6)
+    loadM = c(.5, .6),
+    singleOccasionIdent = FALSE
   )
   ph1c <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
@@ -3981,7 +3983,8 @@ test_powerLI <- function(doTest = TRUE){
     nullEffect = 'scalar',
     nIndicator = c(3, 3),
     loadM = c(.5, .5),
-    tau = c(0, 0, 0, .1, .1, .1)
+    tau = c(0, 0, 0, .1, .1, .1),
+    singleOccasionIdent = FALSE
   )  
   ph1d <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
@@ -3989,47 +3992,91 @@ test_powerLI <- function(doTest = TRUE){
     nullEffect = c('loadings', 'intercepts'),
     nIndicator = c(3, 3),
     loadM = c(.5, .5),
-    tau = c(0, 0, 0, .1, .1, .1)
+    tau = c(0, 0, 0, .1, .1, .1),
+    singleOccasionIdent = FALSE
   )  
-  Phi <- diag(3)
-  Phi[1, 2] <- Phi[2, 1] <- .3
+  Phi <- diag(c(1, 1, 1.5, 1.5))
   ph1e <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
     comparison = 'residual',
-    nullEffect = 'covariances',
-    nIndicator = c(3, 3, 3),
-    loadM = c(.5, .5, .5),
+    nullEffect = 'variances',
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
     Phi = Phi,
-    tau = rep(0, 9)
-  )    
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    useReferenceIndicator = TRUE,
+    singleOccasionIdent = FALSE
+  )
   ph1f <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
     comparison = c('loadings', 'intercepts', 'residuals'),
-    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
-    nIndicator = c(3, 3, 3),
-    loadM = c(.5, .5, .5),
+    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.variances'),
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
     Phi = Phi,
-    tau = rep(0, 9)
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    useReferenceIndicator = TRUE,
+    singleOccasionIdent = FALSE
   )    
   ph1g <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
     comparison = 'covariances',
     nullEffect = 'means',
-    nIndicator = c(3, 3, 3),
-    loadM = c(.5, .5, .5),
-    Phi = diag(3),
-    tau = rep(0, 9),
-    Alpha = c(0, .2, .3)
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
+    Phi = diag(4),
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    Alpha = list(c(0,0), c(1, 1)),
+    useReferenceIndicator = FALSE,
+    singleOccasionIdent = TRUE
   )    
   ph1h <- semPower.powerLI(
     type = 'a-priori', alpha = .05, power = .80,
-    comparison = c('loadings', 'intercepts', 'residuals', 'lv.covariances'),
-    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.covariances', 'means'),
-    nIndicator = c(3, 3, 3),
-    loadM = c(.5, .5, .5),
-    Phi = diag(3),
-    tau = rep(0, 9),
-    Alpha = c(0, .2, .3)
+    comparison = c('loadings', 'intercepts', 'residuals', 'lv.variances', 'lv.covariances'),
+    nullEffect = c('loadings', 'intercepts', 'residuals', 'lv.variances', 'lv.covariances', 'means'),
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
+    Phi = diag(4),
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    Alpha = list(c(0,0), c(1, 1)),
+    useReferenceIndicator = FALSE,
+    singleOccasionIdent = TRUE
   )      
 
   valid <- ph1a$df < ph1b$df &&
@@ -4056,11 +4103,111 @@ test_powerLI <- function(doTest = TRUE){
   valid2 <- valid &&
     length(unique(par1a[par1a$op == '=~', 'label'])) == 3 &&
     length(unique(par1c[par1c$op == '~1' & par1c$lhs %in% paste0('x', 1:6), 'label'])) == 3 &&
-    length(unique(par1f[par1f$op == '~~' & par1f$lhs %in% paste0('x', 1:6) & par1f$lhs == par1f$rhs, 'label'])) == 3 &&
-    length(unique(par1f[par1f$op == '~~' & par1f$lhs %in% paste0('f', 1:3) & par1f$lhs != par1f$rhs, 'label'])) == 1 &&
+    length(unique(par1f[par1f$op == '~~' & par1f$lhs %in% paste0('f', 1:4) & par1f$lhs == par1f$rhs, 'label'])) == 2 &&
     mean(abs(par1h[par1h$op == '~1' & par1h$lhs %in% paste0('f', 1:3), 'est'])) < 1e-6
 
-  if(valid2){
+  
+  # check identification options
+  ph2 <- semPower.powerLI(
+    type = 'ph', alpha = .05, N = 500,
+    comparison = 'saturated',
+    nullEffect = 'means',
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
+    Phi = diag(4),
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    Alpha = list(c(0,0), c(1, 1)),
+    useReferenceIndicator = FALSE,
+    singleOccasionIdent = TRUE
+  )      
+  ph2b <- semPower.powerLI(
+    type = 'ph', alpha = .05, N = 500,
+    comparison = 'saturated',
+    nullEffect = 'means',
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
+    Phi = diag(4),
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    Alpha = list(c(0,0), c(1, 1)),
+    useReferenceIndicator = TRUE,
+    singleOccasionIdent = FALSE
+  )      
+  ph2c <- semPower.powerLI(
+    type = 'ph', alpha = .05, N = 500,
+    comparison = 'saturated',
+    nullEffect = 'scalar',
+    loadings = list(
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      ),
+      list(
+        c(.5, .6, .7),
+        c(.8, .7, .4)
+      )
+    ),
+    Phi = diag(4),
+    Theta = diag(12),
+    tau = list(rep(0, 6), rep(0, 6)),
+    Alpha = list(c(0,0), c(1, 1)),
+    useReferenceIndicator = FALSE,
+    singleOccasionIdent = TRUE
+  )      
+  
+  par2 <- getPar(ph2)
+  par2b <- getPar(ph2b)
+  par2c <- getPar(ph2c)
+  
+  valid3 <- valid2 &&
+    par2[par2$lhs=='f1' & par2$rhs =='x1', 'z'] != 0 &&
+    par2[par2$lhs=='f2' & par2$rhs =='x4', 'z'] != 0 && 
+    par2[par2$lhs=='f3' & par2$rhs =='x7', 'z'] != 0 &&    
+    par2[par2$lhs=='f4' & par2$rhs =='x10', 'z'] != 0 &&    
+    length(unique(par2[par2$op=='=~', 'label'])) == 6 &&    
+    all(is.na(par2[par2$lhs==par2$rhs & grepl('f', par2$rhs), 'z'])) &&    
+    all(is.na(par2[par2$op=='~1' & grepl('f', par2$lhs), 'z'])) &&    
+    length(unique(par2[par2$op=='~1' & grepl('x', par2$lhs), 'label'])) == 6 &&    
+    is.na(par2b[par2b$lhs=='f1' & par2b$rhs =='x1', 'z']) &&
+    is.na(par2b[par2b$lhs=='f2' & par2b$rhs =='x4', 'z']) &&
+    is.na(par2b[par2b$lhs=='f3' & par2b$rhs =='x7', 'z']) &&
+    is.na(par2b[par2b$lhs=='f4' & par2b$rhs =='x10', 'z']) &&
+    all(!is.na(par2b[par2b$lhs==par2b$rhs & grepl('f', par2b$rhs), 'z'])) && 
+    is.na(par2b[par2b$lhs=='x1' & par2b$op =='~1', 'z']) &&
+    is.na(par2b[par2b$lhs=='x4' & par2b$op =='~1', 'z']) &&
+    is.na(par2b[par2b$lhs=='x7' & par2b$op =='~1', 'z']) &&
+    is.na(par2b[par2b$lhs=='x10' & par2b$op =='~1', 'z']) &&
+    all(!is.na(par2b[par2b$op=='~1' & grepl('f', par2b$lhs), 'z'])) &&
+    length(unique(par2b[par2b$op=='~1' & grepl('f', par2b$lhs), 'label'])) == 2 &&
+    par2c[par2c$lhs=='f1' & par2c$rhs =='x1', 'z'] != 0 &&
+    par2c[par2c$lhs=='f2' & par2c$rhs =='x4', 'z'] != 0 && 
+    par2c[par2c$lhs=='f3' & par2c$rhs =='x7', 'z'] != 0 &&    
+    par2c[par2c$lhs=='f4' & par2c$rhs =='x10', 'z'] != 0 &&
+    length(unique(par2c[par2c$op=='=~', 'label'])) == 6 &&    
+    all(is.na(par2c[par2c$lhs==par2c$rhs & par2c$rhs %in% paste0('f',1:2) , 'z'])) &&
+    all(!is.na(par2c[par2c$lhs==par2c$rhs & par2c$rhs %in% paste0('f',3:4) , 'z'])) &&
+    length(unique(par2c[par2c$op=='~1' & grepl('x', par2c$lhs), 'label'])) == 6 &&    
+    all(is.na(par2c[par2c$op=='~1' & par2c$lhs %in% paste0('f', 1:2), 'z'])) &&    
+    all(!is.na(par2c[par2c$op=='~1' & par2c$lhs %in% paste0('f', 3:4), 'z']))
+
+  if(valid3){
     print('test_powerLI: OK')
   }else{
     warning('Invalid')
@@ -4182,11 +4329,11 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 's2Mean = 0',
     loadings = list(
@@ -4207,11 +4354,11 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 's2var = 0',
     loadings = list(
@@ -4229,11 +4376,11 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 'is2cov = 0',
     loadings = list(
@@ -4251,11 +4398,11 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 'ss2cov = 0',
     loadings = list(
@@ -4270,8 +4417,8 @@ test_powerLGCM <- function(doTest = TRUE){
   valid2 <- valid &&
     lavres2$fit['fmin'] < 1e-8 &&
     mean(abs(par2[par2$lhs == 'f1' & par2$op == '=~', 'est'] - c(.5, .6, .5))) < 1e-6 &&
-    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs == par2$rhs, 'est'] - c(.5, .3, .1))) < 1e-6 &&
-    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs != par2$rhs, 'est'] - c(.3, .2, .4))) < 1e-6 &&
+    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs == par2$rhs, 'est'] - c(.5, .3, .2))) < 1e-6 &&
+    mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~~'  & par2$lhs != par2$rhs, 'est'] - c(.3, .2, .1))) < 1e-6 &&
     mean(abs(par2[par2$lhs %in% c('i', 's', 's2') & par2$op == '~1', 'est'] - c(.8, .25, .1))) < 1e-6 &&
     abs(par2a[par2a$lhs == 's2' & par2a$op == '~1', 'est']) < 1e-6 &&
     abs(par2b[par2b$lhs == 's2' & par2b$rhs == 's2', 'est']) < 1e-6 &&
@@ -4289,8 +4436,8 @@ test_powerLGCM <- function(doTest = TRUE){
     ticExogSlopes = c(.5, .4, .3),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 'betaIT = 0',
     loadings = list(
@@ -4311,12 +4458,12 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     ticExogSlopes = c(.5, .4, .3),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 'betaST = 0',
     loadings = list(
@@ -4335,12 +4482,12 @@ test_powerLGCM <- function(doTest = TRUE){
     nWaves = 4,
     quadratic = TRUE,
     means = c(.8, .25, .1),
-    variances = c(.5, .3, .1),
+    variances = c(.5, .3, .2),
     ticExogSlopes = c(.5, .4, .3),
     covariances = matrix(c(
       c(1, .3, .2),
-      c(.3, 1, .4),
-      c(.2, .4, 1)
+      c(.3, 1, .1),
+      c(.2, .1, 1)
     ), ncol = 3, byrow = TRUE),
     nullEffect = 'betaS2T = 0',
     loadings = list(
@@ -5287,7 +5434,7 @@ test_all <- function(){
   test_powerBifactor(doTest = FALSE)
   test_powerAutoreg(doTest = FALSE)
   test_powerARMA(doTest = FALSE)
-  test_powerLI(doTest = FALSE)
+  test_powerLI(doTest = TRUE)
   test_powerLGCM(doTest = FALSE)
   test_simulatePower(doTest = FALSE)
 }
