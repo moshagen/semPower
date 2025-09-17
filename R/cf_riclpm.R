@@ -581,7 +581,7 @@ semPower.powerRICLPM <- function(type, comparison = 'restricted',
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
   if(is.null(nullWhich) && nWaves > 2){
     msg <- 'nullWhich must be defined when there are more than 2 waves and relevant parameters are not constant across waves'
-    if(is.null(waveEqual) && !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy')) stop(msg) 
+    if(is.null(waveEqual) && !nullEffect %in% c('autoregx', 'autoregy', 'crossedx', 'crossedy', 'corbxby=0')) stop(msg) 
     if(!'autoregx' %in% waveEqual && nullEffect %in% c('autoregx=0', 'autoregx=autoregy')) stop(msg) 
     if(!'autoregy' %in% waveEqual && nullEffect %in% c('autoregy=0', 'autoregx=autoregy')) stop(msg) 
     if(!'crossedx' %in% waveEqual && nullEffect %in% c('crossedx=0', 'crossedx=crossedy')) stop(msg) 
