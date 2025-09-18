@@ -46,6 +46,9 @@ editor_options:
 .book.with-summary .book-body {
     left: 380px;
 }
+.caption {
+    font-size: .9em;
+}
 </style>
 ```
 
@@ -76,6 +79,8 @@ effect in [terms of model parameters](#modelBasedPower), covering many
 commonly encountered model structures, and also supports [simulated
 power](#simulatedPower) estimation in addition to analytical power
 analyses.
+
+The [changelog](https://github.com/moshagen/semPower/blob/master/NEWS) for semPower 2 is available at <https://github.com/moshagen/semPower/blob/master/NEWS>.
 
 ##### Installation {.unnumbered}
 
@@ -1028,6 +1033,7 @@ argument:
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
+  # F1  F2
   c(.5, 0),
   c(.5, 0),
   c(.5, 0),
@@ -1045,8 +1051,8 @@ two vectors for the `loadings` argument:
 
 ```{r eval=FALSE}
 loadings <- list(
-  c(.5, .5, .5),
-  c(.5, .5, .5, .5)
+  c(.5, .5, .5),      # F1
+  c(.5, .5, .5, .5)   # F2
   )
 ```
 
@@ -1062,6 +1068,7 @@ specified values:
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
+  # F1  F2  F3
   c(.7, 0, 0),
   c(.6, 0, 0),
   c(.5, 0, 0),
@@ -1077,9 +1084,9 @@ Lambda <- matrix(c(
   ), ncol = 3, byrow = TRUE)
 
 loadings <- list(
-  c(.7, .6, .5),
-  c(.5, .8, .6, .3),
-  c(.9, .5, .7, .4, .6)
+  c(.7, .6, .5),         # F1
+  c(.5, .8, .6, .3),     # F2
+  c(.9, .5, .7, .4, .6)  # F3
   )
 ```
 
@@ -1090,7 +1097,7 @@ respectively, and all loadings equal to .5, is to provide both the
 `nIndicator` and the `loadM` arguments:
 
 ```{r eval=FALSE}
-nIndicator <- c(3, 4)
+nIndicator <- c(3, 4)   # (F1, F2)
 loadM <- .5
 ```
 
@@ -1111,15 +1118,16 @@ indicator) in a model, a dummy factor with a single indicator loading by
 observed variable and a factor with 4 indicators loading by .5 each:
 
 ```{r eval=FALSE}
-nIndicator <- c(1, 4)
-loadM <- c(1, .5)
+nIndicator <- c(1, 4)  # (X, F1)
+loadM <- c(1, .5)      # (X, F1)
 
 loadings <- list(
-  c(1),
-  c(.5, .5, .5, .5)
+  c(1),               # X
+  c(.5, .5, .5, .5)   # F1
   )
 
 Lambda <- matrix(c(
+  # X  F1
   c(1, 0),
   c(0, .5),
   c(0, .5),
@@ -1253,13 +1261,13 @@ powerCFA <- semPower.powerCFA(
   type = 'a-priori', alpha = .05, beta = .20,
   # set comparison model
   comparison = 'restricted',
-  # define fitting function
+  # define fitting function (defaults to ML and typically omitted)
   fittingFunction = 'ML',
   # arguments (and values) specific to semPower.powerCFA
   Phi = .25,
   nullEffect = 'cor = 0',
   nullWhich = c(1, 2),
-  # define factor model
+  # define measurement model
   nIndicator = c(4, 3), loadM = c(.5, .6)
   )
 ```
@@ -1326,7 +1334,7 @@ the default hypothesis and could thus be omitted).
 
 In the simplest case, the model contains exactly two factors, so only
 the to-be-detected factor correlation needs to be specified (along the
-factor model itself). For instance, the following requests the required
+factor model itself). For example (Figure \@ref(fig:figureModCFA)), the following requests the required
 sample (`type = 'a-priori'`) to detect that a factor correlation of at
 least .25 (`Phi = .25`) differs from zero (`nullEffect = 'cor = 0'`) on
 alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The
@@ -1337,16 +1345,23 @@ load by .5, whereas all indicators of the second factor load by .6
 model](#factorDefinition) for alternative (more flexible) ways to define
 the factor loadings.
 
+
+
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'a-priori', alpha = .05, power = .80,
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(4, 3), loadM = c(.5, .6))
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(4, 3), loadM = c(.5, .6))
 summary(powerCFA)
+```
+
+
+```{r figureModCFA, echo=FALSE, out.width="75%", fig.align = "left", fig.cap = "A CFA model with two factors that are correlated by .25 in the population. The  path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/cfa.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -1358,13 +1373,13 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300,
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(4, 3), loadM = c(.5, .6))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300,
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(4, 3), loadM = c(.5, .6))
 ```
 
 Now, `summary(powerCFA)` provides the same information as a model-free
@@ -1386,10 +1401,13 @@ factor with a single indicator loading by 1 (which is then simply an
 observed variable):
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              nIndicator = c(4, 1), loadM = c(.5, 1))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(4, 1),   # (F1, X)
+  loadM = c(.5, 1))       # (F1, X)
 ```
 
 Alternatively, `Phi` can also be a factor correlation matrix. The
@@ -1406,11 +1424,12 @@ Phi <- matrix(c(
    c(0.30, 0.10, 1.00)
  ), ncol = 3,byrow = TRUE)
 
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = Phi,
-                              nullEffect = 'cor = 0',
-                              nullWhich = c(1, 3),
-                              nIndicator = c(3, 3, 3), loadM = c(.5, .7, .6))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = Phi,
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 3),
+  nIndicator = c(3, 3, 3), loadM = c(.5, .7, .6))
 ```
 
 ##### Detect whether a loading differs from zero {.unnumbered}
@@ -1429,11 +1448,12 @@ respectively, and the correlation between the factors is .50 (see
 [Definition of the factor model](#factorDefinition)).
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = .3,
-                              nullEffect = 'loading = 0',
-                              nullWhich = c(3, 1),
-                              nIndicator = c(3, 3), loadM = c(.5, .7))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = .3,
+  nullEffect = 'loading = 0',
+  nullWhich = c(3, 1),
+  nIndicator = c(3, 3), loadM = c(.5, .7))
 ```
 
 In the example above, the indicator associated with the loading targeted
@@ -1448,6 +1468,7 @@ detect that the loading of the fourth indicator on the second factor
 
 ```{r eval=FALSE}
 Lambda <- matrix(c(
+  # F1  F2
   c(.8, 0),
   c(.7, 0),
   c(.6, 0),
@@ -1457,11 +1478,12 @@ Lambda <- matrix(c(
   c(0, .7),
   c(0, .8)
 ), ncol = 2, byrow = TRUE)
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = .3,
-                              nullEffect = 'loading = 0',
-                              nullWhich = c(4, 2),
-                              Lambda = Lambda)
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = .3,
+  nullEffect = 'loading = 0',
+  nullWhich = c(4, 2),
+  Lambda = Lambda)
 ```
 
 ##### Detect whether two correlations differ from each other {.unnumbered}
@@ -1487,11 +1509,12 @@ Phi <- matrix(c(
    c(0.30, 0.10, 1.00)
  ), ncol = 3,byrow = TRUE)
 
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = Phi,
-                              nullEffect = 'corX = corZ',
-                              nullWhich = list(c(1, 2), c(1, 3)),
-                              nIndicator = c(3, 3, 3), loadM = c(.5, .7, .6))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = Phi,
+  nullEffect = 'corX = corZ',
+  nullWhich = list(c(1, 2), c(1, 3)),
+  nIndicator = c(3, 3, 3), loadM = c(.5, .7, .6))
 ```
 
 Note that `nullWhich` is now a list comprising two vectors, jointly
@@ -1513,11 +1536,12 @@ that two factors correlate differently to an observed outcome), the
 factor model is changed by altering `nIndicator` and `loadM`:
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = Phi,
-                              nullEffect = 'corX = corZ',
-                              nullWhich = list(c(1, 2), c(1, 3)),
-                              nIndicator = c(1, 3, 3), loadM = c(1, .7, .6))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = Phi,
+  nullEffect = 'corX = corZ',
+  nullWhich = list(c(1, 2), c(1, 3)),
+  nIndicator = c(1, 3, 3), loadM = c(1, .7, .6))
 ```
 
 ##### Detect whether a correlation differs across two or more groups {.unnumbered}
@@ -1542,11 +1566,12 @@ also be a list, which in case of an a priori power analysis gives the
 group weights. `N = list(1, 1)` requests equally sized groups.
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                              nullEffect = 'corA = corB',
-                              Phi = list(.2, .4), 
-                              loadM = c(.7, .5), 
-                              nIndicator = c(5, 5))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  nullEffect = 'corA = corB',
+  Phi = list(.2, .4),     # group1, group2
+  loadM = c(.7, .5),      # f1, f2 (identical across groups)
+  nIndicator = c(5, 5))   # f1, f2 (identical across groups)
 ```
 
 If using `N = list(2, 1)` instead, the first group would be twice as
@@ -1574,11 +1599,12 @@ Phi2 <- matrix(c(
     c(0.30, 0.10, 1.00)
  ), ncol = 3,byrow = TRUE)
 
-powerCFA <- semPower.powerCFA(type = 'post-hoc', alpha = .05, N = list(300, 400),
-                              Phi = list(Phi1, Phi2),
-                              nullEffect = 'corA = corB',
-                              nullWhich = c(1, 3),
-                              nIndicator = c(3, 3, 3), loadM = c(.5, .5, .5))
+powerCFA <- semPower.powerCFA(
+  type = 'post-hoc', alpha = .05, N = list(300, 400),
+  Phi = list(Phi1, Phi2),
+  nullEffect = 'corA = corB',
+  nullWhich = c(1, 3),
+  nIndicator = c(3, 3, 3), loadM = c(.5, .5, .5))
 ```
 
 If there are more than two groups, the targeted correlation is held
@@ -1591,12 +1617,13 @@ required sample to detect that the correlation in group 1 (of .2)
 differs from the one in group 3 (of .3; `nullWhichGroups = c(1, 3)`).
 
 ```{r eval=FALSE}
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
-                              nullEffect = 'corA = corB',
-                              Phi = list(.2, .4, .3), 
-                              nullWhichGroups = c(1, 3),
-                              loadM = c(.7, .5), 
-                              nIndicator = c(5, 5))
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
+  nullEffect = 'corA = corB',
+  Phi = list(.2, .4, .3),      # group1, group2, group3
+  nullWhichGroups = c(1, 3),
+  loadM = c(.7, .5),           # f1, f2 (identical across groups)
+  nIndicator = c(5, 5))        # f1, f2 (identical across groups)  
 ```
 
 ##### Detect whether a loading differs from zero {.unnumbered}
@@ -1621,19 +1648,21 @@ correlation of .2 (`Phi = .2`).
 ```{r eval=FALSE}
 
 Lambda <- matrix(c(
+   # F1    F2
    c(0.80, 0.00),
    c(0.70, 0.00),
    c(0.60, 0.00),
    c(0.10, 0.50),
    c(0.00, 0.50),
    c(0.00, 0.80)
- ), ncol = 2,byrow = TRUE)
+ ), ncol = 2, byrow = TRUE)
 
-powerCFA <- semPower.powerCFA(type = 'a-priori', alpha = .05, power = .80,
-                              Phi = .2,
-                              nullEffect = 'loading = 0',
-                              nullWhich = c(4, 1),
-                              Lambda = Lambda)
+powerCFA <- semPower.powerCFA(
+  type = 'a-priori', alpha = .05, power = .80,
+  Phi = .2,
+  nullEffect = 'loading = 0',
+  nullWhich = c(4, 1),
+  Lambda = Lambda)
 ```
 
 ## Models involving a bifactor structure {#powerBifactor}
@@ -1723,7 +1752,7 @@ identification, it is generally recommended to define at least one
 indicator that only loads on the bifactor, but not on any of the
 specific factors.
 
-For example, the following defines a single bifactor with 10 indicators
+For example (Figure \@ref(fig:figureModBF)), the following defines a single bifactor with 10 indicators
 loading by .5 each (`bfLoadings <- rep(.5, 10)`) on the bifactor. The
 bifactor structure involves 3 specific factors, namely the factors 1, 2,
 and 3 (`bfWhichFactors <- c(1, 2, 3)`) defined in the argument defining
@@ -1734,16 +1763,16 @@ third are .20, .05, and .15 (`c(.20, .05, .15)`). Furthermore, the
 fourth factor defined in the `loadings` argument acts as an additional
 covariate (which is not part of the bifactor structure). The covariate
 is a factor with 4 indicators, loading by .70, .75, .80, and .85
-(`c(.70, .75, .80, .85)`).
+(`c(.70, .75, .80, .85)`). See (Figure \@ref(fig:figureModBF)).
 
 ```{r eval=FALSE}
-bfLoadings <- rep(.5, 10)
-bfWhichFactors <- c(1, 2, 3)
+bfLoadings <- rep(.5, 10)    # loadings on general factor
+bfWhichFactors <- c(1, 2, 3) # factors being part of bifactor structure
 loadings <- list(
-  c(.30, .20, .10),       # specific factor 1
-  c(.05, .10, .15),       # specific factor 2
-  c(.20, .05, .15),       # specific factor 3
-  c(.70, .75, .80, .85)   # covariate
+  c(.30, .20, .10),          # specific factor 1
+  c(.05, .10, .15),          # specific factor 2
+  c(.20, .05, .15),          # specific factor 3
+  c(.70, .75, .80, .85)      # covariate
 )
 ```
 
@@ -1765,6 +1794,11 @@ BF & S_1 & S_2 & S_3 & COV\\
 0 & 0 & 0 & 0 & .80\\
 0 & 0 & 0 & 0 & .85
 \end{pmatrix}$$
+
+
+```{r figureModBF, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A bifactor model with one general and three specific factors along with a covariate. The general factor and the covariate are correlated by .30 in the population. The path/parameter highlighted in red is targeted by the null hypothesis. (Residual) variances are not shown."}
+knitr::include_graphics("fig/bf.png")
+```
 
 Note that the bifactor comprises 10 indicators, whereas the specific
 factors jointly comprise only 9 indicators, so that one indicator solely
@@ -1861,7 +1895,7 @@ bifactor and another factor or observed covariate differs from zero, use
 `nullEffect = 'cor = 0'` (which is also the default hypothesis and could
 thus be omitted).
 
-For instance, the following requests the required sample
+For example (Figure \@ref(fig:figureModBF)), the following requests the required sample
 (`type = 'a-priori'`) to detect that a correlation between the bifactor
 and the covariate of at least .30 (`Phi`) differs from zero
 (`nullEffect = 'cor = 0'`) on alpha = .05 (`alpha = .05`) with a power
@@ -1888,17 +1922,17 @@ Phi <- matrix(c(
   c(.3, 1)    # covariate
 ), ncol = 2, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80,
-                                  # define hypothesis
-                                  nullEffect = 'cor = 0',
-                                  nullWhich = c(1, 2),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = Phi,
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 2),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = Phi,
+  loadings = loadings
+  )
 summary(powerBF)
 ```
 
@@ -1911,17 +1945,17 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'post-hoc', alpha = .05, N = 350,
-                                  # define hypothesis
-                                  nullEffect = 'cor = 0',
-                                  nullWhich = c(1, 2),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = Phi,
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 350,
+  # define hypothesis
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 2),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = Phi,
+  loadings = loadings
+  )
 ```
 
 Now, `summary(powerBF)` provides the same information as a model-free
@@ -1948,17 +1982,17 @@ Phi <- matrix(c(
   c(.2, 1)    # covariate
 ), ncol = 2, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80,
-                                  # define hypothesis
-                                  nullEffect = 'cor = 0',
-                                  nullWhich = c(1, 2),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = Phi,
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 2),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = Phi,
+  loadings = loadings
+  )
 ```
 
 Similarly, the model can also define two bifactors. In the following,
@@ -1988,17 +2022,17 @@ Phi <- matrix(c(
   c(0.3, 1.0)   # bifactor 2
 ), ncol = 2, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80,
-                                  # define hypothesis
-                                  nullEffect = 'cor = 0',
-                                  nullWhich = c(1, 2),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = Phi,
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'cor = 0',
+  nullWhich = c(1, 2),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = Phi,
+  loadings = loadings
+  )
 ```
 
 In the examples above, a power analysis was performed by comparing the
@@ -2041,17 +2075,17 @@ Phi <- matrix(c(
   c(.5, .2, 1)    # covariate 2
 ), ncol = 3, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80,
-                                  # define hypothesis
-                                  nullEffect = 'corX = corZ',
-                                  nullWhich = list(c(1, 2), c(1, 3)),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = Phi,
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'corX = corZ',
+  nullWhich = list(c(1, 2), c(1, 3)),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = Phi,
+  loadings = loadings
+  )
 ```
 
 Note that `nullWhich` is now a list comprising two vectors, jointly
@@ -2110,17 +2144,17 @@ Phi2 <- matrix(c(
   c(0.1, 1.0)   # covariate
 ), ncol = 2, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1),
-                                  # define hypothesis
-                                  nullEffect = 'corA = corB',
-                                  nullWhich = c(1, 2),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = list(Phi1, Phi2),
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1),
+  # define hypothesis
+  nullEffect = 'corA = corB',
+  nullWhich = c(1, 2),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = list(Phi1, Phi2),
+  loadings = loadings
+  )
 ```
 
 If there are more than two groups, the targeted correlation is held
@@ -2139,18 +2173,18 @@ Phi3 <- matrix(c(
   c(0.5, 1.0)   # covariate
 ), ncol = 2, byrow = TRUE)
 powerBF <- semPower.powerBifactor(
-                                  # define type of power analysis
-                                  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1, 1),
-                                  # define hypothesis
-                                  nullEffect = 'corA = corB',
-                                  nullWhich = c(1, 2),
-                                  nullWhichGroups = c(1, 3),
-                                  # define factor model
-                                  bfLoadings = bfLoadings,
-                                  bfWhichFactors = bfWhichFactors,
-                                  Phi = list(Phi1, Phi2, Phi3),
-                                  loadings = loadings
-                                  )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = c(1, 1, 1),
+  # define hypothesis
+  nullEffect = 'corA = corB',
+  nullWhich = c(1, 2),
+  nullWhichGroups = c(1, 3),
+  # define factor model
+  bfLoadings = bfLoadings,
+  bfWhichFactors = bfWhichFactors,
+  Phi = list(Phi1, Phi2, Phi3),
+  loadings = loadings
+  )
 ```
 
 ## Latent regression models {#powerRegression}
@@ -2222,7 +2256,7 @@ To perform a power analysis to detect whether a slope differs from zero,
 use `nullEffect = 'slope = 0'` (which is also the default and could thus
 be omitted).
 
-For instance, the following sets up three factors measured by 3, 4, and
+For example (Figure \@ref(fig:figureModReg)), the following sets up three factors measured by 3, 4, and
 5 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first
 factor load by .5, all indicators of the second factor by .6, and all of
 the third factor by .7 (`loadM = c(.5, .6, .7)`). See the chapter on
@@ -2241,18 +2275,24 @@ of 80% (`power = .80`).
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     slopes = c(.2, .3), 
-                                     corXX = .4, 
-                                     nullEffect = 'slope = 0',
-                                     nullWhich = 1,
-                                     # define measurement model
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   slopes = c(.2, .3),        # X1 -> Y, X2 -> Y
+   corXX = .4, 
+   nullEffect = 'slope = 0',
+   nullWhich = 1,             # first slope (X1 -> Y)
+   # define measurement model
+   nIndicator = c(3, 5, 4),   # Y, X1, X2
+   loadM = c(.5, .6, .7))     # Y, X1, X2
 summary(powerReg)
 ```
+
+
+```{r figureModReg, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A latent regression model with two correlated factors predicting a criterion with (standardized) regression slopes of .2 and .3, respectively. The path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/reg.png")
+```
+
 
 The results of the power analysis are printed by calling the `summary`
 method on `powerReg`, which, in this example, provides the same
@@ -2263,16 +2303,16 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     slopes = c(.2, .3), 
-                                     corXX = .4, 
-                                     nullEffect = 'slope = 0',
-                                     nullWhich = 1,
-                                     # define measurement model
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   slopes = c(.2, .3), 
+   corXX = .4, 
+   nullEffect = 'slope = 0',
+   nullWhich = 1,
+   # define measurement model
+   nIndicator = c(3, 5, 4), 
+   loadM = c(.5, .6, .7))
 ```
 
 Now, `summary(powerReg)` provides the same information as a model-free
@@ -2303,22 +2343,23 @@ zero (`nullWhich = 2`), and the predictors are correlated according to
 
 ```{r eval=FALSE}
 corXX <- matrix(c(
- #   X1    X2    X3
- c(1.00, 0.20, 0.30),  # X1
- c(0.20, 1.00, 0.10),  # X2
- c(0.30, 0.10, 1.00)   # X3
+   #   X1    X2    X3
+   c(1.00, 0.20, 0.30),  # X1
+   c(0.20, 1.00, 0.10),  # X2
+   c(0.30, 0.10, 1.00)   # X3
 ), ncol = 3, byrow = TRUE)
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     slopes = c(.3, .2, .1), 
-                                     corXX = corXX, 
-                                     nullEffect = 'slope = 0',
-                                     nullWhich = 2,
-                                     # define measurement model
-                                     nIndicator = c(3, 3, 3, 3), 
-                                     loadM = c(.5, .5, .5, .5))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   slopes = c(.3, .2, .1),      # X1 -> Y, X2 -> Y, X3 -> Y
+   corXX = corXX, 
+   nullEffect = 'slope = 0',
+   nullWhich = 2,
+   # define measurement model
+   nIndicator = c(3, 3, 3, 3),  # Y, X1, X2, X3
+   loadM = c(.5, .5, .5, .5)   # Y, X1, X2, X3
+)
 ```
 
 If `corXX` is omitted or `NULL`, all predictors are assumed to be
@@ -2334,16 +2375,17 @@ observed variable:
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     slopes = c(.2, .3), 
-                                     corXX = .4, 
-                                     nullWhich = 1,
-                                     # define measurement model
-                                     nIndicator = c(1, 5, 4), 
-                                     loadM = c(1, .6, .7))
-```
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   slopes = c(.2, .3), 
+   corXX = .4, 
+   nullWhich = 1,
+   # define measurement model
+   nIndicator = c(1, 5, 4),   # Y, X1, X2
+   loadM = c(1, .6, .7)      # Y, X1, X2
+)
+```  
 
 Similarly, using `nIndicator = c(6, 1, 4)` and `loadM = c(.5, 1, .7)`
 would make the first predictor ($X_1$) an observed variable, and a
@@ -2375,16 +2417,17 @@ alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`).
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     slopes = c(.1, .4), 
-                                     corXX = .25, 
-                                     nullEffect = 'slopeX = slopeZ',
-                                     nullWhich = c(1, 2),
-                                     # define measurement model
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   slopes = c(.1, .4), 
+   corXX = .25, 
+   nullEffect = 'slopeX = slopeZ',
+   nullWhich = c(1, 2),
+   # define measurement model
+   nIndicator = c(3, 5, 4), 
+   loadM = c(.5, .6, .7)
+   )
 ```
 
 Note that `nullWhich` is now a vector defining which slopes should be
@@ -2431,28 +2474,28 @@ observations for each group.
 
 ```{r eval=FALSE}
 corXX <- matrix(c(
-  #   X1    X2    X3
-  c(1.00, 0.20, 0.30),  # X1
-  c(0.20, 1.00, 0.10),  # X2
-  c(0.30, 0.10, 1.00)   # X3
+    #   X1    X2    X3
+    c(1.00, 0.20, 0.30),  # X1
+    c(0.20, 1.00, 0.10),  # X2
+    c(0.30, 0.10, 1.00)   # X3
 ), ncol = 3,byrow = TRUE)
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                     # define hypothesis
-                                     slopes = list(
-                                       # slopes in group 1 
-                                       c(.2, .3, .4), 
-                                       # slopes in group 2 
-                                       c(.2, .05, .4)
-                                       ),
-                                     corXX = corXX,
-                                     nullEffect = 'slopeA = slopeB',
-                                     nullWhich = 2,
-                                     # define measurement model
-                                     nIndicator = c(4, 5, 3, 6),
-                                     loadM = c(.5, .6, .7, .6)
-                                     )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   slopes = list(
+     # slopes in group 1 
+     c(.2, .3, .4),      # X1 -> Y, X2 -> Y, X3 -> Y
+     # slopes in group 2 
+     c(.2, .05, .4)      # X1 -> Y, X2 -> Y, X3 -> Y
+     ),
+   corXX = corXX,
+   nullEffect = 'slopeA = slopeB',
+   nullWhich = 2,
+   # define measurement model (same across groups)
+   nIndicator = c(4, 5, 3, 6),  # Y, X1, X2, X3
+   loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
+   )
 ```
 
 If there are more than two groups, the targeted slope is held equal
@@ -2466,25 +2509,25 @@ in group 3 (of .45; `nullWhichGroups = c(1, 3)`).
 
 ```{r eval=FALSE}
 powerReg <- semPower.powerRegression(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
-                                     # define hypothesis
-                                     slopes = list(
-                                       # slopes in group 1 
-                                       c(.2, .3, .4), 
-                                       # slopes in group 2 
-                                       c(.2, .05, .4),
-                                       # slopes in group 3 
-                                       c(.2, .45, .4)
-                                       ),
-                                     corXX = NULL,  # independent predictors
-                                     nullEffect = 'slopeA = slopeB',
-                                     nullWhich = 2,
-                                     nullWhichGroups = c(1, 3),
-                                     # define measurement model
-                                     nIndicator = c(4, 5, 3, 6),
-                                     loadM = c(.5, .6, .7, .6)
-                                     )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
+   # define hypothesis
+   slopes = list(
+     # slopes in group 1 
+     c(.2, .3, .4),     # X1 -> Y, X2 -> Y, X3 -> Y
+     # slopes in group 2 
+     c(.2, .05, .4),   # X1 -> Y, X2 -> Y, X3 -> Y  
+     # slopes in group 3 
+     c(.2, .45, .4)    # X1 -> Y, X2 -> Y, X3 -> Y
+     ),
+   corXX = NULL,  # independent predictors
+   nullEffect = 'slopeA = slopeB',
+   nullWhich = 2,
+   nullWhichGroups = c(1, 3),
+   # define measurement model (same across groups)
+   nIndicator = c(4, 5, 3, 6),  # Y, X1, X2, X3
+   loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
+   )
 ```
 
 ## Mediation models {#powerMediation}
@@ -2575,7 +2618,7 @@ provides accurate results only for models without latent variables.
 In the simple case of a mediation of the form `X -> M -> Y`, the
 relevant arguments specifying the size of the slopes and thus the
 magnitude of the mediation effect are `bYX`, `bMX`, and `bYM`. For
-instance, the following sets up three factors measured by 3, 4, and 5
+example (Figure \@ref(fig:figureModMed)), the following sets up three factors measured by 3, 4, and 5
 indicators (`nIndicator = c(3, 4, 5)`). All indicators of the first
 factor load by .5, all indicators of the second factor by .6, and all
 indicators of the third factor by .7 (`loadM = c(.5, .6, .7)`). See the
@@ -2593,18 +2636,22 @@ of 80% (`power = .80`) is requested.
 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     bYX = .25, 
-                                     bMX = .3, 
-                                     bYM = .4,
-                                     nullEffect = 'ind = 0',
-                                     # define measurement model
-                                     nIndicator = c(3, 4, 5),
-                                     loadM = c(.5, .6, .7)
-                                     )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   bYX = .25,                   # X -> Y
+   bMX = .3,                    # Y -> M
+   bYM = .4,                    # M -> Y
+   nullEffect = 'ind = 0',
+   # define measurement model
+   nIndicator = c(3, 4, 5),     # X, M, Y
+   loadM = c(.5, .6, .7)        # X, M, Y
+   )
 summary(powerMed)
+```
+
+```{r figureModMed, echo=FALSE, out.width="75%", fig.align = "left", fig.cap = "A latent mediation model with an indirect effect of .3*.4 in the population. The path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/med.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -2616,17 +2663,17 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(
-                                     # define type of power analysis
-                                     type = 'post-hoc', alpha = .05, N = 300,
-                                     # define hypothesis
-                                     bYX = .25, 
-                                     bMX = .3, 
-                                     bYM = .4,
-                                     nullEffect = 'ind = 0',
-                                     # define measurement model
-                                     nIndicator = c(3, 4, 5),
-                                     loadM = c(.5, .6, .7)
-                                     )
+   # define type of power analysis
+   type = 'post-hoc', alpha = .05, N = 300,
+   # define hypothesis
+   bYX = .25, 
+   bMX = .3, 
+   bYM = .4,
+   nullEffect = 'ind = 0',
+   # define measurement model
+   nIndicator = c(3, 4, 5),
+   loadM = c(.5, .6, .7)
+   )
 ```
 
 Now, `summary(powerMed)` provides the same information as a model-free
@@ -2657,17 +2704,17 @@ variable:
 
 ```{r eval=FALSE}
 powerMed <- semPower.powerMediation(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     bYX = .25, 
-                                     bMX = .3, 
-                                     bYM = .4,
-                                     nullEffect = 'ind = 0',
-                                     # define measurement model
-                                     nIndicator = c(1, 4, 5),
-                                     loadM = c(1, .6, .7)
-                                     )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   bYX = .25, 
+   bMX = .3, 
+   bYM = .4,
+   nullEffect = 'ind = 0',
+   # define measurement model
+   nIndicator = c(1, 4, 5),
+   loadM = c(1, .6, .7)
+   )
 ```
 
 Similarly, a mediation model involving observed variables only could be
@@ -2702,15 +2749,15 @@ Beta <- matrix(c(
   c(.00, .00, .40, .00)        # Y  = .00*X + .00*M1 + .40*M2 + .00*Y 
 ), byrow = TRUE, ncol = 4)
 powerMed <- semPower.powerMediation(
-                                     # define type of power analysis
-                                     type = 'a-priori', alpha = .05, power = .80,
-                                     # define hypothesis
-                                     Beta = Beta, 
-                                     indirect = list(c(2, 1), c(3, 2), c(4, 3)),
-                                     nullEffect = 'ind = 0',
-                                     # define measurement model
-                                     Lambda = diag(4)
-                                     )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   Beta = Beta, 
+   indirect = list(c(2, 1), c(3, 2), c(4, 3)),  # .2 * .3 * .4 
+   nullEffect = 'ind = 0',
+   # define measurement model
+   Lambda = diag(4)            # only observed variables
+   )
 ```
 
 
@@ -2819,13 +2866,14 @@ analysis is requested, `N` is a list providing the number of
 observations for each group.
 
 ```{r eval=FALSE}
-powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                    nullEffect = 'indA = indB',
-                                    bYX = list(.25, .25),
-                                    bMX = list(.2, .4),
-                                    bYM = list(.3, .5),
-                                    Lambda = diag(3)
-                                   )
+powerMed <- semPower.powerMediation(
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  nullEffect = 'indA = indB',
+  bYX = list(.25, .25),    # group1, group2
+  bMX = list(.2, .4),      # group1, group2
+  bYM = list(.3, .5),      # group1, group2
+  Lambda = diag(3)         # only observed
+ )
 ```
 
 The same as above can also be achieved using the `Beta` and `indirect`
@@ -2846,12 +2894,13 @@ Beta2 <- matrix(c(
   c(.40, .00, .00),    # M = .40*X + .00*M + .00*Y 
   c(.25, .50, .00)     # Y = .25*X + .50*M + .00*Y 
 ), byrow = TRUE, ncol = 3)
-powerMed <- semPower.powerMediation(type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                    nullEffect = 'indA = indB',
-                                    Beta = list(Beta1, Beta2),
-                                    indirect = list(c(2, 1), c(3, 2)),
-                                    Lambda = diag(3)
-                                    )
+powerMed <- semPower.powerMediation(
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  nullEffect = 'indA = indB',
+  Beta = list(Beta1, Beta2),          # group1, group2
+  indirect = list(c(2, 1), c(3, 2)),
+  Lambda = diag(3)
+  )
 ```
 
 ## Generic path models {#powerPath}
@@ -2911,6 +2960,7 @@ to obtain formatted results. The list contains the following components:
 -   `simRes`: Detailed simulation results when a [simulated power
     analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
 
+
 ##### Detect whether a slope differs from zero {.unnumbered}
 
 To perform a power analysis to detect whether a slope differs from zero,
@@ -2919,7 +2969,7 @@ be omitted).
 
 `semPower.powerRegression` requires to specify the regression relations
 between the factors via the `Beta` argument ([see this chapter for
-details](#semDefinition)). For instance, in the example below, there are
+details](#semDefinition)). In the example below (Figure \@ref(fig:figureModPath)), there are
 four factors (equal to number of columns/rows of `Beta`). The structure
 of `Beta` implies the relations $F_2 = .2 \cdot F_1$,
 $F_3 = .3 \cdot F_2$, and $F_4 = .1 \cdot F_1 + .4 \cdot F_3$.
@@ -2947,17 +2997,22 @@ Beta <- matrix(c(
   c(.10, .00, .40, .00)        # f4 = .10*f1 + .00*f2 + .40*f3 + .00*f4
 ), byrow = TRUE, ncol = 4)
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                Beta = Beta,
-                                nullWhich = c(4, 1),
-                                # define measurement model
-                                nIndicator = c(3, 4, 5, 6),
-                                loadM = c(.7, .5, .6, .8),
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Beta = Beta,
+  nullWhich = c(4, 1),
+  # define measurement model
+  nIndicator = c(3, 4, 5, 6),  # f1, f2, f3, f4
+  loadM = c(.7, .5, .6, .8),   # f1, f2, f3, f4
+  )
 summary(powerPath)
 ```
+
+```{r figureModPath, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A latent path model involving four factors. The (standardized) regression slope between F1 and F4 is .1 in the population. The path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/path.png")
+```
+
 
 The results of the power analysis are printed by calling the `summary`
 method on `powerPath`, which, in this example, provides the same
@@ -2968,16 +3023,16 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'post-hoc', alpha = .05, N = 300,
-                                # define hypothesis
-                                Beta = Beta,
-                                nullEffect = 'beta = 0',
-                                nullWhich = c(4, 1),
-                                # define measurement model
-                                nIndicator = c(3, 4, 5, 6),
-                                loadM = c(.7, .5, .6, .8),
-                                )
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300,
+  # define hypothesis
+  Beta = Beta,
+  nullEffect = 'beta = 0',
+  nullWhich = c(4, 1),
+  # define measurement model
+  nIndicator = c(3, 4, 5, 6),
+  loadM = c(.7, .5, .6, .8),
+  )
 ```
 
 Now, `summary(powerPath)` provides the same information as a model-free
@@ -3007,17 +3062,17 @@ Psi <- matrix(c(
   c(.00, .00, .30, 1.0)        # f4
 ), byrow = TRUE, ncol = 4)
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                Beta = Beta,
-                                Psi = Psi,
-                                nullEffect = 'beta = 0',
-                                nullWhich = c(4, 1),
-                                # define measurement model
-                                nIndicator = c(3, 4, 5, 6),
-                                loadM = c(.7, .5, .6, .8),
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Beta = Beta,
+  Psi = Psi,
+  nullEffect = 'beta = 0',
+  nullWhich = c(4, 1),
+  # define measurement model
+  nIndicator = c(3, 4, 5, 6),
+  loadM = c(.7, .5, .6, .8),
+  )
 ```
 
 Note that all examples above treated all parameters as completely
@@ -3046,15 +3101,15 @@ variables:
 
 ```{r eval=FALSE}
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                Beta = Beta,
-                                nullWhich = c(4, 1),
-                                # define measurement model
-                                nIndicator = c(1, 4, 1, 6),
-                                loadM = c(1, .5, 1, .8),
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Beta = Beta,
+  nullWhich = c(4, 1),
+  # define measurement model
+  nIndicator = c(1, 4, 1, 6),  # X1, f1, X2, f2 
+  loadM = c(1, .5, 1, .8),     # X1, f1, X2, f2   
+  )
 ```
 
 Similarly, a path model involving observed variables only could be
@@ -3087,16 +3142,16 @@ Beta <- matrix(c(
   c(.30, .40, .00, .00)        # f4 = .30*f1 + .40*f2 + .00*f3 + .00*f4
 ), byrow = TRUE, ncol = 4)
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                Beta = Beta,
-                                nullEffect = 'betaX = betaZ',
-                                nullWhich = list(c(4, 1), c(4, 2)),
-                                # define measurement model
-                                nIndicator = c(3, 4, 5, 6),
-                                loadM = c(.7, .5, .6, .8),
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  Beta = Beta,
+  nullEffect = 'betaX = betaZ',
+  nullWhich = list(c(4, 1), c(4, 2)),
+  # define measurement model
+  nIndicator = c(3, 4, 5, 6),
+  loadM = c(.7, .5, .6, .8),
+  )
 ```
 
 Note that `nullWhich` is now a list of vectors defining which slopes
@@ -3152,16 +3207,16 @@ Beta2 <- matrix(c(
   c(.30, .50, .00)        # f3 = .30*f1 + .50*f2 + .00*f3 + .00*f4
 ), byrow = TRUE, ncol = 3)
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                # define hypothesis
-                                Beta = list(Beta1, Beta2),
-                                nullEffect = 'betaA = betaB',
-                                nullWhich = c(2, 1),
-                                # define measurement model
-                                nIndicator =  c(5, 5, 5),
-                                loadM =  c(.7, .5, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  # define hypothesis
+  Beta = list(Beta1, Beta2),     # group1, group2
+  nullEffect = 'betaA = betaB',
+  nullWhich = c(2, 1),
+  # define measurement model (same across groups)
+  nIndicator =  c(5, 5, 5),
+  loadM =  c(.7, .5, .6)
+  )
 ```
 
 If there are more than two groups, the targeted slope is held equal
@@ -3191,17 +3246,17 @@ Beta3 <- matrix(c(
   c(.40, .00)       # f2 = .40*f1 + .00*f2
 ), byrow = TRUE, ncol =2)
 powerPath <- semPower.powerPath(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
-                                # define hypothesis
-                                Beta = list(Beta1, Beta2, Beta3),
-                                nullEffect = 'betaA = betaB',
-                                nullWhich = c(2, 1),
-                                nullWhichGroups =  c(1, 3),
-                                # define measurement model
-                                nIndicator =  c(5, 5),
-                                loadM =  c(.7, .5)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
+  # define hypothesis
+  Beta = list(Beta1, Beta2, Beta3),  # group1, group2, group3
+  nullEffect = 'betaA = betaB',
+  nullWhich = c(2, 1),
+  nullWhichGroups =  c(1, 3),        # restrict across group1 and group3
+  # define measurement model (same across groups)
+  nIndicator =  c(5, 5),
+  loadM =  c(.7, .5)
+  )
 ```
 
 ## Multiple group invariance {#powerMI}
@@ -3313,22 +3368,26 @@ and define the factor model in a way that at least one loading differs
 across groups (so that metric invariance is violated to the extent as
 defined by the difference in the loadings across groups).
 
-For instance, the following requests the required sample size (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises a single factor, which is measured by 5 indicators in both groups. The `loadings` argument specifies that in the first group, all indicators load by .5, whereas in the second group, the indicators load by .7, .4, .6, .4, .7. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to define the factor loadings. 
+For example (Figure \@ref(fig:figureModMI)), the following requests the required sample size (`type = 'a-priori'`) to detect that a metric invariance model (`nullEffect = 'metric'`) differs from a configural invariance model (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`). The model comprises a single factor, which is measured by 5 indicators in both groups. The `loadings` argument specifies that in the first group, all indicators load by .5, whereas in the second group, the indicators load by .7, .4, .6, .4, .7. See the chapter on [specifying a factor model](#factorDefinition) for alternative ways to define the factor loadings. 
 
 Furthermore, in multiple group models, the `N` argument also needs to be supplied as a list, which in case of an a priori power analysis gives the group weights. `N = list(1, 1)` requests equally sized groups. If using `N = list(2, 1)` instead, the first group would be twice as large as the second group. 
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           # define type of power analysis
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define measurement model
-                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
-                                          list(c(.7, .4, .6, .4, .7))) # group 2
-                           )
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = 'configural', 
+   nullEffect = 'metric',
+   # define measurement model
+   loadings= list(list(c(.5, .5, .5, .5, .5)), # single factor, group 1
+                  list(c(.7, .4, .6, .4, .7))) # single factor, group 2
+   )
 summary(powerMI)
+```
+
+```{r figureModMI, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A single factor model measured in two groups. In the H0 model, the loadings are restricted to be equal across groups (highlighted in red)."}
+knitr::include_graphics("fig/mi.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -3341,15 +3400,15 @@ the number of observations for each group:
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           # define type of power analysis
-                           type = 'post-hoc', alpha = .05, N = list(300, 400),
-                           # define hypothesis
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define factor model
-                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
-                                          list(c(.7, .4, .6, .4, .7))) # group 2
-                           )
+ # define type of power analysis
+ type = 'post-hoc', alpha = .05, N = list(300, 400),
+ # define hypothesis
+ comparison = 'configural', 
+ nullEffect = 'metric',
+ # define factor model
+ loadings= list(list(c(.5, .5, .5, .5, .5)),  # single factor, group 1
+                list(c(.7, .4, .6, .4, .7)))  # single factor, group 1
+ )
 ```
 
 Now, `summary(powerMI)` provides the same information as a model-free
@@ -3362,28 +3421,28 @@ following yields the same results as above:
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = 'none', 
-                           nullEffect = c('loadings'),
-                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
-                                          list(c(.7, .4, .6, .4, .7))) # group 2
-                           )
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = 'none', 
+   nullEffect = c('loadings'),
+   loadings= list(list(c(.5, .5, .5, .5, .5)),  # single factor, group 1
+                  list(c(.7, .4, .6, .4, .7)))  # single factor, group 1
+   )
 ```
 
 The arguments [specifying a factor model](#factorDefinition) must be provided as lists, where each component refers to a specific group. For instance, the following defines a two-factor model, where the first factor is measured by 3 indicators and the second factor is measured by 4 indicators. In the first group, all loadings are equal to .5. In the second group, the loadings on the first factor are also .5, but the loadings on the second factor are .6, .4, .3, and .5 (`loadings = list(list(c(.5, .5, .5), c(.5, .5, .5, .5)), list(c(.5, .5, .5), c(.6, .4, .3, .5)))`). In both groups, the factor correlation is .3 (`Phi = list(.3, 3)`).
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define two factors 
-                           loadings = list(list(c(.5, .5, .5),        # group 1, factor 1
-                                                c(.5, .5, .5, .5)),   # group 1, factor 2
-                                           list(c(.5, .5, .5),        # group 2, factor 1
-                                                c(.6, .4, .3, .5))),  # group 2, factor 2     
-                           Phi = list(.3, .3))
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   comparison = 'configural', 
+   nullEffect = 'metric',
+   # define two factors in two groups
+   loadings = list(list(c(.5, .5, .5),        # group 1, factor 1
+                        c(.5, .5, .5, .5)),   # group 1, factor 2
+                   list(c(.5, .5, .5),        # group 2, factor 1
+                        c(.6, .4, .3, .5))),  # group 2, factor 2     
+   Phi = list(.3, .3))                        # group1, group2
 ```
 
 All examples thus far relied on the default identification option (`useReferenceIndicator = FALSE` and `singleGroupIdent = TRUE`). This implies that the factor variances in models involving at least metric invariance are constrained to 1 in a single group, and freely estimated in all remaining groups. Similarly, the factor means in models involving at least scalar invariance are constrained to 0 in a single group, and freely estimated in all remaining groups. In the configural invariance model, factor variances and means are constrained to 1 and 0, respectively, in all groups.
@@ -3392,19 +3451,18 @@ Note that metric invariance equality restrictions are placed on the unstandardiz
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           # define type of power analysis
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = 'configural', 
-                           nullEffect = 'metric',
-                           # define measurement model
-                           loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
-                                          list(c(.6, .6, .6, .6, .6))), # group 2
-                           # identification options
-                           useReferenceIndicator = FALSE,
-                           singleGroupIdent = TRUE
-                           )
-
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = 'configural', 
+   nullEffect = 'metric',
+   # define measurement model
+   loadings= list(list(c(.5, .5, .5, .5, .5)), # group 1
+                  list(c(.6, .6, .6, .6, .6))), # group 2
+   # identification options
+   useReferenceIndicator = FALSE,
+   singleGroupIdent = TRUE
+   )
 ```
 
 However, the same code works well when setting `singleGroupIdent = FALSE`. Then, the factor variances are 1 in all groups regardless of the level of invariance, so the factor variances cannot account for proportionally different loadings. 
@@ -3437,21 +3495,21 @@ first, but -.3 in the second group:
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           # define type of power analysis
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = 'metric', 
-                           nullEffect = 'scalar',
-                           # define measurement model (same for all groups)
-                           nIndicator = 5,
-                           loadM = .5,
-                           # define indicator intercepts
-                           tau = list(
-                             # intercepts in the first group
-                             c(0, 0, 0, 0, 0),
-                             # intercepts in the second group
-                             c(0, .1, -.3, 0, 0)
-                           ))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = 'metric', 
+   nullEffect = 'scalar',
+   # define measurement model
+   nIndicator = 5,    # same across groups
+   loadM = .5,        # same across groups
+   # define indicator intercepts
+   tau = list(
+     # intercepts in the first group
+     c(0, 0, 0, 0, 0),
+     # intercepts in the second group
+     c(0, .1, -.3, 0, 0)
+   ))
 ```
 
 Equivalently, `comparison` and `nullEffect` can also be provided
@@ -3459,17 +3517,17 @@ according to `lavaan` conventions:
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = c('loadings'), 
-                           nullEffect = c('loadings', 'intercepts'),
-                           # define measurement model
-                           nIndicator = 5,
-                           loadM = .5,
-                           tau = list(
-                             c(0, 0, 0, 0, 0),
-                             c(0, .1, -.3, 0, 0)
-                           ))
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = c('loadings'), 
+   nullEffect = c('loadings', 'intercepts'),
+   # define measurement model
+   nIndicator = 5,   
+   loadM = .5,
+   tau = list(
+     c(0, 0, 0, 0, 0),
+     c(0, .1, -.3, 0, 0)
+   ))
 ```
 
 Similar as in the case of metric invariance, scalar invariance with the default identification option (`useReferenceIndicator = FALSE` and `singleGroupIdent = TRUE`) fixes only the latent factor means of the first group to 0, while the latent factor means of the other groups are set free. As a consequence, differences in indicator intercepts can be accounted for by the free factor means, if the intercepts are proportional across groups (i.e., the ratio of intercepts across groups is identical for all indicators within a factor). In such cases, the scalar invariance model shows no discrepancy and a power analysis cannot be performed. 
@@ -3478,21 +3536,23 @@ For instance, the following assumes a single-factor model, which is measured by 
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = 'metric', 
-                           nullEffect = 'scalar',
-                           # define measurement model
-                           nIndicator = 5,
-                           loadM = .5,
-                           tau = list(
-                             c(0, 0, 0, 0, 0),
-                             c(.1, .1, .1, .1, .1)
-                           ),
-                           # identification options
-                           useReferenceIndicator = FALSE,
-                           singleGroupIdent = TRUE
-                           )
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = 'metric', 
+   nullEffect = 'scalar',
+   # define measurement model
+   nIndicator = 5,   # same across groups
+   loadM = .5,       # same across groups
+   tau = list(
+     # intercepts in the first group
+     c(0, 0, 0, 0, 0),
+     # intercepts in the second group
+     c(.1, .1, .1, .1, .1)
+   ),
+   # identification options
+   useReferenceIndicator = FALSE,
+   singleGroupIdent = TRUE
+   )
 ```
 
 ##### Detect residual non-invariance {.unnumbered}
@@ -3522,14 +3582,14 @@ Theta2 <- matrix(c(
   c(0, 0, .60)
 ), ncol = 3, byrow = TRUE)
 powerMI <- semPower.powerMI(
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = c('loadings'), 
-                           nullEffect = c('loadings', 'residuals'),
-                           # define measurement model
-                           nIndicator = 3,
-                           loadM = .5, 
-                           Theta = list(Theta1, Theta2))
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = c('loadings'), 
+   nullEffect = c('loadings', 'residuals'),
+   # define measurement model
+   nIndicator = 3,                # same across groups
+   loadM = .5,                    # same across groups
+   Theta = list(Theta1, Theta2))  # group1, group2
 ```
 
 Note that if defining the invariance models using the predefined
@@ -3560,24 +3620,24 @@ factor variances are fixed to 1):
 
 ```{r eval=FALSE}
 powerMI <- semPower.powerMI(
-                           # define type of power analysis
-                           type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                           # define hypothesis
-                           comparison = c('loadings', 'intercepts'), 
-                           nullEffect = c('loadings', 'intercepts', 'means'),
-                           # define measurement model (same for all groups)
-                           nIndicator = 5,
-                           loadM = .5,
-                           # define indicator intercepts
-                           tau = list(
-                             c(0, 0, 0, 0, 0),
-                             c(0, 0, 0, 0, 0)
-                           ),
-                           # define latent means in the first and the second group
-                           Alpha = list(
-                             c(0.0), 
-                             c(0.5)
-                           ))
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+   # define hypothesis
+   comparison = c('loadings', 'intercepts'), 
+   nullEffect = c('loadings', 'intercepts', 'means'),
+   # define measurement model
+   nIndicator = 5,             # same across groups
+   loadM = .5,                 # same across groups
+   # define indicator intercepts
+   tau = list(
+     c(0, 0, 0, 0, 0),        # group1
+     c(0, 0, 0, 0, 0)         # group2
+   ),
+   # define latent means
+   Alpha = list(
+     c(0.0),                  # group1
+     c(0.5)                   # group2
+   ))
 ```
 
 ## Longitudinal invariance {#powerLI}
@@ -3698,7 +3758,7 @@ across measurement occasions (so that metric invariance is violated to
 the extent defined by the difference in the loadings across
 measurements).
 
-For instance, the following requests the required sample size
+For example (Figure \@ref(fig:figureModLI)), the following requests the required sample size
 (`type = 'a-priori'`) to detect that a metric invariance model
 (`nullEffect = 'metric'`) differs from a configural invariance model
 (`comparison = 'configural'`) on alpha = .05 (`alpha = .05`) with a
@@ -3728,6 +3788,11 @@ powerLI <- semPower.powerLI(
   Phi = .3
 )
 summary(powerLI)
+```
+
+
+```{r figureModLI, echo=FALSE, out.width="90%", fig.align = "left", fig.cap = "A single factor measured at two occasions. The model includes  autocorrelated indicator residuals  (which are all zero in the population). In the H0 model, the loadings are restricted to be equal across groups (highlighted in red)."}
+knitr::include_graphics("fig/li.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -3872,14 +3937,15 @@ powerLI <- semPower.powerLI(
   nullEffect = 'scalar',
   # define model
   loadings = list(
-    c(.7, .6, .7, .6),   # factor 1 at T1
-    c(.7, .6, .7, .6)    # factor 1 at T2
+    c(.7, .6, .7, .6),    # factor 1 at T1
+    c(.7, .6, .7, .6)     # factor 1 at T2
   ),
-  tau = c(0, 0, 0, 0,     # intercepts at time 1
-          0, .2, 0, .2),   # intercepts at time 2
+  tau = c(0, 0, 0, 0,     # intercepts at T1
+          0, .2, 0, .2),  # intercepts at T2
   Phi = .3
 )
 ```
+
 
 Equivalently, `comparison` and `nullEffect` can also be provided
 according to `lavaan` conventions:
@@ -3893,11 +3959,11 @@ powerLI <- semPower.powerLI(
   nullEffect = c('loadings', 'intercepts'),
   # define model
   loadings = list(
-    c(.7, .6, .7, .6),   # factor 1 at T1
-    c(.7, .6, .7, .6)    # factor 1 at T2
+    c(.7, .6, .7, .6),    # factor 1 at T1
+    c(.7, .6, .7, .6)     # factor 1 at T2
   ),
-  tau = c(0, 0, 0, 0,     # intercepts at time 1
-          0, .2, 0, .2),   # intercepts at time 2
+  tau = c(0, 0, 0, 0,     # intercepts at T1
+          0, .2, 0, .2),  # intercepts at T2
   Phi = .3
 )
 ```
@@ -3922,19 +3988,23 @@ powerLI <- semPower.powerLI(
   nullEffect = c('loadings', 'intercepts'),
   # define model
   loadings = list(
+    # loadings at T1
     list(
       c(.8, .8, .7),   # factor 1 at T1
       c(.5, .7, .5)    # factor 2 at T1
     ),
+    # loadings at T2
     list(
       c(.8, .8, .7),   # factor 1 at T2
       c(.5, .7, .5)    # factor 2 at T2
     )
   ),
   tau = list(
-    c(0, 0, 0,         # intercepts at T1 
+    # intercepts at T1
+    c(0, 0, 0,          
       0, 0, 0),
-    c(0, .2, 0,        # intercepts at T2 
+    # intercepts at T2     
+    c(0, .2, 0,
       0, .2, 0)
   ),
   Phi = diag(4)
@@ -3978,8 +4048,8 @@ powerLI <- semPower.powerLI(
   Phi = .3,
   # diagonal matrix for Theta
   Theta = diag(  
-    c(.75, .75, .75,   # time 1
-      .70, .50, .60)   # time 2
+    c(.75, .75, .75,   # T1
+      .70, .50, .60)   # T2
   )
 )
 ```
@@ -4230,7 +4300,7 @@ differs from zero, use `nullEffect = 'autoreg'` (or equivalently
 `nullEffect = 'lag1'`) for lag-1 effects, `nullEffect = 'lag2'` for
 lag-2 effects, and `nullEffect = 'lag3'` for lag-3 effects.
 
-For instance, the following requests the required sample size
+For example (Figure \@ref(fig:figureModautoreg)), the following requests the required sample size
 (`type = 'a-priori'`) to detect that the autoregressive lag-1 effect
 (`nullEffect = 'lag1'`) differs from zero with a power of 80%
 (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises an
@@ -4257,13 +4327,18 @@ powerAutoreg <- semPower.powerAutoreg(
   'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .7),  # x1->x2, x2->x3
+  autoregEffects = c(.5, .7),  # f1->f2, f2->f3
   nullEffect = 'autoreg = 0',
   nullWhich = 1,
   # define measurement model
-  nIndicator = c(3, 3, 3), loadM = .5
+  nIndicator = c(3, 3, 3),     # f1, f2, f3
+  loadM = .5
 )
 summary(powerAutoreg)
+```
+
+```{r figureModautoreg, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "An autoregressive model involving a single factor measured at three occasions with (standardized) autoregressive effects in the population of .5 from the first to the second and of .7 from the second to the third measurement. The model includes autocorrelated indicator residuals (which are all zero in the population). The path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/autoreg.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -4279,7 +4354,7 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'post-hoc', alpha = .05, N = 300,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .7),  # x1->x2, x2->x3
+  autoregEffects = c(.5, .7),  # f1->f2, f2->f3
   nullEffect = 'autoreg = 0',
   nullWhich = 1,
   # define measurement model
@@ -4309,7 +4384,7 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'post-hoc', alpha = .05, N = 300,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .7),  # x1->x2, x2->x3
+  autoregEffects = c(.5, .7),  # f1->f2, f2->f3
   nullEffect = 'autoreg = 0',
   nullWhich = 1,
   # define measurement model
@@ -4333,7 +4408,7 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .5),  # x1->x2, x2->x3
+  autoregEffects = c(.5, .5),  # f1->f2, f2->f3
   waveEqual = c('autoreg'),
   nullEffect = 'autoreg = 0',
   # define measurement model
@@ -4357,9 +4432,9 @@ powerAutoreg <- semPower.powerAutoreg(
   'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
-  lag1Effects = c(.5, .5, .5),     # x1->x2, x2->x3, x3->x4
-  lag2Effects = c(.2, .2),         # x1->x3, x2->x4
-  lag3Effects = .1,                # x1->x4
+  lag1Effects = c(.5, .5, .5),     # f1->f2, f2->f3, f3->f4
+  lag2Effects = c(.2, .2),         # f1->f3, f2->f4
+  lag3Effects = .1,                # f1->f4
   waveEqual = c('lag1', 'lag2'),
   nullEffect = 'lag3 = 0',
   # define measurement model
@@ -4389,7 +4464,7 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .6),  # x1->x2, x2->x3
+  autoregEffects = c(.5, .6),  # f1->f2, f2->f3
   nullEffect = 'lag1',
   # define measurement model
   nIndicator = c(3, 3, 3), loadM = .5,
@@ -4411,8 +4486,8 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 4,
-  lag1Effects = c(.5, .5, .5),  # x1->x2, x2->x3, x3->x4
-  lag2Effects = c(.2, .1),      # x1->x3, x2->x4
+  lag1Effects = c(.5, .5, .5),  # f1->f2, f2->f3, f3->f4
+  lag2Effects = c(.2, .1),      # f1->f3, f2->f4
   waveEqual = 'lag1',
   nullEffect = 'lag2',
   # define measurement model
@@ -4450,8 +4525,8 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .5),  # x1->x2, x2->x3
-  variances = c(1, .75, .50),  # x1, x2, x3
+  autoregEffects = c(.5, .5),  # f1->f2, f2->f3
+  variances = c(1, .75, .50),  # f1, f2, f3
   waveEqual = c('autoreg'),
   nullEffect = 'var',
   # define measurement model
@@ -4492,8 +4567,8 @@ powerAutoreg <- semPower.powerAutoreg(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 3,
-  autoregEffects = c(.5, .5),  # x1->x2, x2->x3
-  variances = c(1, .75, .75),  # x1, x2, x3
+  autoregEffects = c(.5, .5),  # f1->f2, f2->f3
+  variances = c(1, .75, .75),  # f1, f2, f3
   means = c(0, .25, .50),
   waveEqual = c('autoreg', 'var'),
   nullEffect = 'mean',
@@ -4543,8 +4618,8 @@ powerAutoreg <- semPower.powerAutoreg(
   # define hypothesis 
   nWaves = 3,
   autoregEffects = list(
-    c(.5, .5),  # group 1: x1->x2, x2->x3
-    c(.4, .4)   # group 2: x1->x2, x2->x3    
+    c(.5, .5),  # group 1: f1->f2, f2->f3
+    c(.4, .4)   # group 2: f1->f2, f2->f3    
   ),
   waveEqual = c('autoreg'),
   nullEffect = 'autoregA = autoregB',
@@ -4633,8 +4708,8 @@ longitudinal measurement invariance, see [`semPower.powerLI`](#powerLI).
     be empty. Valid are `'autoreg'`, `'autoregLag2'`, and
     `'autoregLag3'` for autoregressive effects, `'mvAvg'`,
     `'mvAvgLag2'`, and `'mvAvgLag3'` for moving average effects, `var`
-    for the variance of the noise factors $N_2 \ldots N_nWaves$ , and
-    `mean` for the conditional means of $X_2 \ldots X_nWaves$ (starting
+    for the variance of the noise factors $N_2 \ldots N_{nWaves}$ , and
+    `mean` for the conditional means of $X_2 \ldots X_{nWaves}$ (starting
     at the second measurement).
 -   `groupEqual`: Parameters that are restricted across groups in both
     the H0 and the H1 model, when `nullEffect` implies a multiple group
@@ -4692,7 +4767,7 @@ use `nullEffect = 'autoreg'` for lag-1 effects,
 `nullEffect = 'autoregLag2'` for lag-2 effects, and
 `nullEffect = 'autoregLag3'` for lag-3 effects.
 
-For instance, the following requests the required sample size
+For example (Figure \@ref(fig:figureModARMA)), the following requests the required sample size
 (`type = 'a-priori'`) to detect that the autoregressive lag-1 effect
 (`nullEffect = 'autoreg'`) differs across measurements with a power of
 80% (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises
@@ -4708,8 +4783,8 @@ the factor loadings. The autoregressive (lag-1) effects are .5 for
 variances of the noise variables (= the residual variances of $X$) are 1
 at each measurement occasion (`variances = c(1, 1, 1, 1, 1)`). To
 identify the model, the `waveEqual` argument is set so that the
-variances are restricted to be equal across measurements (excluding the
-first wave) in both the H0 and the H1 model (`waveEqual = c('var')`). In
+ moving average effects and the variances are restricted to be equal across measurements (excluding the
+first wave) in both the H0 and the H1 model (`waveEqual = c('mvAvg', 'var')`). In
 addition, the model comprises autocorrelated indicator residuals across
 time, because the `autocorResiduals` (which defaults to `TRUE`) argument
 is omitted, and assumes metric invariance across measurement occasions,
@@ -4722,15 +4797,20 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.4, .4, .4, .4),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
-  waveEqual = c('var'),
+  waveEqual = c('var', 'mvAvg'),
   nullEffect = 'autoreg',
   # define measurement model
-  nIndicator = rep(3, 5), loadM = .5
+  nIndicator = c(3, 3, 3, 3, 3),   #  f1, f2, f3, f4, f5
+  loadM = .5
 )
 summary(powerARMA)
+```
+
+```{r figureModARMA, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A latent ARMA model involving 5 waves. The (lag 1) autoregressive effects are  .5, .4, .3, and .2 in the population. The model includes autocorrelated indicator residuals (which are all zero in the population). The H0 model restricts the autoregressive effects to equality (highlighted in red). (Residual) variances and intercepts/means are not shown."}
+knitr::include_graphics("fig/arma.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -4746,13 +4826,14 @@ powerARMA <- semPower.powerARMA(
   type = 'post-hoc', alpha = .05, N = 300,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.4, .4, .4, .4),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
-  waveEqual = c('var'),
+  waveEqual = c('var', 'mvAvg'),
   nullEffect = 'autoreg',
   # define measurement model
-  nIndicator = rep(3, 5), loadM = .5
+  nIndicator = c(3, 3, 3, 3, 3),   #  f1, f2, f3, f4, f5
+  loadM = .5
 )
 ```
 
@@ -4778,10 +4859,10 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # f1->f2, f2->f3, f3->f4, f4->f5
+  mvAvgLag1 = c(.4, .4, .4, .4),    # n1->f2, n2->f3, n3->f4, n4->f5
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
-  waveEqual = c('var'),
+  waveEqual = c('var', 'mvAvg'),
   nullEffect = 'autoreg',
   # define measurement model
   Lamda = diag(5)
@@ -4809,10 +4890,10 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  autoregLag2 = c(.15, .1, .05),    # x1->x3, x2->x4, x3->x5 
-  autoregLag3 = c(.05, .10),        # x1->x5, x2->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.4, .4, .4, .4),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  autoregLag2 = c(.15, .1, .05),    # f1->f3, f2->f4, f3->f5 
+  autoregLag3 = c(.05, .10),        # f1->f5, f2->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var', 'autoreg', 'mvAvg'),
   nullEffect = 'autoregLag2',
@@ -4832,7 +4913,8 @@ average parameters: `nullEffect = 'mvAvg'` for lag-1 effects,
 `nullEffect = 'mvAvgLag3'` for lag-3 effects.
 
 For instance, the following sets up a population model largely identical
-to the example described above, but this time requests the required
+to the example described above, but restricts the autoregressive effects 
+to be equal and requests the required
 sample size to detect that the moving average parameters differ across
 measurements (`nullEffect = 'mvAvg'`).
 
@@ -4842,10 +4924,10 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .4, .5, .4),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.3, .4, .5, .4),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
-  waveEqual = c('var'),
+  waveEqual = c('var', 'autoreg'),
   nullEffect = 'mvAvg',
   # define measurement model
   nIndicator = rep(3, 5), loadM = .5
@@ -4876,12 +4958,12 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  autoregLag2 = c(.1, .1, .1),   # x1->x3, x2->x4, x3->x5 
-  autoregLag3 = c(.05, .05),        # x1->x5, x2->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
-  mvAvgLag2 = c(.20, .10, .05),     # n1->x3, n2->x4, n3->x5 
-  mvAvgLag3 = c(.05, .10),          # n1->x5, x2->x5 
+  autoregLag1 = c(.4, .4, .4, .4),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  autoregLag2 = c(.1, .1, .1),      # f1->f3, f2->f4, f3->f5 
+  autoregLag3 = c(.05, .05),        # f1->f5, f2->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5 
+  mvAvgLag2 = c(.20, .10, .05),     # n1->f3, n2->f4, n3->f5 
+  mvAvgLag3 = c(.05, .10),          # n1->f5, n2->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var', 'autoreg', 'autoregLag2', 'autoregLag3', 'mvAvg'),
   nullEffect = 'mvAvgLag2',
@@ -4917,8 +4999,8 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .5, .5, .5),  # f1->f2, f2->f3, f3->f4, f4->f5  
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, .75, .5, .5), # n1, n2, n3, n4, n5
   waveEqual = c('autoreg', 'mvAvg'),
   nullEffect = 'var',
@@ -4955,10 +5037,10 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .5, .5, .5),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5  
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
-  means = c(0, .3, .2, .5, .4),     # x1, x2, x3, x4, x5
+  means = c(0, .3, .2, .5, .4),     # f1, f2, f3, f4, f5
   waveEqual = c('autoreg', 'mvAvg', 'var'),
   nullEffect = 'mean',
   # define measurement model
@@ -5005,8 +5087,8 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .4, .3, .2),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .4, .3, .2),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var', 'mvAvg'),
   nullEffect = 'autoreg = 0',
@@ -5032,9 +5114,9 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80,
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.4, .4, .4, .4),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
-  mvAvgLag2 = c(.2, .2, .2),        # n1->x3, n2->x4, n3->x5 
+  autoregLag1 = c(.4, .4, .4, .4),  # f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->f2, n2->f3, n3->f4, n4->f5
+  mvAvgLag2 = c(.2, .2, .2),        # n1->f3, n2->f4, n3->f5 
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var', 'autoreg', 'mvAvg', 'mvAvgLag2'),
   nullEffect = 'mvAvgLag2 = 0',
@@ -5093,11 +5175,11 @@ powerARMA <- semPower.powerARMA(
   # define hypothesis 
   nWaves = 5,
   autoregLag1 = list(
-    c(.5, .5, .5, .5),  # group 1: x1->x2, x2->x3, x3->x4, x4->x5     
-    c(.3, .3, .3, .3)   # group 2: x1->x2, x2->x3, x3->x4, x4->x5     
+    c(.5, .5, .5, .5),  # group 1: f1->f2, f2->f3, f3->f4, f4->f5    
+    c(.3, .3, .3, .3)   # group 2: f1->f2, f2->f3, f3->f4, f4->f5     
   ),
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
-  variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
+  mvAvgLag1 = c(.3, .3, .3, .3),    # same across groups: n1->f2, n2->f3, n3->f4, n4->f5 
+  variances = c(1, 1, 1, 1, 1),     # same across groups: n1, n2, n3, n4, n5
   waveEqual = c('var', 'autoreg', 'mvAvg'),
   groupEqual = c('var'),
   nullEffect = 'autoregA = autoRegB',
@@ -5133,10 +5215,10 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .5, .5, .5),
+  autoregLag1 = c(.5, .5, .5, .5), # same across groups: f1->f2, f2->f3, f3->f4, f4->f5 
   mvAvgLag1 = list(
-    c(.5, .5, .4, .3),  # group 1: n1->x2, n2->x3, n3->x4, n4->x5     
-    c(.5, .2, .4, .3)   # group 2: n1->x2, n2->x3, n3->x4, n4->x5     
+    c(.5, .5, .4, .3),  # group 1: n1->f2, n2->f3, n3->f4, n4->f5     
+    c(.5, .2, .4, .3)   # group 2: n1->f2, n2->f3, n3->f4, n4->f5      
   ),
   variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
   waveEqual = c('var', 'autoreg'),
@@ -5171,11 +5253,11 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
+  autoregLag1 = c(.5, .5, .5, .5),  # same across groups: f1->f2, f2->f3, f3->f4, f4->f5
+  mvAvgLag1 = c(.3, .3, .3, .3),    # same across groups: n1->f2, n2->f3, n3->f4, n4->f5 
   variances = list(
-    c(1, 1, 1, 1, 1),         # n1, n2, n3, n4, n5
-    c(.6, .6, .6, .6, .6)     # n1, n2, n3, n4, n5
+    c(1, 1, 1, 1, 1),         # group 1: n1, n2, n3, n4, n5
+    c(.6, .6, .6, .6, .6)     # group 2: n1, n2, n3, n4, n5
   ),
   waveEqual = c('var', 'mvAvg', 'autoreg'),
   nullEffect = 'varA = varB',
@@ -5201,12 +5283,12 @@ powerARMA <- semPower.powerARMA(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 5,
-  autoregLag1 = c(.5, .5, .5, .5),  # x1->x2, x2->x3, x3->x4, x4->x5 
-  mvAvgLag1 = c(.3, .3, .3, .3),    # n1->x2, n2->x3, n3->x4, n4->x5 
-  variances = c(1, 1, 1, 1, 1),     # n1, n2, n3, n4, n5
+  autoregLag1 = c(.5, .5, .5, .5),  # same across groups: f1->f2, f2->f3, f3->f4, f4->f5 
+  mvAvgLag1 = c(.3, .3, .3, .3),    # same across groups: n1->f2, n2->f3, n3->f4, n4->f5 
+  variances = c(1, 1, 1, 1, 1),     # same across groups: n1, n2, n3, n4, n5
   means = list(
-    c(0, 0, 0, 0, 0),         # n1, n2, n3, n4, n5
-    c(0, .5, .5, .5, .5)     # n1, n2, n3, n4, n5
+    c(0, 0, 0, 0, 0),         # group 1: n1, n2, n3, n4, n5
+    c(0, .5, .5, .5, .5)      # group 2: n1, n2, n3, n4, n5
   ),
   waveEqual = c('var', 'mvAvg', 'autoreg', 'mean'),
   nullEffect = 'meanA = meanB',
@@ -5261,10 +5343,11 @@ analysis](#modelFreePower) should be performed.
 -   `nWaves`: The number of waves, must be at $\geq$ 2.
 -   `autoregEffects`: Vector of the autoregressive effects of $X$ and
     $Y$ (constant across waves), or a list of vectors of autoregressive
-    effects for $X$ and $Y$ from wave to wave.
+    effects for $X$ and $Y$ from wave to wave, e.g. `list(c(.7, .6), c(.5, .5))` for a autoregressive effect of .7 for `X1 -> X2` and .6 for `X2 -> X3` and autoregressive effects of .5 for `Y1 -> Y2` and `Y2 -> Y3`.
 -   `crossedEffects`: Vector of cross-lagged effects of $X$ on $Y$
     (`X -> Y`) and of $Y$ on $X$ (`Y -> X`) (both constant across
-    waves), or a list of vectors of cross-lagged effects for each wave.
+    waves), or a list of vectors of cross-lagged effects for each wave, e.g. 
+    `list(c(.2, .3), c(.1, .1))` for `⁠X1 - > Y2`⁠ = .2, `X2 -> Y3` = .3, `Y1 -> Y2` = .1, and `Y2 -> Y3` = .1.
 -   `rXY`: vector of (residual-)correlations between $X$ and $Y$ for
     each wave or `NULL` for no (residual-)correlations.
 -   `waveEqual`: Parameters that are assumed to be equal across waves in
@@ -5375,14 +5458,21 @@ instance, in the case of three waves,
 effect of .8 for `X1 -> X2` and of .6 for `X2 -> X3`, and an
 autoregressive effect of .7 for `Y1 -> Y2` and of .5 for `Y2 -> Y3`.
 When additionally specifying
-`crossedEffects = list(c(.1, .2), c(.3, .4))`, the system becomes:
+`crossedEffects = list(c(.1, .2), c(.3, .4))`, the system becomes (Figure \@ref(fig:figureModCLPMi)):
 
 $$
-\hat{X_2} = .8 \cdot X_1 + .2 \cdot Y_1 \\
-\hat{Y_2} = .1 \cdot X_1 + .7 \cdot Y_1 \\
-\hat{X_3} = .6 \cdot X_2 + .4 \cdot Y_2 \\
-\hat{Y_3} = .3 \cdot X_2 + .5 \cdot Y_2
-$$ By default, all defined parameters in `autoregEffects`,
+\hat{X_2} = .8 \cdot X_1 + .3 \cdot Y_1 \\
+\hat{Y_2} = .1 \cdot X_1 + .6 \cdot Y_1 \\
+\hat{X_3} = .7 \cdot X_2 + .4 \cdot Y_2 \\
+\hat{Y_3} = .2 \cdot X_2 + .5 \cdot Y_2
+$$ 
+
+```{r figureModCLPMi, echo=FALSE, out.width="75%", fig.align = "left", fig.cap = "A CLPM with two attributes measured at three waves."}
+knitr::include_graphics("fig/clpmi.png")
+```
+
+
+By default, all defined parameters in `autoregEffects`,
 `crossedEffects`, and `corXY` are treated as completely standardized
 parameters (`standardized = TRUE`). In this case `semPower` defines the
 residual variances in $\Psi$ such that all variances are 1. When
@@ -5489,7 +5579,7 @@ To perform a power analysis to detect whether the cross-lagged effect of
 either $X$ (`X -> Y`) or $Y$ (`Y -> X`) differs from zero, use
 `nullEffect = 'crossedX = 0'` or `nullEffect = 'crossedY = 0'`.
 
-For instance, the following sets up a CLPM with two waves (`nWaves = 2`)
+For example (Figure \@ref(fig:figureModCLPM)), the following sets up a CLPM with two waves (`nWaves = 2`)
 and requests the required sample size (`type = 'a-priori'`) to detect
 that a cross-lagged effect of $X$ of at least .10
 (`crossedEffects = c(.10, .15)`) differs from zero
@@ -5506,19 +5596,23 @@ section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'crossedX = 0',
-                                nWaves = 2,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = c(.10, .15),
-                                rXY = c(.3, .1),
-                                # define measurement model
-                                nIndicator = c(5, 3, 5, 3),
-                                loadM = c(.5, .6, .5, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'crossedX = 0',
+  nWaves = 2,
+  autoregEffects = c(.60, .70),   # X1 -> X2, Y1 -> Y2
+  crossedEffects = c(.10, .15),   # X1 -> Y2, Y1 -> X2
+  rXY = c(.3, .1),                # X1 <-> Y1, X2 <-> Y2 
+  # define measurement model
+  nIndicator = c(5, 3, 5, 3),     # X1, Y1, X2, Y2
+  loadM = c(.5, .6, .5, .6)       # X1, Y1, X2, Y2
+  )
 summary(powerCLPM)
+```
+
+```{r figureModCLPM, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A CLPM with two attributes measured twice each (i.e, two waves). In the population, the (standardized) cross-lagged effect of X on Y is .1, and the one of Y on X is .15. The model includes autocorrelated indicator residuals (which are all zero in the population). The path/parameter highlighted in red is targeted by the null hypothesis."}
+knitr::include_graphics("fig/clpm.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -5530,18 +5624,18 @@ power analysis need to be adapted accordingly:
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'post-hoc', alpha = .05, N = 500,
-                                # define hypothesis
-                                nullEffect = 'crossedX = 0',
-                                nWaves = 2,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = c(.10, .15),
-                                rXY = c(.3, .1),
-                                # define measurement model
-                                nIndicator = c(5, 3, 5, 3),
-                                loadM = c(.5, .6, .5, .6)
-                                )
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 500,
+  # define hypothesis
+  nullEffect = 'crossedX = 0',
+  nWaves = 2,
+  autoregEffects = c(.60, .70),   # X1 -> X2, Y1 -> Y2
+  crossedEffects = c(.10, .15),   # X1 -> Y2, Y1 -> X2
+  rXY = c(.3, .1),                # X1 <-> Y1, X2 <-> Y2 
+  # define measurement model
+  nIndicator = c(5, 3, 5, 3),     # X1, Y1, X2, Y2
+  loadM = c(.5, .6, .5, .6)       # X1, Y1, X2, Y2
+  )
 ```
 
 Now, `summary(powerCLPM)` provides the same information as a model-free
@@ -5555,17 +5649,17 @@ single indicator loading by 1, so these become observed variables:
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'crossedX = 0',
-                                nWaves = 2,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = c(.10, .15),
-                                rXY = c(.3, .1),
-                                # define measurement model
-                                Lambda = diag(4)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'crossedX = 0',
+  nWaves = 2,
+  autoregEffects = c(.60, .70),   # X1 -> X2, Y1 -> Y2
+  crossedEffects = c(.10, .15),   # X1 -> Y2, Y1 -> X2
+  rXY = c(.3, .1),                # X1 <-> Y1, X2 <-> Y2 
+  # define measurement model
+  Lambda = diag(4)
+  )
 ```
 
 If the model comprises more than two waves and the autoregressive
@@ -5588,18 +5682,18 @@ the cross-lagged effect of $X$, `nullEffect = 'crossedX = 0'`).
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'crossedX = 0',
-                                nWaves = 3,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = c(.10, .15),
-                                rXY = c(.3, .1, .1),
-                                waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
-                                # define measurement model
-                                Lambda = diag(6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'crossedX = 0',
+  nWaves = 3,
+  autoregEffects = c(.60, .70),  # X_s -> X_t, Y_s -> Y_t
+  crossedEffects = c(.10, .15),  # X_s -> Y_t, Y_s -> X_t
+  rXY = c(.3, .1, .1),           # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3 
+  waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY', 'corXY'),
+  # define measurement model
+  Lambda = diag(6)
+  )
 ```
 
 In all examples above, a power analysis was performed by comparing the
@@ -5632,18 +5726,18 @@ section on [defining the CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'autoregX = 0',
-                                nWaves = 2,
-                                autoregEffects = c(.50, .80),
-                                crossedEffects = c(.10, .05),
-                                rXY = c(.2, .3),
-                                # define measurement model
-                                nIndicator = c(3, 3, 3, 3),
-                                loadM = c(.5, .7, .5, .7)
-                                )
+    # define type of power analysis
+    type = 'a-priori', alpha = .05, power = .80,
+    # define hypothesis
+    nullEffect = 'autoregX = 0',
+    nWaves = 2,
+    autoregEffects = c(.50, .80),   # X1 -> X2, Y1 -> Y2
+    crossedEffects = c(.10, .05),   # X1 -> Y2, Y1 -> X2
+    rXY = c(.2, .3),                # X1 <-> Y1, X2 <-> Y2
+    # define measurement model
+    nIndicator = c(3, 3, 3, 3),
+    loadM = c(.5, .7, .5, .7)
+    )
 ```
 
 ##### Detect whether the cross-lagged effects of $X$ and $Y$ differ {.unnumbered}
@@ -5683,23 +5777,23 @@ CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'crossedX = crossedY',
-                                nullWhich = 1, 
-                                nWaves = 3,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = list(
-                                  c(.05, .15),     # X1 -> Y2; X2 -> Y3
-                                  c(.15, .20)      # Y1 -> X2; Y2 -> X3
-                                ),
-                                rXY = c(.3, .1, .1),
-                                waveEqual = c('autoregX', 'autoregY', 'corXY'),
-                                # define measurement model
-                                nIndicator = c(10, 8, 10, 8, 10, 8),
-                                loadM = c(.7, .6, .7, .6, .7, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'crossedX = crossedY',
+  nullWhich = 1, 
+  nWaves = 3,
+  autoregEffects = c(.60, .70),          # X_s -> X_t, Y_s -> Y_t 
+  crossedEffects = list(
+    c(.05, .15),                         # X1 -> Y2; X2 -> Y3
+    c(.15, .20)                          # Y1 -> X2; Y2 -> X3
+  ),
+  rXY = c(.3, .1, .1),                   # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3
+  waveEqual = c('autoregX', 'autoregY', 'corXY'),
+  # define measurement model
+  nIndicator = c(10, 8, 10, 8, 10, 8),   # X1, Y1, X2, Y2, X3, Y3 
+  loadM = c(.7, .6, .7, .6, .7, .6)      # X1, Y1, X2, Y2, X3, Y3  
+  )
 ```
 
 ##### Detect whether the autoregressive effects of $X$ and $Y$ differ {.unnumbered}
@@ -5723,22 +5817,22 @@ argument can be omitted.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'autoregX = autoregY',
-                                nWaves = 3,
-                                autoregEffects = c(.60, .70),
-                                crossedEffects = list(
-                                  c(.05, .15),     # X1 -> Y2; X2 -> Y3
-                                  c(.15, .20)      # Y1 -> X2; Y2 -> X3
-                                ),
-                                rXY = c(.3, .1, .1),
-                                waveEqual = c('autoregX', 'autoregY', 'corXY'),
-                                # define measurement model
-                                nIndicator = c(10, 8, 10, 8, 10, 8),
-                                loadM = c(.7, .6, .7, .6, .7, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'autoregX = autoregY',
+  nWaves = 3,
+  autoregEffects = c(.60, .70),          # X_s -> X_t, Y_s -> Y_t
+  crossedEffects = list(
+    c(.05, .15),                         # X1 -> Y2; X2 -> Y3
+    c(.15, .20)                          # Y1 -> X2; Y2 -> X3
+  ),
+  rXY = c(.3, .1, .1),                   # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3
+  waveEqual = c('autoregX', 'autoregY', 'corXY'),
+  # define measurement model
+  nIndicator = c(10, 8, 10, 8, 10, 8),   # X1, Y1, X2, Y2, X3, Y3
+  loadM = c(.7, .6, .7, .6, .7, .6)      # X1, Y1, X2, Y2, X3, Y3
+  )
 ```
 
 ##### Detect whether the cross-lagged effects differ across waves {.unnumbered}
@@ -5771,25 +5865,25 @@ CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'crossedX',
-                                nWaves = 3,
-                                autoregEffects = list(
-                                  c(.60, .70),     # X1 -> X2; X2 -> X3
-                                  c(.70, .70)      # Y1 -> Y2; Y2 -> Y3
-                                ),
-                                crossedEffects = list(
-                                  c(.05, .15),     # X1 -> Y2; X2 -> Y3
-                                  c(.15, .20)      # Y1 -> X2; Y2 -> X3
-                                ),
-                                rXY = c(.3, .1, .1),
-                                waveEqual = c('corXY'),
-                                # define measurement model
-                                nIndicator = c(10, 8, 10, 8, 10, 8),
-                                loadM = c(.7, .6, .7, .6, .7, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'crossedX',
+  nWaves = 3,
+  autoregEffects = list(
+    c(.60, .70),                       # X1 -> X2; X2 -> X3
+    c(.70, .70)                        # Y1 -> Y2; Y2 -> Y3
+  ),
+  crossedEffects = list(
+    c(.05, .15),                       # X1 -> Y2; X2 -> Y3
+    c(.15, .20)                        # Y1 -> X2; Y2 -> X3
+  ),
+  rXY = c(.3, .1, .1),                 # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3
+  waveEqual = c('corXY'),
+  # define measurement model
+  nIndicator = c(10, 8, 10, 8, 10, 8), # X1, Y1, X2, Y2, X3, Y3
+  loadM = c(.7, .6, .7, .6, .7, .6)    # X1, Y1, X2, Y2, X3, Y3
+  )
 ```
 
 ##### Detect whether the autoregressive effects differ across waves {.unnumbered}
@@ -5810,25 +5904,25 @@ not be possible, as there is no difference to detect.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'autoregX',
-                                nWaves = 3,
-                                autoregEffects = list(
-                                  c(.60, .70),     # X1 -> X2; X2 -> X3
-                                  c(.70, .70)      # Y1 -> Y2; Y2 -> Y3
-                                ),
-                                crossedEffects = list(
-                                  c(.05, .15),     # X1 -> Y2; X2 -> Y3
-                                  c(.15, .20)      # Y1 -> X2; Y2 -> X3
-                                ),
-                                rXY = c(.3, .1, .1),
-                                waveEqual = c('corXY'),
-                                # define measurement model
-                                nIndicator = c(10, 8, 10, 8, 10, 8),
-                                loadM = c(.7, .6, .7, .6, .7, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'autoregX',
+  nWaves = 3,
+  autoregEffects = list(
+    c(.60, .70),                       # X1 -> X2; X2 -> X3
+    c(.70, .70)                        # Y1 -> Y2; Y2 -> Y3
+  ),
+  crossedEffects = list(
+    c(.05, .15),                       # X1 -> Y2; X2 -> Y3
+    c(.15, .20)                        # Y1 -> X2; Y2 -> X3
+  ),
+  rXY = c(.3, .1, .1),                 # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3   
+  waveEqual = c('corXY'),
+  # define measurement model
+  nIndicator = c(10, 8, 10, 8, 10, 8), # X1, Y1, X2, Y2, X3, Y3
+  loadM = c(.7, .6, .7, .6, .7, .6)    # X1, Y1, X2, Y2, X3, Y3
+  )
 ```
 
 ##### Detect whether the residual correlations between $X$ and $Y$ differ across waves {.unnumbered}
@@ -5861,23 +5955,23 @@ CLPM structure](#clpmDefinition) for details.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80,
-                                # define hypothesis
-                                nullEffect = 'corXY',
-                                nWaves = 3,
-                                autoregEffects = list(
-                                  c(.60, .70),     # X1 -> X2; X2 -> X3
-                                  c(.70, .70)      # Y1 -> Y2; Y2 -> Y3
-                                ),
-                                crossedEffects = c(.05, .15),
-                                rXY = c(.3, .2, .1),
-                                waveEqual = c('crossedX', 'crossedY', 'autoregY'),
-                                standardized = FALSE, 
-                                # define measurement model
-                                nIndicator = c(10, 8, 10, 8, 10, 8),
-                                loadM = c(.7, .6, .7, .6, .7, .6)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'corXY',
+  nWaves = 3,
+  autoregEffects = list(
+    c(.60, .70),                        # X1 -> X2; X2 -> X3
+    c(.70, .70)                         # Y1 -> Y2; Y2 -> Y3
+  ),
+  crossedEffects = c(.05, .15),         # X_s -> Y_t, Y_s -> X_t
+  rXY = c(.3, .2, .1),                  # X1 <-> Y1, X2 <-> Y2, X3 <-> Y3  
+  waveEqual = c('crossedX', 'crossedY', 'autoregY'),
+  standardized = FALSE, 
+  # define measurement model
+  nIndicator = c(10, 8, 10, 8, 10, 8),  # X1, Y1, X2, Y2, X3, Y3
+  loadM = c(.7, .6, .7, .6, .7, .6)     # X1, Y1, X2, Y2, X3, Y3
+  )
 ```
 
 Whereas all previous examples were based on standardized effects (by
@@ -5931,33 +6025,33 @@ second group. If a post hoc or compromise power analysis is requested,
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                # define hypothesis
-                                nullEffect = 'crossedXA = crossedXB',
-                                nWaves = 3,
-                                autoregEffects = list(
-                                  # group 1
-                                  list(c(.80, .80),   # X1 -> X2, X2 -> X3 
-                                       c(.70, .70)),  # Y1 -> Y2, Y2 -> Y3
-                                  # group 2
-                                  list(c(.60, .60),   # X1 -> X2, X2 -> X3
-                                       c(.70, .70))   # Y1 -> Y2, Y2 -> Y3
-                                ),
-                                crossedEffects = list(
-                                  # group 1
-                                  list(c(.10, .10),   # X1 -> Y2, X2 -> Y3 
-                                       c(.05, .05)),  # Y1 -> X2, Y2 -> X3
-                                  # group 2
-                                  list(c(.20, .20),   # X1 -> Y2, X2 -> Y3
-                                       c(.05, .05))   # Y1 -> X2, Y2 -> X3
-                                ),
-                                waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
-                                rXY = NULL,
-                                # define measurement model
-                                nIndicator = c(5, 3, 5, 3, 5, 3),
-                                loadM = c(.5, .4, .5, .4, .5, .4)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  # define hypothesis
+  nullEffect = 'crossedXA = crossedXB',
+  nWaves = 3,
+  autoregEffects = list(
+    # group 1
+    list(c(.80, .80),   # X1 -> X2, X2 -> X3 
+         c(.70, .70)),  # Y1 -> Y2, Y2 -> Y3
+    # group 2
+    list(c(.60, .60),   # X1 -> X2, X2 -> X3
+         c(.70, .70))   # Y1 -> Y2, Y2 -> Y3
+  ),
+  crossedEffects = list(
+    # group 1
+    list(c(.10, .10),   # X1 -> Y2, X2 -> Y3 
+         c(.05, .05)),  # Y1 -> X2, Y2 -> X3
+    # group 2
+    list(c(.20, .20),   # X1 -> Y2, X2 -> Y3
+         c(.05, .05))   # Y1 -> X2, Y2 -> X3
+  ),
+  waveEqual = c('autoregX', 'autoregY', 'crossedX', 'crossedY'),
+  rXY = NULL,           # uncorrelated
+  # define measurement model (same across groups)
+  nIndicator = c(5, 3, 5, 3, 5, 3),   # X1, Y1, X2, Y2, X3, Y3
+  loadM = c(.5, .4, .5, .4, .5, .4)   # X1, Y1, X2, Y2, X3, Y3
+  )
 ```
 
 If there are more than two groups, the targeted cross-lagged effect is
@@ -5974,31 +6068,31 @@ constrain to equality across groups.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
-                                # define hypothesis
-                                nullEffect = 'crossedXA = crossedXB',
-                                nullWhich = 1,
-                                nullWhichGroups = c(1, 3),
-                                nWaves = 3,
-                                autoregEffects = c(.80, .70),  # (X->Y, Y->X) in all groups and all waves 
-                                crossedEffects = list(
-                                  # group 1
-                                  list(c(.05, .20),   # X1 -> Y2, X2 -> Y3 
-                                       c(.00, .05)),  # Y1 -> X2, Y2 -> X3
-                                  # group 2
-                                  list(c(.10, .10),   # X1 -> Y2, X2 -> Y3 
-                                       c(.15, .15)),  # Y1 -> X2, Y2 -> X3
-                                  # group 3
-                                  list(c(.20, .20),   # X1 -> Y2, X2 -> Y3
-                                       c(.05, .10))   # Y1 -> X2, Y2 -> X3
-                                ),
-                                waveEqual = c('autoregX', 'autoregY'),
-                                rXY = c(.3, .3, .3),  # for all groups
-                                # define measurement model
-                                nIndicator = c(5, 3, 5, 3, 5, 3),
-                                loadM = c(.5, .4, .5, .4, .5, .4)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1, 1),
+  # define hypothesis
+  nullEffect = 'crossedXA = crossedXB',
+  nullWhich = 1,
+  nullWhichGroups = c(1, 3),
+  nWaves = 3,
+  autoregEffects = c(.80, .70),  # (X->Y, Y->X) in all groups and all waves 
+  crossedEffects = list(
+    # group 1
+    list(c(.05, .20),   # X1 -> Y2, X2 -> Y3 
+         c(.00, .05)),  # Y1 -> X2, Y2 -> X3
+    # group 2
+    list(c(.10, .10),   # X1 -> Y2, X2 -> Y3 
+         c(.15, .15)),  # Y1 -> X2, Y2 -> X3
+    # group 3
+    list(c(.20, .20),   # X1 -> Y2, X2 -> Y3
+         c(.05, .10))   # Y1 -> X2, Y2 -> X3
+  ),
+  waveEqual = c('autoregX', 'autoregY'),
+  rXY = c(.3, .3, .3),  # same across groups
+  # define measurement model (same across groups)
+  nIndicator = c(5, 3, 5, 3, 5, 3),
+  loadM = c(.5, .4, .5, .4, .5, .4)
+  )
 ```
 
 ##### Detect whether the autoregressive effect of $X$ or $Y$ differs across groups {.unnumbered}
@@ -6025,27 +6119,27 @@ applied.
 
 ```{r eval=FALSE}
 powerCLPM <- semPower.powerCLPM(
-                                # define type of power analysis
-                                type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                # define hypothesis
-                                nullEffect = 'autoregXA = autoregXB',
-                                nullWhich = 2,
-                                nWaves = 3,
-                                autoregEffects = list(
-                                  # group 1
-                                  list(c(.80, .80),   # X1 -> X2, X2 -> X3 
-                                       c(.70, .70)),  # Y1 -> Y2, Y2 -> Y3
-                                  # group 2
-                                  list(c(.80, .60),   # X1 -> X2, X2 -> X3
-                                       c(.70, .70))   # Y1 -> Y2, Y2 -> Y3
-                                ),
-                                crossedEffects = c(.10, .05), # (X->Y, Y->X) in all groups and all waves
-                                waveEqual = c('crossedX', 'crossedY'),
-                                rXY = NULL,
-                                # define measurement model
-                                nIndicator = c(5, 3, 5, 3, 5, 3),
-                                loadM = c(.5, .4, .5, .4, .5, .4)
-                                )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  # define hypothesis
+  nullEffect = 'autoregXA = autoregXB',
+  nullWhich = 2,
+  nWaves = 3,
+  autoregEffects = list(
+    # group 1
+    list(c(.80, .80),   # X1 -> X2, X2 -> X3 
+         c(.70, .70)),  # Y1 -> Y2, Y2 -> Y3
+    # group 2
+    list(c(.80, .60),   # X1 -> X2, X2 -> X3
+         c(.70, .70))   # Y1 -> Y2, Y2 -> Y3
+  ),
+  crossedEffects = c(.10, .05), # (X->Y, Y->X) in all groups and all waves
+  waveEqual = c('crossedX', 'crossedY'),
+  rXY = NULL,           # uncorrelated 
+  # define measurement model (same across groups)
+  nIndicator = c(5, 3, 5, 3, 5, 3),
+  loadM = c(.5, .4, .5, .4, .5, .4)
+  )
 
 ```
 
@@ -6077,7 +6171,7 @@ To perform a power analysis to detect whether the correlation between
 the random intercept factors differs from zero, use
 `nullEffect = 'corBXBY = 0'`.
 
-For instance, the following sets up a RI-CLPM with three waves
+For example (Figure \@ref(fig:figureModRICLPM)), the following sets up a RI-CLPM with three waves
 (`nWaves = 3`) and requests the required sample size
 (`type = 'a-priori'`) to detect that the correlation between the random
 intercept factors (of .30; `rBXBY= .30`) differs from zero
@@ -6093,20 +6187,26 @@ the arguments, see the chapter on traditional [CLPMs](#powerCLPM).
 
 ```{r eval=FALSE}
 powerRICLPM <- semPower.powerRICLPM(
-                                    # define type of power analysis
-                                    type = 'a-priori', alpha = .05, power = .80,
-                                    # define hypothesis
-                                    nullEffect = 'corBXBY = 0',
-                                    nWaves = 3,
-                                    autoregEffects = c(.5, .4),   # (X, Y)
-                                    crossedEffects = c(.2, .1),   # (X, Y)
-                                    rXY = NULL,                   # diagonal
-                                    rBXBY = .30,                  
-                                    # define measurement model
-                                    nIndicator = rep(3, 6),
-                                    loadM = rep(c(.5, .6), 3)
-                                    )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80,
+  # define hypothesis
+  nullEffect = 'corBXBY = 0',
+  nWaves = 3,
+  autoregEffects = c(.5, .4),   # X_s -> X_t, Y_s -> Y_t 
+  crossedEffects = c(.2, .1),   # X_s -> Y_t, Y_s -> X_t
+  rXY = NULL,                   # diagonal
+  rBXBY = .30,                  
+  # define measurement model
+  nIndicator = rep(3, 6),
+  loadM = rep(c(.5, .6), 3)
+  )
 ```
+
+
+```{r figureModRICLPM, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A latent RI-CLPM with two attributes measured at three waves. In the population, the correlation between the intercept factors of X and Y is .3. The model includes autocorrelated indicator residuals (which are all zero in the population). The path/parameter highlighted in red is targeted by the null hypothesis. (Residual) variances and intercepts/means are not shown."}
+knitr::include_graphics("fig/riclpm.png")
+```
+
 
 ##### Detect whether the correlations between the random intercept factors differ across groups {.unnumbered}
 
@@ -6135,31 +6235,31 @@ see the chapter on traditional [CLPMs](#powerCLPM).
 
 ```{r eval=FALSE}
 powerRICLPM <- semPower.powerRICLPM(
-                                    # define type of power analysis
-                                    type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
-                                    # define hypothesis
-                                    nullEffect = 'crossedXA = crossedXB',
-                                    nullWhich = 2,
-                                    nWaves = 3,
-                                    autoregEffects = c(.5, .4),   # constant across waves and groups
-                                    crossedEffects = list(
-                                    # group 1
-                                    list(
-                                      c(.25, .10),    # X1 -> Y2, X2 -> Y3 
-                                      c(.05, .15)     # Y1 -> X2, Y2 -> X3 
-                                      ),
-                                    # group 2
-                                    list(
-                                       c(.15, .05),   # X1 -> Y2, X2 -> Y3 
-                                       c(.01, .10)    # Y1 -> X2, Y2 -> X3 
-                                       )
-                                    ),
-                                    rXY = NULL,                   # diagonal
-                                    rBXBY = list(.3, .6),         # (group1, group2) 
-                                    # define measurement model (same for all groups)
-                                    nIndicator = rep(3, 6),
-                                    loadM = rep(c(.5, .6), 3)
-                                    )
+  # define type of power analysis
+  type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
+  # define hypothesis
+  nullEffect = 'crossedXA = crossedXB',
+  nullWhich = 2,
+  nWaves = 3,
+  autoregEffects = c(.5, .4),   #  X_s -> X_t, Y_s -> Y_t; constant across waves and groups
+  crossedEffects = list(
+  # group 1
+  list(
+    c(.25, .10),    # X1 -> Y2, X2 -> Y3 
+    c(.05, .15)     # Y1 -> X2, Y2 -> X3 
+    ),
+  # group 2
+  list(
+     c(.15, .05),   # X1 -> Y2, X2 -> Y3 
+     c(.01, .10)    # Y1 -> X2, Y2 -> X3 
+     )
+  ),
+  rXY = NULL,                   # diagonal
+  rBXBY = list(.3, .6),         # (group1, group2) 
+  # define measurement model (same for all groups)
+  nIndicator = rep(3, 6),
+  loadM = rep(c(.5, .6), 3)
+  )
 ```
 
 ## Latent growth curve models {#powerLGCM}
@@ -6307,7 +6407,7 @@ factor, the slope factor, or the quadratic slope factor (if present)
 differs from zero, use `nullEffect = 'iMean'`, `nullEffect = 'sMean'`,
 and `nullEffect = 'iMean2'`, respectively.
 
-For instance, the following requests the required sample size
+For example (Figure \@ref(fig:figureModLGCM)), the following requests the required sample size
 (`type = 'a-priori'`) to detect that the mean of the slope factor
 (`nullEffect = 'sMean'`) differs from zero with a power of 80%
 (`power = .80`) on alpha = .05 (`alpha = .05`). The model comprises an
@@ -6335,9 +6435,16 @@ powerLGCM <- semPower.powerLGCM(
   covariances = .25,
   nullEffect = 'sMean = 0',
   # define measurement model
-  nIndicator = rep(3, 3), loadM = .5
+  nIndicator = rep(3, 3), 
+  loadM = .5
 )
 summary(powerLGCM)
+```
+
+
+
+```{r figureModLGCM, echo=FALSE, out.width="100%", fig.align = "left", fig.cap = "A latent LGCM with a factor measured on three occasions (i.e., 3 waves). In the population, the means of the intercept and slope factors are .5 and .2, respectively. The model includes autocorrelated indicator residuals (which are all zero in the population). The path/parameter highlighted in red is targeted by the null hypothesis. (Residual) variances are not shown."}
+knitr::include_graphics("fig/lgcm.png")
 ```
 
 The results of the power analysis are printed by calling the `summary`
@@ -6358,7 +6465,8 @@ powerLGCM <- semPower.powerLGCM(
   covariances = .25,
   nullEffect = 'sMean = 0',
   # define measurement model
-  nIndicator = rep(3, 3), loadM = .5
+  nIndicator = rep(3, 3), 
+  loadM = .5
 )
 ```
 
@@ -6386,13 +6494,14 @@ powerLGCM <- semPower.powerLGCM(
   nWaves = 3,
   means = c(.5, .2),     # i, s
   covariances = matrix(c(
-      # i, s
-    c(1, .25),
-    c(.25, .5)
+    #    i     s
+    c(1.00, 0.25), # i
+    c(0.25, 0.50)  # s
     ), ncol = 2, byrow = TRUE),
   nullEffect = 'sMean = 0',
   # define measurement model
-  nIndicator = rep(3, 3), loadM = .5
+  nIndicator = rep(3, 3), 
+  loadM = .5
 )
 ```
 
@@ -6438,14 +6547,15 @@ powerLGCM <- semPower.powerLGCM(
   quadratic = TRUE, 
   means = c(.5, .2, .1),     # i, s, s2
   covariances = matrix(c(
-    # i,   s,   s2
-    c(1, .25, .10),
-    c(.25, .5, .05),
-    c(.10, .05, .10)
+    #   i    s   s2
+    c(1.0, .25, .10), # i
+    c(.25, .50, .05), # s
+    c(.10, .05, .10)  # s2
   ), ncol = 3, byrow = TRUE),
   nullEffect = 's2Mean = 0',
   # define measurement model
-  nIndicator = rep(3, 4), loadM = .5
+  nIndicator = rep(3, 4), 
+  loadM = .5
 )
 ```
 
@@ -6478,14 +6588,15 @@ powerLGCM <- semPower.powerLGCM(
   quadratic = TRUE, 
   means = c(.5, .2, .1),     # i, s, s2
   covariances = matrix(c(
-    # i,   s,   s2
-    c(1, .25, .10),
-    c(.25, .5, .05),
-    c(.10, .05, .10)
+    # i      s   s2
+    c(1.0, .25, .10),  # i
+    c(.25, .50, .05),  # s
+    c(.10, .05, .10)   # s2
   ), ncol = 3, byrow = TRUE),
   nullEffect = 'iVar = 0',
   # define measurement model
-  nIndicator = rep(3, 4), loadM = .5
+  nIndicator = rep(3, 4), 
+  loadM = .5
 )
 ```
 
@@ -6522,14 +6633,15 @@ powerLGCM <- semPower.powerLGCM(
   quadratic = TRUE, 
   means = c(.5, .2, .1),     # i, s, s2
   covariances = matrix(c(
-    # i,   s,   s2
-    c(1, .25, .10),
-    c(.25, .5, .05),
-    c(.10, .05, .10)
+    # i      s   s2
+    c(1.0, .25, .10),  # i
+    c(.25, .50, .05),  # s
+    c(.10, .05, .10)   # s2
   ), ncol = 3, byrow = TRUE),
   nullEffect = 'isCov = 0',
   # define measurement model
-  nIndicator = rep(3, 4), loadM = .5
+  nIndicator = rep(3, 4), 
+  loadM = .5
 )
 ```
 
@@ -6683,11 +6795,12 @@ powerLGCM <- semPower.powerLGCM(
     c(.5, .2),          # group 1: i, s
     c(.0, .4)           # group 2: i, s  
   ),          
-  variances = c(1, 1),         # i, s
+  variances = c(1, 1),  # i, s (same across groups)
   covariances = .3,
   nullEffect = 'iMeanA = iMeanB',
-  # define measurement model
-  nIndicator = rep(3, 3), loadM = rep(.5, 3)
+  # define measurement model (same for all groups)
+  nIndicator = rep(3, 3), 
+  loadM = rep(.5, 3)
 )
 ```
 
@@ -6715,15 +6828,16 @@ powerLGCM <- semPower.powerLGCM(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
-  means = c(.5, .2),           # i, s
+  means = c(.5, .2),    # i, s (same across groups)
   variances = list(
     c(.5, 1),           # group 1: i, s
     c(.5, .5)           # group 2: i, s
   ),         
   covariances = .3,
   nullEffect = 'sVarA = sVarB',
-  # define measurement model
-  nIndicator = rep(3, 3), loadM = rep(.5, 3)
+  # define measurement model (same for all groups)
+  nIndicator = rep(3, 3), 
+  loadM = rep(.5, 3)
 )
 ```
 
@@ -6753,13 +6867,14 @@ powerLGCM <- semPower.powerLGCM(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
-  means = c(.5, .2),              # i, s
-  variances = c(1, 1),            # i, s
+  means = c(.5, .2),              # i, s (same across groups)
+  variances = c(1, 1),            # i, s (same across groups)
   covariances = list(.3, 0),      # group1, group2
   groupEqual = c('iVar', 'sVar'),
   nullEffect = 'isCovA = isCovB',
-  # define measurement model
-  nIndicator = rep(3, 3), loadM = rep(.5, 3)
+  # define measurement model (same for all groups)
+  nIndicator = rep(3, 3), 
+  loadM = rep(.5, 3)
 )
 ```
 
@@ -6794,16 +6909,16 @@ powerLGCM <- semPower.powerLGCM(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
-  means = c(.5, .2),     # i, s
-  variances = c(1, 1),   # i, s
-  covariances = .3,
+  means = c(.5, .2),     # i, s (same across groups)
+  variances = c(1, 1),   # i, s (same across groups)
+  covariances = .3, 
   groupEqual = c('iVar', 'sVar', 'isCov'),
   ticExogSlopes = list(
-    c(.5, .1),           # group 1: i, s
-    c(.1, .2)            # group 2: i, s
+    c(.5, .1),           # group 1: cov -> i, cov -> s
+    c(.1, .2)            # group 2: cov -> i, cov -> s
   ),
   nullEffect = 'betaITA = betaITB',
-  # define measurement model
+  # define measurement model (same for all groups)
   loadings = list(
     c(.5, .6, .7),       # x1
     c(.5, .6, .7),       # x2
@@ -6837,16 +6952,16 @@ powerLGCM <- semPower.powerLGCM(
   type = 'a-priori', alpha = .05, power = .80, N = list(1, 1),
   # define hypothesis 
   nWaves = 3,
-  means = c(.5, .2),     # i, s
-  variances = c(1, 1),   # i, s
+  means = c(.5, .2),     # i, s (same across groups)
+  variances = c(1, 1),   # i, s (same across groups)
   covariances = .3,
   groupEqual = c('iVar', 'sVar', 'isCov'),
   ticEndogSlopes = list(
-    c(.3, .2),           # group 1: i, s
-    c(.1, .5)            # group 2: i, s
+    c(.3, .2),           # group 1: i -> cov, s -> cov
+    c(.1, .5)            # group 2: i -> cov, s -> cov
   ),
   nullEffect = 'betaTSA = betaTSB',
-  # define measurement model
+  # define measurement model (same for all groups)
   loadings = list(
     c(.5, .6, .7),       # x1
     c(.5, .6, .7),       # x2
@@ -6993,10 +7108,11 @@ model strings as tediously done in full detail above, the very same may
 also be achieved through
 
 ```{r eval=FALSE}
-generated <- semPower.genSigma(Phi = .90, 
-                               loadings = list(
-                                 c(.7, .7, .5, .5),
-                                 c(.8, .6, .6, .4)))
+generated <- semPower.genSigma(
+  Phi = .90, 
+  loadings = list(
+    c(.7, .7, .5, .5),
+    c(.8, .6, .6, .4)))
 modelH1 <- generated$modelTrue
 # define modelH0 as function of modelH1 plus the 
 # additional constraint of interest
@@ -7010,11 +7126,13 @@ in this example, requesting an a priori power analysis:
 
 ```{r eval=FALSE}
 # using the population model 
-ap <- semPower.powerLav(type = 'a-priori', alpha = .05, power = .80,
-                        modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
+ap <- semPower.powerLav(
+  type = 'a-priori', alpha = .05, power = .80,
+  modelPop = modelPop, modelH0 = modelH0, modelH1 = modelH1)
 # using the population covariance matrix 
-ap <- semPower.powerLav(type = 'a-priori', alpha = .05, power = .80,
-                        Sigma = generated$Sigma, modelH0 = modelH0, modelH1 = modelH1)
+ap <- semPower.powerLav(
+  type = 'a-priori', alpha = .05, power = .80,
+  Sigma = generated$Sigma, modelH0 = modelH0, modelH1 = modelH1)
 summary(ap)
 ```
 
@@ -7105,8 +7223,9 @@ defined: `effect = .05`, `effect.measure = 'RMSEA'`,`alpha = .05`,
 `df = 100`.
 
 ```{r eval = FALSE}
-semPower.powerPlot.byN(effect = .05, effect.measure = 'RMSEA', 
-                       alpha = .05, df = 100, power.min = .05, power.max = .99)
+semPower.powerPlot.byN(
+  effect = .05, effect.measure = 'RMSEA', 
+  alpha = .05, df = 100, power.min = .05, power.max = .99)
 ```
 
 ## Power by the magnitude of effect for a given N {#plotByEffect}
@@ -7122,8 +7241,9 @@ and the alpha error need to be defined: `N = 500`, `df = 100`,
 `alpha = .05`.
 
 ```{r figurePowerPlotByEffect, fig.cap = "Power as function of the RMSEA with N = 500."}
-semPower.powerPlot.byEffect(effect.measure = 'RMSEA', alpha = .05, N = 500, 
-                            df = 100, effect.min = .001, effect.max = .10)
+semPower.powerPlot.byEffect(
+  effect.measure = 'RMSEA', alpha = .05, N = 500, 
+  df = 100, effect.min = .001, effect.max = .10)
 ```
 
 This shows that with N = 500, a model with an associated RMSEA \> .04 is
@@ -7372,15 +7492,15 @@ obtain reproducible results (`set.seed(300121)`).
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE)
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE)
 ```
 
 To change the number of replications and/or the minimum convergence
@@ -7393,21 +7513,21 @@ cores (`nCores = 8`).
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                nReplications = 1000,
-                                minConvergenceRate = .90,
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    nReplications = 1000,
+    minConvergenceRate = .90,
+    nCores = 8
+  ))
 ```
 
 As usual, the output of the power analysis is printed by calling the
@@ -7581,7 +7701,8 @@ powerCFA <- list('simRes' = list('fitH1' = res))
 ```
 
 ```{r figureEmpExpChi, fig.cap = "Empirical (solid) versus expected (dashed) chi-square distributions"}
-plot(dchisq(seq(max(powerCFA$simRes$fitH1[ , 'chisq'])), df = powerCFA$simRes$fitH1[1 , 'df']), type = 'l', lty = 2, xlab = 'chi square', ylab = 'density')
+plot(dchisq(seq(max(powerCFA$simRes$fitH1[ , 'chisq'])), df = powerCFA$simRes$fitH1[1 , 'df']), 
+     type = 'l', lty = 2, xlab = 'Chi-Square', ylab = 'Density')
 lines(density(powerCFA$simRes$fitH1[ , 'chisq']))
 ```
 
@@ -7635,22 +7756,22 @@ kurtosis between 4 - 6.
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                type = 'IG',
-                                skewness = c(0, 0, 0, 0, 0, 2, 2, 2, 2),
-                                kurtosis = c(20, 15, 10, 15, 18, 5, 4, 5, 6),
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    type = 'IG',
+    skewness = c(0, 0, 0, 0, 0, 2, 2, 2, 2),
+    kurtosis = c(20, 15, 10, 15, 18, 5, 4, 5, 6),
+    nCores = 8
+  ))
 ```
 
 The following also specifies the marginal skewness and kurtosis, but
@@ -7659,22 +7780,22 @@ relies on the VM approach (`type = 'VM'`):
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                type = 'VM',
-                                skewness = c(1, 1, 1, 1, 1, 3, 3, 3, 3),
-                                kurtosis = c(4, 4, 4, 4, 4, 15, 15, 15, 15),
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    type = 'VM',
+    skewness = c(1, 1, 1, 1, 1, 3, 3, 3, 3),
+    kurtosis = c(4, 4, 4, 4, 4, 15, 15, 15, 15),
+    nCores = 8
+  ))
 ```
 
 Alternatively, one may specify Mardia's multivariate skewness and
@@ -7685,22 +7806,22 @@ skewness of 10 and a multivariate kurtosis of 200:
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                type = 'mnonr',
-                                skewness = 10,
-                                kurtosis = 200,
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    type = 'mnonr',
+    skewness = 10,
+    kurtosis = 200,
+    nCores = 8
+  ))
 ```
 
 Instead of defining the marginal skewness and kurtosis as in the IG or
@@ -7726,21 +7847,21 @@ distributions <- list(
   list('rbinom', list(size = 1, prob = .5))        # binomial   
 )
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                type = 'RK',
-                                distributions = distributions,
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    type = 'RK',
+    distributions = distributions,
+    nCores = 8
+  ))
 ```
 
 One may also just define a single distribution to apply to all
@@ -7783,22 +7904,22 @@ the final two indicators of the second factor contain missings.
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                missingVars = c(1, 2, 8, 9),
-                                missingProp = .25,
-                                missingMechanism = 'MAR',
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    missingVars = c(1, 2, 8, 9),
+    missingProp = .25,
+    missingMechanism = 'MAR',
+    nCores = 8
+  ))
 ```
 
 Alternatively, one may also specify the proportion of missing values for
@@ -7810,22 +7931,22 @@ respectively.
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                missingVars = c(1, 2, 8, 9),
-                                missingProp = c(.1, .2, .3, .4),
-                                missingMechanism = 'MAR',
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    missingVars = c(1, 2, 8, 9),
+    missingProp = c(.1, .2, .3, .4),
+    missingMechanism = 'MAR',
+    nCores = 8
+  ))
 ```
 
 Instead of defining specific variables that contain missings, it is also
@@ -7837,22 +7958,22 @@ the variables contain missings:
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                missingVarProp = .50,
-                                missingProp = .25,
-                                missingMechanism = 'MAR',
-                                nCores = 8
-                              ))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    missingVarProp = .50,
+    missingProp = .25,
+    missingMechanism = 'MAR',
+    nCores = 8
+  ))
 ```
 
 ##### Changing the estimator and test-statistic {#simEstimators .unnumbered}
@@ -7887,25 +8008,25 @@ asymptotically equivalent to the Yuan-Bentler statistic
 ```{r eval=FALSE}
 set.seed(300121)
 powerCFA <- semPower.powerCFA(
-                              # define type of power analysis
-                              type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
-                              # define hypothesis
-                              Phi = .25,
-                              nullEffect = 'cor = 0',
-                              # define measurement model
-                              nIndicator = c(5, 4), loadM = c(.5, .6),
-                              # request simulated power
-                              simulatedPower = TRUE,
-                              # set simulation options
-                              simOptions = list(
-                                type = 'mnonr',
-                                skewness = 10,
-                                kurtosis = 200,
-                                missingVars = c(1, 2, 8, 9),
-                                missingProp = c(.1, .2, .3, .4),
-                                missingMechanism = 'MAR'
-                              ),
-                              lavOptions = list(estimator = 'mlr'))
+  # define type of power analysis
+  type = 'post-hoc', alpha = .05, N = 300, comparison = 'restricted',
+  # define hypothesis
+  Phi = .25,
+  nullEffect = 'cor = 0',
+  # define measurement model
+  nIndicator = c(5, 4), loadM = c(.5, .6),
+  # request simulated power
+  simulatedPower = TRUE,
+  # set simulation options
+  simOptions = list(
+    type = 'mnonr',
+    skewness = 10,
+    kurtosis = 200,
+    missingVars = c(1, 2, 8, 9),
+    missingProp = c(.1, .2, .3, .4),
+    missingMechanism = 'MAR'
+  ),
+  lavOptions = list(estimator = 'mlr'))
 ```
 
 ## Power analyses based on covariance matrices {#powerCov}
@@ -7974,10 +8095,10 @@ relevant covariance matrices.
 # get population covariance matrix; equivalent to a perfectly fitting model
 covPop <- fitted(sem(modelPop))$cov
 
-# get covariance matrix as implied by H0 model; note the nobs are arbitrary
+# get covariance matrix as implied by H0 model; note the sample.nobs are arbitrary
 fitH0 <- sem(modelH0, sample.cov = covPop, 
-              sample.nobs = 250, sample.cov.rescale = FALSE, 
-              likelihood = 'wishart')
+             sample.nobs = 250, sample.cov.rescale = FALSE, 
+             likelihood = 'wishart')
 df <- fitH0@test[[1]]$df
 covH0 <- fitted(fitH0)$cov
 ```
@@ -7994,7 +8115,8 @@ analysis. The following performs a post hoc power-analysis assuming N =
 `SigmaHat = covH0` and `Sigma = covPop`.
 
 ```{r eval=FALSE}
-ph <- semPower.postHoc(SigmaHat = covH0, Sigma = covPop, alpha = .05, N = 250, df = df)
+ph <- semPower.postHoc(alpha = .05, N = 250, df = df,
+                       SigmaHat = covH0, Sigma = covPop)
 summary(ph)
 ```
 
@@ -8027,9 +8149,9 @@ the population model string (`modelPop`) and the H0 model string
 (`modelH0`). This leads to:
 
 ```{r eval=FALSE}
-ph <- semPower.powerLav(type = 'post-hoc',
-                        modelPop = modelPop, modelH0 = modelH0,
-                        alpha = .05, N = 250)
+ph <- semPower.powerLav(
+  type = 'post-hoc', alpha = .05, N = 250,
+  modelPop = modelPop, modelH0 = modelH0)
 summary(ph)
 ```
 
@@ -8045,13 +8167,14 @@ the residual variances. In the scenario above, the following leads to
 the same results:
 
 ```{r eval=FALSE}
-generated <- semPower.genSigma(Phi = .50, 
-                               loadings = list(
-                                 c(.8, .7, .6),
-                                 c(.7, .6, .5)))
-ph <- semPower.powerLav(type = 'post-hoc', 
-                        Sigma = generated$Sigma, modelH0 = modelH0, 
-                        alpha = .05, N = 250)
+generated <- semPower.genSigma(
+  Phi = .50,
+  loadings = list(
+   c(.8, .7, .6),
+   c(.7, .6, .5)))
+ph <- semPower.powerLav(
+  type = 'post-hoc', alpha = .05, N = 250,
+  Sigma = generated$Sigma, modelH0 = modelH0)
 summary(ph)
 ```
 
@@ -8063,13 +8186,14 @@ function, actually none of the above is required and could be achieved
 by a simple call to `semPower.powerCFA`:
 
 ```{r eval=FALSE}
-ph <- semPower.powerCFA(type = 'post-hoc', 
-                        comparison = 'saturated',
-                        Phi = .5,
-                        loadings = list(
-                          c(.8, .7, .6),
-                          c(.7, .6, .5)),
-                        alpha = .05, N = 250)
+ph <- semPower.powerCFA(
+  type = 'post-hoc', 
+  comparison = 'saturated',
+  Phi = .5,
+  loadings = list(
+    c(.8, .7, .6),
+    c(.7, .6, .5)),
+  alpha = .05, N = 250)
 summary(ph)
 ```
 
@@ -8119,24 +8243,24 @@ matrix for a three-factor model with factor correlations as defined in
 `Phi` and the loading matrix as defined in `Lambda`:
 
 ```{r eval=FALSE}
-  Phi <- matrix(c(
-    c(1.0, 0.5, 0.1),
-    c(0.5, 1.0, 0.2),
-    c(0.1, 0.2, 1.0)
-  ), byrow = T, ncol=3)
-  Lambda <- matrix(c(
-    c(0.4, 0.0, 0.0),
-    c(0.7, 0.0, 0.0),
-    c(0.8, 0.0, 0.0),
-    c(0.0, 0.6, 0.0),
-    c(0.0, 0.7, 0.0),
-    c(0.0, 0.4, 0.0),
-    c(0.0, 0.0, 0.8),
-    c(0.0, 0.0, 0.7),
-    c(0.0, 0.0, 0.8)
-  ), byrow = T, ncol = 3)
-  
-  gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
+Phi <- matrix(c(
+  c(1.0, 0.5, 0.1),
+  c(0.5, 1.0, 0.2),
+  c(0.1, 0.2, 1.0)
+), byrow = T, ncol=3)
+Lambda <- matrix(c(
+  c(0.4, 0.0, 0.0),
+  c(0.7, 0.0, 0.0),
+  c(0.8, 0.0, 0.0),
+  c(0.0, 0.6, 0.0),
+  c(0.0, 0.7, 0.0),
+  c(0.0, 0.4, 0.0),
+  c(0.0, 0.0, 0.8),
+  c(0.0, 0.0, 0.7),
+  c(0.0, 0.0, 0.8)
+), byrow = T, ncol = 3)
+
+gen <- semPower.genSigma(Phi = Phi, Lambda = Lambda)
 ```
 
 `semPower.genSigma` returns a list comprising all model matrices (in the
@@ -8180,18 +8304,18 @@ correlations for the groups, so that two model-implied covariance
 matrices are returned:
 
 ```{r eval=FALSE}
-  Phi1 <- matrix(c(
-     c(1.0, 0.5, 0.1),
-     c(0.5, 1.0, 0.2),
-     c(0.1, 0.2, 1.0)
-  ), byrow = T, ncol=3)
-  Phi2 <- matrix(c(
-     c(1.0, 0.6, 0.2),
-     c(0.6, 1.0, 0.3),
-     c(0.2, 0.3, 1.0)
-  ), byrow = T, ncol=3)
-  
-  gen <- semPower.genSigma(Phi = list(Phi1, Phi2), Lambda = Lambda)
+Phi1 <- matrix(c(
+   c(1.0, 0.5, 0.1),
+   c(0.5, 1.0, 0.2),
+   c(0.1, 0.2, 1.0)
+), byrow = T, ncol=3)
+Phi2 <- matrix(c(
+   c(1.0, 0.6, 0.2),
+   c(0.6, 1.0, 0.3),
+   c(0.2, 0.3, 1.0)
+), byrow = T, ncol=3)
+
+gen <- semPower.genSigma(Phi = list(Phi1, Phi2), Lambda = Lambda)
 ```
 
 ##### SEM model {#semDefinition .unnumbered}
@@ -8216,7 +8340,7 @@ $X_2$, $X_3$, $X_4$), and Beta is defined as follows: $$
 X_1 & 0.0 & 0.0 & 0.0 & 0.0 \\
 X_2 & 0.0 & 0.0 & 0.0 & 0.0  \\
 X_3 & 0.2 & 0.3 & 0.0 & 0.0  \\
-X_4 & 0.3 & 0.5 & 0.0 & 0.0  \\
+X_4 & 0.4 & 0.5 & 0.0 & 0.0  \\
 \end{array}
 $$ Each row specifies how a particular factor is predicted by the
 available factors, so the above implies the following regression
@@ -8226,33 +8350,40 @@ $$
 X_1 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
 X_2 = 0.0 \cdot X_1 +  0.0 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
 X_3 = 0.2 \cdot X_1 +  0.3 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4 \\
-X_4 = 0.3 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4
+X_4 = 0.4 \cdot X_1 +  0.5 \cdot X_2 + 0.0 \cdot X_3 + 0.0 \cdot X_4
 $$
 
 which simplifies to
 
 $$
 X_3 = 0.2 \cdot X_1 + 0.3 \cdot X_2 \\
-X_4 = 0.3 \cdot X_1 + 0.5 \cdot X_2
+X_4 = 0.4 \cdot X_1 + 0.5 \cdot X_2
 $$
 
 Psi ($\Psi$) defines the (residual-)variances and whether there are
-(residual-)covariances between the factors. Suppose that $\Psi$ is $$
+(residual-)covariances between the factors. Suppose that $\Psi$ is 
+$$
 \begin{array}{lrrr}
     & X_1 & X_2 & X_3 & X_4\\
-X_1 & 1.0 & 0.3 & 0.0 & 0.0 \\
-X_2 & 0.3 & 1.0 & 0.0 & 0.0 \\
-X_3 & 0.0 & 0.0 & 1.0 & 0.2 \\
-X_4 & 0.0 & 0.0 & 0.2 & 1.0 \\
+X_1 & 1.0 & 0.6 & 0.0 & 0.0 \\
+X_2 & 0.6 & 1.0 & 0.0 & 0.0 \\
+X_3 & 0.0 & 0.0 & 1.0 & 0.1 \\
+X_4 & 0.0 & 0.0 & 0.1 & 1.0 \\
 \end{array}
 $$
 
 which implies that the variances of $X_1$ and $X_2$ are 1, and that the
 residual variances of $X_3$ and $X_4$ are also 1. Further, the
-covariance between $X_1$ and $X_2$ is .3 (which is also a correlation,
+covariance between $X_1$ and $X_2$ is .6 (which is also a correlation,
 because both variances are 1) and a residual covariance between $X_3$
-and $X_4$ of .2 (which is *not* a correlation, because the variances of
+and $X_4$ of .1 (which is *not* a correlation, because the variances of
 $X_3$ and $X_4$ also depend on Beta).
+
+The following Figure (\@ref(fig:figureModCFA)) shows the resulting structure:
+
+```{r figureModGP, echo=FALSE, out.width="50%", fig.align = "left", fig.cap = "Structural relations among four variables."}
+knitr::include_graphics("fig/pathx.png")
+```
 
 The scenario just described can be achieved by defining `Beta` and `Psi`
 accordingly and plugging these as input to `semPower.genSigma`:
@@ -8262,13 +8393,13 @@ Beta <- matrix(c(
   c(.00, .00, .00, .00),
   c(.00, .00, .00, .00),
   c(.20, .30, .00, .00),
-  c(.30, .50, .00, .00)
+  c(.40, .50, .00, .00)
 ), byrow = TRUE, ncol = 4)
 Psi <- matrix(c(
-  c(1, .30, .00, .00),
-  c(.30, 1, .00, .00),
-  c(.00, .00, 1, .20),
-  c(.00, .00, .20, 1)
+  c(1, .60, .00, .00),
+  c(.60, 1, .00, .00),
+  c(.00, .00, 1, .10),
+  c(.00, .00, .10, 1)
 ), byrow = TRUE, ncol = 4)
 
 gen <- semPower.genSigma(Beta = Beta, Psi = Psi, Lambda = diag(ncol(Beta)))
