@@ -36,7 +36,7 @@ semPower.powerRegression(
 
 \item{nullEffect}{defines the hypothesis of interest, must be one of \code{'slope = 0'} (the default) to test whether a slope is zero, \code{'slopeX = slopeZ'} to test for the equality of slopes, \code{'slopeA = slopeB'} to test for the equality of slopes across groups, or \code{'R2inc = 0'} to test whether the incremental variance explained is zero, or \code{'R2incA = R2incB'} to test whether the incremental variance explained is equal across groups. Define the slopes to set to equality or the relevant predictors in \code{nullWhich}.}
 
-\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'} (can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality), or vector defining the k additional predictors yielding the incremental R-squared when \code{nullEffect = 'R2inc = 0'} or \code{nullEffect = 'R2incA = R2incB'} (e.g. \code{c(2, 3)} to test the incremental variance explained by the including the second and third predictor in addition to the first predictors). In the latter case, the k additional predictors must include the final predictor, i.e. when there are 5 predictors in total, \code{nullWhich} must include predictor 5.}
+\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'} (can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality), or vector defining the k additional predictors yielding the incremental R-squared when \code{nullEffect = 'R2inc = 0'} or \code{nullEffect = 'R2incA = R2incB'} (e.g. \code{c(2, 3)} to test the incremental variance explained by the including the second and third predictor in addition to the first predictors). In the latter case, the maximum value in \code{nullWhich} defines the total number of predictors, i.e. when there are 5 predictors in total, \code{nullWhich} must include predictor 5.}
 
 \item{nullWhichGroups}{for \code{nullEffect = 'slopeA = slopeB'} or \code{nullEffect = 'r2IncA = r2IncB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
@@ -79,7 +79,7 @@ The H0 model also constrains the respective slopes to zero (or equality across g
 In this case, slopes are computed that satisfy the specified baseline and incremental R-squared values by solving
 \deqn{
   b = R_{xx}^{-1} r_{yx} \\
-  R^2 = \sum{b r_{yx}}
+  R^2 = \sum{b \times r_{yx}}
 }
 Note that this is only approximate (but still accurate to about 5 decimal places).
 
