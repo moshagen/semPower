@@ -9,6 +9,9 @@ semPower.powerRegression(
   comparison = "restricted",
   slopes = NULL,
   corXX = NULL,
+  corYX = NULL,
+  R2base = NULL,
+  R2inc = NULL,
   nullEffect = "slope = 0",
   nullWhich = NULL,
   nullWhichGroups = NULL,
@@ -25,11 +28,17 @@ semPower.powerRegression(
 
 \item{corXX}{correlation(s) between the k predictors (X). Either \code{NULL} for uncorrelated predictors, a single number (for k = 2 predictors), or a matrix. Can also be a list for multigroup models providing the correlations by group of matrices (otherwise, the same correlations are used in all groups).}
 
-\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'slope = 0'} (the default) to test whether a slope is zero, \code{'slopeX = slopeZ'} to test for the equality of slopes, or \code{'slopeA = slopeB'} to test for the equality of slopes across groups. Define the slopes to set to equality in \code{nullWhich}.}
+\item{corYX}{can be provided instead of \code{slopes}. Correlation(s) between the k predictors (X) and the criterion (Y). A list for multigroup models.}
 
-\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'}. Can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality.}
+\item{R2base}{can be provided instead of \code{slopes}, to be used in conjunction with \code{R2inc}. Multiple R-squared yielded by a set of k1 predictors (X). A list for multigroup models.}
 
-\item{nullWhichGroups}{for \code{nullEffect = 'slopeA = slopeB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
+\item{R2inc}{can be provided instead of \code{slopes}, to be used in conjunction with \code{R2base}. Incremental multiple R-squared yielded by a set of k2 predictors over the k1 predictors (so that R^2 = R_base^2 + R_inc^2) . A list for multigroup models.}
+
+\item{nullEffect}{defines the hypothesis of interest, must be one of \code{'slope = 0'} (the default) to test whether a slope is zero, \code{'slopeX = slopeZ'} to test for the equality of slopes, \code{'slopeA = slopeB'} to test for the equality of slopes across groups, or \code{'R2inc = 0'} to test whether the incremental variance explained is zero, or \code{'R2incA = R2incB'} to test whether the incremental variance explained is equal across groups. Define the slopes to set to equality or the relevant predictors in \code{nullWhich}.}
+
+\item{nullWhich}{single number indicating which slope is hypothesized to equal zero when \code{nullEffect = 'slope = 0'}, or indicating which slope to restrict to equality across groups when \code{nullEffect = 'slopeA = slopeB'}, or vector defining the slopes to restrict to equality when \code{nullEffect = 'slopeX = slopeZ'} (can also contain more than two slopes, e.g. \code{c(1, 2, 3)} to constrain the first three slopes to equality), or vector defining the k additional predictors yielding the incremental R-squared when \code{nullEffect = 'R2inc = 0'} or \code{nullEffect = 'R2incA = R2incB'} (e.g. \code{c(2, 3)} to test the incremental variance explained by the including the second and third predictor in addition to the first predictors). In the latter case, the k additional predictors must include the final predictor, i.e. when there are 5 predictors in total, \code{nullWhich} must include predictor 5.}
+
+\item{nullWhichGroups}{for \code{nullEffect = 'slopeA = slopeB'} or \code{nullEffect = 'r2IncA = r2IncB'}, vector indicating the groups for which equality constrains should be applied, e.g. \code{c(1, 3)} to constrain the relevant parameters of the first and the third group. If \code{NULL}, all groups are constrained to equality.}
 
 \item{standardized}{whether all parameters should be standardized (\code{TRUE}, the default). If \code{FALSE}, all regression relations are unstandardized.}
 
@@ -56,9 +65,23 @@ in SEM models involving a simple regression relation of the form \code{Y = b_1*X
 \item \code{nullEffect = 'slope = 0'}: Tests the hypothesis that the slope for a predictor is zero.
 \item \code{nullEffect = 'slopeX = slopeZ'}: Tests the hypothesis that two or more slopes are equal to each other.
 \item \code{nullEffect = 'slopeA = slopeB'}: Tests the hypothesis that the slope for a predictor is equal in two or more groups (always assuming metric invariance).
+\item \code{nullEffect = 'R2inc = 0'}: Tests the hypothesis that the increase in the variance by one or more predictors explained is zero.
+\item \code{nullEffect = 'R2incA = R2incB'}: Tests the hypothesis that the increase in the variance explained  by one or more predictors is equal in two or more groups (always assuming metric invariance).
 }
 
 For hypotheses regarding mediation effects, see \code{\link[=semPower.powerMediation]{semPower.powerMediation()}}. For hypothesis in autoregressive models, see  \code{\link[=semPower.powerAutoreg]{semPower.powerAutoreg()}}.
+
+When the regression structure is defined in terms of \code{corYX} (rather than providing the individual slopes via \code{slopes}), the implied slopes are
+computed according to \eqn{b = R_{xx}^{-1} r_{yx}}.
+
+The purpose of \code{nullEffect = 'R2inc = 0'} and \code{nullEffect = 'R2incA = R2incB'} is to state the effect in terms of variance explained rather than in terms of individual values of the regression slopes.
+The H0 model also constrains the respective slopes to zero (or equality across groups), so that the same tests is performed as the ones involving slopes.
+In this case, slopes are computed that satisfy the specified baseline and incremental R-squared values by solving
+\deqn{
+  b = R_{xx}^{-1} r_{yx} \\
+  R^2 = \sum{b r_{yx}}
+}
+Note that this is only approximate (but still accurate to about 5 decimal places).
 
 Beyond the arguments explicitly contained in the function call, additional arguments
 are required specifying the factor model and the requested type of power analysis.
@@ -119,77 +142,97 @@ specifying third and fourth moments of the marginals, and thus requires that ske
 # where Y is measured by 3 indicators loading by .5 each,
 # X1 by 5 indicators loading by .6 each, and
 # X2 by 4 indicators loading by .7 each. 
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 1, 
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     alpha = .05, beta = .05)
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 1,              # b1
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
 # show summary
 summary(powerReg)
 # optionally use lavaan to verify the model was set-up as intended
 lavaan::sem(powerReg$modelH1, sample.cov = powerReg$Sigma, 
-sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
+  sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 lavaan::sem(powerReg$modelH0, sample.cov = powerReg$Sigma, 
-sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
+  sample.nobs = powerReg$requiredN, sample.cov.rescale = FALSE)
 
-# same as above, but determine power with N = 500 on alpha = .05 
-powerReg <- semPower.powerRegression(type = 'post-hoc',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 1, 
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     alpha = .05, N = 500)
-                                     
-# same as above, but determine the critical chi-square with N = 500 so that alpha = beta 
-powerReg <- semPower.powerRegression(type = 'compromise',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 1, 
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     abratio = .05, N = 500)
-                                     
+# same as above, but determine power with N = 500 on alpha = .05
+powerReg <- semPower.powerRegression(
+  type = 'post-hoc',alpha = .05, N = 500,
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 1,              # b1
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
+
+# same as above, but determine the critical chi-square with N = 500 so that alpha = beta
+powerReg <- semPower.powerRegression(
+  type = 'compromise', abratio = .05, N = 500,
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 1,              # b1
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
+
 # same as above, but ask for the required N to detect that the slope of X2 is zero
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 2, 
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     alpha = .05, beta = .05)
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 2,              # b2
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
 
 # same as above, but define unstandardized slopes
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), corXX = .4,
-                                     nullWhich = 2, 
-                                     standardized = FALSE,
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     alpha = .05, beta = .05)
-                                     
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3),         # b1, b2
+  standardized = FALSE,
+  corXX = .4,
+  nullWhich = 2,              # b2
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
+
 # same as above, but compare to the saturated model
 # (rather than to the less restricted model)
-powerReg <- semPower.powerRegression(type = 'a-priori', 
-                                     comparison = 'saturated',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 2, 
-                                     nIndicator = c(3, 5, 4), 
-                                     loadM = c(.5, .6, .7),
-                                     alpha = .05, beta = .05)
-                                     
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  comparison = 'saturated',
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 2,              # b2
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
+
 # same as above, but provide a reduced loading matrix defining
 # three indicators with loadings of .7, .6, .5 on the first factor (Y),
 # four indicators with loadings of .5, .6, .4, .8 on the second factor (X1), and
 # three indicators with loadings of .8, .7, .8 on the third factor (X2).
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3), corXX = .4, 
-                                     nullWhich = 2, 
-                                     loadings = list(
-                                       c(.7, .6, .5), 
-                                       c(.5, .6, .4, .8),
-                                       c(.8, .7, .8)),
-                                     alpha = .05, beta = .05)
-                              
-# latent regression of the form `Y = .2*X1 + .3*X2 + .4*X3`, 
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  comparison = 'saturated',
+  slopes = c(.2, .3),         # b1, b2
+  corXX = .4,
+  nullWhich = 2,              # b2
+  loadings = list(
+    c(.7, .6, .5),            # Y
+    c(.5, .6, .4, .8),        # X1
+    c(.8, .7, .8)             # X2
+  ))
+
+# same as above, but define effect in terms
+# of predictor-criterion correlations instead of slopes
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  comparison = 'saturated',
+  corYX = c(.32, .38),        # r_Y,X1, r_Y,X2
+  corXX = .4,                 # r_X1,X2 
+  nullWhich = 2,              # b2
+  nIndicator = c(3, 5, 4),    # Y, X1, X2
+  loadM = c(.5, .6, .7))      # Y, X1, X2
+   
+# latent regression of the form `Y = .2*X1 + .3*X2 + .4*X3`,
 # providing the predictor intercorrelation matrix,
 # and ask for the required N to detect that the first slope differs from zero.
 corXX <- matrix(c(
@@ -198,62 +241,118 @@ corXX <- matrix(c(
   c(0.20, 1.00, 0.10),  # X2
   c(0.30, 0.10, 1.00)   # X3
 ), ncol = 3,byrow = TRUE)
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3, .4), corXX = corXX, 
-                                     nullWhich = 1,
-                                     nIndicator = c(4, 3, 5, 4),
-                                     loadM = c(.5, .5, .6, .7),
-                                     alpha = .05, beta = .05)
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3, .4),     # b1, b2, b3
+  corXX = corXX,
+  nullWhich = 1,              # b1
+  nIndicator = c(4, 3, 5, 4), # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7))  # Y, X1, X2, X3
 
-# same as above, but ask for the required N to detect that 
+# same as above, but ask for the required N to detect that
 # the slope for X1 (b = .2) and the slope for X2 (b = .3) differ from each other
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3, .4), corXX = corXX, 
-                                     nullEffect = 'slopeX = slopeZ', 
-                                     nullWhich = c(1, 2),
-                                     nIndicator = c(4, 3, 5, 4),
-                                     loadM = c(.5, .5, .6, .7),
-                                     alpha = .05, beta = .05)
-                                     
-# same as above, but ask for the required N to reject the hypothesis that 
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3, .4),     # b1, b2, b3
+  corXX = corXX,
+  nullEffect = 'slopeX = slopeZ',
+  nullWhich = c(1, 2),        # b1 = b2 
+  nIndicator = c(4, 3, 5, 4), # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7))  # Y, X1, X2, X3
+
+# same as above, but ask for the required N to reject the hypothesis that
 # all three slopes are equal to each other
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = c(.2, .3, .4), corXX = corXX, 
-                                     nullEffect = 'slopeX = slopeZ', 
-                                     nullWhich = c(1, 2, 3),
-                                     nIndicator = c(4, 3, 5, 4),
-                                     loadM = c(.5, .5, .6, .7),
-                                     alpha = .05, beta = .05)
-    
-# get required N to detect that 
-# the slope for X2 group 1 (of b2 = .3) differs from the slope for X2 in group 2 (of b = .0). 
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  slopes = c(.2, .3, .4),     # b1, b2, b3
+  corXX = corXX,
+  nullEffect = 'slopeX = slopeZ',
+  nullWhich = c(1, 2, 3),     # b1 = b2 = b2
+  nIndicator = c(4, 3, 5, 4), # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7))  # Y, X1, X2, X3
+
+
+# get required N to detect that
+# the slope for X2 group 1 (of b2 = .3) differs from the slope for X2 in group 2 (of b = .0).
 # The remaining slopes are equal in both groups (b1 = .2, b3 = .4).
 # The measurement model is identical in both groups:
-# The criterion (Y) is measured by 4 indicators loading by .5 each, 
+# The criterion (Y) is measured by 4 indicators loading by .5 each,
 # Predictors X1 and X3 are both measured by 5 indicators loading by .6 each,
 # Predictor X2 is measured by 3 indicators loading by .7 each.
 # Both groups are sized equally (N = list(1, 1)).
-powerReg <- semPower.powerRegression(type = 'a-priori',
-                                     slopes = list(c(.2, .3, .4), 
-                                     c(.2, .0, .4)), 
-                                     corXX = corXX, 
-                                     nullEffect = 'slopeA = slopeB', 
-                                     nullWhich = 2,
-                                     nIndicator = c(4, 5, 3, 5),
-                                     loadM = c(.5, .6, .7, .6),
-                                     alpha = .05, beta = .05, 
-                                     N = list(1, 1))
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, beta = .05,
+  N = list(1, 1),              # group weights
+  slopes = list(
+    c(.2, .3, .4),             # group 1: b1, b2, b3
+    c(.2, .0, .4)              # group 2: b1, b2, b3
+    ),
+  corXX = corXX,
+  nullEffect = 'slopeA = slopeB',
+  nullWhich = 2,               # g1b2 = g2b2   
+  nIndicator = c(4, 5, 3, 5),  # Y, X1, X2, X3 (same across groups)
+  loadM = c(.5, .6, .7, .6))   # Y, X1, X2, X3 (same across groups)
 
-# request a simulated post-hoc power analysis with 500 replications 
+
+# determine required N to detect that the third predictor incrementally 
+# accounts for 10\% of the variance explained in the criterion
+# above predictors 1 and 2 which account for 5\% of the variance. 
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, power = .80,
+  R2base =  .05, 
+  R2inc =  .1,
+  corXX = corXX,
+  nullEffect = 'R2inc = 0',
+  nullWhich = c(3),              # b3
+  nIndicator = c(4, 3, 5, 4),    # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7)      # Y, X1, X2, X3
+)
+
+# same as above, but determine required N to detect that 
+# all three predictors jointly account for 15\% of the variance explained 
+# in the criterion
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, power = .80,
+  R2base =  0,
+  R2inc =  .15,
+  corXX = corXX,
+  nullEffect = 'R2inc = 0',
+  nullWhich = c(1, 2, 3),      # b1, b2, b3
+  nIndicator = c(4, 3, 5, 4),  # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7)    # Y, X1, X2, X3
+)
+
+
+# determine required N to detect that the incremental variance
+# explained by the third predictor in group 1 of .025 differs from 
+# that in group 2 of .10. 
+powerReg <- semPower.powerRegression(
+  type = 'a-priori', alpha = .05, power = .80, 
+  N = list(1, 1),
+  R2base =  list(.05, .05),    # group1, group2
+  R2inc =  list(.025, .10),    # group1, group2
+  corXX = corXX,
+  nullEffect = 'R2incA = R2incB',
+  nullWhich = c(3),            # b3
+  nIndicator = c(4, 3, 5, 4),  # Y, X1, X2, X3
+  loadM = c(.5, .5, .6, .7)    # Y, X1, X2, X3
+)
+
+
+# request a simulated post-hoc power analysis with 500 replications
 # to detect that the slope of X1 differs from zero.
 set.seed(300121)
-powerReg <- semPower.powerRegression(type = 'post-hoc',
-                                     slopes = c(.2, .1), 
-                                     nullWhich = 1,
-                                     nIndicator = c(4, 3, 3), loadM = .5,
-                                     alpha = .05, N = 500, 
-                                     simulatedPower = TRUE, 
-                                     simOptions = list(nReplications = 500))
+powerReg <- semPower.powerRegression(
+  type = 'post-hoc', alpha = .05, N = 500,
+  slopes = c(.2, .1),
+  nullWhich = 1,
+  nIndicator = c(4, 3, 3), 
+  loadM = .5,
+  simulatedPower = TRUE,
+  simOptions = list(
+    nReplications = 500
+    )
+)
 }
 }
 \seealso{
