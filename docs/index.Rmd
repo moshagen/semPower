@@ -2187,7 +2187,7 @@ powerBF <- semPower.powerBifactor(
   )
 ```
 
-## Latent regression models {#powerRegression}
+## Regression models {#powerRegression}
 
 `semPower.powerRegression` is used to perform power analyses for SEM
 models involving a simple linear regression relation of the form
@@ -2202,6 +2202,10 @@ concerning the following hypotheses:
     (`nullEffect = 'slopeX = slopeZ'`).
 -   whether a slope ($\beta_{i,m}$, $\beta_{i,n}$) differs across two or
     more groups (`nullEffect = 'slopeA = slopeB'`).
+-   whether the (increase in) the variance explained by one or more predictors 
+    differs from zero (`nullEffect = 'R2inc = 0'`).
+-   whether the (increase in) the variance explained by one or more predictors 
+    is differs across groups (`nullEffect = 'R2incA = R2incB'`).  
 
 `semPower.powerRegression` only addresses hypotheses concerning slope(s)
 in a regression. `semPower` provides other convenience functions for
@@ -2218,10 +2222,22 @@ analysis](#modelFreePower) should be performed.
     Either a single number defining the correlation between exactly two
     predictors, or a $k \cdot k$ correlation matrix, or `NULL` for
     uncorrelated predictors (the default).
+-   `corXY`: Can be provided instead of `slopes`: Correlation(s) 
+    between the predictors and the criterion.
+-   `R2base`: Can be provided instead of `slopes` and to be used in 
+    conjunction with `R2inc`: Proportion of the variance 
+    explained in the criterion by k predictors.
+-   `R2inc`:Can be provided instead of `slopes` and to be used in 
+    conjunction with `R2base`: Proportion of the incremental variance 
+    explained in the criterion by k1 + k2 predictors, where k2 is defined in `nullWhich`.
 -   `nullEffect`: Defines the hypothesis of interest; one of
-    `'slope = 0'`, `'slopeX = slopeZ'`, or `'slopeA = slopeB'`.
+    `'slope = 0'`, `'slopeX = slopeZ'`, `'slopeA = slopeB'`, `'R2inc = 0'`,
+    or `'R2incA = R2incB'`.
 -   `nullWhich`: Defines which slope(s) is targeted by the hypothesis
-    defined in `nullEffect`.
+    defined in `nullEffect`. When `nullEffect` is `'R2inc = 0'` 
+    or `'R2incA = R2incB'`, the maximum number in `nullWhich` defines the total 
+    number of predictors, so `nullWhich` must contain the final predictor. For example, 
+    when there a total of 5 predictors, `nullWhich` must contain predictor 5.
 -   `nullWhichGroups`: Defines which groups are targeted when
     `nullEffect = 'slopeA = slopeB'`.
 -   `standardized`: Whether the arguments provided to `slopes` and
@@ -2249,6 +2265,7 @@ components:
     the H1 model (only if `type = 'restricted'`).
 -   `simRes`: Detailed simulation results when a [simulated power
     analysis](#simulatedPower) (`simulatedPower = TRUE`) was performed.
+
 
 ##### Detect whether a slope differs from zero {.unnumbered}
 
@@ -2355,10 +2372,10 @@ powerReg <- semPower.powerRegression(
    slopes = c(.3, .2, .1),      # X1 -> Y, X2 -> Y, X3 -> Y
    corXX = corXX, 
    nullEffect = 'slope = 0',
-   nullWhich = 2,
+   nullWhich = 2,               # X2 -> Y
    # define measurement model
    nIndicator = c(3, 3, 3, 3),  # Y, X1, X2, X3
-   loadM = c(.5, .5, .5, .5)   # Y, X1, X2, X3
+   loadM = c(.5, .5, .5, .5)    # Y, X1, X2, X3
 )
 ```
 
@@ -2378,12 +2395,12 @@ powerReg <- semPower.powerRegression(
    # define type of power analysis
    type = 'a-priori', alpha = .05, power = .80,
    # define hypothesis
-   slopes = c(.2, .3), 
+   slopes = c(.2, .3),        # X1 -> Y, X2 -> Y
    corXX = .4, 
-   nullWhich = 1,
+   nullWhich = 1,             # X1 -> Y
    # define measurement model
    nIndicator = c(1, 5, 4),   # Y, X1, X2
-   loadM = c(1, .6, .7)      # Y, X1, X2
+   loadM = c(1, .6, .7)       # Y, X1, X2
 )
 ```  
 
@@ -2395,6 +2412,28 @@ just providing `Lambda = diag(3)` instead of `nIndicator` and `loadM`. A
 MIMIC model with a factor measured by 5 indicators all loading by .7
 would thus correspond to `nIndicator = c(5, 1, 1)` and
 `loadM = c(.7, 1, 1)`.
+
+Instead of providing individual values for the regression slopes directly 
+via the `slopes` argument, it is also possible to provide the (bivariate) 
+predictor-criterion correlations via the `corYX` argument. The call above
+(with `slopes = c(.2, .3)`) could be replicated via the following call 
+(with `corYX = c(.32, .38)`):
+
+
+```{r eval=FALSE}
+powerReg <- semPower.powerRegression(
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   corYX = c(.32, .38),       # r_YX1, r_YX2  
+   corXX = .4,                # r_X1X2
+   nullWhich = 1,             # X1 -> Y
+   # define measurement model
+   nIndicator = c(1, 5, 4),   # Y, X1, X2
+   loadM = c(1, .6, .7)       # Y, X1, X2
+)
+```  
+
 
 ##### Detect whether two slopes differ from each other {.unnumbered}
 
@@ -2438,6 +2477,27 @@ second slope shall be equal.
 equality of more than two slopes For instance, when there are 4
 predictors, using `nullWhich = c(1, 2, 4)` would constrain the first,
 second, and fourth (but not the third) slope to equality.
+
+Again, instead of providing the slopes, one may also  provide the (bivariate) 
+predictor-criterion correlations. The call above
+(with `slopes = c(.1, .4)`) could be replicated via the following call 
+(with `corYX = c(.20, .425)`):
+
+```{r eval=FALSE}
+powerReg <- semPower.powerRegression(
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   corYX = c(.20, .425), 
+   corXX = .25, 
+   nullEffect = 'slopeX = slopeZ',
+   nullWhich = c(1, 2),
+   # define measurement model
+   nIndicator = c(3, 5, 4), 
+   loadM = c(.5, .6, .7)
+   )
+```
+
 
 ##### Detect whether a slope differs across two or more groups {.unnumbered}
 
@@ -2529,6 +2589,149 @@ powerReg <- semPower.powerRegression(
    loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
    )
 ```
+
+
+##### Detect whether the (incremental) variance explained differs from zero {.unnumbered}
+
+To perform a power analysis to detect whether the (incremental) proportion of 
+variance explained by a set of predictors differs from zero, use `nullEffect = 'R2inc = 0'`.
+
+When only the proportion of explained variance in $Y$ (i.e. $R^2$) is provided, 
+`semPower` computes the slopes by solving 
+$$
+   b = R_{xx}^{-1} r_{yx} \\
+   R^2 = \sum{b \times r_{yx}}
+$$
+for the slopes ($b$). Depending on the structure of the correlations between the 
+predictors ($R_{xx}$), multiple values for the slopes might incur the same $R^2$. 
+For example, when there are two uncorrelated predictors (so that $R_{xx} = I$) and 
+the target $R^2$ is .25, this could be achieved by any of $b = (.0, .5)$,
+$b = (.35356, .35356)$, $b = (.5, 0)$ and many more combinations. 
+However, the exact values of the slopes are irrelevant when power
+concerning the overall explained variance is of interest. Nevertheless, as
+the slopes are estimated, power analyses are often only approximate in these cases,
+although still accurate to about 5 decimals.
+
+When defining the effect in terms of $R^2$, one needs to provide both `R2base` 
+and `R2inc`. `R2base` defines the $R^2$ for a baseline model with k1 predictors, 
+and `R2inc` the incremental $R^2$ yielded by a comparison model involving k1 and k2 other predictors. 
+So the total $R^2$ explained by all predictors is $R^2_{tot} = R^2_{base} + R^2_{inc}$.
+The evaluated null hypothesis refers to the value defined in `R2inc`. The k2 predictors
+added to the k1 predictors of the baseline model are defined in `nullWhich`. 
+
+Consider a total of 3 predictors X1, X2, and X3. The baseline model involves the first two
+predictors, $Y = b_1 X_1 + b_2 X_2$ and yields $R^2_{base} = .10$. The comparison
+model adds X3 to the regression equation, $Y = b_1 X_1 + b_2 X_2 + b_3 X_3$, and yields an
+incremental $R^2_{inc} = .15$, so that $R^2_{tot} = .10 + .15$ . 
+This situation is defined using `R2base = .10`, `R2inc = .15`, and `nullWhich = 3`. 
+The evaluated null hypothesis refers to whether $R^2_{inc}$ differs from zero.
+
+Similarly, when X1 explains 5% of the variance and one wants to detect that 
+adding X2 and X3 incrementally explain 20% of the variance 
+beyond X1, this could be achieve by  `R2base = .05`, `R2inc = .20`, 
+and `nullWhich = c(2, 3)`. Note that `nullWhich` (implicitly) also defines the 
+total number of predictors and thus must always contain the final predictor. So
+when there are five predictors in total, `nullWhich` must contain 5.
+
+When the total proportion of explained variance is of interest, define $R^2_{base} = 0$ 
+and add all predictors to `nullWhich`. Thus, when there are three predictors that
+jointly account for 25% of the variance and a power analysis is performed to detect whether
+this proportion differs from zero, use `R2base = 0`, `R2inc = .25`, and `nullWhich = c(1, 2, 3)`.
+
+For example, the following sets up four factors measured by 4, 5, 3, and
+6 indicators (`nIndicator = c(4, 5, 3, 6)`). All indicators of the first
+factor load by .5, all indicators of the second factor by .6, all of
+the third factor by .7, and all of the fourth factor by .6  
+(`loadM = c(.5, .6, .7, .6)`; see [definition of a
+factor model](#factorDefinition)). Recall that the first factor is
+treated as criterion ($Y$), so that there are 3 predictors. 
+The correlations between the 3 predictors is defined in `corXX`.
+Finally, the required sample (`type = 'a-priori'`) is requested to detect that the 
+incremental variance explained (`R2inc = .10`) by the third predictor (`nullWhich = c(3)`) over 
+the variance explained by only predictors one and two (`R2base = .05`) differs from zero (`nullEffect = 'R2inc = 0'`) on
+alpha = .05 (`alpha = .05`) with a power of 80% (`power = .80`).
+
+```{r eval=FALSE}
+corXX <- matrix(c(
+    #   X1    X2    X3
+    c(1.00, 0.20, 0.30),  # X1
+    c(0.20, 1.00, 0.10),  # X2
+    c(0.30, 0.10, 1.00)   # X3
+), ncol = 3,byrow = TRUE)
+powerReg <- semPower.powerRegression(
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   corXX = corXX, 
+   nullEffect = 'R2inc = 0',
+   R2base = .05,
+   R2inc = .10,
+   nullWhich = c(3),            # X3 -> Y
+   # define measurement model
+   nIndicator = c(4, 5, 3, 6),  # Y, X1, X2, X3
+   loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
+)
+```
+
+Similarly, the following asks for the required sample to detect that
+all three predictors jointly account for 15% of the variance:
+
+```{r eval=FALSE}
+powerReg <- semPower.powerRegression(
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80,
+   # define hypothesis
+   corXX = corXX, 
+   nullEffect = 'R2inc = 0',
+   R2base = 0,
+   R2inc = .15,
+   nullWhich = c(1, 2, 3),      # X1 -> Y, X2 -> Y, X3 -> Y
+   # define measurement model
+   nIndicator = c(4, 5, 3, 6),  # Y, X1, X2, X3
+   loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
+)
+```
+
+
+##### Detect whether the (incremental) variance explained differs across groups  {.unnumbered}
+
+To perform a power analysis to detect whether the (incremental) proportion of 
+variance explained by a set of predictors differs from zero, 
+use `nullEffect = 'R2incA = R2incB'`. 
+
+For example, the following sets up four factors in the same way as in the previous
+example. Note that the measurement model is identical across groups. The groups are 
+equally sized (`N = list(1, 1)`). The $R^2_{base}$
+explained by the baseline model involving the first predictor only is 5% in both
+groups (`R2base = list(.05, .05)`). The incremental variance explained by predictors 
+2 and 3 (`nullWhich = c(2, 3)`) is .025 in the first group and .10 in the second
+group (`R2inc = list(.025, .10)`). Finally, the required sample size
+is requested to detect that the incremental variance explained differs across
+groups (`nullEffect = 'R2incA = R2incB'`).
+
+```{r eval=FALSE}
+corXX <- matrix(c(
+    #   X1    X2    X3
+    c(1.00, 0.20, 0.30),  # X1
+    c(0.20, 1.00, 0.10),  # X2
+    c(0.30, 0.10, 1.00)   # X3
+), ncol = 3,byrow = TRUE)
+powerReg <- semPower.powerRegression(
+   # define type of power analysis
+   type = 'a-priori', alpha = .05, power = .80, 
+   N = list(1, 1),              # group weights
+   # define hypothesis
+   corXX = corXX,               # same across groups
+   nullEffect = 'R2incA = R2incB',
+   R2base = list(.05, .05),     # group1, group2
+   R2inc = list(.025, .10),     # group1, group2
+   nullWhich = c(2, 3),         # X2 -> Y, X3 -> Y
+   # define measurement model (same across groups)
+   nIndicator = c(4, 5, 3, 6),  # Y, X1, X2, X3
+   loadM = c(.5, .6, .7, .6)    # Y, X1, X2, X3
+)
+```
+
 
 ## Mediation models {#powerMediation}
 
