@@ -457,7 +457,7 @@ doSim <- function(r,
       
       lavfitH0 <- lavaan::fitMeasures(lavresH0)
       fitH0 <- lavfitH0[c('fmin','chisq', 'df', 'pvalue')]
-      if(lavresH0@Options[['test']] != 'standard'){
+      if(length(lavresH0@Options[['test']]) > 1 || (length(lavresH0@Options[['test']]) == 1 && lavresH0@Options[['test']] != 'standard')){
         fitH0 <- lavfitH0[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
       }
       fitH0['fmin'] <- 2*fitH0['fmin'] # lav reports .5*fmin
