@@ -7,6 +7,7 @@ semPower 2.2.0 (development)
 * allow definition of effect size in powerRegression in terms of R squared
 * more sensible structure of returned simulated data in the multigroup case 
 * add option to specify a specific strategy to resolve futures when using parallel processing to estimate simulated power
+* bugfix: make simulated power with robust test-statistics (also) work with lavaan > 0.20. 
 * bugfix: proper evaluation of parameter bias in simulated power when models involve a single factor or single regression relations. 
 * bugfix: respect requested autocorrelated residuals without invariance constraints in powerARMA, powerAutoreg
 
