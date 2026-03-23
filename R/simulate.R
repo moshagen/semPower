@@ -482,7 +482,7 @@ doSim <- function(r,
           
           lavfitH1 <- lavaan::fitMeasures(lavresH1)
           fitH1 <- lavfitH1[c('fmin','chisq', 'df', 'pvalue')]
-          if(lavresH1@Options[['test']] != 'standard'){
+          if(length(lavresH1@Options[['test']]) > 1 || (length(lavresH1@Options[['test']]) == 1 && lavresH1@Options[['test']] != 'standard')){
             fitH1 <- lavfitH1[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
           }
           fitH1['fmin'] <- 2*fitH1['fmin'] # lav reports .5*fmin
@@ -492,7 +492,7 @@ doSim <- function(r,
           
           fitH1 <- c(fitH1, cfminGroupsH1)
           
-          if(lavresH1@Options[['test']] != 'standard'){
+          if(length(lavresH1@Options[['test']]) > 1 || (length(lavresH1@Options[['test']]) == 1 && lavresH1@Options[['test']] != 'standard')){
             mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
           }else{
             mcomp <- lavaan::anova(lavresH0, lavresH1) 
