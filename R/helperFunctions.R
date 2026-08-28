@@ -731,28 +731,29 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
   # check whether lavaan is available
   if(!'lavaan' %in% rownames(installed.packages())) stop('This function depends on the lavaan package, so install lavaan first.')
   
-  # Fit model to dummy covariance matrix instead of counting parameters. 
+  # Fit model to dummy covariance matrix and means instead of counting parameters. 
   # This should also account for parameter restrictions and other intricacies
   # Model fitting will give warnings we just can ignore
   tryCatch({
     params <- lavaan::sem(lavModel)
-    dummyS <- diag(params@Model@nvar)
+    p <- params@Model@nvar
+    dummyS <- diag(p)
+    dummyMu <- rep(0, p)
     rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
     if(is.null(nGroups) || nGroups == 1){
-      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = FALSE, optim.force.converged = TRUE))
+      # TODO consider whether we can obtain reliable df without actually fitting the model (do.fit = F)
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample_mean = dummyMu, sample.nobs = 1000, 
+                                               warn = FALSE, optim.force.converged = TRUE))
     }else{
-      if(is.null(group.equal)){
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = FALSE, optim.force.converged = TRUE))
-      }else{
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE, optim.force.converged = TRUE))
-      }
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample_mean = lapply(1:nGroups, function(x) dummyMu), sample.nobs = rep(1000, nGroups), group.equal = group.equal, 
+                                               warn = FALSE, optim.force.converged = TRUE))
     }
     df <- dummyFit@test[['standard']][['df']]
     # the above can be NULL if lav encounters issues, so fall back in this case
     if(is.null(df)){
       warning('Some problem occured when estimating df; reported df might be inaccurate.')
       if(is.null(nGroups)) nGroups <- 1 
-      df <- nGroups * ((params@Model@nvar*(params@Model@nvar + 1) / 2) - dummyFit@loglik$npar) # invalid for partial multigroup constraints
+      df <- nGroups * ((p*(p + 1) / 2) + p) - dummyFit@loglik$npar   # not sure whether this accounts for any parameter restriction scenario
     }
     df
   }, 
