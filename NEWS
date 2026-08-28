@@ -10,6 +10,7 @@ semPower 2.2.0 (development)
 * bugfix: make simulated power with robust test-statistics (also) work with lavaan > 0.20. 
 * bugfix: proper evaluation of parameter bias in simulated power when models involve a single factor or single regression relations. 
 * bugfix: respect requested autocorrelated residuals without invariance constraints in powerARMA, powerAutoreg
+* bugfix: semPower.getDf reported incorrect df for multigroup models under special (rare) circumstances
 
 
 semPower 2.1.3 (August 2025)
