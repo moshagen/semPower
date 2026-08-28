@@ -739,18 +739,20 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
     dummyS <- diag(params@Model@nvar)
     rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
     if(is.null(nGroups) || nGroups == 1){
-      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = FALSE))
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.nobs = 1000, warn = FALSE, optim.force.converged = TRUE))
     }else{
       if(is.null(group.equal)){
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = FALSE))
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), warn = FALSE, optim.force.converged = TRUE))
       }else{
-        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE))
+        dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.nobs = rep(1000, nGroups), group.equal = group.equal, warn = FALSE, optim.force.converged = TRUE))
       }
     }
     df <- dummyFit@test[['standard']][['df']]
     # the above can be NULL if lav encounters issues, so fall back in this case
     if(is.null(df)){
-      df <- (params@Model@nvar*(params@Model@nvar + 1) / 2) - dummyFit@loglik$npar
+      warning('Some problem occured when estimating df; reported df might be inaccurate.')
+      if(is.null(nGroups)) nGroups <- 1 
+      df <- nGroups * ((params@Model@nvar*(params@Model@nvar + 1) / 2) - dummyFit@loglik$npar) # invalid for partial multigroup constraints
     }
     df
   }, 
