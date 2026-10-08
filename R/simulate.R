@@ -224,24 +224,26 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
     # replace non-converged by NA
     fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))
     nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
-    
-    rr <- 1
+    nEstimated <- nReplications
+
   }else{
     # single core case
     res <- list()
     nConverged <- 0
+    nEstimated <- 0
   }
   
   
-  ## check convergence and do additional non-parallel runs to reach target replications
+  ## check convergence and do additional non-parallel runs to reach target replications; also called in single core case to do all replications
   if(nConverged < nReplications){
     
     # fit models
     progressBar <- txtProgressBar(min = 0, max = (nReplications - nConverged), initial = 0, style = 3)
-    r <- rr <- (nConverged + 1)
+    r <- nConverged + 1
+    rr <- nEstimated + 1
     while(r <= nReplications && rr <= maxReplications){
       setTxtProgressBar(progressBar, (r - nConverged))
-      cr <- doSim(r = r, 
+      cr <- doSim(r = rr, 
                   simData = simData,
                   isMultigroup = is.list(Sigma),
                   modelH0 = modelH0, modelH1 = modelH1,
@@ -254,6 +256,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       rr <- rr + 1
     }
     close(progressBar)
+    nEstimated <- rr
   }
 
   # check convergence
@@ -261,7 +264,7 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # replace non-converged by NA
   fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))
   nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
-  convergenceRate <- nConverged / length(res)
+  convergenceRate <- nConverged / nEstimated
   if(nConverged == 0) stop("Something went wrong during model estimation, no replication converged.")
   if(convergenceRate < minConvergenceRate){ 
     warning(paste("Actual convergence rate of", round(convergenceRate, 2), "is below minConvergenceRate of", minConvergenceRate, ". Results are based on", nConverged,"replications."))
