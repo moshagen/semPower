@@ -256,12 +256,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
       rr <- rr + 1
     }
     close(progressBar)
-    nEstimated <- rr
+    nEstimated <- rr - 1
   }
 
   # check convergence
+  if(length(res) == 0) stop("Something went wrong during model estimation, no replication converged.")
   fit <- lapply(res, '[[', 1)
-  # replace non-converged by NA
+  # replace non-converged by NA and determine actual convergence rate by having fitmeasures
   fit[which(unlist(lapply(fit, function(x) length(x) == 0)))] <- list(rep(list(rep(NA, 5)), 3))
   nConverged <- sum(!is.na(do.call(rbind, lapply(fit, '[[', 1))[, 1]))
   convergenceRate <- nConverged / nEstimated
