@@ -431,7 +431,7 @@ getCFI.Sigma.mgroups <- function(SigmaHat, S, muHat = NULL, mu = NULL, N, fittin
       SigmaHatNull <- diag(ncol(S[[x]]))
       diag(SigmaHatNull) <- diag(S[[x]])
       muHatNull <- mu[[x]]   # as in mplus: baseline model has unrestricted means
-      getF.Sigma(SigmaHatNull, S[[x]], muHatNull[[x]], mu[[x]], fittingFunction = fittingFunction)
+      getF.Sigma(SigmaHatNull, S[[x]], muHatNull, mu[[x]], fittingFunction = fittingFunction)
     })
   }
   
