@@ -333,7 +333,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if(power.type == "a-priori"){
     if(is.null(beta) && is.null(power))
       stop("Need to define either beta or power in a-priori power analyis")
-    if(!is.null(beta) && !is.null(power) && (power - (1 - beta) > 1e-8))
+    if(!is.null(beta) && !is.null(power) && abs((power - (1 - beta)) > 1e-8))
       stop("Either set beta or set power, but not both.")
     if(!is.null(beta))
       checkBounded(beta)
