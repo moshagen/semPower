@@ -333,7 +333,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
   if(power.type == "a-priori"){
     if(is.null(beta) && is.null(power))
       stop("Need to define either beta or power in a-priori power analyis")
-    if(!is.null(beta) && !is.null(power) && power != (1 - beta))
+    if(!is.null(beta) && !is.null(power) && (power - (1 - beta) > 1e-8))
       stop("Either set beta or set power, but not both.")
     if(!is.null(beta))
       checkBounded(beta)
@@ -510,9 +510,9 @@ checkDataGenerationTypes <- function(type){
 #' @param type type
 #' @return Returns cleaned data generation type
 checkMissingTypes <- function(type){
-  if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Missing mechanism must be one of "mcar", "mar", or "mnar".')
+  if(is.null(type) || length(type) != 1 || typeof(type) != 'character') stop('Missing mechanism must be one of "mcar", "mar", or "nmar".')
   type <- tolower(trimws(type))
-  if(!type %in% c('mcar', 'mar', 'nmar')) stop('Missing mechanism must be one of "mcar", "mar", or "mnar"')
+  if(!type %in% c('mcar', 'mar', 'nmar')) stop('Missing mechanism must be one of "mcar", "mar", or "nmar"')
   type
 }
 
