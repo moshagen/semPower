@@ -11,6 +11,7 @@ semPower 2.2.0 (development)
 * bugfix: proper evaluation of parameter bias in simulated power when models involve a single factor or single regression relations. 
 * bugfix: respect requested autocorrelated residuals without invariance constraints in powerARMA, powerAutoreg
 * bugfix: semPower.getDf reported incorrect df for multigroup models under special (rare) circumstances
+* bugfix: cfi was computed incorrectly in multigroup settings 
 
 
 semPower 2.1.3 (August 2025)
