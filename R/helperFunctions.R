@@ -742,10 +742,10 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
     rownames(dummyS) <- params@Model@dimNames[[1]][[1]]
     if(is.null(nGroups) || nGroups == 1){
       # TODO consider whether we can obtain reliable df without actually fitting the model (do.fit = F)
-      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample_mean = dummyMu, sample.nobs = 1000, 
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = dummyS, sample.mean = dummyMu, sample.nobs = 1000, 
                                                warn = FALSE, optim.force.converged = TRUE))
     }else{
-      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample_mean = lapply(1:nGroups, function(x) dummyMu), sample.nobs = rep(1000, nGroups), group.equal = group.equal, 
+      dummyFit <- suppressWarnings(lavaan::sem(lavModel, sample.cov = lapply(1:nGroups, function(x) dummyS), sample.mean = lapply(1:nGroups, function(x) dummyMu), sample.nobs = rep(1000, nGroups), group.equal = group.equal, 
                                                warn = FALSE, optim.force.converged = TRUE))
     }
     df <- dummyFit@test[['standard']][['df']]
