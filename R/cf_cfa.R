@@ -227,6 +227,7 @@ semPower.powerCFA <- function(type, comparison = 'restricted',
     if(is.null(nullWhich) && nfac == 2) nullWhich <- c(1, 2)
     if(is.null(nullWhich)) stop('nullWhich must be defined.')
     if(!is.list(nullWhich)) nullWhich <- list(nullWhich)
+    if(nullEffect == 'corx=corz' & length(nullWhich) < 2) stop('corx=corz compares two correlations, so nullWhich must contain at least two vectors.')
     if(any(unlist(lapply(nullWhich, function(x) length(x) != 2)))) stop('nullWhich may only contain vectors of size two.')
     if(any(unlist(lapply(nullWhich, function(x) x[1] == x[2])))) stop('elements in nullWhich may not refer to variances.')
     if(any(unlist(lapply(nullWhich, function(x) (x[1] < 1 || x[2] < 1 || x[1] > nfac || x[2] > nfac))))) stop('At least one element in nullWhich is an out of bounds index concerning Phi.')

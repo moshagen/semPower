@@ -430,7 +430,7 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
   
   if(is.null(ticExogSlopes) && nullEffect %in% c('betait=0', 'betast=0', 'betas2t=0', 'betaita=betaitb', 'betasta=betastb','betas2ta=betas2tb'))
     stop('Specified nullEffect refers to an exogenous time-invariant covariate as predictor, but slopes in ticExogSlopes are not provided.')
-  if(is.null(ticEndogSlopes) && nullEffect %in% c('betati=0', 'betats=0', 'betats2=0', 'betatia=betatb', 'betatsa=betatsb', 'betats2a=betats2b'))
+  if(is.null(ticEndogSlopes) && nullEffect %in% c('betati=0', 'betats=0', 'betats2=0', 'betatia=betatib', 'betatsa=betatsb', 'betats2a=betats2b'))
     stop('Specified nullEffect refers to an endogenous time-invariant covariate as criterion, but slopes in ticEndogSlopes are not provided.')
   if(grepl('s2', nullEffect) && !quadratic) stop('nulleffect refers to quadratic slope, but no quadratic slope requested.')
   
