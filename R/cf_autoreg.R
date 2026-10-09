@@ -381,7 +381,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   invisible(lapply(autoregEffects, function(x) lapply(x, function(x) checkBounded(x, 'All autoregressive effects ', bound = c(-1, 1), inclusive = FALSE))))
   
   if(!is.null(lag2Effects) && nWaves < 3) stop('There are no lag-2 effects when nWaves < 3')
-  if(!is.null(lag3Effects) && nWaves < 4) stop('There are no lag-2 effects when nWaves < 4')
+  if(!is.null(lag3Effects) && nWaves < 4) stop('There are no lag-3 effects when nWaves < 4')
   if(isMultigroup && !is.null(lag2Effects) && !is.list(lag2Effects)) stop('For multigroup models, lag2Effects must be a list')
   if(isMultigroup && !is.null(lag3Effects) && !is.list(lag3Effects)) stop('For multigroup models, lag3Effects must be a list')
   if(isMultigroup && !is.null(lag2Effects) && length(lag2Effects) != nGroups) stop('lag2Effects must be provided for each group.')
@@ -403,7 +403,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   }
   if(!is.null(variances) && standardized) stop('When variances are provided, standardized must be FALSE.') 
   if(isMultigroup && !is.null(means) && !is.list(means)) stop('For multigroup models, means must be a list')
-  if(isMultigroup && !is.null(variances) && !is.list(variances)) stop('For multigroup models, means must be a list')
+  if(isMultigroup && !is.null(variances) && !is.list(variances)) stop('For multigroup models, variances must be a list')
   if(!is.null(means) && !is.list(means)) means <- list(means)
   if(!is.null(variances) && !is.list(variances)) variances <- list(variances)
   if(!is.null(means) && any(unlist(lapply(means, function(x) length(x) != nWaves)))) stop('means must be provided for each wave.') 
@@ -419,16 +419,16 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(nullEffect == 'lag1') nullEffect <- 'autoreg'
   if(nullEffect == 'lag1=0') nullEffect <- 'autoreg=0'
   if(nullEffect == 'lag1a=lag1b') nullEffect <- 'autorega=autoregb'
-  if('lag1' %in% waveEqual) waveEqual[which('lag1' %in% waveEqual)] <- 'autoreg'
-  if('lag1=0' %in% waveEqual) waveEqual[which('lag1' %in% waveEqual)] <- 'autoreg=0'
-  if('lag1a=lag1b' %in% waveEqual) waveEqual[which('lag1' %in% waveEqual)] <- 'autorega=autoregb'
+  if('lag1' %in% waveEqual) waveEqual[waveEqual == 'lag1'] <- 'autoreg'
+  if('lag1=0' %in% waveEqual) waveEqual[waveEqual == 'lag1=0'] <- 'autoreg=0'
+  if('lag1a=lag1b' %in% waveEqual) waveEqual[waveEqual == 'lag1a=lag1b'] <- 'autorega=autoregb'
 
   if(nullEffect %in% waveEqual) stop('You cannot set the same parameters in nullEffect and waveEqual')
   if(nWaves == 2 && nullEffect %in% c('autoreg')) stop('For two waves, there is only one one autoregressive effect. Did you mean autoreg = 0?')
   if(nWaves == 3 && nullEffect %in% c('lag2')) stop('For three waves, there is only one lag2 effect. Did you mean lag2 = 0?')
-  if(nWaves == 4 && nullEffect %in% c('lag3')) stop('For three waves, there is only one lag3 effect. Did you mean lag3 = 0?')
+  if(nWaves == 4 && nullEffect %in% c('lag3')) stop('For four waves, there is only one lag3 effect. Did you mean lag3 = 0?')
   if((nullEffect == 'var' || 'var' %in% waveEqual) && is.null(variances)) stop('Either nullEffect or waveEqual refer to variances, but no variances are provided.')
-  if((nullEffect == 'mean' || 'mean' %in% waveEqual) && is.null(variances)) stop('Either nullEffect or waveEqual refer to means, but no means are provided.')
+  if((nullEffect == 'mean' || 'mean' %in% waveEqual) && is.null(means)) stop('Either nullEffect or waveEqual refer to means, but no means are provided.')
   if((nullEffect == 'mean' || 'mean' %in% waveEqual) && !invariance) stop('When hypothesis include latent means, invariance must be TRUE.')
   
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
@@ -441,8 +441,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(!is.null(nullWhich)){
     if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
     if(nullWhich < 1 || nullWhich > (nWaves - 1)) stop('nullWhich must lie between 1 and nWaves - 1.')
-    if('lag2' %in% nullEffect && nullWhich > (nWaves - 2)) stop('For lag2 effects, nullWhich must lie between 1 and nWaves - 2.')
-    if('lag3' %in% nullEffect && nullWhich > (nWaves - 3)) stop('For lag3 effects, nullWhich must lie between 1 and nWaves - 3.')
+    if(nullEffect %in% c('lag2=0', 'lag2') && nullWhich > (nWaves - 2)) stop('For lag2 effects, nullWhich must lie between 1 and nWaves - 2.')
+    if(nullEffect %in% c('lag3=0', 'lag3') && nullWhich > (nWaves - 3)) stop('For lag3 effects, nullWhich must lie between 1 and nWaves - 3.')
   }
   
   ### create B
