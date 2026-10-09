@@ -530,8 +530,10 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
     lab <- paste0('ff', seq(nGroups))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
+    tokconstr <- paste0(lab, 'f', np[nullWhich])
+    tokuncon <- if(length(np) > 1) paste0(' + ', paste0('f', np[-nullWhich], collapse = ' + ')) else ''
     modelH0 <- paste(model, 
-                     paste0('f1 ~ ', paste0(lab, 'f', np[(nullWhich - 1)], ' + '), paste0('f',np[-(nullWhich - 1)], collapse = ' + ')),
+                     paste0('f1 ~ ', tokconstr, tokuncon),
                      sep = '\n')
   }else if(nullEffect == 'r2inc=0'){
     modelH0 <- paste(model, 
@@ -540,14 +542,14 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                      sep = '\n')
   }else if(nullEffect == 'r2inca=r2incb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
-    tok <- 'f1 ~ ' 
-    tok <- paste0('f1 ~ ', paste0('f',np[-(nullWhich - 1)], collapse = ' + '))
+    tok <- if(length(nullWhich) < nPred) paste0('f1 ~ ', paste0('f', np[-nullWhich], collapse = ' + '), ' + ') else 'f1 ~ '
     for(i in seq_along(nullWhich)){
       nw <- nullWhich[i]
       lab <- paste0('ff', seq(nGroups))
       lab[nullWhichGroups] <- paste0('pf', nw)
-      lab <- paste0(' + c(', paste(lab, collapse = ','), ')*')
-      tok <- paste(tok, paste0(lab, 'f', np[(nw - 1)]))
+      lab <- paste0('c(', paste(lab, collapse = ','), ')*')
+      plus <- if(i < length(nullWhich)) '+' else ''
+      tok <- paste(tok, paste0(lab, 'f', np[nw]), plus)
     }
     modelH0 <- paste(model, tok, sep = '\n')
   }else{
