@@ -178,7 +178,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
   impliedPower <- pchisq(critChi, df, impliedNCP, lower.tail = FALSE)
 
   # need to compute this after having determined Ns, because some indices rely on sample weights in multigroup case
-  fit <- getIndices.F(fmin, df, p, pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], requiredN.g)
+  fit <- getIndices.F(fmin, df, pp[['p']], pp[['SigmaHat']], Sigma, pp[['muHat']], pp[['mu']], requiredN.g)
   
   result <- list(
     type = "a-priori",
