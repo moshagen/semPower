@@ -542,14 +542,14 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
                      sep = '\n')
   }else if(nullEffect == 'r2inca=r2incb'){
     if(is.null(nullWhichGroups)) nullWhichGroups <- seq(nGroups)
-    tok <- if(length(nullWhich) < nPred) paste0('f1 ~ ', paste0('f', np[-nullWhich], collapse = ' + '), ' + ') else 'f1 ~ '
+    tok <- if(length(nullWhich) < nPred) paste0('f1 ~ ', paste0('f', np[-(nullWhich - 1)], collapse = ' + '), ' + ') else 'f1 ~ '
     for(i in seq_along(nullWhich)){
       nw <- nullWhich[i]
       lab <- paste0('ff', seq(nGroups))
       lab[nullWhichGroups] <- paste0('pf', nw)
       lab <- paste0('c(', paste(lab, collapse = ','), ')*')
       plus <- if(i < length(nullWhich)) '+' else ''
-      tok <- paste(tok, paste0(lab, 'f', np[nw]), plus)
+      tok <- paste(tok, paste0(lab, 'f', np[(nw - 1)]), plus)
     }
     modelH0 <- paste(model, tok, sep = '\n')
   }else{
