@@ -364,7 +364,7 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   
   nullValid <- c('autoreg', 'autoreg=0', 'autorega=autoregb',
                  'lag1', 'lag1=0', 'lag1a=lag1b',
-                 'lag2', 'lag3', 'lag2=0', 'lag3=0', 'lagged=0',
+                 'lag2', 'lag3', 'lag2=0', 'lag3=0',
                  'var', 'mean')
   nullEffect <- checkNullEffect(nullEffect, nullValid)
   
@@ -434,8 +434,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   if(is.null(nullWhich) && nWaves == 2) nullWhich <- 1
   if(is.null(nullWhich)){
     if(nWaves > 2 && !c('autoreg') %in% waveEqual && nullEffect %in% c('autoreg=0', 'autorega=autoregb')) stop('nullWhich must be defined when there are more than 2 waves and the autoregressive effects are not constant across waves.') 
-    if(nWaves > 3 && !c('lag2') %in% waveEqual && nullEffect %in% c('lag2=0', 'lagged=0')) stop('nullWhich must be defined when there are more than 3 waves and the lag2 effects are not constant across waves.') 
-    if(nWaves > 4 && !c('lag3') %in% waveEqual && nullEffect %in% c('lag3=0', 'lagged=0')) stop('nullWhich must be defined when there are more than 4 waves and the lag3 effects are not constant across waves.') 
+    if(nWaves > 3 && !c('lag2') %in% waveEqual && nullEffect %in% c('lag2=0')) stop('nullWhich must be defined when there are more than 3 waves and the lag2 effects are not constant across waves.') 
+    if(nWaves > 4 && !c('lag3') %in% waveEqual && nullEffect %in% c('lag3=0')) stop('nullWhich must be defined when there are more than 4 waves and the lag3 effects are not constant across waves.') 
     nullWhich <- 1 # this should be the proper default for all remaining cases
   }
   if(!is.null(nullWhich)){
@@ -651,14 +651,14 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
       modelH0 <- gsub(pAutoregX[nullWhich], '0', modelH0)
     }
   }
-  if(nullEffect %in% c('lag2=0', 'lagged')){
+  if(nullEffect %in% c('lag2=0')){
     if('lag2' %in% waveEqual){
       modelH0 <- gsub(paste(pLag2, collapse = ''), '0', modelH0)
     }else{
       modelH0 <- gsub(pLag2[nullWhich], '0', modelH0)
     }
   }
-  if(nullEffect %in% c('lag3=0', 'lagged')){
+  if(nullEffect %in% c('lag3=0')){
     if('lag3' %in% waveEqual){
       modelH0 <- gsub(paste(pLag3, collapse = ''), '0', modelH0)
     }else{
