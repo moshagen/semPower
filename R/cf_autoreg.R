@@ -468,7 +468,6 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   })
   
   # add metric invariance constraints to analysis model
-  metricInvarianceFactors <- NULL
   metricInvarianceFactors <- list(seq(nWaves))
 
   # define latent means
@@ -524,8 +523,8 @@ semPower.powerAutoreg <- function(type, comparison = 'restricted',
   # add autoregressive structure 
   for(f in 2:ncol(Beta[[1]])){     # omit first row
     fidx <- (f - 1)
-    if(estimateLag2Effects && f > 2) fidx <- c(fidx, (f - 2)) # estm lag2 effects regardless of these are zero
-    if(estimateLag3Effects && f > 3) fidx <- c(fidx, (f - 3)) # estm lag3 effects regardless of these are zero
+    if(estimateLag2Effects && f > 2) fidx <- c(fidx, (f - 2)) # always estm lag2 effects (also zero ones)
+    if(estimateLag3Effects && f > 3) fidx <- c(fidx, (f - 3)) # always estm lag3 effects (also zero ones)
     if(length(fidx) != 0){
       tok <- paste0('f', f, ' ~ ', paste(paste0('pf', paste0(formatC(f, width = 2, flag = 0), formatC(fidx, width = 2, flag = 0)), '*'), paste0('f', fidx), sep = '', collapse = ' + '))
       model <- paste(model, tok, sep='\n')
