@@ -300,7 +300,7 @@ semPower.powerMediation <- function(type, comparison = 'restricted',
     })
   }
   
-  if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups'), bound = c(1, length(B)), inclusive = TRUE)
+  if(!is.null(nullWhichGroups)) lapply(nullWhichGroups, function(x) checkBounded(x, 'All elements in nullWhichGroups', bound = c(1, length(B)), inclusive = TRUE))
   
   ### get Sigma
   if(standardized){
