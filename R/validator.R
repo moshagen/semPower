@@ -219,7 +219,7 @@ validateInput <- function(power.type = NULL, effect = NULL, effect.measure = NUL
           lapply(effect, function(x) if(is.null(x) || is.na(x) || x < -1e-8) stop(paste(effect.measure, 'must not be negative')))
           if(sum(unlist(effect)) <= 1e-10) stop(paste(effect.measure, 'must be larger than zero'))
         }else{
-          checkPositive(effect, message = effect.measure)
+          lapply(effect, function(x) checkPositive(x, message = effect.measure))
         }
       }
       

@@ -337,7 +337,7 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
   # validate input
   nullEffect <- checkNullEffect(nullEffect, c('slope=0', 'slopex=slopez', 'slopea=slopeb', 'r2inc=0', 'r2inca=r2incb'))
   if(is.null(slopes) && is.null(corYX) && is.null(R2inc)) stop('Either define slopes, or corYX, or R2base and R2inc.')
-  if(nullEffect == 'slopea=slopeb' && (!is.list(slopes) || !is.list(corYX))) stop('slope / corYXs must be a list when a multiple group analysis is requested.')
+  if(nullEffect == 'slopea=slopeb' && (!is.list(slopes) && !is.list(corYX))) stop('slope / corYXs must be a list when a multiple group analysis is requested.')
   if(is.list(slopes)) if(length(unique(unlist(lapply(slopes, length)))) > 1) stop('The same number of slopes must be provided for each group.')
   if(is.list(corYX)) if(length(unique(unlist(lapply(corYX, length)))) > 1) stop('The same number of predictor-criterion correlations must be provided for each group.')
   if(!is.null(R2base) && is.null(R2inc) || !is.null(R2inc) && is.null(R2base)) stop('Both R2base and R2inc must be provided.')
