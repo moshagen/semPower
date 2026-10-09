@@ -373,9 +373,9 @@ semPower.powerMI <- function(type,
         replacement <- paste0('c(1,', paste(rep('NA', (nGroups-1)), collapse = ','), ')*')
         for(i in 1:nFactors){
           modelH0 <- sub(paste0('f', i, ' ~~ ', '1*f', i), paste0('f', i, ' ~~ ', replacement, 'f', i), modelH0, fixed = TRUE)
-        }
-        if("loadings" %in% lavOptionsH1[['group.equal']]){
-          modelH1 <- sub(paste0('f', i, ' ~~ ', '1*f', i), paste0('f', i, ' ~~ ', replacement, 'f', i), modelH1, fixed = TRUE)
+          if("loadings" %in% lavOptionsH1[['group.equal']]){
+            modelH1 <- sub(paste0('f', i, ' ~~ ', '1*f', i), paste0('f', i, ' ~~ ', replacement, 'f', i), modelH1, fixed = TRUE)
+          }
         }
       }
       if("intercepts" %in% lavOptionsH0[['group.equal']]){
