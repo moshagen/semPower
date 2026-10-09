@@ -530,8 +530,8 @@ semPower.powerRegression <- function(type, comparison = 'restricted',
     lab <- paste0('ff', seq(nGroups))
     lab[nullWhichGroups] <- 'pf1'
     lab <- paste0('c(', paste(lab, collapse = ','), ')*')
-    tokconstr <- paste0(lab, 'f', np[nullWhich])
-    tokuncon <- if(length(np) > 1) paste0(' + ', paste0('f', np[-nullWhich], collapse = ' + ')) else ''
+    tokconstr <- paste0(lab, 'f', np[nullWhich - 1])
+    tokuncon <- if(length(np) > 1) paste0(' + ', paste0('f', np[-(nullWhich - 1)], collapse = ' + ')) else ''
     modelH0 <- paste(model, 
                      paste0('f1 ~ ', tokconstr, tokuncon),
                      sep = '\n')
