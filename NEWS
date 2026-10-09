@@ -13,6 +13,7 @@ semPower 2.2.0 (development)
 * bugfix: respect requested autocorrelated residuals without invariance constraints in powerARMA, powerAutoreg
 * bugfix: semPower.getDf reported incorrect df for multigroup models under special (rare) circumstances
 * bugfix: fix computation of cfi in multigroup settings 
+* bugfix: make tests involving residual invariance when not relying on lav strings work properly in powerMI 
 
 
 semPower 2.1.3 (August 2025)
