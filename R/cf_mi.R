@@ -278,7 +278,7 @@ semPower.powerMI <- function(type,
     comparison <- checkNullEffect(comparison, c('saturated', 'configural', 'metric', 'scalar', 'variances', 'covariances'))
     nullEffect <- checkNullEffect(nullEffect, c('metric', 'scalar', 'residual', 'variances', 'covariances', 'means'))
     if(which(c('saturated', 'configural', 'metric', 'scalar', 'variances', 'covariances') %in% comparison) >= 
-       (2 + which(c('metric', 'scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
+       (2 + which(c('metric', 'scalar', 'residual', 'variances', 'covariances', 'means') %in% nullEffect))) stop('Model defined in nullEffect is not nested in comparison model.')
   }else{
     if(!useReferenceIndicator && !singleGroupIdent && ('lv.variances' %in% comparison || 'lv.variances' %in% nullEffect)) stop('Variance scaling without single group identification is used, so invariance of latent variances is always met. Either use single group identification or referent scaling.')
     if(!useReferenceIndicator && !singleGroupIdent && ('means' %in% nullEffect)) stop('Mean scaling without single group identification is used, so invariance of latent means is always met. Either use single group identification or referent scaling.')
@@ -296,7 +296,7 @@ semPower.powerMI <- function(type,
     if(useLavOptions){
       inv <- any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect))
     }else{
-      inv <- any(c('scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect)
+      inv <- any(c('scalar', 'residual', 'variances', 'covariances', 'means') %in% nullEffect)
     }
     if(inv) stop('The models imply a meanstructure, so tau and/or Alpha need to be defined.')
   }
@@ -405,7 +405,7 @@ semPower.powerMI <- function(type,
   Sigma <- lapply(generated, '[[', 'Sigma')
   mu <- NULL
   if(!useLavOptions){
-    if(any(c('scalar', 'residuals', 'variances', 'covariances', 'means') %in% nullEffect))
+    if(any(c('scalar', 'residual', 'variances', 'covariances', 'means') %in% nullEffect))
       mu <- lapply(generated, '[[', 'mu')
   }else{
     if(any(grepl('intercepts|means', comparison)) || any(grepl('intercepts|means', nullEffect)))
