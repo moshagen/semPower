@@ -223,6 +223,8 @@ semPower.powerLav <- function(type,
       SigmaHat <- list(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]))
       muHat <- list(orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]))
     }
+    if(is.null(mu[[1]])) muHat <- mu   # lav sometimes computes muhat despite NULL mu is provided, i.e. lav incorrectly assumes meanstructure
+    
     df <- dfH0 <- modelH0Fit@test[['standard']][['df']]  # this is probably invalid for estm with adjusted df
     
     # get H1 comparison model and deltaF
