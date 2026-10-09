@@ -290,7 +290,7 @@ semPower.powerLav <- function(type,
       if(any(fminH1 > 1e-6)) warning(paste0('H1 model yields imperfect fit (F0 = ', round(unlist(fminH1)[which(unlist(fminH1) > 1e-6)[1]], 6), '). This may happen if the H1 model contains restrictions on parameters (such as invariance constraints) that actually differ in the population. Verify that this is intended.'))
       df <- (dfH0 - dfH1)
     }else if (!is.null(modelH1) && !fitH1model){
-      df <- df - semPower.getDf(modelH1)
+      df <- df - semPower.getDf(modelH1, nGroups = nGroups)
     }
 
     # we use sigma for the comparison with the saturated model (so we also get additional fitindices) 
