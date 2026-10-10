@@ -19,6 +19,7 @@ semPower 2.2.0 (development)
 * bugfix: make multigroup hypotheses in powerRegression work when there is only a single predictor and when R2base = 0
 * bugfix: make powerLgcm work when there are both endogenous and exogenous tics
 * bugfix: fix autoreg = 0 and mvavg = 0 in powerArma when these are wave-equal and there are corresponding lag2 or lag3 effects
+* bugfix: powerBifactor now also supports more than two bifactor structures, and does not require bifactor specific indicators.
 
 
 semPower 2.1.3 (August 2025)
