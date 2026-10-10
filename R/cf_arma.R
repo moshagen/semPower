@@ -525,7 +525,8 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   }
   if(!is.null(nullWhich)){
     if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
-    if(nullWhich < 1 || nullWhich > (nWaves - 1)) stop('nullWhich must lie between 1 and nWaves - 1.')
+    if(nullEffect != 'meana=meanb' && nullWhich < 1 || nullWhich > (nWaves - 1)) stop('nullWhich must lie between 1 and nWaves - 1.')
+    if(nullEffect == 'meana=meanb' && nullWhich < 2 || nullWhich > nWaves) stop('The first mean is fixed to zero, so nullWhich must lie between 2 and nWaves when nullEffect = "meanA = meanB".')
     if(nullEffect %in% c('autoreglag2=0','autoreglag2', 'mvavglag2=0', 'mvavglag2') && nullWhich > (nWaves - 2)) stop('For lag2 effects, nullWhich must lie between 1 and nWaves - 2.')
     if(nullEffect %in% c('autoreglag3=0','autoreglag3', 'mvavglag3=0', 'mvavglag3') && nullWhich > (nWaves - 3)) stop('For lag3 effects, nullWhich must lie between 1 and nWaves - 3.')
   }
@@ -838,7 +839,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(c('mvavg') %in% waveEqual) modelH1 <- gsub(paste(pMvAvg, collapse = '|'), 'pn', modelH1)
   if(c('mvavglag2') %in% waveEqual) modelH1 <- gsub(paste(pMvAvgLag2, collapse = '|'), 'pn2', modelH1)
   if(c('mvavglag3') %in% waveEqual) modelH1 <- gsub(paste(pMvAvgLag3, collapse = '|'), 'pn3', modelH1)
-  # wave-equal contraints for means and vars do not include first measurement
+  # wave-equal constraints for means and vars do not include first measurement
   if(c('var') %in% waveEqual) modelH1 <- gsub(paste(pNoiseVar[-1], collapse = '|'), 'pvn', modelH1)
   if(c('mean') %in% waveEqual) modelH1 <- gsub(paste(pMeans[-1], collapse = '|'), 'pmf', modelH1)
   
@@ -853,7 +854,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   if(c('mvavg') %in% nullEffect) modelH0 <- gsub(paste(pMvAvg, collapse = '|'), 'pn', modelH0)
   if(c('mvavglag2') %in% nullEffect) modelH0 <- gsub(paste(pMvAvgLag2, collapse = '|'), 'pn2', modelH0)
   if(c('mvavglag3') %in% nullEffect) modelH0 <- gsub(paste(pMvAvgLag3, collapse = '|'), 'pn3', modelH0)
-  # wave-equal contraints for means and vars do not include first measurement
+  # wave-equal constraints for means and vars do not include first measurement
   if(c('var') %in% nullEffect) modelH0 <- gsub(paste(pNoiseVar[-1], collapse = '|'), 'pvn', modelH0)
   if(c('mean') %in% nullEffect) modelH0 <- gsub(paste(pMeans[-1], collapse = '|'), 'pmf', modelH0)
   
