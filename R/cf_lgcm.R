@@ -632,7 +632,7 @@ semPower.powerLGCM <- function(type, comparison = 'restricted',
   }
   # cov tic pred/crit 
   if(!is.null(ticExogSlopes) && !is.null(ticEndogSlopes)){
-    idx <- 1 + nWaves + 2 + sum(!is.null(quadratic))
+    idx <- 1 + nWaves + 2 + sum(quadratic)
     model <- append(model, paste0('f', idx, ' ~~ f', (idx + 1))) 
   }
   
