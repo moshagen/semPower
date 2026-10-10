@@ -520,7 +520,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
     if(nullEffect %in% 'mvavglag2=0' && !'mvavglag2' %in% waveEqual && nWaves > 3) stop(msg)
     if(nullEffect %in% 'mvavglag3=0' && !'mvavglag3' %in% waveEqual && nWaves > 4) stop(msg)
     if(nullEffect %in% 'vara=varb' && !'var' %in% waveEqual) stop(msg)
-    if(nullEffect %in% 'meana=meanb' && !'var' %in% waveEqual) stop(msg)
+    if(nullEffect %in% 'meana=meanb' && !'mean' %in% waveEqual) stop(msg)
     nullWhich <- 1 # proper default for all remaining cases
   }
   if(!is.null(nullWhich)){
@@ -860,7 +860,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   # zero constraints:
   if('autoreg=0' %in% nullEffect){
     if('autoreg' %in% waveEqual){
-      modelH0 <- gsub('pf', '0', modelH0)
+      modelH0 <- gsub('\\bpf\\b', '0', modelH0)
     }else{
       modelH0 <- gsub(pAutoregX[nullWhich], '0', modelH0)
     }
@@ -881,7 +881,7 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
   }
   if('mvavg=0' %in% nullEffect){
     if('mvavg' %in% waveEqual){
-      modelH0 <- gsub('pn', '0', modelH0)
+      modelH0 <- gsub('\\bpn\\b', '0', modelH0)
     }else{
       modelH0 <- gsub(pMvAvg[nullWhich], '0', modelH0)
     }
