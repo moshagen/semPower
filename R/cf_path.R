@@ -223,11 +223,11 @@ semPower.powerPath <- function(type, comparison = 'restricted',
     if(!is.list(Psi)) Psi <- list(Psi)
     if(isMultigroup && (length(unique(unlist(lapply(Psi, ncol)))) > 1 || length(unique(unlist(lapply(Psi, nrow)))) > 1)) stop('Psi must be of same dimension for all groups') 
     lapply(Psi, function(x) checkSymmetricSquare(x, 'Psi'))
-    if(any(unlist(lapply(Psi, function(x) any(eigen(x)$values <= 0))))) warning('Phi is not positive definite.')
+    if(any(unlist(lapply(Psi, function(x) any(eigen(x)$values <= 0))))) warning('Psi is not positive definite.')
     if(ncol(Psi[[1]]) != ncol(Beta[[1]])) stop('Beta and Psi must be of same dimension.')
   }
   if(is.null(nullWhich)) stop('nullWhich must not be NULL.')
-  if(any(unlist(lapply(nullWhich, function(x) any(x > ncol(Beta[[1]])))))) stop('At least one element in nullWhich is an out of bounds index concerning Beta.')
+  if(any(unlist(lapply(nullWhich, function(x) any(x > ncol(Beta[[1]])) || any(x == 0))))) stop('At least one element in nullWhich is an out of bounds index concerning Beta.')
   if(nullEffect == 'betax=betaz' && any(lapply(nullWhich, function(x) length(x)) != 2)) stop('nullWhich must be a list containing vectors of size two each.')
   if(nullEffect == 'betaa=betab' && !isMultigroup) stop('Beta must be a list for multiple group comparisons.')
   if(nullEffect != 'betaa=betab' && isMultigroup) stop('Multiple group models are only valid for nullEffect = "betaA=betaB".')
