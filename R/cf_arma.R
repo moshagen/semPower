@@ -521,12 +521,12 @@ semPower.powerARMA <- function(type, comparison = 'restricted',
     if(nullEffect %in% 'mvavglag3=0' && !'mvavglag3' %in% waveEqual && nWaves > 4) stop(msg)
     if(nullEffect %in% 'vara=varb' && !'var' %in% waveEqual) stop(msg)
     if(nullEffect %in% 'meana=meanb' && !'mean' %in% waveEqual) stop(msg)
-    nullWhich <- 1 # proper default for all remaining cases
+    nullWhich <- if(nullEffect == 'meana=meanb') 2 else 1   # proper defaults for all remaining cases
   }
   if(!is.null(nullWhich)){
     if(!is.numeric(nullWhich) || length(nullWhich) > 1) stop('nullWhich must be a single number.')
-    if(nullEffect != 'meana=meanb' && nullWhich < 1 || nullWhich > (nWaves - 1)) stop('nullWhich must lie between 1 and nWaves - 1.')
-    if(nullEffect == 'meana=meanb' && nullWhich < 2 || nullWhich > nWaves) stop('The first mean is fixed to zero, so nullWhich must lie between 2 and nWaves when nullEffect = "meanA = meanB".')
+    if(nullEffect != 'meana=meanb' && (nullWhich < 1 || nullWhich > (nWaves - 1))) stop('nullWhich must lie between 1 and nWaves - 1.')
+    if(nullEffect == 'meana=meanb' && (nullWhich < 2 || nullWhich > nWaves)) stop('The first mean is fixed to zero, so nullWhich must lie between 2 and nWaves when nullEffect = "meanA = meanB".')
     if(nullEffect %in% c('autoreglag2=0','autoreglag2', 'mvavglag2=0', 'mvavglag2') && nullWhich > (nWaves - 2)) stop('For lag2 effects, nullWhich must lie between 1 and nWaves - 2.')
     if(nullEffect %in% c('autoreglag3=0','autoreglag3', 'mvavglag3=0', 'mvavglag3') && nullWhich > (nWaves - 3)) stop('For lag3 effects, nullWhich must lie between 1 and nWaves - 3.')
   }
