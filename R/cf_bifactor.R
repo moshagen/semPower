@@ -354,11 +354,13 @@ semPower.powerBifactor <- function(type, comparison = 'restricted',
     cLambda <- matrix(0, nrow = (sum(extraIndicators) + nrow(csLambda)), ncol = (numBifactors + ncol(csLambda)))  
     # specific factors + covariate(s)
     cLambda[(sum(extraIndicators) + 1) : nrow(cLambda), (numBifactors + 1) : ncol(cLambda)] <- csLambda
-    extraLoadings <- lapply(seq_along(cBfLoadings), function(x) cBfLoadings[[x]][1:extraIndicators[x]])
+    extraLoadings <- lapply(seq_along(cBfLoadings), function(x) cBfLoadings[[x]][seq_len(extraIndicators[x])])
     for(i in 1:numBifactors){
       # bifactor extra indicators
-      if(i == 1) idx <- 1 : extraIndicators[i] else idx <- (1 + extraIndicators[i - 1]) : (extraIndicators[i - 1] + extraIndicators[i])
-      cLambda[idx, i] <- extraLoadings[[i]]
+      if(extraIndicators[i] > 0){
+        idx <- sum(extraIndicators[seq_len(i - 1)]) + seq_len(extraIndicators[i])
+        cLambda[idx, i] <- extraLoadings[[i]]
+      }
       # bifactor specific indicators 
       idx <- length(unlist(extraLoadings)) + unlist(lapply(cBfWhichFactors[[i]], function(x) which(csLambda[, x] != 0)))
       cLambda[idx, i] <- cBfLoadings[[i]][(1 + extraIndicators[i]) : length(cBfLoadings[[i]])]
