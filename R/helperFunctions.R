@@ -208,14 +208,14 @@ semPower.genSigma <- function(Lambda = NULL,
       Phi <- matrix(Phi, ncol = nfac, nrow = nfac)
       diag(Phi) <- 1
     } 
-    if(ncol(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
+    if(ncol(Phi) != nfac || nrow(Phi) != nfac) stop('Phi must have the same number of rows/columns as the number of factors.') 
     checkPositiveDefinite(Phi)
     if(!any(diag(Phi) != 1)){
-      if(any(Phi > 1) || any(Phi > 1)) stop('Phi implies correlations outside [-1 - 1].')
+      if(any(Phi > 1) || any(Phi < -1)) stop('Phi implies correlations outside [-1 - 1].')
     }
   }else{
-    if(ncol(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
-    if(!is.null(Psi) && ncol(Psi) != nfac) stop('Psi must have the same number of rows/columns as the number of factors.')
+    if(ncol(Beta) != nfac || nrow(Beta) != nfac) stop('Beta must have the same number of rows/columns as the number of factors.')
+    if(!is.null(Psi) && (ncol(Psi) != nfac || nrow(Psi) != nfac)) stop('Psi must have the same number of rows/columns as the number of factors.')
     if(is.null(Psi)) Psi <- diag(ncol(Beta))
     if(any(diag(Psi) < 0)) stop('Model implies negative residual variances for latent variables (Psi). Make sure the sum of squared standardized regression coefficients in predicting a factor does not exceed 1.')
   }
