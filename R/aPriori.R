@@ -119,7 +119,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
     # make a reasonable guess about required sample size
     exponent <- -floor(log10(fmin)) + 1
-    startN <- 5*10^(exponent)
+    startN <- 5 * 10^exponent
     
     bPrecisionWarning <- (startN < 5)  # skip estm for N < 5, but take N = 10 as effective minimum 
     
@@ -129,7 +129,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                             critChi = critChi, logBetaTarget = logBetaTarget, fmin = unlist(fmin.g), df = df, weights = weights,
                             method = 'Nelder-Mead', control = list(warn.1d.NelderMead = FALSE))
       
-      requiredN <- sum(ceiling(weights * chiCritOptim$par))  
+      requiredN <- ceiling(chiCritOptim$par)
       
       # even N = 10 achieves or exceeds desired power
       if(requiredN < 10){
@@ -144,6 +144,8 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
     
     # N by group
     requiredN.g <- ceiling(weights * requiredN)
+    # make sure total N matches sum of group n
+    requiredN <- sum(requiredN.g)
     
   # first perform analytical even when simulated is requested, so both results can be provided and we get start N
   }else{
