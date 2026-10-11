@@ -120,8 +120,8 @@ semPower.compromise  <- function(effect = NULL, effect.measure = NULL,
     agfi = fit[['agfi']],
     srmr = fit[['srmr']],
     cfi = fit[['cfi']],
-    max = max,
-    min = min,
+    max = maxChi,
+    min = minChi,
     bPrecisionWarning = bPrecisionWarning,
     plotShow = if('plotShow' %in% names(list(...))) list(...)[['plotShow']] else TRUE,
     plotLinewidth = if('plotLinewidth' %in% names(list(...))) list(...)[['plotLinewidth']] else 1, 
@@ -152,7 +152,7 @@ getErrorDiff <- function(critChiSquare, df, ncp, log.abratio){
   if(is.infinite(beta) || is.infinite(alpha)){
 
     warning('Alpha or beta are too small.')
-    diff <- 0
+    diff <- 1e100
 
   }else{
 
