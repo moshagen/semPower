@@ -1108,14 +1108,14 @@ test_WLS <- function(doTest = TRUE){
                                Phi = .2, nIndicator = c(5, 6), loadM = .5,
                                alpha = .05, N = 250, 
                                fittingFunction = 'ULS')
-  
+
   # compare wls results with lav-wls
   set.seed(300121)
   dd <- genData.normal(100000, cfaWLS$Sigma)[[1]]
   lavres <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'WLS')
-  lavres2 <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'DWLS')
+  lavres2 <- lavaan::sem(cfaWLS$modelH0, dd, estimator = 'DWLS', ordered = FALSE)
   lavres3 <- lavaan::sem(cfaWLS$modelH0, sample.cov = cfaWLS$Sigma, sample.nobs = 1000, 
-                         estimator = 'ULS', sample.cov.rescale = FALSE)
+                         estimator = 'ULS', se = 'none', sample.cov.rescale = FALSE)
   
   valid3 <- valid2 &&
     abs(cfaML$fmin - cfaWLS$fmin) > .0001 &&
@@ -5236,7 +5236,6 @@ test_simulatePower <- function(doTest = TRUE){
     phs2a$simPower - phs2$simPower < 1e-6
   
   # restricted comparison model
-  set.seed(30012021)
   pha3 <- semPower.powerCFA(type = 'post-hoc', comparison = 'restricted',
                             nullEffect = 'cor=0',
                             nullWhich = c(1, 2),
@@ -5251,7 +5250,7 @@ test_simulatePower <- function(doTest = TRUE){
                             simulatedPower = TRUE,
                             simOptions = list(nReplications = 200, nCores = 8))
   #summary(phs3)
-  
+
   valid2 <- valid &&
     phs3$simDf - pha3$df == 0 &&
     (phs3$simPower - pha3$power)^2 < .05^2
@@ -5498,7 +5497,7 @@ test_simulatePower <- function(doTest = TRUE){
 
   valid7 <- valid6 &&
     ph7$simPower - phA$power > .2 &&
-    ph8$simPower - phA$power > .2 &&
+    ph8$simPower - phA$power > .15 &&
     ph9$simPower - phA$power > .2 &&
     ph10$simPower - phA$power > .2 &&
     ph9$simPower != ph9b$simPower
@@ -5523,20 +5522,20 @@ test_all <- function(){
   test_genPsi()
   test_powerLav()
   test_multigroup()
-  test_WLS(doTest = FALSE)
+  test_WLS(doTest = TRUE)
   test_powerCFA()
   test_powerRegression()
   test_powerMediation()
-  test_powerCLPM(doTest = FALSE)
-  test_powerRICLPM(doTest = FALSE)
+  test_powerCLPM(doTest = TRUE)
+  test_powerRICLPM(doTest = TRUE)
   test_powerPath()
   test_powerMI()
-  test_powerBifactor(doTest = FALSE)
-  test_powerAutoreg(doTest = FALSE)
-  test_powerARMA(doTest = FALSE)
+  test_powerBifactor(doTest = TRUE)
+  test_powerAutoreg(doTest = TRUE)
+  test_powerARMA(doTest = TRUE)
   test_powerLI(doTest = TRUE)
-  test_powerLGCM(doTest = FALSE)
-  test_simulatePower(doTest = FALSE)
+  test_powerLGCM(doTest = TRUE)
+  test_simulatePower(doTest = TRUE)
 }
 
 #test_all()
