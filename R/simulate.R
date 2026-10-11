@@ -184,9 +184,13 @@ simulate <- function(modelH0 = NULL, modelH1 = NULL,
   # we need to call lavaan() directly with defaults as defined in sem()
   lavOptions <- append(getLavOptions(lavOptions, isCovarianceMatrix = FALSE, nGroups = length(Sigma)),
                        list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
+  if(!is.null(lavOptions[['estimator']]) && tolower(lavOptions[['estimator']]) %in% c('wlsmv', 'dwls')) lavOptions[['ordered']] <- FALSE
+  if(is.null(lavOptions[['estimator']]) || (!is.null(lavOptions[['estimator']]) && tolower(lavOptions[['estimator']]) == c('ml'))) lavOptions[['test']] <- c('standard') # disable browne.residual.nt.model
+  
   if(!is.null(modelH1)){
     lavOptionsH1 <- append(getLavOptions(lavOptionsH1, isCovarianceMatrix = FALSE, nGroups = length(Sigma)),
                            list(check.gradient = FALSE, check.post = FALSE, check.vcov = FALSE))
+    if(!is.null(lavOptionsH1[['estimator']]) && tolower(lavOptionsH1[['estimator']]) %in% c('wlsmv', 'dwls')) lavOptionsH1[['ordered']] <- FALSE
   }
   
   # generate data. we always generate maxreplications, though this incurs a bit overhead 
@@ -461,7 +465,7 @@ doSim <- function(r,
       
       lavfitH0 <- lavaan::fitMeasures(lavresH0)
       fitH0 <- lavfitH0[c('fmin','chisq', 'df', 'pvalue')]
-      if(length(lavresH0@Options[['test']]) > 1 || (length(lavresH0@Options[['test']]) == 1 && lavresH0@Options[['test']] != 'standard')){
+      if('chisq.scaled' %in% names(lavfitH0)){
         fitH0 <- lavfitH0[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
       }
       fitH0['fmin'] <- 2*fitH0['fmin'] # lav reports .5*fmin
@@ -486,7 +490,7 @@ doSim <- function(r,
           
           lavfitH1 <- lavaan::fitMeasures(lavresH1)
           fitH1 <- lavfitH1[c('fmin','chisq', 'df', 'pvalue')]
-          if(length(lavresH1@Options[['test']]) > 1 || (length(lavresH1@Options[['test']]) == 1 && lavresH1@Options[['test']] != 'standard')){
+          if('chisq.scaled' %in% names(lavfitH1)){
             fitH1 <- lavfitH1[c('fmin','chisq.scaled', 'df.scaled', 'pvalue.scaled')]
           }
           fitH1['fmin'] <- 2*fitH1['fmin'] # lav reports .5*fmin
@@ -496,7 +500,7 @@ doSim <- function(r,
           
           fitH1 <- c(fitH1, cfminGroupsH1)
           
-          if(length(lavresH1@Options[['test']]) > 1 || (length(lavresH1@Options[['test']]) == 1 && lavresH1@Options[['test']] != 'standard')){
+          if('chisq.scaled' %in% names(lavfitH1)){
             mcomp <- lavaan::anova(lavresH0, lavresH1, method = 'satorra.bentler.2010') 
           }else{
             mcomp <- lavaan::anova(lavresH0, lavresH1) 

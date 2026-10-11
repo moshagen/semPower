@@ -163,16 +163,25 @@ semPower.powerLav <- function(type,
   if(!is.null(modelPop) && !is.list(modelPop)) modelPop <- list(modelPop)
   if(!is.null(Sigma) && !is.list(Sigma)) Sigma <- list(Sigma)
   if(!is.null(mu) && !is.list(mu)) mu <- list(mu)
-  
+  # initially supply means even if there is no meanstructure, bc lav (7-1 onwards) tends to complain
+  if(is.null(mu)){
+    mu <- lapply(Sigma, function(x) rep(0, ncol(x)))
+    for(i in seq(mu)){
+      names(mu[[i]]) <- colnames(Sigma[[1]])
+    }
+  }
 
   # determine population Sigma / mu
   if(is.null(Sigma)){
-    Sigma <- lapply(modelPop, function(x) orderLavCov(lavaan::fitted(lavaan::sem(x))[['cov']]))
-    mu <- lapply(modelPop, function(x) orderLavMu(lavaan::fitted(lavaan::sem(x))[['mean']]))
+    lavFitted <- lapply(modelPop, function(x) lavaan::fitted(lavaan::sem(x)))
+    Sigma <- lapply(lavFitted, function(x) orderLavCov(x[['cov']]))
+    # lav (7-1 onwards) does not complain about null mu when it infers no meanstructure, so be happy about orderLavMu returning NULL
+    mu <- lapply(lavFitted, function(x) orderLavMu(x[['mean']]))
+  }else{
+    # make sure sigma/mu are properly ordered
+    Sigma <- lapply(Sigma, function(x) orderLavCov(x))
+    if(!is.null(mu[[1]])) mu <- lapply(mu, function(x) orderLavMu(x))
   }
-  # make sure sigma/mu are properly ordered
-  Sigma <- lapply(Sigma, function(x) orderLavCov(x))
-  if(!is.null(mu)) mu <- lapply(mu, function(x) orderLavMu(x))
   
   nGroups <- length(Sigma)
   
@@ -193,6 +202,7 @@ semPower.powerLav <- function(type,
     } 
     if(fittingFunction == 'DWLS'){
       lavOptions[['WLS.V']] <- lapply(seq(nGroups), function(x) getWLSv(Sigma[[x]], mu[[x]], diag = TRUE))
+      lavOptions[['ordered']] <- FALSE
       if(nGroups == 1) lavOptions[['WLS.V']] <- lavOptions[['WLS.V']][[1]]
     } 
 
@@ -223,7 +233,7 @@ semPower.powerLav <- function(type,
       SigmaHat <- list(orderLavCov(lavaan::fitted(modelH0Fit)[['cov']]))
       muHat <- list(orderLavMu(lavaan::fitted(modelH0Fit)[['mean']]))
     }
-    if(is.null(mu[[1]])) muHat <- mu   # lav sometimes computes muhat despite NULL mu is provided, i.e. lav incorrectly assumes meanstructure
+    if(is.null(mu[[1]]) && !is.null(muHat[[1]])) mu <- muHat   # lav sometimes computes muhat despite NULL mu is provided, i.e. lav incorrectly assumes meanstructure
     
     df <- dfH0 <- modelH0Fit@test[['standard']][['df']]  # this is probably invalid for estm with adjusted df
     

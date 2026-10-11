@@ -92,6 +92,7 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
                      lavOptions = lavOptions)
 
   Sigma <- pp[['Sigma']]
+  mu <- pp[['mu']]
   
   if(!is.null(beta)){
     desiredBeta <- beta
