@@ -766,6 +766,24 @@ semPower.getDf <- function(lavModel, nGroups = NULL, group.equal = NULL){
   )
 }
 
+#' getKSdistance
+#'
+#' computes average absulute KS-distance between empirical and asympotic chi-square reference distribution.
+#' 
+#' @param chi empirical distribution  
+#' @param df df of reference distribution  
+#' @param ncp ncp of reference distribution  
+#' @return average absolute distance
+#' @importFrom stats ecdf pchisq
+getKSdistance <- function(chi, df, ncp = 0){
+  sChi <- sort(chi)
+  cdfChi <- ecdf(sChi)(sChi)
+  pChi <- sapply(sChi, FUN = pchisq, df = df, ncp = ncp)
+  ks1 <- abs(pChi - cdfChi)
+  ks2 <- abs(pChi - c(0, cdfChi[-length(cdfChi)]))
+  mean(c(mean(ks1), mean(ks2)))
+}
+
 #' getLavOptions
 #'
 #' returns `lavaan` options including defaults as set in `sem()` as a list to be passed to `lavaan()` 
@@ -778,7 +796,9 @@ getLavOptions <- function(lavOptions = NULL, isCovarianceMatrix = TRUE, nGroups 
   # defaults as defined in lavaan::sem()
   lavOptionsDefaults <- list(int.ov.free = TRUE, int.lv.free = FALSE, auto.fix.first = TRUE,
                              auto.fix.single = TRUE, auto.var = TRUE, auto.cov.lv.x = TRUE,
-                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE) 
+                             auto.efa = TRUE, auto.th = TRUE, auto.delta = TRUE, auto.cov.y = TRUE,
+                             se = 'none' # unneeded and speeds things up
+                             ) 
   
   # we also want N - 1 for ml based estm
   if(is.null(lavOptions[['estimator']]) || 
@@ -827,25 +847,6 @@ orderLavResults <- function(lavCov = NULL, lavMu = NULL){
 #' @return cov in correct order
 orderLavCov <- function(lavCov = NULL){
   orderLavResults(lavCov = lavCov)
-}
-
-
-#' getKSdistance
-#'
-#' computes average absulute KS-distance between empirical and asympotic chi-square reference distribution.
-#' 
-#' @param chi empirical distribution  
-#' @param df df of reference distribution  
-#' @param ncp ncp of reference distribution  
-#' @return average absolute distance
-#' @importFrom stats ecdf pchisq
-getKSdistance <- function(chi, df, ncp = 0){
-  sChi <- sort(chi)
-  cdfChi <- ecdf(sChi)(sChi)
-  pChi <- sapply(sChi, FUN = pchisq, df = df, ncp = ncp)
-  ks1 <- abs(pChi - cdfChi)
-  ks2 <- abs(pChi - c(0, cdfChi[-length(cdfChi)]))
-  mean(c(mean(ks1), mean(ks2)))
 }
 
 
