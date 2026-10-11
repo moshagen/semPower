@@ -131,6 +131,11 @@ semPower.aPriori <- function(effect = NULL, effect.measure = NULL,
       
       requiredN <- ceiling(chiCritOptim$par)
       
+      # Nelder-Mead may stop slightly early: refine to the smallest N that actually achieves the desired power
+      reachesTarget <- function(cN) pchisq(critChi, df, sum(unlist(fmin.g) * ((weights * cN) - 1)), log.p = TRUE) <= logBetaTarget
+      while(!reachesTarget(requiredN)) requiredN <- requiredN + 1
+      while(requiredN > 10 && reachesTarget(requiredN - 1)) requiredN <- requiredN - 1
+      
       # even N = 10 achieves or exceeds desired power
       if(requiredN < 10){
         requiredN <- 10
