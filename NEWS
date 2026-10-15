@@ -1,4 +1,4 @@
-semPower 2.2.0 (development)
+semPower 2.2.0 (october 2026)
 ===========
 
 * single group/occasion identification is now the default in models assuming metric or scalar invariance in powerMI and powerLI. The previous behavior can be obtained by setting singleGroupIdent = FALSE / singleOccasionIdent = FALSE.
